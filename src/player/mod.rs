@@ -2,8 +2,9 @@ use bevy::prelude::*;
 
 use crate::player::{
     camera::PlayerCameraPlugin,
+    components::Player,
     systems::{
-        basic_shooting, handle_bullet_timer, player_movement, spawn_player,
+        basic_shooting, handle_bullet_timer, player_movement, post_process_player,
         tick_player_weapon_timer,
     },
 };
@@ -19,8 +20,8 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(PlayerCameraPlugin)
-            .add_systems(Startup, spawn_player)
+        app.register_type::<Player>()
+            .add_plugins(PlayerCameraPlugin)
             .add_systems(
                 Update,
                 (
@@ -28,6 +29,7 @@ impl Plugin for PlayerPlugin {
                     basic_shooting,
                     tick_player_weapon_timer,
                     handle_bullet_timer,
+                    post_process_player,
                 ),
             );
     }

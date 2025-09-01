@@ -15,3 +15,4 @@ opt-level = 3
 avian3d = "0.3.1"
 bevy = { version = "0.16.1", features = ["dynamic_linking", "mp3"] }
 bevy-inspector-egui = "0.33.1"
+bevy_skein = "0.2.1"

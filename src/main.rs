@@ -1,9 +1,13 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
+use bevy_skein::SkeinPlugin;
 
 use crate::{
-    debug_hud::DebugHudPlugin, game_flow::GameFlowPlugin, player::PlayerPlugin, world::WorldPlugin,
+    debug_hud::DebugHudPlugin,
+    game_flow::GameFlowPlugin,
+    player::{PlayerPlugin, components::Player},
+    world::WorldPlugin,
 };
 
 mod debug_hud;
@@ -19,7 +23,8 @@ fn main() {
 
     // avian (physics)
     app.add_plugins(PhysicsPlugins::default())
-        .add_plugins(PhysicsDebugPlugin::default());
+        .add_plugins(PhysicsDebugPlugin::default())
+        .insert_resource(Gravity(Vec3::NEG_Y * 9.81));
 
     // own plugins
     app.add_plugins(PlayerPlugin)
@@ -27,9 +32,21 @@ fn main() {
         .add_plugins(GameFlowPlugin)
         .add_plugins(DebugHudPlugin);
 
+    // skein
+    app.add_plugins(SkeinPlugin::default());
+
     // misc plugins
     app.add_plugins(EguiPlugin::default())
         .add_plugins(WorldInspectorPlugin::new());
 
+    // app.add_systems(Update, check_if_my_fault_or_skein_fault);
     app.run();
+}
+
+fn check_if_my_fault_or_skein_fault(
+    camera_query: Query<Entity, With<Camera>>,
+    player_query: Query<Entity, With<Player>>,
+) {
+    info!("camera count: {}", camera_query.iter().len());
+    info!("player count: {}", player_query.iter().len());
 }

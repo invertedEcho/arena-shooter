@@ -1,113 +1,47 @@
-use avian3d::{math::PI, prelude::*};
+use std::f32::consts::PI;
+
+use avian3d::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*, render::view::RenderLayers};
 
 use crate::player::{
     PLAYER_RUN_SPEED, PLAYER_WALK_SPEED,
-    camera::{
-        VIEW_MODEL_RENDER_LAYER,
-        components::{PlayerCamera, WorldModelCamera},
-    },
     components::{BulletTimer, Player, PlayerWeaponShootCooldownTimer},
 };
 
-// TODO: Everything camera related should be moved into crate::player::camera
-pub fn spawn_player(asset_server: Res<AssetServer>, mut commands: Commands) {
-    commands
-        .spawn((
-            Player,
-            RigidBody::Dynamic,
-            Collider::capsule(0.7, 1.7),
-            Visibility::default(),
-            LinearVelocity::ZERO,
-            Transform::from_xyz(0.0, 3.0, 0.0),
-            LinearDamping(1.0),
-            Friction::new(1.0),
-            LockedAxes::new()
-                .lock_rotation_x()
-                .lock_rotation_y()
-                .lock_rotation_z(),
-        ))
-        .with_children(|parent| {
-            parent.spawn((
-                WorldModelCamera,
-                Camera3d::default(),
-                Projection::from(PerspectiveProjection {
-                    // fov: 90.0_f32.to_radians(),
-                    ..default()
-                }),
-            ));
-
-            // Spawn view model camera
-            parent.spawn((
-                PlayerCamera::default(),
-                Camera3d::default(),
-                Camera {
-                    order: 100,
-                    ..default()
-                },
-                RenderLayers::layer(VIEW_MODEL_RENDER_LAYER),
-            ));
-
-            let model =
-                asset_server.load(GltfAssetLabel::Scene(0).from_asset("weapons/rifle/WA_2000.glb"));
-
-            parent
-                .spawn((
-                    Transform {
-                        translation: Vec3 {
-                            x: 2.0,
-                            y: -1.0,
-                            z: -5.0,
-                        },
-                        scale: Vec3::splat(0.5),
-                        // rotate 180 degrees as weapon is spawned wrong way
-                        // need to use radian, radian another way of representing rotation like degrees
-                        // PI = 180 degrees
-                        // FRAC_PI_2 (e.g. PI / 2) = 90 degrees
-                        rotation: Quat::from_rotation_y(PI),
-                        ..default()
-                    },
-                    RenderLayers::layer(VIEW_MODEL_RENDER_LAYER),
-                ))
-                .with_child(SceneRoot(model));
-        });
-}
-
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    player: Query<(&mut LinearVelocity, &mut Transform), With<Player>>,
+    player: Single<(&mut LinearVelocity, &mut Transform), With<Player>>,
 ) {
-    for (mut velocity, transform) in player {
-        let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
-            PLAYER_RUN_SPEED
-        } else {
-            PLAYER_WALK_SPEED
-        };
+    let (mut velocity, transform) = player.into_inner();
+    // info!("found player with transform and velocity!");
 
-        let mut local_velocity = Vec3::ZERO;
+    let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
+        PLAYER_RUN_SPEED
+    } else {
+        PLAYER_WALK_SPEED
+    };
 
-        if keyboard_input.pressed(KeyCode::KeyW) {
-            local_velocity.z -= speed;
-        }
-        if keyboard_input.pressed(KeyCode::KeyA) {
-            local_velocity.x -= speed;
-        }
-        if keyboard_input.pressed(KeyCode::KeyD) {
-            local_velocity.x += speed;
-        }
-        if keyboard_input.pressed(KeyCode::KeyS) {
-            local_velocity.z += speed;
-        }
-        if keyboard_input.just_pressed(KeyCode::Space) {
-            velocity.y = 3.0;
-        }
+    let mut local_velocity = Vec3::ZERO;
 
-        if local_velocity.length_squared() > 0.0 {
-            let world_velocity = transform.rotation * local_velocity;
-            velocity.x = world_velocity.x;
-            velocity.z = world_velocity.z;
-        }
+    if keyboard_input.pressed(KeyCode::KeyW) {
+        local_velocity.z -= speed;
     }
+    if keyboard_input.pressed(KeyCode::KeyA) {
+        local_velocity.x -= speed;
+    }
+    if keyboard_input.pressed(KeyCode::KeyD) {
+        local_velocity.x += speed;
+    }
+    if keyboard_input.pressed(KeyCode::KeyS) {
+        local_velocity.z += speed;
+    }
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        velocity.y = 3.0;
+    }
+
+    let world_velocity = transform.rotation * local_velocity;
+    velocity.x = world_velocity.x;
+    velocity.z = world_velocity.z;
 }
 
 pub fn basic_shooting(
@@ -194,4 +128,42 @@ pub fn handle_bullet_timer(
             commands.entity(entity).despawn();
         }
     }
+}
+
+pub fn post_process_player(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    player_query: Single<Entity, Added<Player>>,
+) {
+    commands.entity(*player_query).with_children(|parent| {
+        let weapon_model = asset_server
+            .load(GltfAssetLabel::Scene(0).from_asset("weapons/rifle/WA_2000.glb#Scene0"));
+        parent.spawn((
+            Camera {
+                order: 1,
+                clear_color: ClearColorConfig::Default,
+                ..default()
+            },
+            RenderLayers::layer(1),
+            Camera3d::default(),
+        ));
+        parent.spawn((
+            Transform {
+                translation: Vec3 {
+                    x: 2.0,
+                    y: -1.0,
+                    z: -5.0,
+                },
+                scale: Vec3::splat(1.0),
+                // rotate 180 degrees as weapon is spawned wrong way
+                // need to use radian, radian another way of representing rotation like degrees
+                // PI = 180 degrees
+                // FRAC_PI_2 (e.g. PI / 2) = 90 degrees
+                rotation: Quat::from_rotation_y(PI),
+                ..default()
+            },
+            SceneRoot(weapon_model),
+            RenderLayers::layer(1),
+        ));
+    });
 }

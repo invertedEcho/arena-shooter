@@ -2,8 +2,9 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
 
-use super::components::{PlayerCamera, PlayerCameraMode};
 use crate::player::components::Player;
+
+const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 
 // we only need to change transform for player as camera is a child of the player
 pub fn camera_orbit_player(
@@ -25,32 +26,9 @@ pub fn camera_orbit_player(
 
         let new_yaw = delta_yaw + current_yaw;
 
-        const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
         let new_pitch = (delta_pitch + current_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
 
         player_transform.rotation =
             Quat::from_euler(EulerRot::YXZ, new_yaw, new_pitch, current_roll);
-    }
-}
-
-pub fn switch_first_third_person(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_camera_query: Query<(&mut PlayerCamera, &mut Transform), With<Camera>>,
-) {
-    let Ok((mut player_camera, mut transform)) = player_camera_query.single_mut() else {
-        return;
-    };
-
-    if keyboard_input.just_pressed(KeyCode::KeyV) {
-        match player_camera.camera_mode {
-            PlayerCameraMode::FirstPerson => {
-                transform.translation.z += 30.0;
-                player_camera.camera_mode = PlayerCameraMode::ThirdPerson;
-            }
-            PlayerCameraMode::ThirdPerson => {
-                transform.translation.z -= 30.0;
-                player_camera.camera_mode = PlayerCameraMode::FirstPerson;
-            }
-        }
     }
 }
