@@ -150,11 +150,11 @@ pub fn post_process_player(
         parent.spawn((
             Transform {
                 translation: Vec3 {
-                    x: 2.0,
-                    y: -1.0,
-                    z: -5.0,
+                    x: 1.0,
+                    y: -0.25,
+                    z: -2.0,
                 },
-                scale: Vec3::splat(1.0),
+                scale: Vec3::splat(0.25),
                 // rotate 180 degrees as weapon is spawned wrong way
                 // need to use radian, radian another way of representing rotation like degrees
                 // PI = 180 degrees

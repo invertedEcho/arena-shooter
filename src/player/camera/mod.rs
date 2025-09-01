@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::player::camera::systems::camera_orbit_player;
+use crate::player::camera::{
+    components::PlayerCamera,
+    systems::{camera_follow_player, camera_orbit_player, switch_between_first_and_third_person},
+};
 
 pub mod components;
 mod systems;
@@ -15,6 +18,14 @@ pub struct PlayerCameraPlugin;
 
 impl Plugin for PlayerCameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, camera_orbit_player);
+        app.add_systems(
+            Update,
+            (
+                camera_orbit_player,
+                camera_follow_player,
+                switch_between_first_and_third_person,
+            ),
+        )
+        .register_type::<PlayerCamera>();
     }
 }

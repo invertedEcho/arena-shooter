@@ -39,14 +39,5 @@ fn main() {
     app.add_plugins(EguiPlugin::default())
         .add_plugins(WorldInspectorPlugin::new());
 
-    // app.add_systems(Update, check_if_my_fault_or_skein_fault);
     app.run();
-}
-
-fn check_if_my_fault_or_skein_fault(
-    camera_query: Query<Entity, With<Camera>>,
-    player_query: Query<Entity, With<Player>>,
-) {
-    info!("camera count: {}", camera_query.iter().len());
-    info!("player count: {}", player_query.iter().len());
 }
