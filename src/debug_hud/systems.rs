@@ -13,6 +13,6 @@ pub fn spawn_debug_hud(mut commands: Commands) {
             parent.spawn(Text::new(
                 "Press v to switch between first and third person",
             ));
-            parent.spawn(Text::new("Press g to disable mouse motion roll/pitch/yaw"));
+            parent.spawn(Text::new("Press m to disable mouse motion roll/pitch/yaw"));
         });
 }

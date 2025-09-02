@@ -38,7 +38,7 @@ pub fn player_movement(
         local_velocity.z += speed;
     }
     if keyboard_input.just_pressed(KeyCode::Space) && ground_detection.on_ground {
-        velocity.y = 3.0;
+        velocity.y = 4.0;
     }
 
     let world_velocity = transform.rotation * local_velocity;

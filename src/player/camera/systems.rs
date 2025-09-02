@@ -81,7 +81,7 @@ pub fn change_mouse_motion_enabled(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: Single<&mut PlayerCamera>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::KeyG) {
+    if keyboard_input.just_pressed(KeyCode::KeyM) {
         query.mouse_motion_enabled = !query.mouse_motion_enabled;
     }
 }
