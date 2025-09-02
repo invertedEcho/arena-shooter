@@ -18,10 +18,10 @@ pub fn camera_orbit_player(
 
     if delta != Vec2::ZERO {
         // pitch like nodding yes with your head
-        let delta_pitch = -delta.y * 0.002;
+        let delta_pitch = -delta.y * 0.001;
 
         // yaw like nodding no with your head
-        let delta_yaw = -delta.x * 0.003;
+        let delta_yaw = -delta.x * 0.002;
 
         // existing rotation
         let (current_yaw, current_pitch, current_roll) =

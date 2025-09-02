@@ -89,10 +89,10 @@ pub fn basic_shooting(
             },
             ..default()
         },
-        Collider::cuboid(0.5, 0.5, 0.5),
+        Collider::cuboid(0.1, 0.1, 0.1),
         Sensor,
         Mesh3d(meshes.add(Cuboid {
-            half_size: Vec3::splat(0.25),
+            half_size: Vec3::splat(0.05),
         })),
         MeshMaterial3d(materials.add(StandardMaterial {
             base_color: RED.into(),
