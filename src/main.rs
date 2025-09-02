@@ -4,14 +4,13 @@ use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 use bevy_skein::SkeinPlugin;
 
 use crate::{
-    debug_hud::DebugHudPlugin,
-    game_flow::GameFlowPlugin,
-    player::{PlayerPlugin, components::Player},
-    world::WorldPlugin,
+    debug_hud::DebugHudPlugin, game_flow::GameFlowPlugin, ground_detection::GroundDetectionPlugin,
+    player::PlayerPlugin, world::WorldPlugin,
 };
 
 mod debug_hud;
 mod game_flow;
+pub mod ground_detection;
 mod player;
 mod world;
 
@@ -30,7 +29,8 @@ fn main() {
     app.add_plugins(PlayerPlugin)
         .add_plugins(WorldPlugin)
         .add_plugins(GameFlowPlugin)
-        .add_plugins(DebugHudPlugin);
+        .add_plugins(DebugHudPlugin)
+        .add_plugins(GroundDetectionPlugin);
 
     // skein
     app.add_plugins(SkeinPlugin::default());

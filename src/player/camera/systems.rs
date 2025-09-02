@@ -12,8 +12,14 @@ const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 pub fn camera_orbit_player(
     mouse_motion: Res<AccumulatedMouseMotion>,
     mut player_transform: Single<&mut Transform, (With<Player>, Without<PlayerCamera>)>,
-    mut camera_transform: Single<&mut Transform, (With<PlayerCamera>, Without<Player>)>,
+    camera_query: Single<(&mut Transform, &PlayerCamera), (With<PlayerCamera>, Without<Player>)>,
 ) {
+    let (mut camera_transform, player_camera) = camera_query.into_inner();
+
+    if !player_camera.mouse_motion_enabled {
+        return;
+    }
+
     let delta = mouse_motion.delta;
 
     if delta != Vec2::ZERO {
@@ -51,7 +57,7 @@ pub fn camera_follow_player(
     camera_transform.0.translation.y += 0.3;
 
     if camera_transform.1.mode == PlayerCameraMode::ThirdPerson {
-        camera_transform.0.translation.z += 1.5;
+        camera_transform.0.translation.z += 3.0;
     }
 }
 
@@ -68,5 +74,14 @@ pub fn switch_between_first_and_third_person(
                 query.mode = PlayerCameraMode::FirstPerson;
             }
         }
+    }
+}
+
+pub fn change_mouse_motion_enabled(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut query: Single<&mut PlayerCamera>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyG) {
+        query.mouse_motion_enabled = !query.mouse_motion_enabled;
     }
 }

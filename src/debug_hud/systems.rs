@@ -10,5 +10,9 @@ pub fn spawn_debug_hud(mut commands: Commands) {
         })
         .with_children(|parent| {
             parent.spawn(Text::new("Press g to toggle grab mouse"));
+            parent.spawn(Text::new(
+                "Press v to switch between first and third person",
+            ));
+            parent.spawn(Text::new("Press g to disable mouse motion roll/pitch/yaw"));
         });
 }

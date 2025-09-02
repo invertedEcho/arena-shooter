@@ -3,17 +3,19 @@ use std::f32::consts::PI;
 use avian3d::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*, render::view::RenderLayers};
 
-use crate::player::{
-    PLAYER_RUN_SPEED, PLAYER_WALK_SPEED,
-    components::{BulletTimer, Player, PlayerWeaponShootCooldownTimer},
+use crate::{
+    ground_detection::components::GroundDetection,
+    player::{
+        PLAYER_RUN_SPEED, PLAYER_WALK_SPEED,
+        components::{BulletTimer, Player, PlayerWeaponShootCooldownTimer},
+    },
 };
 
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    player: Single<(&mut LinearVelocity, &mut Transform), With<Player>>,
+    player: Single<(&mut LinearVelocity, &mut Transform, &GroundDetection), With<Player>>,
 ) {
-    let (mut velocity, transform) = player.into_inner();
-    // info!("found player with transform and velocity!");
+    let (mut velocity, transform, ground_detection) = player.into_inner();
 
     let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
         PLAYER_RUN_SPEED
@@ -35,7 +37,7 @@ pub fn player_movement(
     if keyboard_input.pressed(KeyCode::KeyS) {
         local_velocity.z += speed;
     }
-    if keyboard_input.just_pressed(KeyCode::Space) {
+    if keyboard_input.just_pressed(KeyCode::Space) && ground_detection.on_ground {
         velocity.y = 3.0;
     }
 
@@ -68,10 +70,10 @@ pub fn basic_shooting(
         TimerMode::Once,
     )));
 
-    // let audio = asset_server
-    //     .load("weapons/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 Single MP3.mp3");
+    let audio = asset_server
+        .load("weapons/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 Single MP3.mp3");
 
-    // commands.spawn((AudioPlayer::new(audio), PlaybackSettings::ONCE));
+    commands.spawn((AudioPlayer::new(audio), PlaybackSettings::ONCE));
 
     let local_bullet_velocity = Vec3 {
         z: -100.0,
@@ -135,35 +137,39 @@ pub fn post_process_player(
     mut commands: Commands,
     player_query: Single<Entity, Added<Player>>,
 ) {
-    commands.entity(*player_query).with_children(|parent| {
-        let weapon_model = asset_server
-            .load(GltfAssetLabel::Scene(0).from_asset("weapons/rifle/WA_2000.glb#Scene0"));
-        parent.spawn((
-            Camera {
-                order: 1,
-                clear_color: ClearColorConfig::Default,
-                ..default()
-            },
-            RenderLayers::layer(1),
-            Camera3d::default(),
-        ));
-        parent.spawn((
-            Transform {
-                translation: Vec3 {
-                    x: 1.0,
-                    y: -0.25,
-                    z: -2.0,
+    commands
+        .entity(*player_query)
+        .insert(GroundDetection::default())
+        .with_children(|parent| {
+            let weapon_model = asset_server
+                .load(GltfAssetLabel::Scene(0).from_asset("weapons/rifle/WA_2000.glb#Scene0"));
+            parent.spawn((
+                Camera {
+                    order: 1,
+                    clear_color: ClearColorConfig::Default,
+                    ..default()
                 },
-                scale: Vec3::splat(0.25),
-                // rotate 180 degrees as weapon is spawned wrong way
-                // need to use radian, radian another way of representing rotation like degrees
-                // PI = 180 degrees
-                // FRAC_PI_2 (e.g. PI / 2) = 90 degrees
-                rotation: Quat::from_rotation_y(PI),
-                ..default()
-            },
-            SceneRoot(weapon_model),
-            RenderLayers::layer(1),
-        ));
-    });
+                RenderLayers::layer(1),
+                Camera3d::default(),
+            ));
+
+            parent.spawn((
+                Transform {
+                    translation: Vec3 {
+                        x: 1.0,
+                        y: -0.25,
+                        z: -2.0,
+                    },
+                    scale: Vec3::splat(0.25),
+                    // rotate 180 degrees as weapon is spawned wrong way
+                    // need to use radian, radian another way of representing rotation like degrees
+                    // PI = 180 degrees
+                    // FRAC_PI_2 (e.g. PI / 2) = 90 degrees
+                    rotation: Quat::from_rotation_y(PI),
+                    ..default()
+                },
+                SceneRoot(weapon_model),
+                RenderLayers::layer(1),
+            ));
+        });
 }

@@ -4,6 +4,7 @@ use bevy::prelude::*;
 #[reflect(Component, Default)]
 pub struct PlayerCamera {
     pub mode: PlayerCameraMode,
+    pub mouse_motion_enabled: bool,
 }
 
 #[derive(Debug, Default, PartialEq, Reflect)]

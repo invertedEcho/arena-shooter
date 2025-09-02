@@ -2,7 +2,10 @@ use bevy::prelude::*;
 
 use crate::player::camera::{
     components::PlayerCamera,
-    systems::{camera_follow_player, camera_orbit_player, switch_between_first_and_third_person},
+    systems::{
+        camera_follow_player, camera_orbit_player, change_mouse_motion_enabled,
+        switch_between_first_and_third_person,
+    },
 };
 
 pub mod components;
@@ -24,6 +27,7 @@ impl Plugin for PlayerCameraPlugin {
                 camera_orbit_player,
                 camera_follow_player,
                 switch_between_first_and_third_person,
+                change_mouse_motion_enabled,
             ),
         )
         .register_type::<PlayerCamera>();
