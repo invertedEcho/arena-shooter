@@ -18,7 +18,11 @@ fn main() {
     let mut app = App::new();
 
     // bevy-builtin plugins
-    app.add_plugins(DefaultPlugins);
+    app.add_plugins(DefaultPlugins.set(bevy::log::LogPlugin {
+        // stupid audio library bevy uses which uses info level for debug level messages.. smh
+        filter: "symphonia_core=off,symphonia_bundle=off,wgpu=error,naga=warn".to_string(),
+        ..default()
+    }));
 
     // avian (physics)
     app.add_plugins(PhysicsPlugins::default())
