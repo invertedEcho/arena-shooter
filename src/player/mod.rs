@@ -4,7 +4,7 @@ use crate::player::{
     camera::PlayerCameraPlugin,
     components::Player,
     systems::{
-        basic_shooting, handle_bullet_timer, player_movement, post_process_player,
+        basic_shooting, handle_bullet_timer, player_movement, setup_player_camera,
         tick_player_weapon_timer,
     },
 };
@@ -29,7 +29,7 @@ impl Plugin for PlayerPlugin {
                     basic_shooting,
                     tick_player_weapon_timer,
                     handle_bullet_timer,
-                    post_process_player,
+                    setup_player_camera,
                 ),
             );
     }

@@ -11,11 +11,9 @@ const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 
 pub fn camera_orbit_player(
     mouse_motion: Res<AccumulatedMouseMotion>,
-    mut player_transform: Single<&mut Transform, (With<Player>, Without<PlayerCamera>)>,
-    camera_query: Single<(&mut Transform, &PlayerCamera), (With<PlayerCamera>, Without<Player>)>,
+    player_camera: Single<&PlayerCamera>,
+    mut player_transform: Single<&mut Transform, With<Player>>,
 ) {
-    let (mut camera_transform, player_camera) = camera_query.into_inner();
-
     if !player_camera.mouse_motion_enabled {
         return;
     }
@@ -39,26 +37,24 @@ pub fn camera_orbit_player(
 
         player_transform.rotation =
             Quat::from_euler(EulerRot::YXZ, new_yaw, new_pitch, current_roll);
-        camera_transform.rotation =
-            Quat::from_euler(EulerRot::YXZ, new_yaw, new_pitch, current_roll);
     }
 }
 
-pub fn camera_follow_player(
-    mut camera_transform: Single<
-        (&mut Transform, &PlayerCamera),
-        (With<PlayerCamera>, Without<Player>),
-    >,
-    player_transform: Single<&Transform, (With<Player>, Without<PlayerCamera>)>,
+pub fn update_player_camera_distance(
+    mut camera_transform: Single<(&mut Transform, &PlayerCamera), Changed<PlayerCamera>>,
 ) {
-    camera_transform.0.translation = player_transform.translation;
-
-    // increase y a bit so camera is more like at head of player
-    camera_transform.0.translation.y += 0.3;
-
     if camera_transform.1.mode == PlayerCameraMode::ThirdPerson {
         camera_transform.0.translation.z += 3.0;
+    } else if camera_transform.1.mode == PlayerCameraMode::FirstPerson {
+        if camera_transform.0.translation.z == 0.0 {
+            return;
+        }
+        camera_transform.0.translation.z -= 3.0;
     }
+
+    // TODO: add again
+    // increase y a bit so camera is more like at head of player
+    // camera_transform.0.translation.y += 0.3;
 }
 
 pub fn switch_between_first_and_third_person(

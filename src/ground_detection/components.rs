@@ -2,7 +2,8 @@ use std::collections::HashSet;
 
 use bevy::prelude::*;
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
 pub struct GroundDetection {
     pub on_ground: bool,
 }

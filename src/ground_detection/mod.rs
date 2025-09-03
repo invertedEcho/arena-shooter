@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
-use crate::ground_detection::systems::{
-    detect_ground_collision, setup_ground_detection, update_on_ground,
+use crate::ground_detection::{
+    components::GroundDetection,
+    systems::{detect_ground_collision, setup_ground_detection, update_on_ground},
 };
 
 pub mod components;
@@ -11,7 +12,7 @@ pub struct GroundDetectionPlugin;
 
 impl Plugin for GroundDetectionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.register_type::<GroundDetection>().add_systems(
             Update,
             (
                 setup_ground_detection,

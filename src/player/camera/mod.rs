@@ -3,8 +3,8 @@ use bevy::prelude::*;
 use crate::player::camera::{
     components::PlayerCamera,
     systems::{
-        camera_follow_player, camera_orbit_player, change_mouse_motion_enabled,
-        switch_between_first_and_third_person,
+        camera_orbit_player, change_mouse_motion_enabled, switch_between_first_and_third_person,
+        update_player_camera_distance,
     },
 };
 
@@ -25,7 +25,7 @@ impl Plugin for PlayerCameraPlugin {
             Update,
             (
                 camera_orbit_player,
-                camera_follow_player,
+                update_player_camera_distance,
                 switch_between_first_and_third_person,
                 change_mouse_motion_enabled,
             ),

@@ -1,12 +1,19 @@
 use std::f32::consts::PI;
 
 use avian3d::prelude::*;
-use bevy::{color::palettes::css::RED, prelude::*, render::view::RenderLayers};
+use bevy::{
+    color::palettes::css::RED,
+    core_pipeline::core_3d::Camera3dDepthLoadOp,
+    pbr::NotShadowCaster,
+    prelude::*,
+    render::{render_resource::LoadOp, view::RenderLayers},
+};
 
 use crate::{
     ground_detection::components::GroundDetection,
     player::{
         PLAYER_RUN_SPEED, PLAYER_WALK_SPEED,
+        camera::components::PlayerCamera,
         components::{BulletTimer, Player, PlayerWeaponShootCooldownTimer},
     },
 };
@@ -132,44 +139,48 @@ pub fn handle_bullet_timer(
     }
 }
 
-pub fn post_process_player(
+pub fn setup_player_camera(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     player_query: Single<Entity, Added<Player>>,
 ) {
-    commands
-        .entity(*player_query)
-        .insert(GroundDetection::default())
-        .with_children(|parent| {
-            let weapon_model = asset_server
-                .load(GltfAssetLabel::Scene(0).from_asset("weapons/rifle/WA_2000.glb#Scene0"));
-            parent.spawn((
-                Camera {
-                    order: 1,
-                    clear_color: ClearColorConfig::Default,
-                    ..default()
-                },
-                RenderLayers::layer(1),
-                Camera3d::default(),
-            ));
+    let weapon_model =
+        asset_server.load(GltfAssetLabel::Scene(0).from_asset("weapons/rifle/WA_2000.glb#Scene0"));
 
-            parent.spawn((
-                Transform {
-                    translation: Vec3 {
-                        x: 1.0,
-                        y: -0.25,
-                        z: -2.0,
-                    },
-                    scale: Vec3::splat(0.25),
-                    // rotate 180 degrees as weapon is spawned wrong way
-                    // need to use radian, radian another way of representing rotation like degrees
-                    // PI = 180 degrees
-                    // FRAC_PI_2 (e.g. PI / 2) = 90 degrees
-                    rotation: Quat::from_rotation_y(PI),
-                    ..default()
+    commands.entity(*player_query).with_children(|parent| {
+        parent.spawn((Camera3d::default(), PlayerCamera::default()));
+
+        parent.spawn((
+            Camera3d {
+                depth_load_op: Camera3dDepthLoadOp::Clear(1.0),
+                ..default()
+            },
+            Camera {
+                order: 1,
+                clear_color: ClearColorConfig::None,
+                ..default()
+            },
+            RenderLayers::layer(1),
+        ));
+
+        parent.spawn((
+            SceneRoot(weapon_model),
+            Transform {
+                translation: Vec3 {
+                    x: 1.0,
+                    y: -0.25,
+                    z: -2.0,
                 },
-                SceneRoot(weapon_model),
-                RenderLayers::layer(1),
-            ));
-        });
+                scale: Vec3::splat(0.25),
+                // rotate 180 degrees as weapon is spawned wrong way
+                // radians are a different way of representing rotations
+                // PI = 180 degrees
+                // FRAC_PI_2 (e.g. PI / 2) = 90 degrees
+                rotation: Quat::from_rotation_y(PI),
+                ..default()
+            },
+            RenderLayers::layer(1),
+            NotShadowCaster,
+        ));
+    });
 }
