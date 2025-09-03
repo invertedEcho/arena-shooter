@@ -4,8 +4,8 @@ use crate::player::{
     camera::PlayerCameraPlugin,
     components::Player,
     systems::{
-        basic_shooting, handle_bullet_timer, player_movement, setup_player_camera,
-        tick_player_weapon_timer,
+        basic_shooting, billboad_muzzle_flash, handle_despawn_timer, player_movement,
+        setup_player_camera, tick_player_weapon_timer,
     },
 };
 
@@ -28,8 +28,9 @@ impl Plugin for PlayerPlugin {
                     player_movement,
                     basic_shooting,
                     tick_player_weapon_timer,
-                    handle_bullet_timer,
+                    handle_despawn_timer,
                     setup_player_camera,
+                    billboad_muzzle_flash,
                 ),
             );
     }

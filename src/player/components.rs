@@ -8,4 +8,4 @@ pub struct Player;
 pub struct PlayerWeaponShootCooldownTimer(pub Timer);
 
 #[derive(Component)]
-pub struct BulletTimer(pub Timer);
+pub struct DespawnTimer(pub Timer);

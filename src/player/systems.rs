@@ -2,11 +2,8 @@ use std::f32::consts::PI;
 
 use avian3d::prelude::*;
 use bevy::{
-    color::palettes::css::RED,
-    core_pipeline::core_3d::Camera3dDepthLoadOp,
-    pbr::NotShadowCaster,
-    prelude::*,
-    render::{render_resource::LoadOp, view::RenderLayers},
+    color::palettes::css::RED, core_pipeline::core_3d::Camera3dDepthLoadOp, pbr::NotShadowCaster,
+    prelude::*, render::view::RenderLayers,
 };
 
 use crate::{
@@ -14,7 +11,7 @@ use crate::{
     player::{
         PLAYER_RUN_SPEED, PLAYER_WALK_SPEED,
         camera::components::PlayerCamera,
-        components::{BulletTimer, Player, PlayerWeaponShootCooldownTimer},
+        components::{DespawnTimer, Player, PlayerWeaponShootCooldownTimer},
     },
 };
 
@@ -53,6 +50,9 @@ pub fn player_movement(
     velocity.z = world_velocity.z;
 }
 
+#[derive(Component)]
+pub struct MuzzleFlash;
+
 pub fn basic_shooting(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
@@ -76,6 +76,16 @@ pub fn basic_shooting(
         0.1,
         TimerMode::Once,
     )));
+
+    commands.spawn((
+        ImageNode {
+            image: asset_server.load("muzzle_flash.png"),
+
+            ..default()
+        },
+        MuzzleFlash,
+        DespawnTimer(Timer::from_seconds(0.02, TimerMode::Once)),
+    ));
 
     let audio = asset_server
         .load("weapons/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 Single MP3.mp3");
@@ -109,8 +119,20 @@ pub fn basic_shooting(
         })),
         LinearVelocity(world_bullet_velocity),
         RigidBody::Kinematic,
-        BulletTimer(Timer::from_seconds(3.0, TimerMode::Once)),
+        DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
     ));
+}
+
+pub fn billboad_muzzle_flash(
+    billboads: Query<&mut Transform, With<MuzzleFlash>>,
+    camera_transform: Single<&Transform, (With<Camera>, Without<MuzzleFlash>)>,
+) {
+    for mut transform in billboads {
+        let direction = camera_transform.translation - transform.translation;
+        transform.look_at(camera_transform.translation, Vec3::Y);
+
+        transform.rotation = Quat::from_rotation_y(direction.x.atan2(direction.z));
+    }
 }
 
 pub fn tick_player_weapon_timer(
@@ -126,8 +148,8 @@ pub fn tick_player_weapon_timer(
     }
 }
 
-pub fn handle_bullet_timer(
-    bullet_timer_query: Query<(Entity, &mut BulletTimer)>,
+pub fn handle_despawn_timer(
+    bullet_timer_query: Query<(Entity, &mut DespawnTimer)>,
     mut commands: Commands,
     time: Res<Time>,
 ) {
