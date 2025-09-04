@@ -2,19 +2,17 @@ use bevy::prelude::*;
 
 use crate::player::{
     camera::PlayerCameraPlugin,
-    components::Player,
-    systems::{
-        basic_shooting, billboad_muzzle_flash, handle_despawn_timer, player_movement,
-        setup_player_camera, tick_player_weapon_timer,
-    },
+    movement::player_movement,
+    shooting::{basic_shooting, billboad_muzzle_flash, tick_player_weapon_timer},
 };
 
 pub mod camera;
-pub mod components;
-mod systems;
+mod movement;
+mod shooting;
 
-const PLAYER_WALK_SPEED: f32 = 2.0;
-const PLAYER_RUN_SPEED: f32 = 5.0;
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct Player;
 
 pub struct PlayerPlugin;
 
@@ -28,8 +26,6 @@ impl Plugin for PlayerPlugin {
                     player_movement,
                     basic_shooting,
                     tick_player_weapon_timer,
-                    handle_despawn_timer,
-                    setup_player_camera,
                     billboad_muzzle_flash,
                 ),
             );

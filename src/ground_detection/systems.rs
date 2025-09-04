@@ -5,7 +5,7 @@ use bevy::prelude::*;
 
 use crate::{
     ground_detection::components::{GroundDetection, GroundSensor},
-    world::Ground,
+    world::components::Ground,
 };
 
 pub fn setup_ground_detection(

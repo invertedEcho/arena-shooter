@@ -1,13 +1,68 @@
-use std::f32::consts::FRAC_PI_2;
+use crate::player::camera::components::PlayerCameraMode;
+use std::f32::consts::{FRAC_PI_2, PI};
 
-use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
-
-use crate::player::{
-    camera::components::{PlayerCamera, PlayerCameraMode},
-    components::Player,
+use bevy::{
+    core_pipeline::core_3d::Camera3dDepthLoadOp, input::mouse::AccumulatedMouseMotion,
+    pbr::NotShadowCaster, prelude::*, render::view::RenderLayers,
 };
 
+use crate::player::{Player, camera::PlayerCamera};
+
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
+
+pub fn setup_player_camera(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    player_query: Single<Entity, Added<Player>>,
+) {
+    let weapon_model =
+        asset_server.load(GltfAssetLabel::Scene(0).from_asset("weapons/rifle/WA_2000.glb#Scene0"));
+
+    commands.entity(*player_query).with_children(|parent| {
+        parent.spawn((
+            Camera3d::default(),
+            PlayerCamera::default(),
+            Transform::from_xyz(0.0, 0.3, 0.0),
+        ));
+
+        parent.spawn((
+            Camera3d {
+                depth_load_op: Camera3dDepthLoadOp::Clear(1.0),
+                ..default()
+            },
+            Camera {
+                order: 1,
+                clear_color: ClearColorConfig::None,
+                ..default()
+            },
+            RenderLayers::layer(1),
+        ));
+
+        parent.spawn((
+            SceneRoot(weapon_model),
+            Transform {
+                translation: Vec3 {
+                    x: 1.0,
+                    y: -0.25,
+                    z: -2.0,
+                },
+                scale: Vec3::splat(0.25),
+                // rotate 180 degrees as weapon is spawned wrong way
+                // radians are a different way of representing rotations
+                // PI = 180 degrees
+                // FRAC_PI_2 (e.g. PI / 2) = 90 degrees
+                rotation: Quat::from_rotation_y(PI),
+                ..default()
+            },
+            // TODO: sadly this doesnt work, player weapon still not rendered on top of everything
+            // as this works with just a normal mesh and material, it must have something to do
+            // with the SceneRoot. Maybe it has something to do with that SceneRoot is spawned as a
+            // child of this entity?
+            RenderLayers::layer(1),
+            NotShadowCaster,
+        ));
+    });
+}
 
 pub fn camera_orbit_player(
     mouse_motion: Res<AccumulatedMouseMotion>,
@@ -51,10 +106,6 @@ pub fn update_player_camera_distance(
         }
         camera_transform.0.translation.z -= 3.0;
     }
-
-    // TODO: add again
-    // increase y a bit so camera is more like at head of player
-    // camera_transform.0.translation.y += 0.3;
 }
 
 pub fn switch_between_first_and_third_person(
