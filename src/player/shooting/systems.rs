@@ -5,6 +5,7 @@ use crate::{
     common::components::DespawnTimer,
     player::{
         Player,
+        camera::PLAYER_CAMERA_Y_OFFSET,
         shooting::components::{MuzzleFlash, PlayerWeaponShootCooldownTimer},
     },
 };
@@ -59,7 +60,7 @@ pub fn basic_shooting(
         Transform {
             translation: Vec3 {
                 x: player_transform.translation.x,
-                y: player_transform.translation.y,
+                y: player_transform.translation.y + PLAYER_CAMERA_Y_OFFSET,
                 z: player_transform.translation.z,
             },
             ..default()

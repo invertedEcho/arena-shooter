@@ -25,7 +25,7 @@ pub fn setup_player_camera(
         parent.spawn((
             Camera3d::default(),
             PlayerCamera::default(),
-            Transform::from_xyz(0.0, 0.3, 0.0),
+            Transform::from_xyz(0.0, super::PLAYER_CAMERA_Y_OFFSET, 0.0),
         ));
 
         parent.spawn((
