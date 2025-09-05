@@ -6197,7 +6197,7 @@
 				]
 			},
 			"mesh":291,
-			"name":"MapColliderExternal",
+			"name":"MapWallCollider",
 			"translation":[
 				-0.004652818199247122,
 				1.4417461156845093,
@@ -6222,7 +6222,7 @@
 				]
 			},
 			"mesh":292,
-			"name":"MapColliderExternal.001",
+			"name":"MapWallCollider.001",
 			"translation":[
 				-0.004652797244489193,
 				1.4417461156845093,
@@ -6247,7 +6247,7 @@
 				]
 			},
 			"mesh":293,
-			"name":"MapColliderExternal.002",
+			"name":"MapWallCollider.002",
 			"translation":[
 				12.433148384094238,
 				1.4612274169921875,
@@ -6272,7 +6272,7 @@
 				]
 			},
 			"mesh":294,
-			"name":"MapColliderExternal.003",
+			"name":"MapWallCollider.003",
 			"translation":[
 				-12.43940544128418,
 				1.4612274169921875,

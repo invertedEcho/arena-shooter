@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::common::systems::handle_despawn_timer;
 
 pub mod components;
-mod systems;
+pub mod systems;
 
 pub struct CommonPlugin;
 

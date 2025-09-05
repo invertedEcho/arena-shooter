@@ -1,9 +1,12 @@
-use crate::player::camera::components::PlayerCameraMode;
+use crate::{
+    common::systems::apply_render_layers_to_children,
+    player::{camera::components::PlayerCameraMode, shooting::components::PlayerWeapon},
+};
 use std::f32::consts::{FRAC_PI_2, PI};
 
 use bevy::{
-    core_pipeline::core_3d::Camera3dDepthLoadOp, input::mouse::AccumulatedMouseMotion,
-    pbr::NotShadowCaster, prelude::*, render::view::RenderLayers,
+    input::mouse::AccumulatedMouseMotion, pbr::NotShadowCaster, prelude::*,
+    render::view::RenderLayers,
 };
 
 use crate::player::{Player, camera::PlayerCamera};
@@ -26,41 +29,36 @@ pub fn setup_player_camera(
         ));
 
         parent.spawn((
-            Camera3d {
-                depth_load_op: Camera3dDepthLoadOp::Clear(1.0),
-                ..default()
-            },
+            Camera3d::default(),
             Camera {
                 order: 1,
-                clear_color: ClearColorConfig::None,
                 ..default()
             },
             RenderLayers::layer(1),
         ));
 
-        parent.spawn((
-            SceneRoot(weapon_model),
-            Transform {
-                translation: Vec3 {
-                    x: 1.0,
-                    y: -0.25,
-                    z: -2.0,
+        parent
+            .spawn((
+                SceneRoot(weapon_model),
+                Transform {
+                    translation: Vec3 {
+                        x: 1.0,
+                        y: -0.25,
+                        z: -2.0,
+                    },
+                    scale: Vec3::splat(0.25),
+                    // rotate 180 degrees as weapon is spawned wrong way
+                    // radians are a different way of representing rotations
+                    // PI = 180 degrees
+                    // FRAC_PI_2 (e.g. PI / 2) = 90 degrees
+                    rotation: Quat::from_rotation_y(PI),
+                    ..default()
                 },
-                scale: Vec3::splat(0.25),
-                // rotate 180 degrees as weapon is spawned wrong way
-                // radians are a different way of representing rotations
-                // PI = 180 degrees
-                // FRAC_PI_2 (e.g. PI / 2) = 90 degrees
-                rotation: Quat::from_rotation_y(PI),
-                ..default()
-            },
-            // TODO: sadly this doesnt work, player weapon still not rendered on top of everything
-            // as this works with just a normal mesh and material, it must have something to do
-            // with the SceneRoot. Maybe it has something to do with that SceneRoot is spawned as a
-            // child of this entity?
-            RenderLayers::layer(1),
-            NotShadowCaster,
-        ));
+                RenderLayers::layer(1),
+                NotShadowCaster,
+                PlayerWeapon,
+            ))
+            .observe(apply_render_layers_to_children);
     });
 }
 

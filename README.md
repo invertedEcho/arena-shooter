@@ -8,7 +8,8 @@
   - World generation goes into the WorldPlugin
   - Plugin declarations must always live in the `mod.rs` of the given module
 - If a module has sub modules, like for example Player has the submodule movement, it will be in `movement/mod.rs`
-  - Note that a submodule always has its own plugin.
+  - Note that a submodule may have its own plugin.
+    - If the submodule doesnt have lots of logic, all code may be located in its `mod.rs` and then be used in the root plugin of given module
   - Every module, no matter if submodule or not, needs to be split up into seperate files, always following ECS structure, e.g. one file `components.rs` for all components of the given module, or a `systems.rs` for all systems of the given module.
   - This makes it very easy to navigate the codebase
 

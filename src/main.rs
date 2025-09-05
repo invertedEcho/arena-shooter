@@ -1,6 +1,6 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
+use bevy_editor_pls::EditorPlugin;
 use bevy_skein::SkeinPlugin;
 
 use crate::{
@@ -42,8 +42,7 @@ fn main() {
     app.add_plugins(SkeinPlugin::default());
 
     // misc plugins
-    app.add_plugins(EguiPlugin::default())
-        .add_plugins(WorldInspectorPlugin::new());
+    app.add_plugins(EditorPlugin::default());
 
     app.run();
 }
