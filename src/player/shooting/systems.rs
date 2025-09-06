@@ -1,4 +1,4 @@
-use avian3d::prelude::{Collider, LinearVelocity, RigidBody, Sensor};
+use avian3d::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
@@ -6,7 +6,9 @@ use crate::{
     player::{
         Player,
         camera::PLAYER_CAMERA_Y_OFFSET,
-        shooting::components::{MuzzleFlash, PlayerWeaponShootCooldownTimer},
+        shooting::components::{
+            Bullet, MuzzleFlash, PlayerWeaponShootCooldownTimer,
+        },
     },
 };
 
@@ -17,7 +19,9 @@ pub fn basic_shooting(
     player_transform: Single<&Transform, With<Player>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    player_weapon_shoot_cooldown_timer_query: Query<&PlayerWeaponShootCooldownTimer>,
+    player_weapon_shoot_cooldown_timer_query: Query<
+        &PlayerWeaponShootCooldownTimer,
+    >,
 ) {
     if !mouse_input.pressed(MouseButton::Left) {
         return;
@@ -54,7 +58,8 @@ pub fn basic_shooting(
         x: 0.0,
         y: 0.0,
     };
-    let world_bullet_velocity = player_transform.rotation * local_bullet_velocity;
+    let world_bullet_velocity =
+        player_transform.rotation * local_bullet_velocity;
 
     commands.spawn((
         Transform {
@@ -77,6 +82,7 @@ pub fn basic_shooting(
         LinearVelocity(world_bullet_velocity),
         RigidBody::Kinematic,
         DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
+        Bullet,
     ));
 }
 
@@ -88,7 +94,8 @@ pub fn billboad_muzzle_flash(
         let direction = camera_transform.translation - transform.translation;
         transform.look_at(camera_transform.translation, Vec3::Y);
 
-        transform.rotation = Quat::from_rotation_y(direction.x.atan2(direction.z));
+        transform.rotation =
+            Quat::from_rotation_y(direction.x.atan2(direction.z));
     }
 }
 
@@ -102,5 +109,31 @@ pub fn tick_player_weapon_timer(
         if timer.0.just_finished() {
             commands.entity(entity).despawn();
         }
+    }
+}
+
+pub fn detect_bullet_collision_with_player(
+    mut collision_event_reader: EventReader<CollisionStarted>,
+    bullet_query: Query<Entity, With<Bullet>>,
+    player_entity: Single<Entity, With<Player>>,
+) {
+    for CollisionStarted(first_entity, second_entity) in
+        collision_event_reader.read()
+    {
+        let collided_entities_is_player =
+            *player_entity == *first_entity || *player_entity == *second_entity;
+
+        if !collided_entities_is_player {
+            continue;
+        }
+
+        let collided_entities_is_bullet = bullet_query
+            .iter()
+            .any(|bullet| bullet == *first_entity || bullet == *second_entity);
+        if !collided_entities_is_bullet {
+            continue;
+        }
+
+        info!("Player was hit by bullet!");
     }
 }

@@ -2,7 +2,10 @@ use bevy::prelude::*;
 
 use crate::debug_hud::systems::spawn_debug_hud;
 
-mod systems;
+pub mod systems;
+
+#[derive(Component)]
+pub struct RootNode;
 
 pub struct DebugHudPlugin;
 

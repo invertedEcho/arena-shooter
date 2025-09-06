@@ -8,3 +8,6 @@ pub struct MuzzleFlash;
 
 #[derive(Component)]
 pub struct PlayerWeapon;
+
+#[derive(Component)]
+pub struct Bullet;

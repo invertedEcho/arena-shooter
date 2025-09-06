@@ -1,14 +1,24 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
-use crate::{ground_detection::components::GroundDetection, player::Player};
+use crate::{
+    ground_detection::components::GroundDetection,
+    player::{Player, camera::components::PlayerCamera},
+};
 
 const PLAYER_WALK_SPEED: f32 = 2.0;
 const PLAYER_RUN_SPEED: f32 = 5.0;
 
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    player: Single<(&mut LinearVelocity, &mut Transform, &GroundDetection), With<Player>>,
+    player: Single<
+        (&mut LinearVelocity, &mut Transform, &GroundDetection),
+        With<Player>,
+    >,
+    player_camera_transform: Single<
+        &Transform,
+        (With<PlayerCamera>, Without<Player>),
+    >,
 ) {
     let (mut velocity, transform, ground_detection) = player.into_inner();
 
@@ -32,11 +42,12 @@ pub fn player_movement(
     if keyboard_input.pressed(KeyCode::KeyS) {
         local_velocity.z += speed;
     }
-    if keyboard_input.just_pressed(KeyCode::Space) && ground_detection.on_ground {
+    if keyboard_input.just_pressed(KeyCode::Space) && ground_detection.on_ground
+    {
         velocity.y = 4.0;
     }
 
-    let world_velocity = transform.rotation * local_velocity;
+    let world_velocity = player_camera_transform.rotation * local_velocity;
     velocity.x = world_velocity.x;
     velocity.z = world_velocity.z;
 }

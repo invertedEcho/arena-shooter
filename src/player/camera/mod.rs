@@ -8,7 +8,7 @@ use crate::player::camera::{
     },
 };
 
-mod components;
+pub mod components;
 mod systems;
 
 pub const PLAYER_CAMERA_Y_OFFSET: f32 = 0.3;

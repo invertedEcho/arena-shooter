@@ -1,19 +1,20 @@
 use bevy::prelude::*;
 
 use crate::player::{
-    camera::PlayerCameraPlugin, movement::player_movement,
-    shooting::PlayerShootingPlugin,
+    camera::PlayerCameraPlugin, hud::PlayerHudPlugin,
+    movement::player_movement, shooting::PlayerShootingPlugin,
 };
 
 pub mod camera;
 mod hud;
 mod movement;
-mod shooting;
+pub mod shooting;
 
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 pub struct Player {
-    health: u32,
+    #[reflect(default)]
+    pub health: u32,
 }
 
 impl Default for Player {
@@ -29,6 +30,7 @@ impl Plugin for PlayerPlugin {
         app.register_type::<Player>()
             .add_plugins(PlayerCameraPlugin)
             .add_plugins(PlayerShootingPlugin)
+            .add_plugins(PlayerHudPlugin)
             .add_systems(Update, (player_movement,));
     }
 }

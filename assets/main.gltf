@@ -43,15 +43,19 @@
 						}
 					},
 					{
-						"avian3d::dynamics::rigid_body::locked_axes::LockedAxes":7
+						"fun_shooter::enemy::Enemy":{}
 					},
 					{
-						"fun_shooter::enemy::Enemy":{}
+						"avian3d::dynamics::rigid_body::AngularVelocity":[
+							0.0,
+							2.0,
+							0.0
+						]
 					}
 				]
 			},
 			"mesh":0,
-			"name":"Player",
+			"name":"Enemy",
 			"translation":[
 				-0.06977920234203339,
 				0.914367139339447,
@@ -6313,16 +6317,18 @@
 						}
 					},
 					{
-						"fun_shooter::player::Player":{}
+						"fun_shooter::player::Player":{
+							"health":100
+						}
 					}
 				]
 			},
 			"mesh":295,
-			"name":"Player.001",
+			"name":"Player",
 			"translation":[
-				-8.46345329284668,
-				2.442389488220215,
-				-1.0280051231384277
+				6.049520492553711,
+				1,
+				-0.23880183696746826
 			]
 		}
 	],
