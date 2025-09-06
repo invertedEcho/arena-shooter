@@ -4,14 +4,15 @@ use bevy_editor_pls::EditorPlugin;
 use bevy_skein::SkeinPlugin;
 
 use crate::{
-    common::CommonPlugin, debug_hud::DebugHudPlugin, game_flow::GameFlowPlugin,
+    common::CommonPlugin, debug_hud::DebugHudPlugin, enemy::EnemyPlugin, game_flow::GameFlowPlugin,
     ground_detection::GroundDetectionPlugin, player::PlayerPlugin, world::WorldPlugin,
 };
 
 mod common;
 mod debug_hud;
+mod enemy;
 mod game_flow;
-pub mod ground_detection;
+mod ground_detection;
 mod player;
 mod world;
 
@@ -36,7 +37,8 @@ fn main() {
         .add_plugins(GameFlowPlugin)
         .add_plugins(DebugHudPlugin)
         .add_plugins(GroundDetectionPlugin)
-        .add_plugins(CommonPlugin);
+        .add_plugins(CommonPlugin)
+        .add_plugins(EnemyPlugin);
 
     // skein
     app.add_plugins(SkeinPlugin::default());
