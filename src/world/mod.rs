@@ -1,4 +1,4 @@
-use crate::world::components::Ground;
+use crate::world::components::{Ground, Map};
 use crate::world::systems::setup_world;
 use bevy::prelude::*;
 
@@ -10,6 +10,7 @@ pub struct WorldPlugin;
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_world)
-            .register_type::<Ground>();
+            .register_type::<Ground>()
+            .register_type::<Map>();
     }
 }

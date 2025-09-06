@@ -6173,6 +6173,13 @@
 				290,
 				291
 			],
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::world::components::Map":{}
+					}
+				]
+			},
 			"name":"Map"
 		},
 		{
