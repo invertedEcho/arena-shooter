@@ -92,19 +92,6 @@ pub fn basic_shooting(
     ));
 }
 
-pub fn billboad_muzzle_flash(
-    billboads: Query<&mut Transform, With<MuzzleFlash>>,
-    camera_transform: Single<&Transform, (With<Camera>, Without<MuzzleFlash>)>,
-) {
-    for mut transform in billboads {
-        let direction = camera_transform.translation - transform.translation;
-        transform.look_at(camera_transform.translation, Vec3::Y);
-
-        transform.rotation =
-            Quat::from_rotation_y(direction.x.atan2(direction.z));
-    }
-}
-
 pub fn tick_player_weapon_timer(
     mut commands: Commands,
     query: Query<(Entity, &mut PlayerWeaponShootCooldownTimer)>,
@@ -118,16 +105,19 @@ pub fn tick_player_weapon_timer(
     }
 }
 
+// TODO: Also despawn bullet if player hit
 pub fn detect_bullet_collision_with_player(
     mut collision_event_reader: EventReader<CollisionStarted>,
     bullet_query: Query<Entity, With<Bullet>>,
-    player_entity: Single<Entity, With<Player>>,
+    player_query: Single<(Entity, &mut Player)>,
 ) {
+    let (player_entity, mut player) = player_query.into_inner();
+
     for CollisionStarted(first_entity, second_entity) in
         collision_event_reader.read()
     {
         let collided_entities_is_player =
-            *player_entity == *first_entity || *player_entity == *second_entity;
+            player_entity == *first_entity || player_entity == *second_entity;
 
         if !collided_entities_is_player {
             continue;
@@ -141,5 +131,11 @@ pub fn detect_bullet_collision_with_player(
         }
 
         info!("Player was hit by bullet!");
+
+        if player.health == 0 {
+            warn!("Player already dead, ignoring bullet collision event");
+            continue;
+        }
+        player.health -= 10;
     }
 }

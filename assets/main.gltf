@@ -6320,6 +6320,9 @@
 						"fun_shooter::player::Player":{
 							"health":100
 						}
+					},
+					{
+						"avian3d::collision::collision_events::CollisionEventsEnabled":{}
 					}
 				]
 			},

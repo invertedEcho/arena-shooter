@@ -19,10 +19,19 @@ fn spawn_player_hud(
     root_node: Single<Entity, Added<RootNode>>,
 ) {
     info!("spawnimg player hud");
-    commands.entity(*root_node).with_children(|parent| {
-        parent.spawn(Text::new("HP"));
-        parent.spawn((Text::new(player.health.to_string()), PlayerHealthText));
-    });
+    commands
+        .entity(*root_node)
+        .with_child(Node {
+            align_self: AlignSelf::FlexEnd,
+            ..default()
+        })
+        .with_children(|parent| {
+            parent.spawn(Text::new("HP"));
+            parent.spawn((
+                Text::new(player.health.to_string()),
+                PlayerHealthText,
+            ));
+        });
 }
 
 fn update_player_health_text(
