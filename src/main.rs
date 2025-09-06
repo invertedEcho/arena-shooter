@@ -1,6 +1,5 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use bevy_editor_pls::EditorPlugin;
 use bevy_skein::SkeinPlugin;
 
 use crate::{

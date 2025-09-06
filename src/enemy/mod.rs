@@ -81,10 +81,10 @@ fn check_if_enemy_can_see_player(
                     info!("Enemy can see the player!");
                     enemy.can_see_player = true;
                 } else {
-                    info!(
-                        "Ray cast didnt hit player but hit: {}",
-                        first_hit.entity
-                    );
+                    // info!(
+                    //     "Ray cast didnt hit player but hit: {}",
+                    //     first_hit.entity
+                    // );
                 }
             }
         }
@@ -92,10 +92,10 @@ fn check_if_enemy_can_see_player(
 }
 
 fn rotate_enemy_to_face_toward_player(
-    enemy_query: Query<(&Enemy, &mut Transform, &mut AngularVelocity)>,
+    enemy_query: Query<(&Enemy, &mut Transform)>,
     player_transform: Single<&Transform, (With<Player>, Without<Enemy>)>,
 ) {
-    for (enemy, mut enemy_transform, mut angular_velocity) in enemy_query {
+    for (enemy, mut enemy_transform) in enemy_query {
         if enemy.can_see_player {
             // let destination_transform =
             enemy_transform.look_at(player_transform.translation, Dir3::Y);

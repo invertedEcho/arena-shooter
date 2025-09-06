@@ -5,7 +5,7 @@ use crate::{
     common::components::DespawnTimer,
     player::{
         Player,
-        camera::PLAYER_CAMERA_Y_OFFSET,
+        camera::components::PlayerCamera,
         shooting::components::{
             Bullet, MuzzleFlash, PlayerWeaponShootCooldownTimer,
         },
@@ -16,7 +16,10 @@ pub fn basic_shooting(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mouse_input: Res<ButtonInput<MouseButton>>,
-    player_transform: Single<&Transform, With<Player>>,
+    player_camera_global_transform: Single<
+        &GlobalTransform,
+        (With<PlayerCamera>, Without<Player>),
+    >,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     player_weapon_shoot_cooldown_timer_query: Query<
@@ -59,14 +62,17 @@ pub fn basic_shooting(
         y: 0.0,
     };
     let world_bullet_velocity =
-        player_transform.rotation * local_bullet_velocity;
+        player_camera_global_transform.rotation() * local_bullet_velocity;
+
+    let player_camera_global_transform_translation =
+        player_camera_global_transform.translation();
 
     commands.spawn((
         Transform {
             translation: Vec3 {
-                x: player_transform.translation.x,
-                y: player_transform.translation.y + PLAYER_CAMERA_Y_OFFSET,
-                z: player_transform.translation.z,
+                x: player_camera_global_transform_translation.x,
+                y: player_camera_global_transform_translation.y,
+                z: player_camera_global_transform_translation.z,
             },
             ..default()
         },

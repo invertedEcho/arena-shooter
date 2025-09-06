@@ -11,16 +11,13 @@ const PLAYER_RUN_SPEED: f32 = 5.0;
 
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    player: Single<
-        (&mut LinearVelocity, &mut Transform, &GroundDetection),
-        With<Player>,
-    >,
+    player: Single<(&mut LinearVelocity, &GroundDetection), With<Player>>,
     player_camera_transform: Single<
         &Transform,
         (With<PlayerCamera>, Without<Player>),
     >,
 ) {
-    let (mut velocity, transform, ground_detection) = player.into_inner();
+    let (mut velocity, ground_detection) = player.into_inner();
 
     let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
         PLAYER_RUN_SPEED
