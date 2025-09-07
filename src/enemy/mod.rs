@@ -2,8 +2,7 @@ use avian3d::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
-    common::components::DespawnTimer,
-    player::{Player, shooting::components::Bullet},
+    common::components::DespawnTimer, game_flow::GameState, player::Player,
 };
 
 pub struct EnemyPlugin;
@@ -12,16 +11,17 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<Enemy>()
             .insert_resource(CheckIfEnemyCanSeePlayerCooldownTimer(
-                Timer::from_seconds(0.4, TimerMode::Repeating),
+                Timer::from_seconds(0.1, TimerMode::Repeating),
             ))
             .add_systems(
                 Update,
                 (
-                    check_if_enemy_can_see_player,
+                    check_if_enemy_can_see_player_and_look_at_player,
                     tick_enemy_can_see_player_cooldown_timer,
-                    rotate_enemy_to_face_toward_player_and_shoot_player,
+                    enemy_shoot_playerr,
                     handle_enemy_shoot_player_cooldown_timer,
-                ),
+                )
+                    .run_if(in_state(GameState::InGame)),
             );
     }
 }
@@ -36,6 +36,9 @@ pub struct Enemy {
 #[derive(Resource)]
 pub struct CheckIfEnemyCanSeePlayerCooldownTimer(pub Timer);
 
+#[derive(Component)]
+pub struct EnemyBullet;
+
 fn tick_enemy_can_see_player_cooldown_timer(
     mut timer: ResMut<CheckIfEnemyCanSeePlayerCooldownTimer>,
     time: Res<Time>,
@@ -46,9 +49,10 @@ fn tick_enemy_can_see_player_cooldown_timer(
 #[derive(Component)]
 pub struct EnemyShootPlayerCooldownTimer(pub Timer);
 
-fn check_if_enemy_can_see_player(
+// TODO: should probably be two systems
+fn check_if_enemy_can_see_player_and_look_at_player(
     spatial_query: SpatialQuery,
-    enemy_query: Query<(&mut Enemy, Entity, &Transform)>,
+    enemy_query: Query<(&mut Enemy, Entity, &mut Transform), Without<Player>>,
     player_query: Single<(Entity, &Transform), With<Player>>,
     timer: Res<CheckIfEnemyCanSeePlayerCooldownTimer>,
 ) {
@@ -56,7 +60,7 @@ fn check_if_enemy_can_see_player(
         let player_entity = player_query.0;
         let player_transform = player_query.1;
 
-        for (mut enemy, enemy_entity, enemy_transform) in enemy_query {
+        for (mut enemy, enemy_entity, mut enemy_transform) in enemy_query {
             let enemy_translation = enemy_transform.translation;
             let player_translation = player_transform.translation;
 
@@ -87,6 +91,8 @@ fn check_if_enemy_can_see_player(
                 if first_hit.entity == player_entity {
                     info!("Enemy can see the player!");
                     enemy.can_see_player = true;
+                    enemy_transform
+                        .look_at(player_transform.translation, Dir3::Y);
                 } else {
                     enemy.can_see_player = false;
                     // info!(
@@ -99,11 +105,9 @@ fn check_if_enemy_can_see_player(
     }
 }
 
-// TODO: should probably be two systems
-fn rotate_enemy_to_face_toward_player_and_shoot_player(
+fn enemy_shoot_playerr(
     mut commands: Commands,
-    enemy_query: Query<(&Enemy, &mut Transform)>,
-    player_transform: Single<&Transform, (With<Player>, Without<Enemy>)>,
+    enemy_query: Query<(&Enemy, &Transform)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     // TODO: This will break if multiple enemies exist... great, what a good system..
@@ -111,12 +115,10 @@ fn rotate_enemy_to_face_toward_player_and_shoot_player(
         &EnemyShootPlayerCooldownTimer,
     >,
 ) {
-    for (enemy, mut enemy_transform) in enemy_query {
+    for (enemy, enemy_transform) in enemy_query {
         if enemy.can_see_player
             && enemy_can_shoot_player_cooldown_timer.iter().len() == 0
         {
-            enemy_transform.look_at(player_transform.translation, Dir3::Y);
-
             let local_bullet_velocity = Vec3 {
                 z: -100.0,
                 x: 0.0,
@@ -146,10 +148,10 @@ fn rotate_enemy_to_face_toward_player_and_shoot_player(
                 LinearVelocity(world_bullet_velocity),
                 RigidBody::Kinematic,
                 DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
-                Bullet,
+                EnemyBullet,
             ));
             commands.spawn(EnemyShootPlayerCooldownTimer(Timer::from_seconds(
-                2.0,
+                1.5,
                 TimerMode::Once,
             )));
         }

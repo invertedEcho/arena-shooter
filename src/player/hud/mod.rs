@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{debug_hud::RootNode, player::Player};
+use crate::player::Player;
 
 #[derive(Component)]
 struct PlayerHealthText;
@@ -15,12 +15,15 @@ impl Plugin for PlayerHudPlugin {
 
 fn spawn_player_hud(
     mut commands: Commands,
-    player: Single<&Player>,
-    root_node: Single<Entity, Added<RootNode>>,
+    player: Single<&Player, Added<Player>>,
 ) {
-    info!("spawnimg player hud");
+    info!("Spawning player hud");
     commands
-        .entity(*root_node)
+        .spawn(Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            ..default()
+        })
         .with_child(Node {
             align_self: AlignSelf::FlexEnd,
             ..default()

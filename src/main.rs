@@ -3,17 +3,17 @@ use bevy::prelude::*;
 use bevy_skein::SkeinPlugin;
 
 use crate::{
-    common::CommonPlugin, debug_hud::DebugHudPlugin, enemy::EnemyPlugin,
-    game_flow::GameFlowPlugin, ground_detection::GroundDetectionPlugin,
-    player::PlayerPlugin, world::WorldPlugin,
+    common::CommonPlugin, enemy::EnemyPlugin, game_flow::GameFlowPlugin,
+    ground_detection::GroundDetectionPlugin, player::PlayerPlugin,
+    user_interface::UserInterfacePlugin, world::WorldPlugin,
 };
 
 mod common;
-mod debug_hud;
 mod enemy;
 mod game_flow;
 mod ground_detection;
 pub mod player;
+mod user_interface;
 mod world;
 
 fn main() {
@@ -39,10 +39,10 @@ fn main() {
     app.add_plugins(PlayerPlugin)
         .add_plugins(WorldPlugin)
         .add_plugins(GameFlowPlugin)
-        .add_plugins(DebugHudPlugin)
         .add_plugins(GroundDetectionPlugin)
         .add_plugins(CommonPlugin)
-        .add_plugins(EnemyPlugin);
+        .add_plugins(EnemyPlugin)
+        .add_plugins(UserInterfacePlugin);
 
     // skein
     app.add_plugins(SkeinPlugin::default());

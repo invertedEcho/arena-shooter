@@ -1,8 +1,11 @@
 use bevy::prelude::*;
 
-use crate::player::shooting::systems::{
-    basic_shooting, detect_bullet_collision_with_player,
-    tick_player_weapon_timer,
+use crate::{
+    game_flow::GameState,
+    player::shooting::systems::{
+        basic_shooting, detect_bullet_collision_with_player,
+        tick_player_weapon_timer,
+    },
 };
 
 pub mod components;
@@ -21,7 +24,8 @@ impl Plugin for PlayerShootingPlugin {
                 basic_shooting,
                 tick_player_weapon_timer,
                 detect_bullet_collision_with_player,
-            ),
+            )
+                .run_if(in_state(GameState::InGame)),
         );
     }
 }

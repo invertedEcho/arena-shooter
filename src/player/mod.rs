@@ -1,8 +1,11 @@
 use bevy::prelude::*;
 
-use crate::player::{
-    camera::PlayerCameraPlugin, hud::PlayerHudPlugin,
-    movement::player_movement, shooting::PlayerShootingPlugin,
+use crate::{
+    game_flow::GameState,
+    player::{
+        camera::PlayerCameraPlugin, hud::PlayerHudPlugin,
+        movement::player_movement, shooting::PlayerShootingPlugin,
+    },
 };
 
 pub mod camera;
@@ -31,6 +34,9 @@ impl Plugin for PlayerPlugin {
             .add_plugins(PlayerCameraPlugin)
             .add_plugins(PlayerShootingPlugin)
             .add_plugins(PlayerHudPlugin)
-            .add_systems(Update, (player_movement,));
+            .add_systems(
+                Update,
+                (player_movement).run_if(in_state(GameState::InGame)),
+            );
     }
 }

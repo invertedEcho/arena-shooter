@@ -3,11 +3,12 @@ use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
     common::components::DespawnTimer,
+    enemy::EnemyBullet,
     player::{
         Player,
         camera::components::PlayerCamera,
         shooting::components::{
-            Bullet, MuzzleFlash, PlayerWeaponShootCooldownTimer,
+            MuzzleFlash, PlayerBullet, PlayerWeaponShootCooldownTimer,
         },
     },
 };
@@ -88,7 +89,7 @@ pub fn basic_shooting(
         LinearVelocity(world_bullet_velocity),
         RigidBody::Kinematic,
         DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
-        Bullet,
+        PlayerBullet,
     ));
 }
 
@@ -108,7 +109,7 @@ pub fn tick_player_weapon_timer(
 // TODO: Also despawn bullet if player hit
 pub fn detect_bullet_collision_with_player(
     mut collision_event_reader: EventReader<CollisionStarted>,
-    bullet_query: Query<Entity, With<Bullet>>,
+    enemy_bullet_query: Query<Entity, With<EnemyBullet>>,
     player_query: Single<(Entity, &mut Player)>,
 ) {
     let (player_entity, mut player) = player_query.into_inner();
@@ -123,14 +124,14 @@ pub fn detect_bullet_collision_with_player(
             continue;
         }
 
-        let collided_entities_is_bullet = bullet_query
+        let collided_entities_is_bullet = enemy_bullet_query
             .iter()
             .any(|bullet| bullet == *first_entity || bullet == *second_entity);
         if !collided_entities_is_bullet {
             continue;
         }
 
-        info!("Player was hit by bullet!");
+        info!("Player was hit by enemy bullet!");
 
         if player.health == 0 {
             warn!("Player already dead, ignoring bullet collision event");
