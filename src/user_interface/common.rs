@@ -1,10 +1,16 @@
-use bevy::prelude::*;
+use bevy::{
+    color::palettes::{css::WHITE, tailwind::ORANGE_400},
+    prelude::*,
+};
 
 pub struct CommonUiPlugin;
 
 impl Plugin for CommonUiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, handle_common_ui_button_interaction);
+        app.add_systems(
+            Update,
+            (handle_common_ui_button_interaction, handle_any_button_hover),
+        );
     }
 }
 
@@ -29,6 +35,25 @@ fn handle_common_ui_button_interaction(
             CommonUiButtonType::Quit => {
                 app_exit_event_writer.write(AppExit::Success);
             }
+        }
+    }
+}
+
+fn handle_any_button_hover(
+    query: Query<
+        (&Interaction, &Children),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut text_color_query: Query<&mut TextColor>,
+) {
+    for (interaction, children) in query {
+        let Ok(mut text_color) = text_color_query.get_mut(children[0]) else {
+            continue;
+        };
+        match interaction {
+            Interaction::Hovered => *text_color = ORANGE_400.into(),
+            Interaction::None => *text_color = WHITE.into(),
+            _ => {}
         }
     }
 }

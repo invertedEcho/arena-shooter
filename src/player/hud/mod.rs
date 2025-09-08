@@ -22,10 +22,10 @@ fn spawn_player_hud(
         .spawn(Node {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
-            ..default()
-        })
-        .with_child(Node {
-            align_self: AlignSelf::FlexEnd,
+            flex_direction: FlexDirection::Row,
+            justify_content: JustifyContent::Start,
+            align_items: AlignItems::End,
+            column_gap: Val::Px(16.0),
             ..default()
         })
         .with_children(|parent| {

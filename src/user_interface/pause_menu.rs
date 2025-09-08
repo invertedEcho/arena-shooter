@@ -53,6 +53,7 @@ fn spawn_pause_menu(mut commands: Commands) {
                     PauseMenuButton {
                         pause_menu_button_type: PauseMenuButtonType::Resume,
                     },
+                    TextColor::WHITE,
                 ))
                 .with_child(Text::new("Resume"));
             parent
@@ -62,6 +63,7 @@ fn spawn_pause_menu(mut commands: Commands) {
                     CommonUiButton {
                         common_ui_button_type: CommonUiButtonType::Quit,
                     },
+                    TextColor::WHITE,
                 ))
                 .with_child(Text::new("Quit"));
         });
