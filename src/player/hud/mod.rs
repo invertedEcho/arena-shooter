@@ -26,6 +26,7 @@ fn spawn_player_hud(
             justify_content: JustifyContent::Start,
             align_items: AlignItems::End,
             column_gap: Val::Px(16.0),
+            padding: UiRect::all(Val::Px(16.0)),
             ..default()
         })
         .with_children(|parent| {

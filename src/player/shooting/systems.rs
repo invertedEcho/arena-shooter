@@ -8,7 +8,8 @@ use crate::{
         Player,
         camera::components::PlayerCamera,
         shooting::components::{
-            MuzzleFlash, PlayerBullet, PlayerWeaponShootCooldownTimer,
+            BloodScreenEffect, MuzzleFlash, PlayerBullet,
+            PlayerWeaponShootCooldownTimer,
         },
     },
 };
@@ -108,6 +109,8 @@ pub fn tick_player_weapon_timer(
 
 // TODO: Also despawn bullet if player hit
 pub fn detect_bullet_collision_with_player(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
     mut collision_event_reader: EventReader<CollisionStarted>,
     enemy_bullet_query: Query<Entity, With<EnemyBullet>>,
     player_query: Single<(Entity, &mut Player)>,
@@ -132,11 +135,54 @@ pub fn detect_bullet_collision_with_player(
         }
 
         info!("Player was hit by enemy bullet!");
+        // how to do fade out? i guess timer repeating every 0.1 second further decrease alpha,
+        // from 1.0 to 0.0, so timer needs to run ten times. also, when player hit again, we should
+        // despawn current blood screen effect and spawn new and start from 1.0 again
+        commands.spawn((
+            ImageNode {
+                image: asset_server.load("Bloody Screen Effects/Effect_5.png"),
+                color: Color::srgba(1.0, 1.0, 1.0, 1.0),
+                ..default()
+            },
+            BloodScreenEffect::default(),
+        ));
 
         if player.health == 0 {
             warn!("Player already dead, ignoring bullet collision event");
             continue;
         }
         player.health -= 10;
+    }
+}
+
+pub fn handle_blood_screen_effect(
+    mut blood_screen_effect_query: Query<(
+        Entity,
+        &mut BloodScreenEffect,
+        &mut ImageNode,
+    )>,
+    mut commands: Commands,
+    time: Res<Time>,
+) {
+    // TODO: hmm i mean theoretically only one instance of blood screen effect should exist, maybe
+    // convert to `Resource`?
+    for (entity, mut blood_screen_effect, mut image_node) in
+        blood_screen_effect_query.iter_mut()
+    {
+        let timer = &mut blood_screen_effect.timer;
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            let new_current_timer_iteration =
+                blood_screen_effect.currrent_timer_iteration + 1;
+            if new_current_timer_iteration as f32
+                > blood_screen_effect.total_timer_iteration_count
+            {
+                commands.entity(entity).despawn();
+                continue;
+            }
+            let current_color = &image_node.color;
+            image_node.color =
+                Color::srgba(1.0, 1.0, 1.0, current_color.alpha() - 0.1);
+        }
     }
 }
