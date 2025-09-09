@@ -91,6 +91,7 @@ pub fn basic_shooting(
         RigidBody::Kinematic,
         DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
         PlayerBullet,
+        CollisionEventsEnabled,
     ));
 }
 
@@ -134,10 +135,6 @@ pub fn detect_bullet_collision_with_player(
             continue;
         }
 
-        info!("Player was hit by enemy bullet!");
-        // how to do fade out? i guess timer repeating every 0.1 second further decrease alpha,
-        // from 1.0 to 0.0, so timer needs to run ten times. also, when player hit again, we should
-        // despawn current blood screen effect and spawn new and start from 1.0 again
         commands.spawn((
             ImageNode {
                 image: asset_server.load("Bloody Screen Effects/Effect_5.png"),
@@ -147,11 +144,7 @@ pub fn detect_bullet_collision_with_player(
             BloodScreenEffect::default(),
         ));
 
-        if player.health == 0 {
-            warn!("Player already dead, ignoring bullet collision event");
-            continue;
-        }
-        player.health -= 10;
+        player.health -= 10.0;
     }
 }
 

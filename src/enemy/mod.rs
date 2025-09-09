@@ -2,7 +2,9 @@ use avian3d::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
-    common::components::DespawnTimer, game_flow::GameState, player::Player,
+    common::components::DespawnTimer,
+    game_flow::GameState,
+    player::{Player, shooting::components::PlayerBullet},
 };
 
 pub struct EnemyPlugin;
@@ -20,17 +22,18 @@ impl Plugin for EnemyPlugin {
                     tick_enemy_can_see_player_cooldown_timer,
                     enemy_shoot_playerr,
                     handle_enemy_shoot_player_cooldown_timer,
+                    detect_player_bullet_collision_with_enemy,
                 )
                     .run_if(in_state(GameState::InGame)),
             );
     }
 }
 
-#[derive(Component, Reflect)]
-#[reflect(Component)]
+#[derive(Component, Reflect, Default)]
+#[reflect(Component, Default)]
 pub struct Enemy {
-    #[reflect(default)]
     pub can_see_player: bool,
+    pub health: f32,
 }
 
 #[derive(Resource)]
@@ -39,15 +42,43 @@ pub struct CheckIfEnemyCanSeePlayerCooldownTimer(pub Timer);
 #[derive(Component)]
 pub struct EnemyBullet;
 
+#[derive(Component)]
+pub struct EnemyShootPlayerCooldownTimer(pub Timer);
+
+fn detect_player_bullet_collision_with_enemy(
+    mut commands: Commands,
+    player_bullet_query: Query<Entity, With<PlayerBullet>>,
+    mut enemy_query: Query<(Entity, &mut Enemy)>,
+    mut collision_event_reader: EventReader<CollisionStarted>,
+) {
+    for CollisionStarted(first_entity, second_entity) in
+        collision_event_reader.read()
+    {
+        let is_player_bullet = player_bullet_query
+            .iter()
+            .any(|entity| entity == *first_entity || entity == *second_entity);
+        if !is_player_bullet {
+            continue;
+        }
+        let Some(mut enemy) = enemy_query.iter_mut().find(|(entity, _)| {
+            entity == first_entity || entity == second_entity
+        }) else {
+            continue;
+        };
+
+        enemy.1.health -= 10.0;
+        if enemy.1.health <= 0.0 {
+            commands.entity(enemy.0).despawn();
+        }
+    }
+}
+
 fn tick_enemy_can_see_player_cooldown_timer(
     mut timer: ResMut<CheckIfEnemyCanSeePlayerCooldownTimer>,
     time: Res<Time>,
 ) {
     timer.0.tick(time.delta());
 }
-
-#[derive(Component)]
-pub struct EnemyShootPlayerCooldownTimer(pub Timer);
 
 // TODO: should probably be two systems
 fn check_if_enemy_can_see_player_and_look_at_player(
@@ -89,16 +120,11 @@ fn check_if_enemy_can_see_player_and_look_at_player(
                 &filter,
             ) {
                 if first_hit.entity == player_entity {
-                    info!("Enemy can see the player!");
                     enemy.can_see_player = true;
                     enemy_transform
                         .look_at(player_transform.translation, Dir3::Y);
                 } else {
                     enemy.can_see_player = false;
-                    // info!(
-                    //     "Ray cast didnt hit player but hit: {}",
-                    //     first_hit.entity
-                    // );
                 }
             }
         }

@@ -17,12 +17,12 @@ pub mod shooting;
 #[reflect(Component)]
 pub struct Player {
     #[reflect(default)]
-    pub health: u32,
+    pub health: f32,
 }
 
 impl Default for Player {
     fn default() -> Self {
-        Player { health: 100 }
+        Player { health: 100.0 }
     }
 }
 
