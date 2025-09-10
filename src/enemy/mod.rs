@@ -1,8 +1,10 @@
+use std::ops::Neg;
+
 use avian3d::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
-    common::components::DespawnTimer,
+    common::{BULLET_VELOCITY, components::DespawnTimer},
     game_flow::GameState,
     player::{Player, shooting::components::PlayerBullet},
 };
@@ -47,26 +49,28 @@ pub struct EnemyShootPlayerCooldownTimer(pub Timer);
 
 fn detect_player_bullet_collision_with_enemy(
     mut commands: Commands,
-    player_bullet_query: Query<Entity, With<PlayerBullet>>,
+    player_bullet_query: Query<(Entity, &PlayerBullet)>,
     mut enemy_query: Query<(Entity, &mut Enemy)>,
     mut collision_event_reader: EventReader<CollisionStarted>,
 ) {
     for CollisionStarted(first_entity, second_entity) in
         collision_event_reader.read()
     {
-        let is_player_bullet = player_bullet_query
-            .iter()
-            .any(|entity| entity == *first_entity || entity == *second_entity);
-        if !is_player_bullet {
+        let Some(player_bullet) =
+            player_bullet_query.iter().find(|(entity, _)| {
+                entity == first_entity || entity == second_entity
+            })
+        else {
             continue;
-        }
+        };
+
         let Some(mut enemy) = enemy_query.iter_mut().find(|(entity, _)| {
             entity == first_entity || entity == second_entity
         }) else {
             continue;
         };
 
-        enemy.1.health -= 10.0;
+        enemy.1.health -= player_bullet.1.damage;
         if enemy.1.health <= 0.0 {
             commands.entity(enemy.0).despawn();
         }
@@ -146,7 +150,7 @@ fn enemy_shoot_playerr(
             && enemy_can_shoot_player_cooldown_timer.iter().len() == 0
         {
             let local_bullet_velocity = Vec3 {
-                z: -100.0,
+                z: BULLET_VELOCITY.neg(),
                 x: 0.0,
                 y: 0.0,
             };

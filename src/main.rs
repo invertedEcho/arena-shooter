@@ -14,6 +14,7 @@ mod game_flow;
 mod ground_detection;
 pub mod player;
 mod user_interface;
+pub mod utils;
 mod world;
 
 fn main() {

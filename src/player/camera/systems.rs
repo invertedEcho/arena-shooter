@@ -1,8 +1,7 @@
 use crate::{
     common::systems::apply_render_layers_to_children,
     player::{
-        camera::{PLAYER_CAMERA_Y_OFFSET, components::PlayerCameraMode},
-        shooting::components::PlayerWeapon,
+        camera::PLAYER_CAMERA_Y_OFFSET, shooting::components::PlayerWeapon,
     },
 };
 use std::f32::consts::{FRAC_PI_2, PI};
@@ -61,7 +60,12 @@ pub fn setup_player_camera(
                 },
                 RenderLayers::layer(1),
                 NotShadowCaster,
-                PlayerWeapon,
+                // TODO: Its kinda weid that we spawn "PlayerWeapon" in `player/camera` module
+                PlayerWeapon {
+                    loaded_ammo: 30,
+                    carried_ammo: 120,
+                    max_loaded_ammo: 30,
+                },
             ))
             .observe(apply_render_layers_to_children);
     });
@@ -69,17 +73,8 @@ pub fn setup_player_camera(
 
 pub fn camera_orbit_player(
     mouse_motion: Res<AccumulatedMouseMotion>,
-    mut player_camera_query: Single<
-        (&PlayerCamera, &mut Transform),
-        Without<Player>,
-    >,
-    // mut player_query: Single<&mut Transform, With<Player>>,
+    mut player_camera_transform: Single<&mut Transform, With<PlayerCamera>>,
 ) {
-    let player_camera = player_camera_query.0;
-    if !player_camera.mouse_motion_enabled {
-        return;
-    }
-
     let delta = mouse_motion.delta;
 
     if delta != Vec2::ZERO {
@@ -91,14 +86,14 @@ pub fn camera_orbit_player(
 
         // existing rotation
         let (current_yaw, current_pitch, current_roll) =
-            player_camera_query.1.rotation.to_euler(EulerRot::YXZ);
+            player_camera_transform.rotation.to_euler(EulerRot::YXZ);
 
         let new_yaw = delta_yaw + current_yaw;
 
         let new_pitch =
             (delta_pitch + current_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
 
-        player_camera_query.1.rotation =
+        player_camera_transform.rotation =
             Quat::from_euler(EulerRot::YXZ, new_yaw, new_pitch, current_roll);
         // now we just need to adjust yaw of player, so other players can also see in which direction
         // the person is looking.
@@ -107,52 +102,5 @@ pub fn camera_orbit_player(
 
         // later, we can adjust pitch of player weapon so other players can also see if aiming to
         // sky or to bottom.
-    }
-}
-
-pub fn update_player_camera_distance(
-    player_camera_query: Single<
-        (&mut Transform, &PlayerCamera),
-        Changed<PlayerCamera>,
-    >,
-) {
-    let player_camera_mode = &player_camera_query.1.mode;
-    let mut player_camera_translation = player_camera_query.0.translation;
-
-    info!("new player camera mode: {:?}", player_camera_mode);
-    if *player_camera_mode == PlayerCameraMode::ThirdPerson {
-        player_camera_translation.z = 3.0;
-    } else if *player_camera_mode == PlayerCameraMode::FirstPerson {
-        player_camera_translation.z = 0.0;
-    }
-
-    info!(
-        "new player camera translation z: {}",
-        player_camera_translation.z
-    );
-}
-
-pub fn switch_between_first_and_third_person(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Single<&mut PlayerCamera>,
-) {
-    if keyboard_input.just_pressed(KeyCode::KeyV) {
-        match query.mode {
-            PlayerCameraMode::FirstPerson => {
-                query.mode = PlayerCameraMode::ThirdPerson;
-            }
-            PlayerCameraMode::ThirdPerson => {
-                query.mode = PlayerCameraMode::FirstPerson;
-            }
-        }
-    }
-}
-
-pub fn change_mouse_motion_enabled(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Single<&mut PlayerCamera>,
-) {
-    if keyboard_input.just_pressed(KeyCode::KeyM) {
-        query.mouse_motion_enabled = !query.mouse_motion_enabled;
     }
 }

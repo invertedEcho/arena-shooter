@@ -1,14 +1,16 @@
+use std::ops::Neg;
+
 use avian3d::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
-    common::components::DespawnTimer,
+    common::{BULLET_VELOCITY, components::DespawnTimer},
     enemy::EnemyBullet,
     player::{
         Player,
         camera::components::PlayerCamera,
         shooting::components::{
-            BloodScreenEffect, MuzzleFlash, PlayerBullet,
+            BloodScreenEffect, MuzzleFlash, PlayerBullet, PlayerWeapon,
             PlayerWeaponShootCooldownTimer,
         },
     },
@@ -27,30 +29,45 @@ pub fn basic_shooting(
     player_weapon_shoot_cooldown_timer_query: Query<
         &PlayerWeaponShootCooldownTimer,
     >,
+    player_entity: Single<Entity, With<Player>>,
+    mut player_weapon: Single<&mut PlayerWeapon>,
 ) {
     if !mouse_input.pressed(MouseButton::Left) {
         return;
     }
 
-    // if on cooldown, dont allow shooting
     if player_weapon_shoot_cooldown_timer_query.iter().len() != 0 {
         return;
     }
 
-    // if no timer, means we are allowed to shoot, and insert the cooldown timer
+    if player_weapon.loaded_ammo == 0 {
+        return;
+    }
+    player_weapon.loaded_ammo -= 1;
+
     commands.spawn(PlayerWeaponShootCooldownTimer(Timer::from_seconds(
         0.1,
         TimerMode::Once,
     )));
 
-    commands.spawn((
-        ImageNode {
-            image: asset_server.load("muzzle_flash.png"),
+    // let random_rotation_angle = get_random_number_from_range_i32(1, 5);
 
+    commands.entity(*player_entity).with_child((
+        Sprite {
+            image: asset_server.load("muzzle_flash.png"),
             ..default()
         },
         MuzzleFlash,
-        DespawnTimer(Timer::from_seconds(0.02, TimerMode::Once)),
+        Transform {
+            // scale: Vec3::splat(0.15),
+            // rotation: Quat::from_axis_angle(
+            //     Vec3::new(0.0, 0.0, 1.0),
+            //     random_rotation_angle as f32,
+            // ),
+            translation: Vec3::new(0.0, 0.2, -1.0),
+            ..default()
+        },
+        // DespawnTimer(Timer::from_seconds(0.05, TimerMode::Once)),
     ));
 
     let audio = asset_server
@@ -59,7 +76,7 @@ pub fn basic_shooting(
     commands.spawn((AudioPlayer::new(audio), PlaybackSettings::ONCE));
 
     let local_bullet_velocity = Vec3 {
-        z: -100.0,
+        z: BULLET_VELOCITY.neg(),
         x: 0.0,
         y: 0.0,
     };
@@ -90,7 +107,7 @@ pub fn basic_shooting(
         LinearVelocity(world_bullet_velocity),
         RigidBody::Kinematic,
         DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
-        PlayerBullet,
+        PlayerBullet { damage: 20.0 },
         CollisionEventsEnabled,
     ));
 }
@@ -177,5 +194,29 @@ pub fn handle_blood_screen_effect(
             image_node.color =
                 Color::srgba(1.0, 1.0, 1.0, current_color.alpha() - 0.1);
         }
+    }
+}
+
+pub fn reload_player_weapon(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut player_weapon: Single<&mut PlayerWeapon>,
+) {
+    if !keyboard_input.just_pressed(KeyCode::KeyR) {
+        return;
+    }
+
+    if player_weapon.loaded_ammo == player_weapon.max_loaded_ammo {
+        return;
+    }
+
+    let missing_bullets_to_load =
+        player_weapon.max_loaded_ammo - player_weapon.loaded_ammo;
+
+    if player_weapon.carried_ammo > missing_bullets_to_load {
+        player_weapon.loaded_ammo += missing_bullets_to_load;
+        player_weapon.carried_ammo -= missing_bullets_to_load;
+    } else {
+        player_weapon.loaded_ammo = player_weapon.carried_ammo;
+        player_weapon.carried_ammo = 0;
     }
 }

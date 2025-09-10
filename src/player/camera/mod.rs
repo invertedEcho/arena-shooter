@@ -4,11 +4,7 @@ use crate::{
     game_flow::GameState,
     player::camera::{
         components::PlayerCamera,
-        systems::{
-            camera_orbit_player, change_mouse_motion_enabled,
-            setup_player_camera, switch_between_first_and_third_person,
-            update_player_camera_distance,
-        },
+        systems::{camera_orbit_player, setup_player_camera},
     },
 };
 
@@ -25,9 +21,6 @@ impl Plugin for PlayerCameraPlugin {
             Update,
             (
                 camera_orbit_player.run_if(in_state(GameState::InGame)),
-                update_player_camera_distance,
-                switch_between_first_and_third_person,
-                change_mouse_motion_enabled,
                 setup_player_camera,
             ),
         )
