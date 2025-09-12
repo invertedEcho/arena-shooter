@@ -8,12 +8,13 @@ use crate::{
     enemy::EnemyBullet,
     player::{
         Player,
-        camera::components::PlayerCamera,
+        camera::{PLAYER_CAMERA_Y_OFFSET, components::PlayerCamera},
         shooting::components::{
             BloodScreenEffect, MuzzleFlash, PlayerBullet, PlayerWeapon,
             PlayerWeaponShootCooldownTimer,
         },
     },
+    utils::random::get_random_number_from_range_i32,
 };
 
 pub fn basic_shooting(
@@ -29,8 +30,8 @@ pub fn basic_shooting(
     player_weapon_shoot_cooldown_timer_query: Query<
         &PlayerWeaponShootCooldownTimer,
     >,
-    player_entity: Single<Entity, With<Player>>,
     mut player_weapon: Single<&mut PlayerWeapon>,
+    player_camera_entity: Single<Entity, With<PlayerCamera>>,
 ) {
     if !mouse_input.pressed(MouseButton::Left) {
         return;
@@ -40,6 +41,7 @@ pub fn basic_shooting(
         return;
     }
 
+    // TODO: play a sound which indicates empty magazine
     if player_weapon.loaded_ammo == 0 {
         return;
     }
@@ -50,24 +52,35 @@ pub fn basic_shooting(
         TimerMode::Once,
     )));
 
-    // let random_rotation_angle = get_random_number_from_range_i32(1, 5);
-
-    commands.entity(*player_entity).with_child((
-        Sprite {
-            image: asset_server.load("muzzle_flash.png"),
+    let random_rotation_angle = get_random_number_from_range_i32(0, 5);
+    commands.entity(*player_camera_entity).with_child((
+        Transform {
+            translation: Vec3 {
+                x: 0.3,
+                y: -0.1,
+                z: -1.0,
+            },
+            rotation: Quat::from_axis_angle(
+                Vec3::Z,
+                random_rotation_angle as f32,
+            ),
             ..default()
         },
         MuzzleFlash,
-        Transform {
-            // scale: Vec3::splat(0.15),
-            // rotation: Quat::from_axis_angle(
-            //     Vec3::new(0.0, 0.0, 1.0),
-            //     random_rotation_angle as f32,
-            // ),
-            translation: Vec3::new(0.0, 0.2, -1.0),
+        Mesh3d(meshes.add(Plane3d {
+            half_size: Vec2::splat(0.1),
+            normal: Dir3::Z,
             ..default()
-        },
-        // DespawnTimer(Timer::from_seconds(0.05, TimerMode::Once)),
+        })),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color_texture: Some(
+                asset_server.load("muzzle_flash_cropped.png"),
+            ),
+            alpha_mode: AlphaMode::Blend,
+            unlit: true,
+            ..default()
+        })),
+        DespawnTimer(Timer::from_seconds(0.05, TimerMode::Once)),
     ));
 
     let audio = asset_server
