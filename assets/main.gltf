@@ -109,6 +109,9 @@
 								"z_length":3.299999952316284
 							}
 						}
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -134,6 +137,9 @@
 								"z_length":3.299999952316284
 							}
 						}
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -159,6 +165,9 @@
 								"z_length":3.299999952316284
 							}
 						}
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -184,6 +193,9 @@
 					},
 					{
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -209,6 +221,9 @@
 					},
 					{
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -234,6 +249,9 @@
 								"z_length":3.299999952316284
 							}
 						}
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -259,6 +277,9 @@
 					},
 					{
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -899,6 +920,9 @@
 								"z_length":4.25
 							}
 						}
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -1529,6 +1553,9 @@
 					},
 					{
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -2159,6 +2186,9 @@
 					},
 					{
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -3079,6 +3109,9 @@
 					},
 					{
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -3104,6 +3137,9 @@
 					},
 					{
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -3129,6 +3165,9 @@
 					},
 					{
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -5782,6 +5821,9 @@
 					},
 					{
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -6200,6 +6242,9 @@
 					},
 					{
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -6225,6 +6270,9 @@
 					},
 					{
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -6250,6 +6298,9 @@
 					},
 					{
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},
@@ -6275,6 +6326,9 @@
 					},
 					{
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
+					},
+					{
+						"fun_shooter::world::components::Wall":{}
 					}
 				]
 			},

@@ -44,8 +44,8 @@ fn main() {
             })
         ,
     );
-    app.add_plugins(FrameTimeDiagnosticsPlugin::default());
-    app.add_plugins(LogDiagnosticsPlugin::default());
+    // app.add_plugins(FrameTimeDiagnosticsPlugin::default());
+    // app.add_plugins(LogDiagnosticsPlugin::default());
 
     // avian (physics)
     app.add_plugins(PhysicsPlugins::default())
