@@ -1,5 +1,9 @@
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    prelude::*,
+    window::{PresentMode, WindowTheme},
+};
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 use bevy_skein::SkeinPlugin;
 
@@ -29,8 +33,19 @@ fn main() {
                 "symphonia_core=off,symphonia_bundle=off,wgpu=error,naga=warn"
                     .to_string(),
             ..default()
-        }),
+        }).set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: "fun-shooter".into(),
+                    name: Some("fun-shooter".into()),
+                    present_mode: PresentMode::AutoVsync,
+                    ..default()
+                }),
+                ..default()
+            })
+        ,
     );
+    app.add_plugins(FrameTimeDiagnosticsPlugin::default());
+    app.add_plugins(LogDiagnosticsPlugin::default());
 
     // avian (physics)
     app.add_plugins(PhysicsPlugins::default())
@@ -50,8 +65,8 @@ fn main() {
     app.add_plugins(SkeinPlugin::default());
 
     // misc plugins
-    app.add_plugins(EguiPlugin::default())
-        .add_plugins(WorldInspectorPlugin::new());
+    // app.add_plugins(EguiPlugin::default())
+    //     .add_plugins(WorldInspectorPlugin::new());
 
     app.run();
 }
