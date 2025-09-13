@@ -8,7 +8,7 @@ use crate::{
     enemy::EnemyBullet,
     player::{
         Player,
-        camera::{PLAYER_CAMERA_Y_OFFSET, components::PlayerCamera},
+        camera::components::PlayerCamera,
         shooting::components::{
             BloodScreenEffect, MuzzleFlash, PlayerBullet, PlayerWeapon,
             PlayerWeaponShootCooldownTimer,
@@ -32,6 +32,8 @@ pub fn basic_shooting(
     >,
     mut player_weapon: Single<&mut PlayerWeapon>,
     player_camera_entity: Single<Entity, With<PlayerCamera>>,
+    spatial_query: SpatialQuery,
+    player_query: Single<(Entity, &Transform), With<Player>>,
 ) {
     if !mouse_input.pressed(MouseButton::Left) {
         return;
@@ -123,6 +125,25 @@ pub fn basic_shooting(
         PlayerBullet { damage: 20.0 },
         CollisionEventsEnabled,
     ));
+
+    let (player_entity, player_transform) = *player_query;
+
+    // cast a ray in direction player is shooting, to check if there is a wall or ground, and get
+    // accurate location to know where to spawn the bullet impact effect
+
+    //  ray-cast settings
+    let origin = player_transform.translation;
+    let direction = player_camera_global_transform.forward();
+    let max_distance = 100.0;
+    let solid = true;
+    let filter =
+        SpatialQueryFilter::default().with_excluded_entities([player_entity]);
+
+    if let Some(first_hit) =
+        spatial_query.cast_ray(origin, direction, max_distance, solid, &filter)
+    {
+        info!("player shot and raycast hit: {:?}", first_hit);
+    }
 }
 
 pub fn tick_player_weapon_timer(

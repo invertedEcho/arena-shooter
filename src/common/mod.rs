@@ -5,7 +5,7 @@ use crate::common::systems::handle_despawn_timer;
 pub mod components;
 pub mod systems;
 
-pub const BULLET_VELOCITY: f32 = 300.0;
+pub const BULLET_VELOCITY: f32 = 100.0;
 
 pub struct CommonPlugin;
 
