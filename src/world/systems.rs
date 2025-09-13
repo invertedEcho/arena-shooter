@@ -50,8 +50,6 @@ pub fn detect_bullet_collision_with_wall_and_grounds(
             commands.entity(*first_entity).despawn();
         }
 
-        info!("Bullet collided with a wall or ground!");
-
         // well this doesnt work. the transform is just the center of the hit collider, but not the
         // actual point. what about using raycasts instead, e.g. when player shoots, send a raycast
         // in the direction he is looking, and then check if collided with a wall or ground, and

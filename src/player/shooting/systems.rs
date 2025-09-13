@@ -6,6 +6,7 @@ use bevy::{color::palettes::css::RED, prelude::*};
 use crate::{
     common::{BULLET_VELOCITY, components::DespawnTimer},
     enemy::EnemyBullet,
+    particles::SpawnBulletImpactEffectEvent,
     player::{
         Player,
         camera::components::PlayerCamera,
@@ -34,6 +35,9 @@ pub fn basic_shooting(
     player_camera_entity: Single<Entity, With<PlayerCamera>>,
     spatial_query: SpatialQuery,
     player_query: Single<(Entity, &Transform), With<Player>>,
+    mut bullet_effect_spawn_event_writer: EventWriter<
+        SpawnBulletImpactEffectEvent,
+    >,
 ) {
     if !mouse_input.pressed(MouseButton::Left) {
         return;
@@ -142,7 +146,60 @@ pub fn basic_shooting(
     if let Some(first_hit) =
         spatial_query.cast_ray(origin, direction, max_distance, solid, &filter)
     {
-        info!("player shot and raycast hit: {:?}", first_hit);
+        info!("player shot and ray cast hit!");
+        info!("current player transform: {}", player_transform.translation);
+        info!("ray cast hit distance: {}", first_hit.distance);
+        info!("ray cast normal: {}", first_hit.normal);
+        info!("\n");
+        let player_translation = player_transform.translation;
+        let mut maybe_target: Option<Vec3> = None;
+
+        // This gives us the direction and translation of where the bullet collided, but we also
+        // need to take player camera rotation in consideration
+        if first_hit.normal.z == -1.0 {
+            maybe_target = Some(Vec3 {
+                x: player_translation.x,
+                y: player_translation.y,
+                z: player_translation.z + first_hit.distance,
+            });
+        } else if first_hit.normal.z == 1.0 {
+            maybe_target = Some(Vec3 {
+                x: player_translation.x,
+                y: player_translation.y,
+                z: player_translation.z - first_hit.distance,
+            });
+        } else if first_hit.normal.z == -1.0 {
+            maybe_target = Some(Vec3 {
+                x: player_translation.x + first_hit.distance,
+                y: player_translation.y,
+                z: player_translation.z,
+            });
+        } else if first_hit.normal.z == 1.0 {
+            maybe_target = Some(Vec3 {
+                x: player_translation.x - first_hit.distance,
+                y: player_translation.y,
+                z: player_translation.z,
+            });
+        }
+        if let Some(target) = maybe_target {
+            info!("target is at: {}", target);
+
+            bullet_effect_spawn_event_writer.write(
+                SpawnBulletImpactEffectEvent {
+                    spawn_location: target,
+                },
+            );
+            commands.spawn((
+                Transform::from_translation(target),
+                Mesh3d(meshes.add(Cuboid {
+                    half_size: Vec3::splat(0.5),
+                })),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: RED.into(),
+                    ..Default::default()
+                })),
+            ));
+        }
     }
 }
 
