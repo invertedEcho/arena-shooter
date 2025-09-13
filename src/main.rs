@@ -4,19 +4,22 @@ use bevy::{
     prelude::*,
     window::{PresentMode, WindowTheme},
 };
+use bevy_hanabi::HanabiPlugin;
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 use bevy_skein::SkeinPlugin;
 
 use crate::{
     common::CommonPlugin, enemy::EnemyPlugin, game_flow::GameFlowPlugin,
-    ground_detection::GroundDetectionPlugin, player::PlayerPlugin,
-    user_interface::UserInterfacePlugin, world::WorldPlugin,
+    ground_detection::GroundDetectionPlugin, particles::ParticlesPlugin,
+    player::PlayerPlugin, user_interface::UserInterfacePlugin,
+    world::WorldPlugin,
 };
 
 mod common;
 mod enemy;
 mod game_flow;
 mod ground_detection;
+mod particles;
 pub mod player;
 mod user_interface;
 pub mod utils;
@@ -52,15 +55,6 @@ fn main() {
         .add_plugins(PhysicsDebugPlugin::default())
         .insert_resource(Gravity(Vec3::NEG_Y * 9.81));
 
-    // own plugins
-    app.add_plugins(PlayerPlugin)
-        .add_plugins(WorldPlugin)
-        .add_plugins(GameFlowPlugin)
-        .add_plugins(GroundDetectionPlugin)
-        .add_plugins(CommonPlugin)
-        .add_plugins(EnemyPlugin)
-        .add_plugins(UserInterfacePlugin);
-
     // skein
     app.add_plugins(SkeinPlugin::default());
 
@@ -68,5 +62,17 @@ fn main() {
     // app.add_plugins(EguiPlugin::default())
     //     .add_plugins(WorldInspectorPlugin::new());
 
+    // hanabi plugins (particles)
+    app.add_plugins(HanabiPlugin);
+
+    // own plugins
+    app.add_plugins(PlayerPlugin)
+        .add_plugins(WorldPlugin)
+        .add_plugins(GameFlowPlugin)
+        .add_plugins(GroundDetectionPlugin)
+        .add_plugins(CommonPlugin)
+        .add_plugins(EnemyPlugin)
+        .add_plugins(UserInterfacePlugin)
+        .add_plugins(ParticlesPlugin);
     app.run();
 }
