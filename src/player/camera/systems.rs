@@ -63,7 +63,7 @@ pub fn setup_player_camera(
                 // TODO: Its kinda weid that we spawn "PlayerWeapon" in `player/camera` module
                 PlayerWeapon {
                     loaded_ammo: 30,
-                    carried_ammo: 120,
+                    carried_ammo: 99999999,
                     max_loaded_ammo: 30,
                 },
             ))

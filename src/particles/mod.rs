@@ -58,7 +58,6 @@ fn setup_bullet_effect_handle(
         attribute: Attribute::SIZE,
         value: module.lit(0.3),
     };
-    info!("size attribute: {:?}", size_attribute);
 
     // Every frame, add a gravity-like acceleration downward
     let accel = module.lit(Vec3::new(0., -3., 0.));

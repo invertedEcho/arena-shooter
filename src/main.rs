@@ -59,8 +59,8 @@ fn main() {
     app.add_plugins(SkeinPlugin::default());
 
     // misc plugins
-    // app.add_plugins(EguiPlugin::default())
-    //     .add_plugins(WorldInspectorPlugin::new());
+    app.add_plugins(EguiPlugin::default())
+        .add_plugins(WorldInspectorPlugin::new());
 
     // hanabi plugins (particles)
     app.add_plugins(HanabiPlugin);
