@@ -11,7 +11,7 @@
   - Note that a submodule may have its own plugin.
     - If the submodule doesnt have lots of logic, all code may be located in its `mod.rs` and then be used in the root plugin of given module
   - Every module, no matter if submodule or not, needs to be split up into seperate files, always following ECS structure, e.g. one file `components.rs` for all components of the given module, or a `systems.rs` for all systems of the given module.
-  - This makes it very easy to navigate the codebase
+    - This makes it very easy to navigate the codebase and scales well
 
 ## idk what to call this section
 this project assumes 1 unit = 1m, e.g. a unit is like `Transform::from_xyz(1.0, 1.0, 1.0)`
