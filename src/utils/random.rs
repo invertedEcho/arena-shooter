@@ -7,3 +7,24 @@ pub fn get_random_number_from_range_i32(start: i32, end: i32) -> i32 {
     nums.shuffle(&mut rng);
     *nums.choose(&mut rng).unwrap()
 }
+
+pub fn get_random_number_from_range_i32_to_f32_with_step(
+    start: i32,
+    end: i32,
+    step: f32,
+) -> f32 {
+    let mut rng = rand::rng();
+
+    // TODO: i think this factor has to be adjusted depending on the step
+    let fixed_start = start * 10;
+    let fixed_end = end * 10;
+
+    let mut nums: Vec<f32> = Vec::new();
+    for i in fixed_start..fixed_end {
+        let i = i as f32 * step;
+        nums.push(i);
+    }
+
+    nums.shuffle(&mut rng);
+    *nums.choose(&mut rng).unwrap()
+}

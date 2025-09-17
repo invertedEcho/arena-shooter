@@ -3,7 +3,6 @@ use bevy::prelude::*;
 
 use crate::{
     enemy::EnemyBullet,
-    particles::SpawnBulletImpactEffectEvent,
     player::shooting::components::PlayerBullet,
     world::components::{Ground, Wall},
 };
@@ -21,9 +20,6 @@ pub fn detect_bullet_collision_with_wall_and_grounds(
     wall_and_ground_query: Query<
         (Entity, &Transform),
         Or<(With<Wall>, With<Ground>)>,
-    >,
-    mut bullet_effect_spawn_event_writer: EventWriter<
-        SpawnBulletImpactEffectEvent,
     >,
 ) {
     for CollisionStarted(first_entity, second_entity) in
@@ -49,13 +45,5 @@ pub fn detect_bullet_collision_with_wall_and_grounds(
         } else {
             commands.entity(*first_entity).despawn();
         }
-
-        // well this doesnt work. the transform is just the center of the hit collider, but not the
-        // actual point. what about using raycasts instead, e.g. when player shoots, send a raycast
-        // in the direction he is looking, and then check if collided with a wall or ground, and
-        // then we also get accurate location?
-        bullet_effect_spawn_event_writer.write(SpawnBulletImpactEffectEvent {
-            spawn_location: collided_wall_or_ground_entity.1.translation,
-        });
     }
 }

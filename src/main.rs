@@ -1,9 +1,5 @@
 use avian3d::prelude::*;
-use bevy::{
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::*,
-    window::{PresentMode, WindowTheme},
-};
+use bevy::{prelude::*, window::PresentMode};
 use bevy_hanabi::HanabiPlugin;
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 use bevy_skein::SkeinPlugin;

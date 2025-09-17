@@ -18,6 +18,7 @@ use crate::{
     utils::random::get_random_number_from_range_i32,
 };
 
+// TODO: refactor me
 pub fn basic_shooting(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
@@ -147,21 +148,11 @@ pub fn basic_shooting(
         spatial_query.cast_ray(origin, direction, max_distance, solid, &filter)
     {
         let hit_point = origin + direction * first_hit.distance;
-        info!("hit point: {:?}", hit_point);
 
         bullet_effect_spawn_event_writer.write(SpawnBulletImpactEffectEvent {
             spawn_location: hit_point,
+            rotate_towards_target: player_camera_global_transform_translation,
         });
-        commands.spawn((
-            Transform::from_translation(hit_point),
-            Mesh3d(meshes.add(Cuboid {
-                half_size: Vec3::splat(0.5),
-            })),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: RED.into(),
-                ..Default::default()
-            })),
-        ));
     }
 }
 
