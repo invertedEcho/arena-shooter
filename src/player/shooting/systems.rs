@@ -1,7 +1,7 @@
 use std::ops::Neg;
 
 use avian3d::prelude::*;
-use bevy::{color::palettes::css::RED, prelude::*};
+use bevy::prelude::*;
 
 use crate::{
     common::{BULLET_VELOCITY, components::DespawnTimer},
@@ -18,7 +18,7 @@ use crate::{
     utils::random::get_random_number_from_range_i32,
 };
 
-// TODO: refactor me
+// TODO: refactor me ): plsss
 pub fn basic_shooting(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
@@ -117,13 +117,6 @@ pub fn basic_shooting(
         },
         Collider::cuboid(0.1, 0.1, 0.1),
         Sensor,
-        Mesh3d(meshes.add(Cuboid {
-            half_size: Vec3::splat(0.05),
-        })),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: RED.into(),
-            ..Default::default()
-        })),
         LinearVelocity(world_bullet_velocity),
         RigidBody::Kinematic,
         DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
@@ -151,9 +144,13 @@ pub fn basic_shooting(
 
         bullet_effect_spawn_event_writer.write(SpawnBulletImpactEffectEvent {
             spawn_location: hit_point,
-            rotate_towards_target: player_camera_global_transform_translation,
         });
     }
+
+    // let perpendicular_point_to_player = player_camera_global_transform
+    //     .forward()
+    //     .cross(Vec3::Y)
+    //     .normalize();
 }
 
 pub fn tick_player_weapon_timer(

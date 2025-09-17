@@ -1,21 +1,33 @@
-use std::f32::consts::PI;
-
-use avian3d::math::{FRAC_1_SQRT_2, FRAC_PI_2};
 use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
 
-use crate::utils::random::{
-    get_random_number_from_range_i32,
-    get_random_number_from_range_i32_to_f32_with_step,
+use crate::{
+    player::camera::components::PlayerCamera,
+    utils::random::get_random_number_from_range_i32_to_f32_with_fixed_step,
 };
 
-#[derive(Resource)]
+const BULLET_IMPACT_PARTICLE_LIFETIME: f32 = 0.1;
+const BULLET_IMPACT_PARTICLE_VELOCITY: f32 = 3.0;
+
+/// This doesnt work as you cant really fully compare floats
+/// This resource holds all relevant EffectAssets for the BulletImpactEffect.
+/// This is used as a cache to not have to instantiate new effects every time.
+/// Note that we can't just instantiate one and use that as we need to set the axis of the
+/// CirclePositionModifier depending on the players rotation. In the future, it would be nice
+/// to just pre-populate this map at startup.
+/// todo: We shouldnt have exact float but round to something that makes sense so we dont have
+/// trillions of possible values -> the small rotation changes probably won't be visible anyways
+// #[derive(Resource, Default)]
+// pub struct BulletImpactEffectHandle {
+//     map: HashMap<f32, Handle<EffectAsset>>,
+// }
+
+#[derive(Resource, Default)]
 pub struct BulletImpactEffectHandle(Option<Handle<EffectAsset>>);
 
 #[derive(Event)]
 pub struct SpawnBulletImpactEffectEvent {
     pub spawn_location: Vec3,
-    pub rotate_towards_target: Vec3,
 }
 
 pub struct ParticlesPlugin;
@@ -25,40 +37,44 @@ impl Plugin for ParticlesPlugin {
         app.add_systems(Startup, setup_bullet_effect_handle)
             .add_systems(Update, handle_spawn_bullet_impact_effect)
             .add_event::<SpawnBulletImpactEffectEvent>()
-            .insert_resource(BulletImpactEffectHandle(None));
+            .insert_resource(BulletImpactEffectHandle::default());
     }
 }
 
-// TODO: rotate particles, e.g. if user facing towards X, set init_position.axis to X, if -X, set
-// init_position.axis -X
 fn setup_bullet_effect_handle(
-    mut commands: Commands,
     mut effects: ResMut<Assets<EffectAsset>>,
+    mut bullet_impact_effect_resource: ResMut<BulletImpactEffectHandle>,
 ) {
     let expression_writer = ExprWriter::new();
 
     // gradient colors
     let mut gradient = Gradient::new();
-    gradient.add_key(0.0, Vec4::new(1., 1., 1., 1.));
-    gradient.add_key(1.0, Vec4::splat(0.));
+    gradient.add_key(0.0, Vec4::new(0.69, 0.69, 0.69, 1.));
+    gradient.add_key(0.25, Vec4::new(1.0, 0.843, 0.0, 1.0));
+    gradient.add_key(0.75, Vec4::new(0.678, 0.849, 0.902, 1.0));
+    gradient.add_key(1.0, Vec4::new(1.0, 0.271, 0.0, 1.0));
 
-    // where the particles are initially positioned
-    let init_position = SetPositionCircleModifier {
+    // where the origin of the particles is (randomly)
+    let init_position_modifier = SetPositionCircleModifier {
         center: expression_writer.lit(Vec3::ZERO).expr(),
         axis: expression_writer.lit(Vec3::Z).expr(),
         radius: expression_writer.lit(0.1).expr(),
-        dimension: ShapeDimension::Volume,
+        dimension: ShapeDimension::Surface,
     };
 
     // particles "fly" away from center by speed of 3 units/sec
     let init_velocity = SetVelocityCircleModifier {
         center: expression_writer.lit(Vec3::ZERO).expr(),
         axis: expression_writer.lit(Vec3::Z).expr(),
-        speed: expression_writer.lit(3.).expr(),
+        speed: expression_writer
+            .lit(BULLET_IMPACT_PARTICLE_VELOCITY)
+            .expr(),
     };
 
     // how long the particles are visible
-    let lifetime_handle = expression_writer.lit(0.2).expr();
+    let lifetime_handle = expression_writer
+        .lit(BULLET_IMPACT_PARTICLE_LIFETIME)
+        .expr();
     let init_lifetime =
         SetAttributeModifier::new(Attribute::LIFETIME, lifetime_handle);
 
@@ -74,74 +90,59 @@ fn setup_bullet_effect_handle(
         rotation: None,
     };
 
-    let repulsor_accel = expression_writer
-        .add_property("repulsor_accel", Value::Scalar((-15.0).into()));
-    // let repulsor_position = expression_writer
-    //     .add_property("repulsor_position", Value::Vector(REPULSOR_POS.into()));
-    let repulsor_accel = expression_writer.prop(repulsor_accel);
-    let update_repulsor = ConformToSphereModifier {
-        origin: expression_writer.lit(Vec3::ZERO).expr(),
-        radius: expression_writer.lit(0.05).expr(),
-        influence_dist: expression_writer.lit(0.05 * 10.).expr(),
-        attraction_accel: repulsor_accel.expr(),
-        max_attraction_speed: expression_writer.lit(10.).expr(),
-        sticky_factor: None,
-        shell_half_thickness: None,
-    };
-
     let module = expression_writer.finish();
-    let effect = EffectAsset::new(
-        // Maximum number of particles alive at a time
-        32768,
-        SpawnerSettings::once(4.0.into()),
-        // Move the expression module into the asset
-        module,
-    )
-    .with_name("BulletImpact")
-    .init(init_position)
-    .init(init_velocity)
-    .init(init_lifetime)
-    .init(size_attribute)
-    // .update(acceleration_modifier)
-    // Render the particles with a color gradient over their
-    // lifetime. This maps the gradient key 0 to the particle spawn
-    // time, and the gradient key 1 to the particle death (10s).
-    .render(ColorOverLifetimeModifier {
-        gradient,
-        ..default()
-    })
-    .update(update_repulsor)
-    .render(orient_modifier_billboard);
+    let bullet_impact_effect =
+        EffectAsset::new(1000, SpawnerSettings::once(4.0.into()), module)
+            .with_name("BulletImpactStraight")
+            .init(init_position_modifier)
+            .init(init_velocity)
+            .init(init_lifetime)
+            .init(size_attribute)
+            .render(orient_modifier_billboard)
+            .render(ColorOverLifetimeModifier {
+                gradient,
+                ..default()
+            });
 
-    // Insert into the asset system
-    let effect_handle = effects.add(effect);
-    commands.insert_resource(BulletImpactEffectHandle(Some(effect_handle)));
+    let effect_handle = effects.add(bullet_impact_effect);
+    bullet_impact_effect_resource.0 = Some(effect_handle);
 }
 
 fn handle_spawn_bullet_impact_effect(
     mut commands: Commands,
     mut event_reader: EventReader<SpawnBulletImpactEffectEvent>,
     bullet_impact_effect_resource: Res<BulletImpactEffectHandle>,
+    player_camera_transform_global: Single<&Transform, With<PlayerCamera>>,
 ) {
     for event in event_reader.read() {
         let Some(ref bullet_impact_effect_handle) =
             bullet_impact_effect_resource.0
         else {
-            warn!(
-                "Bullet impact effect spawn requested but effect handle does not exist!"
-            );
             continue;
         };
 
         let random_z_rotation =
-            get_random_number_from_range_i32_to_f32_with_step(0, 5, 0.1);
+            get_random_number_from_range_i32_to_f32_with_fixed_step(0, 5);
+
+        let rotation_z = Quat::from_rotation_z(random_z_rotation);
+        let rotation_towards_player_perpendicular =
+            player_camera_transform_global
+                .forward()
+                .cross(Vec3::Y)
+                .normalize();
+
         let transform = Transform {
             translation: Vec3 {
                 x: event.spawn_location.x,
                 y: event.spawn_location.y,
-                z: event.spawn_location.z + 0.2,
+                // maybe makes sense to change this value depending on what direction the player
+                // is facing, so particles are not "in the collided object", e.g. not visible
+                z: event.spawn_location.z,
             },
-            rotation: Quat::from_rotation_z(random_z_rotation as f32),
+            rotation: Quat::from_rotation_arc(
+                Vec3::X,
+                rotation_towards_player_perpendicular,
+            ) + rotation_z,
             ..default()
         };
 
