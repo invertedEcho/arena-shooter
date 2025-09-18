@@ -5,15 +5,20 @@ use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
     common::{BULLET_VELOCITY, components::DespawnTimer},
+    enemy::spawn::EnemySpawnPlugin,
     game_flow::GameState,
     player::{Player, shooting::components::PlayerBullet},
 };
+
+mod spawn;
 
 pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<Enemy>()
+        app.add_plugins(EnemySpawnPlugin)
+            .register_type::<Enemy>()
+            .register_type::<EnemySpawnLocation>()
             .insert_resource(CheckIfEnemyCanSeePlayerCooldownTimer(
                 Timer::from_seconds(0.1, TimerMode::Repeating),
             ))
@@ -22,7 +27,7 @@ impl Plugin for EnemyPlugin {
                 (
                     check_if_enemy_can_see_player_and_look_at_player,
                     tick_enemy_can_see_player_cooldown_timer,
-                    enemy_shoot_playerr,
+                    enemy_shoot_player,
                     handle_enemy_shoot_player_cooldown_timer,
                     detect_player_bullet_collision_with_enemy,
                 )
@@ -34,8 +39,16 @@ impl Plugin for EnemyPlugin {
 #[derive(Component, Reflect, Default)]
 #[reflect(Component, Default)]
 pub struct Enemy {
-    pub can_see_player: bool,
+    state: EnemyState,
     pub health: f32,
+}
+
+#[derive(Default, Reflect, PartialEq)]
+enum EnemyState {
+    #[default]
+    SearchForPlayer,
+    ChasingPlayer,
+    AttackPlayer,
 }
 
 #[derive(Resource)]
@@ -46,6 +59,10 @@ pub struct EnemyBullet;
 
 #[derive(Component)]
 pub struct EnemyShootPlayerCooldownTimer(pub Timer);
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct EnemySpawnLocation;
 
 fn detect_player_bullet_collision_with_enemy(
     mut commands: Commands,
@@ -124,18 +141,18 @@ fn check_if_enemy_can_see_player_and_look_at_player(
                 &filter,
             ) {
                 if first_hit.entity == player_entity {
-                    enemy.can_see_player = true;
+                    enemy.state = EnemyState::AttackPlayer;
                     enemy_transform
                         .look_at(player_transform.translation, Dir3::Y);
                 } else {
-                    enemy.can_see_player = false;
+                    enemy.state = EnemyState::SearchForPlayer;
                 }
             }
         }
     }
 }
 
-fn enemy_shoot_playerr(
+fn enemy_shoot_player(
     mut commands: Commands,
     enemy_query: Query<(&Enemy, &Transform)>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -146,7 +163,7 @@ fn enemy_shoot_playerr(
     >,
 ) {
     for (enemy, enemy_transform) in enemy_query {
-        if enemy.can_see_player
+        if enemy.state == EnemyState::AttackPlayer
             && enemy_can_shoot_player_cooldown_timer.iter().len() == 0
         {
             let local_bullet_velocity = Vec3 {

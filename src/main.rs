@@ -21,6 +21,10 @@ mod user_interface;
 pub mod utils;
 mod world;
 
+/// Feature list:
+/// - Should be able to jump on top of box even if standing very close to box -> friction probably
+/// - weapon should "swing", so it looks more like walking. if running, swing faster.
+
 fn main() {
     let mut app = App::new();
 
