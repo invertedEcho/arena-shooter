@@ -1,7 +1,7 @@
 use std::ops::Neg;
 
 use avian3d::prelude::*;
-use bevy::{color::palettes::css::RED, prelude::*};
+use bevy::prelude::*;
 
 use crate::{
     common::{BULLET_VELOCITY, components::DespawnTimer},
@@ -95,6 +95,7 @@ fn detect_player_bullet_collision_with_enemy(
         if enemy.1.health <= 0.0 {
             commands.entity(enemy.0).despawn();
         }
+        commands.entity(player_bullet.0).despawn();
     }
 }
 

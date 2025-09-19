@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     game_flow::GameState,
     player::shooting::systems::{
-        basic_shooting, detect_bullet_collision_with_player,
+        basic_shooting, detect_enemy_bullet_collision_with_player,
         handle_blood_screen_effect, reload_player_weapon,
         tick_player_weapon_timer,
     },
@@ -24,7 +24,7 @@ impl Plugin for PlayerShootingPlugin {
             (
                 basic_shooting,
                 tick_player_weapon_timer,
-                detect_bullet_collision_with_player,
+                detect_enemy_bullet_collision_with_player,
                 handle_blood_screen_effect,
                 reload_player_weapon,
             )

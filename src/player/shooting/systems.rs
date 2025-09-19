@@ -166,8 +166,7 @@ pub fn tick_player_weapon_timer(
     }
 }
 
-// TODO: Also despawn bullet if player hit
-pub fn detect_bullet_collision_with_player(
+pub fn detect_enemy_bullet_collision_with_player(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut collision_event_reader: EventReader<CollisionStarted>,
@@ -186,12 +185,13 @@ pub fn detect_bullet_collision_with_player(
             continue;
         }
 
-        let collided_entities_is_bullet = enemy_bullet_query
+        let Some(enemy_bullet) = enemy_bullet_query
             .iter()
-            .any(|bullet| bullet == *first_entity || bullet == *second_entity);
-        if !collided_entities_is_bullet {
+            .find(|bullet| bullet == first_entity || bullet == second_entity)
+        else {
             continue;
-        }
+        };
+        commands.entity(enemy_bullet).despawn();
 
         commands.spawn((
             ImageNode {
