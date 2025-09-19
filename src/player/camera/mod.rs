@@ -4,7 +4,9 @@ use crate::{
     game_flow::GameState,
     player::camera::{
         components::PlayerCamera,
-        systems::{camera_orbit_player, setup_player_camera},
+        systems::{
+            camera_orbit_player, player_walk_animation, setup_player_camera,
+        },
     },
 };
 
@@ -22,6 +24,7 @@ impl Plugin for PlayerCameraPlugin {
             (
                 camera_orbit_player.run_if(in_state(GameState::InGame)),
                 setup_player_camera,
+                player_walk_animation,
             ),
         )
         .register_type::<PlayerCamera>();

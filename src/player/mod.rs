@@ -14,15 +14,22 @@ mod movement;
 pub mod shooting;
 
 #[derive(Component, Reflect)]
-#[reflect(Component)]
+#[reflect(Component, Default)]
 pub struct Player {
-    #[reflect(default)]
+    // #[reflect(default)]
     pub health: f32,
+    // TODO: maybe move this to player camera component
+    pub current_walk_animation_step_index: usize,
+    pub walking: bool,
 }
 
 impl Default for Player {
     fn default() -> Self {
-        Player { health: 100.0 }
+        Player {
+            health: 100.0,
+            current_walk_animation_step_index: 0,
+            walking: true,
+        }
     }
 }
 

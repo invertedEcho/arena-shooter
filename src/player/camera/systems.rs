@@ -65,6 +65,8 @@ pub fn setup_player_camera(
                     loaded_ammo: 30,
                     carried_ammo: 99999999,
                     max_loaded_ammo: 30,
+                    moving_to_right: false,
+                    moving_to_bottom: true,
                 },
             ))
             .observe(apply_render_layers_to_children);
@@ -102,5 +104,48 @@ pub fn camera_orbit_player(
 
         // later, we can adjust pitch of player weapon so other players can also see if aiming to
         // sky or to bottom.
+    }
+}
+
+pub fn player_walk_animation(
+    player: Single<&Player>,
+    player_weapon_query: Query<(&mut Transform, &mut PlayerWeapon)>,
+    time: Res<Time>,
+) {
+    for (mut player_weapon_transform, mut player_weapon) in player_weapon_query
+    {
+        // TODO: i feel like this can be simplified completely because wew decrease/increase by
+        // exact same step always, and boundary is always set to 0.5
+        if player.walking {
+            if player_weapon.moving_to_right {
+                info!(
+                    "check coords here: {}",
+                    player_weapon_transform.translation.x
+                );
+                player_weapon_transform.translation.x +=
+                    0.2 * time.delta_secs();
+                if player_weapon_transform.translation.x >= 1.02 {
+                    player_weapon.moving_to_right = false;
+                }
+            } else {
+                player_weapon_transform.translation.x -=
+                    0.2 * time.delta_secs();
+                if player_weapon_transform.translation.x <= 0.98 {
+                    player_weapon.moving_to_right = true;
+                }
+            }
+
+            // if player_weapon_transform.translation.x == 1.0 {
+            //     player_weapon.moving_to_bottom =
+            //         !player_weapon.moving_to_bottom;
+            // }
+            // if player_weapon.moving_to_bottom {
+            //     player_weapon_transform.translation.y -=
+            //         0.2 * time.delta_secs();
+            // } else {
+            //     player_weapon_transform.translation.y +=
+            //         0.2 * time.delta_secs();
+            // }
+        }
     }
 }

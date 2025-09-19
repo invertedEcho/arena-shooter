@@ -205,8 +205,6 @@ pub fn detect_enemy_bullet_collision_with_player(
         ));
 
         player.health -= 10.0;
-        // FIXME: REMOVE ME
-        next_game_state.set(GameState::Death);
         if player.health <= 0.0 {
             next_game_state.set(GameState::Death);
         }

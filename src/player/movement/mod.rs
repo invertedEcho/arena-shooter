@@ -11,13 +11,13 @@ const PLAYER_RUN_SPEED: f32 = 5.0;
 
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    player: Single<(&mut LinearVelocity, &GroundDetection), With<Player>>,
+    player: Single<(&mut Player, &mut LinearVelocity, &GroundDetection)>,
     player_camera_transform: Single<
         &Transform,
         (With<PlayerCamera>, Without<Player>),
     >,
 ) {
-    let (mut velocity, ground_detection) = player.into_inner();
+    let (mut player, mut velocity, ground_detection) = player.into_inner();
 
     let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
         PLAYER_RUN_SPEED
@@ -47,4 +47,9 @@ pub fn player_movement(
     let world_velocity = player_camera_transform.rotation * local_velocity;
     velocity.x = world_velocity.x;
     velocity.z = world_velocity.z;
+    if local_velocity != Vec3::ZERO {
+        player.walking = true;
+    } else {
+        player.walking = false;
+    }
 }

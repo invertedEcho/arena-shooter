@@ -53,7 +53,7 @@ fn animate_enemy(
     for (entity, mut player) in players {
         let mut transitions = AnimationTransitions::new();
         transitions
-            .play(&mut player, animations.animations[23], Duration::ZERO)
+            .play(&mut player, animations.animations[0], Duration::ZERO)
             .repeat();
 
         commands

@@ -12,9 +12,6 @@ use crate::{
 pub mod components;
 mod systems;
 
-#[derive(Resource)]
-pub struct PlayerWeaponShootCooldownTimer(pub Timer);
-
 pub struct PlayerShootingPlugin;
 
 impl Plugin for PlayerShootingPlugin {
