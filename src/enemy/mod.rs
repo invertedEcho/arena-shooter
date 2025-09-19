@@ -5,18 +5,22 @@ use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
     common::{BULLET_VELOCITY, components::DespawnTimer},
-    enemy::spawn::EnemySpawnPlugin,
+    enemy::{animate::AnimateEnemyPlugin, spawn::EnemySpawnPlugin},
     game_flow::GameState,
     player::{Player, shooting::components::PlayerBullet},
 };
 
+mod animate;
 mod spawn;
+
+const SWAT_MODEL_PATH: &str = "models/animated/SWAT.glb";
 
 pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(EnemySpawnPlugin)
+            .add_plugins(AnimateEnemyPlugin)
             .register_type::<Enemy>()
             .register_type::<EnemySpawnLocation>()
             .insert_resource(CheckIfEnemyCanSeePlayerCooldownTimer(
@@ -28,7 +32,7 @@ impl Plugin for EnemyPlugin {
                     check_if_enemy_can_see_player_and_look_at_player,
                     tick_enemy_can_see_player_cooldown_timer,
                     enemy_shoot_player,
-                    handle_enemy_shoot_player_cooldown_timer,
+                    tick_enemy_shoot_player_cooldown_timer,
                     detect_player_bullet_collision_with_enemy,
                 )
                     .run_if(in_state(GameState::InGame)),
@@ -101,10 +105,12 @@ fn tick_enemy_can_see_player_cooldown_timer(
     timer.0.tick(time.delta());
 }
 
-// TODO: should probably be two systems
 fn check_if_enemy_can_see_player_and_look_at_player(
     spatial_query: SpatialQuery,
-    enemy_query: Query<(&mut Enemy, Entity, &mut Transform), Without<Player>>,
+    enemy_query: Query<
+        (&mut Enemy, Entity, &mut Transform),
+        (Without<Player>, With<Enemy>),
+    >,
     player_query: Single<(Entity, &Transform), With<Player>>,
     timer: Res<CheckIfEnemyCanSeePlayerCooldownTimer>,
 ) {
@@ -127,7 +133,7 @@ fn check_if_enemy_can_see_player_and_look_at_player(
             let direction = Dir3::new(vector_not_normalized).unwrap();
 
             let max_distance = 20.0;
-            let solid = true;
+            let solid = false;
 
             // raycast shouldnt hit enemy itself
             let filter = SpatialQueryFilter::default()
@@ -141,10 +147,19 @@ fn check_if_enemy_can_see_player_and_look_at_player(
                 &filter,
             ) {
                 if first_hit.entity == player_entity {
+                    // info!(
+                    //     "Enemy {} can see player, changing state to attack and looking at player!",
+                    //     enemy_entity
+                    // );
                     enemy.state = EnemyState::AttackPlayer;
                     enemy_transform
                         .look_at(player_transform.translation, Dir3::Y);
                 } else {
+                    // info!(
+                    //     "first hit was not player, but something else: {} own id: {}",
+                    //     first_hit.entity, enemy_entity
+                    // );
+
                     enemy.state = EnemyState::SearchForPlayer;
                 }
             }
@@ -154,17 +169,13 @@ fn check_if_enemy_can_see_player_and_look_at_player(
 
 fn enemy_shoot_player(
     mut commands: Commands,
-    enemy_query: Query<(&Enemy, &Transform)>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    // TODO: This will break if multiple enemies exist... great, what a good system..
-    enemy_can_shoot_player_cooldown_timer: Query<
-        &EnemyShootPlayerCooldownTimer,
-    >,
+    enemy_query: Query<(&Enemy, &Transform, &EnemyShootPlayerCooldownTimer)>,
 ) {
-    for (enemy, enemy_transform) in enemy_query {
+    for (enemy, enemy_transform, enemy_shoot_player_cooldown_timer) in
+        enemy_query
+    {
         if enemy.state == EnemyState::AttackPlayer
-            && enemy_can_shoot_player_cooldown_timer.iter().len() == 0
+            && enemy_shoot_player_cooldown_timer.0.finished()
         {
             let local_bullet_velocity = Vec3 {
                 z: BULLET_VELOCITY.neg(),
@@ -185,35 +196,20 @@ fn enemy_shoot_player(
                 },
                 Collider::cuboid(0.1, 0.1, 0.1),
                 Sensor,
-                Mesh3d(meshes.add(Cuboid {
-                    half_size: Vec3::splat(0.05),
-                })),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: RED.into(),
-                    ..Default::default()
-                })),
                 LinearVelocity(world_bullet_velocity),
                 RigidBody::Kinematic,
                 DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
                 EnemyBullet,
             ));
-            commands.spawn(EnemyShootPlayerCooldownTimer(Timer::from_seconds(
-                1.5,
-                TimerMode::Once,
-            )));
         }
     }
 }
 
-fn handle_enemy_shoot_player_cooldown_timer(
-    mut commands: Commands,
-    timer_query: Query<(Entity, &mut EnemyShootPlayerCooldownTimer)>,
+fn tick_enemy_shoot_player_cooldown_timer(
+    timer_query: Query<&mut EnemyShootPlayerCooldownTimer>,
     time: Res<Time>,
 ) {
-    for (entity, mut timer) in timer_query {
+    for mut timer in timer_query {
         timer.0.tick(time.delta());
-        if timer.0.just_finished() {
-            commands.entity(entity).despawn();
-        }
     }
 }

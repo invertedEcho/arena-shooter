@@ -21,9 +21,10 @@ mod user_interface;
 pub mod utils;
 mod world;
 
-/// Feature list:
+/// todo list:
 /// - Should be able to jump on top of box even if standing very close to box -> friction probably
 /// - weapon should "swing", so it looks more like walking. if running, swing faster.
+/// - maybe we can tick all timers in one system? is that a good idea?
 
 fn main() {
     let mut app = App::new();

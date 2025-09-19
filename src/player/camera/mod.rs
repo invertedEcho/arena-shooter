@@ -11,7 +11,7 @@ use crate::{
 pub mod components;
 mod systems;
 
-pub const PLAYER_CAMERA_Y_OFFSET: f32 = 0.3;
+pub const PLAYER_CAMERA_Y_OFFSET: f32 = 0.4;
 
 pub struct PlayerCameraPlugin;
 
