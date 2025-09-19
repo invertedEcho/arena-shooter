@@ -133,7 +133,7 @@ fn check_if_enemy_can_see_player_and_look_at_player(
             };
             let direction = Dir3::new(vector_not_normalized).unwrap();
 
-            let max_distance = 20.0;
+            let max_distance = 1000.0;
             let solid = false;
 
             // raycast shouldnt hit enemy itself

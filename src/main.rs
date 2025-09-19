@@ -16,9 +16,9 @@ mod enemy;
 mod game_flow;
 mod ground_detection;
 mod particles;
-pub mod player;
+mod player;
 mod user_interface;
-pub mod utils;
+mod utils;
 mod world;
 
 /// todo list:

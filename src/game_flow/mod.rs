@@ -2,13 +2,15 @@ use bevy::prelude::*;
 
 use crate::game_flow::systems::{free_mouse, grab_mouse};
 
-mod systems;
+pub mod systems;
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
+#[states(scoped_entities)]
 pub enum GameState {
     #[default]
     InGame,
     Paused,
+    Death,
 }
 
 pub struct GameFlowPlugin;

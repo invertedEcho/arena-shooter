@@ -18,8 +18,7 @@
 				297,
 				298,
 				299,
-				300,
-				301
+				300
 			]
 		}
 	],
@@ -6342,9 +6341,9 @@
 			"mesh":294,
 			"name":"Player",
 			"translation":[
-				1.3796398639678955,
+				6.864091873168945,
 				1,
-				0.12288770079612732
+				6.1716814041137695
 			]
 		},
 		{
@@ -6405,15 +6404,6 @@
 				-7.863809108734131,
 				1.0047128200531006,
 				3.5504167079925537
-			]
-		},
-		{
-			"mesh":295,
-			"name":"Text",
-			"translation":[
-				-0.25583910942077637,
-				4.005413055419922,
-				-0.14033013582229614
 			]
 		}
 	],
@@ -12387,19 +12377,6 @@
 						"TEXCOORD_0":1306
 					},
 					"indices":3
-				}
-			]
-		},
-		{
-			"name":"Text",
-			"primitives":[
-				{
-					"attributes":{
-						"POSITION":1307,
-						"NORMAL":1308,
-						"TEXCOORD_0":1309
-					},
-					"indices":1310
 				}
 			]
 		}
@@ -23926,40 +23903,6 @@
 			"componentType":5126,
 			"count":24,
 			"type":"VEC2"
-		},
-		{
-			"bufferView":1307,
-			"componentType":5126,
-			"count":177,
-			"max":[
-				1.915000081062317,
-				0,
-				0.009000000543892384
-			],
-			"min":[
-				0.017000000923871994,
-				0,
-				-0.6820000410079956
-			],
-			"type":"VEC3"
-		},
-		{
-			"bufferView":1308,
-			"componentType":5126,
-			"count":177,
-			"type":"VEC3"
-		},
-		{
-			"bufferView":1309,
-			"componentType":5126,
-			"count":177,
-			"type":"VEC2"
-		},
-		{
-			"bufferView":1310,
-			"componentType":5123,
-			"count":513,
-			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
@@ -31804,35 +31747,11 @@
 			"byteLength":192,
 			"byteOffset":27766540,
 			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":2124,
-			"byteOffset":27766732,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":2124,
-			"byteOffset":27768856,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":1416,
-			"byteOffset":27770980,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":1026,
-			"byteOffset":27772396,
-			"target":34963
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":27773424,
+			"byteLength":27766732,
 			"uri":"main.bin"
 		}
 	]

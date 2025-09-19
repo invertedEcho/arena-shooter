@@ -15,9 +15,7 @@ impl Plugin for CommonUiPlugin {
 }
 
 #[derive(Component)]
-pub struct CommonUiButton {
-    pub common_ui_button_type: CommonUiButtonType,
-}
+pub struct CommonUiButton(pub CommonUiButtonType);
 
 pub enum CommonUiButtonType {
     Quit,
@@ -31,7 +29,7 @@ fn handle_common_ui_button_interaction(
         let Interaction::Pressed = interaction else {
             continue;
         };
-        match common_ui_button.common_ui_button_type {
+        match common_ui_button.0 {
             CommonUiButtonType::Quit => {
                 app_exit_event_writer.write(AppExit::Success);
             }

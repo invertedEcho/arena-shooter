@@ -10,7 +10,6 @@ pub struct PauseMenuPlugin;
 impl Plugin for PauseMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Paused), spawn_pause_menu)
-            .add_systems(OnExit(GameState::Paused), despawn_pause_menu)
             .add_systems(
                 Update,
                 (handle_pause_menu_button_pressed)
@@ -23,9 +22,7 @@ impl Plugin for PauseMenuPlugin {
 pub struct PauseMenuRoot;
 
 #[derive(Component)]
-pub struct PauseMenuButton {
-    pub pause_menu_button_type: PauseMenuButtonType,
-}
+pub struct PauseMenuButton(PauseMenuButtonType);
 
 pub enum PauseMenuButtonType {
     Resume,
@@ -43,16 +40,25 @@ fn spawn_pause_menu(mut commands: Commands) {
                 ..default()
             },
             PauseMenuRoot,
+            StateScoped(GameState::Paused),
         ))
         .with_children(|parent| {
-            parent.spawn(Text::new("Paused"));
+            parent
+                .spawn(Node {
+                    padding: UiRect::new(
+                        Val::ZERO,
+                        Val::ZERO,
+                        Val::ZERO,
+                        Val::Px(16.0),
+                    ),
+                    ..default()
+                })
+                .with_child(Text::new("Paused"));
             parent
                 .spawn((
                     Node { ..default() },
                     Button,
-                    PauseMenuButton {
-                        pause_menu_button_type: PauseMenuButtonType::Resume,
-                    },
+                    PauseMenuButton(PauseMenuButtonType::Resume),
                     TextColor::WHITE,
                 ))
                 .with_child(Text::new("Resume"));
@@ -60,20 +66,11 @@ fn spawn_pause_menu(mut commands: Commands) {
                 .spawn((
                     Node { ..default() },
                     Button,
-                    CommonUiButton {
-                        common_ui_button_type: CommonUiButtonType::Quit,
-                    },
+                    CommonUiButton(CommonUiButtonType::Quit),
                     TextColor::WHITE,
                 ))
                 .with_child(Text::new("Quit"));
         });
-}
-
-fn despawn_pause_menu(
-    mut commands: Commands,
-    pause_menu_entity: Single<Entity, With<PauseMenuRoot>>,
-) {
-    commands.entity(*pause_menu_entity).despawn();
 }
 
 fn handle_pause_menu_button_pressed(
@@ -84,7 +81,7 @@ fn handle_pause_menu_button_pressed(
         let Interaction::Pressed = interaction else {
             continue;
         };
-        match pause_menu_button.pause_menu_button_type {
+        match pause_menu_button.0 {
             PauseMenuButtonType::Resume => {
                 next_game_state.set(GameState::InGame)
             }
