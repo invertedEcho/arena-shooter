@@ -1,6 +1,12 @@
 use bevy::prelude::*;
 
-use crate::player::{Player, shooting::components::PlayerWeapon};
+use crate::{
+    game_flow::GameState,
+    player::{Player, shooting::components::PlayerWeapon},
+};
+
+const WHITE_CROSSHAIR_PATH: &str =
+    "kenney_crosshair-pack/PNG/White/crosshair086.png";
 
 #[derive(Component)]
 struct PlayerHealthText;
@@ -17,32 +23,26 @@ impl Plugin for PlayerHudPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (
-                update_player_health_text,
-                spawn_player_hud,
-                update_player_ammo_text,
-            ),
-        );
+            (update_player_health_text, update_player_ammo_text),
+        )
+        .add_systems(OnEnter(GameState::InGame), spawn_player_hud);
     }
 }
 
-fn spawn_player_hud(
-    mut commands: Commands,
-    player: Single<&Player, Added<Player>>,
-    player_weapon: Single<&PlayerWeapon, Added<PlayerWeapon>>,
-) {
-    let _ = player_weapon;
+fn spawn_player_hud(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands
-        .spawn(Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            flex_direction: FlexDirection::Row,
-            justify_content: JustifyContent::SpaceBetween,
-            align_items: AlignItems::End,
-            // column_gap: Val::Px(16.0),
-            padding: UiRect::all(Val::Px(16.0)),
-            ..default()
-        })
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::End,
+                padding: UiRect::all(Val::Px(16.0)),
+                ..default()
+            },
+            StateScoped(GameState::InGame),
+        ))
         .with_children(|parent| {
             parent
                 .spawn(Node {
@@ -51,10 +51,7 @@ fn spawn_player_hud(
                 })
                 .with_children(|parent| {
                     parent.spawn(Text::new("HP"));
-                    parent.spawn((
-                        Text::new(player.health.to_string()),
-                        PlayerHealthText,
-                    ));
+                    parent.spawn((Text::new(""), PlayerHealthText));
                 });
             parent
                 .spawn(Node {
@@ -62,17 +59,23 @@ fn spawn_player_hud(
                     ..default()
                 })
                 .with_children(|parent| {
-                    parent.spawn((
-                        Text::new(player_weapon.loaded_ammo.to_string()),
-                        PlayerLoadedAmmoText,
-                    ));
+                    parent.spawn((Text::new(""), PlayerLoadedAmmoText));
                     parent.spawn(Text::new("/"));
-                    parent.spawn((
-                        Text::new(player_weapon.carried_ammo.to_string()),
-                        PlayerCarriedAmmoText,
-                    ));
+                    parent.spawn((Text::new(""), PlayerCarriedAmmoText));
                 });
         });
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            StateScoped(GameState::InGame),
+        ))
+        .with_child(ImageNode::new(asset_server.load(WHITE_CROSSHAIR_PATH)));
 }
 
 fn update_player_health_text(
