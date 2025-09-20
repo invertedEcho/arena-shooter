@@ -118,10 +118,10 @@ pub fn player_walk_animation(
         // exact same step always, and boundary is always set to 0.5
         if player.walking {
             if player_weapon.moving_to_right {
-                info!(
-                    "check coords here: {}",
-                    player_weapon_transform.translation.x
-                );
+                // info!(
+                //     "check coords here: {}",
+                //     player_weapon_transform.translation.x
+                // );
                 player_weapon_transform.translation.x +=
                     0.2 * time.delta_secs();
                 if player_weapon_transform.translation.x >= 1.02 {
