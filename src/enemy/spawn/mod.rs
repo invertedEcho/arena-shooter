@@ -61,7 +61,10 @@ fn random_spawn_enemies(
                 Transform::from_translation(
                     added_enemy_spawn_location.translation,
                 ),
-                Enemy::default(),
+                Enemy {
+                    health: 100.0,
+                    ..default()
+                },
                 RigidBody::Static,
                 Collider::cuboid(0.3, 1.7, 0.3),
                 AngularVelocity::ZERO,
