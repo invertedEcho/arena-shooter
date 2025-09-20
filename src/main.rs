@@ -41,7 +41,7 @@ fn main() {
                 primary_window: Some(Window {
                     title: "fun-shooter".into(),
                     name: Some("fun-shooter".into()),
-                    present_mode: PresentMode::AutoVsync,
+                    present_mode: PresentMode::AutoNoVsync,
                     ..default()
                 }),
                 ..default()

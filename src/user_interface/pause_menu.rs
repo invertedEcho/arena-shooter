@@ -66,6 +66,13 @@ fn spawn_pause_menu(mut commands: Commands) {
                 .spawn((
                     Node { ..default() },
                     Button,
+                    CommonUiButton(CommonUiButtonType::Settings),
+                ))
+                .with_child(Text::new("Settings"));
+            parent
+                .spawn((
+                    Node { ..default() },
+                    Button,
                     CommonUiButton(CommonUiButtonType::Quit),
                     TextColor::WHITE,
                 ))

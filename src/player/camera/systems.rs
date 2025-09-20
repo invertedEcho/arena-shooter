@@ -38,6 +38,10 @@ pub fn setup_player_camera(
         parent.spawn((
             Camera3d::default(),
             PlayerCamera::default(),
+            Projection::from(PerspectiveProjection {
+                fov: 80.0_f32.to_radians(),
+                ..default()
+            }),
             Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
         ));
 

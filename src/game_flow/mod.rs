@@ -11,6 +11,7 @@ pub enum GameState {
     InGame,
     Paused,
     Death,
+    Settings,
 }
 
 pub struct GameFlowPlugin;
@@ -30,10 +31,17 @@ fn handle_escape(
     mut next_game_state: ResMut<NextState<GameState>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
-        if *current_game_state == GameState::InGame {
-            next_game_state.set(GameState::Paused);
-        } else if *current_game_state == GameState::Paused {
-            next_game_state.set(GameState::InGame);
+        match *current_game_state.get() {
+            GameState::InGame => {
+                next_game_state.set(GameState::Paused);
+            }
+            GameState::Paused => {
+                next_game_state.set(GameState::InGame);
+            }
+            GameState::Settings => {
+                next_game_state.set(GameState::Paused);
+            }
+            GameState::Death => {}
         }
     }
 }

@@ -7,9 +7,9 @@ use crate::enemy::{Enemy, EnemyState, SWAT_MODEL_PATH};
 const TOTAL_ENEMY_MODEL_ANIMATIONS: usize = 24;
 // https://poly.pizza/m/Btfn3G5Xv4 index is equal to list option select thing on preview
 const _ENEMY_DEATH_ANIMATION: usize = 0;
-const ENEMY_GUN_SHOOT_ANIMATION: usize = 1;
+const _ENEMY_GUN_SHOOT_ANIMATION: usize = 1;
 const ENEMY_HIT_RECEIVE_ANIMATION: usize = 2;
-const ENEMY_IDLE_ANIMATION: usize = 4;
+const _ENEMY_IDLE_ANIMATION: usize = 4;
 const ENEMY_IDLE_GUN_ANIMATION: usize = 5;
 const ENEMY_IDLE_GUN_POINTING_ANIMATION: usize = 6;
 
@@ -71,7 +71,7 @@ fn setup_enemy_animation(
             .play(
                 &mut player,
                 enemy_animations.animation_node_indices
-                    [ENEMY_HIT_RECEIVE_ANIMATION],
+                    [ENEMY_IDLE_GUN_ANIMATION],
                 Duration::ZERO,
             )
             .repeat();
@@ -97,7 +97,6 @@ fn link_enemy_animation(
     childof: Query<&ChildOf>,
 ) {
     for animation_player_entity in &animation_player_entities {
-        // walk ancestors until you find an Enemy
         for ancestor in childof.iter_ancestors(animation_player_entity) {
             if enemies.get(ancestor).is_ok() {
                 // ancestor == enemy
