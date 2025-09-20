@@ -1,7 +1,8 @@
 use crate::{
     common::systems::apply_render_layers_to_children,
     player::{
-        camera::PLAYER_CAMERA_Y_OFFSET, shooting::components::PlayerWeapon,
+        PlayerState, camera::PLAYER_CAMERA_Y_OFFSET,
+        shooting::components::PlayerWeapon,
     },
 };
 use std::f32::consts::{FRAC_PI_2, PI};
@@ -118,31 +119,30 @@ pub fn player_walk_animation(
 ) {
     for (mut player_weapon_transform, mut player_weapon) in player_weapon_query
     {
-        // TODO: i feel like this can be simplified completely because wew decrease/increase by
+        // TODO: i feel like this can be simplified completely because we decrease/increase by
         // exact same step always, and boundary is always set to 0.5
-        if player.walking {
+        if player.state != PlayerState::Idle {
+            let factor = if player.state == PlayerState::Walking {
+                0.1
+            } else {
+                0.2
+            };
+
             if player_weapon.moving_to_right {
-                // info!(
-                //     "check coords here: {}",
-                //     player_weapon_transform.translation.x
-                // );
                 player_weapon_transform.translation.x +=
-                    0.2 * time.delta_secs();
+                    factor * time.delta_secs();
                 if player_weapon_transform.translation.x >= 1.02 {
                     player_weapon.moving_to_right = false;
                 }
             } else {
                 player_weapon_transform.translation.x -=
-                    0.2 * time.delta_secs();
+                    factor * time.delta_secs();
                 if player_weapon_transform.translation.x <= 0.98 {
                     player_weapon.moving_to_right = true;
                 }
             }
 
-            // if player_weapon_transform.translation.x == 1.0 {
-            //     player_weapon.moving_to_bottom =
-            //         !player_weapon.moving_to_bottom;
-            // }
+            // TODO: move weapon up and down, like `f(x) = x^2`, e.g. at middle stop moving up/down
             // if player_weapon.moving_to_bottom {
             //     player_weapon_transform.translation.y -=
             //         0.2 * time.delta_secs();

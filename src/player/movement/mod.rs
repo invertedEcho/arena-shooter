@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 use crate::{
     ground_detection::components::GroundDetection,
-    player::{Player, camera::components::PlayerCamera},
+    player::{Player, PlayerState, camera::components::PlayerCamera},
 };
 
 const PLAYER_WALK_SPEED: f32 = 2.0;
@@ -41,15 +41,18 @@ pub fn player_movement(
     }
     if keyboard_input.just_pressed(KeyCode::Space) && ground_detection.on_ground
     {
-        velocity.y = 4.0;
+        velocity.y = 3.0;
     }
 
     let world_velocity = player_camera_transform.rotation * local_velocity;
     velocity.x = world_velocity.x;
     velocity.z = world_velocity.z;
-    if local_velocity != Vec3::ZERO {
-        player.walking = true;
+
+    if speed == PLAYER_RUN_SPEED {
+        player.state = PlayerState::Running;
+    } else if local_velocity != Vec3::ZERO {
+        player.state = PlayerState::Walking;
     } else {
-        player.walking = false;
+        player.state = PlayerState::Idle;
     }
 }

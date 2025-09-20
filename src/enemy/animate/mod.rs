@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use bevy::{animation::AnimationTarget, prelude::*};
+use bevy::prelude::*;
 
 use crate::enemy::{Enemy, EnemyState, SWAT_MODEL_PATH};
 
@@ -8,7 +8,7 @@ const TOTAL_ENEMY_MODEL_ANIMATIONS: usize = 24;
 // https://poly.pizza/m/Btfn3G5Xv4 index is equal to list option select thing on preview
 const _ENEMY_DEATH_ANIMATION: usize = 0;
 const _ENEMY_GUN_SHOOT_ANIMATION: usize = 1;
-const ENEMY_HIT_RECEIVE_ANIMATION: usize = 2;
+const _ENEMY_HIT_RECEIVE_ANIMATION: usize = 2;
 const _ENEMY_IDLE_ANIMATION: usize = 4;
 const ENEMY_IDLE_GUN_ANIMATION: usize = 5;
 const ENEMY_IDLE_GUN_POINTING_ANIMATION: usize = 6;
