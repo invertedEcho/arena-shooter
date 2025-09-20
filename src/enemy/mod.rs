@@ -148,20 +148,15 @@ fn check_if_enemy_can_see_player_and_look_at_player(
                 &filter,
             ) {
                 if first_hit.entity == player_entity {
-                    // info!(
-                    //     "Enemy {} can see player, changing state to attack and looking at player!",
-                    //     enemy_entity
-                    // );
-                    enemy.state = EnemyState::AttackPlayer;
+                    if enemy.state != EnemyState::AttackPlayer {
+                        enemy.state = EnemyState::AttackPlayer;
+                    }
                     enemy_transform
                         .look_at(player_transform.translation, Dir3::Y);
                 } else {
-                    // info!(
-                    //     "first hit was not player, but something else: {} own id: {}",
-                    //     first_hit.entity, enemy_entity
-                    // );
-
-                    enemy.state = EnemyState::SearchForPlayer;
+                    if enemy.state != EnemyState::SearchForPlayer {
+                        enemy.state = EnemyState::SearchForPlayer;
+                    }
                 }
             }
         }

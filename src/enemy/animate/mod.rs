@@ -5,7 +5,13 @@ use bevy::{animation::AnimationTarget, prelude::*};
 use crate::enemy::{Enemy, EnemyState, SWAT_MODEL_PATH};
 
 const TOTAL_ENEMY_MODEL_ANIMATIONS: usize = 24;
-const IDLE_ANIMATION: usize = 2;
+// https://poly.pizza/m/Btfn3G5Xv4 index is equal to list option select thing on preview
+const _ENEMY_DEATH_ANIMATION: usize = 0;
+const ENEMY_GUN_SHOOT_ANIMATION: usize = 1;
+const ENEMY_HIT_RECEIVE_ANIMATION: usize = 2;
+const ENEMY_IDLE_ANIMATION: usize = 4;
+const ENEMY_IDLE_GUN_ANIMATION: usize = 5;
+const ENEMY_IDLE_GUN_POINTING_ANIMATION: usize = 6;
 
 #[derive(Resource)]
 struct EnemyAnimations {
@@ -54,18 +60,18 @@ fn setup_enemy_animation(
     mut commands: Commands,
     enemy_animations: Res<EnemyAnimations>,
     animation_players: Query<
-        (Entity, &mut AnimationPlayer, &AnimationTarget, &Children),
+        (Entity, &mut AnimationPlayer),
         Added<AnimationPlayer>,
     >,
 ) {
-    for (entity, mut player, animation_target, children) in animation_players {
-        info!("animation_target: {:?}", animation_target.player);
-        info!("children: {:?}", children);
+    for (entity, mut player) in animation_players {
+        info!("setting up enemy animation");
         let mut transitions = AnimationTransitions::new();
         transitions
             .play(
                 &mut player,
-                enemy_animations.animation_node_indices[IDLE_ANIMATION],
+                enemy_animations.animation_node_indices
+                    [ENEMY_HIT_RECEIVE_ANIMATION],
                 Duration::ZERO,
             )
             .repeat();
@@ -79,93 +85,69 @@ fn setup_enemy_animation(
     }
 }
 
-// goal:
-// query changed enemies.
-// get animation player and animation transitions of that changed enemies
-//
-// problems right now:
-// we only have changed enemies, and animation player and animationtransitions, but no idea what
-// belongs to what
-//
+/// To be inserted into an Enemy entity, pointing to the Entity of the AnimationPlayer and
+/// AnimationTransitions.
+#[derive(Component)]
+struct AnimationPlayerEntityPointer(pub Entity);
 
 fn link_enemy_animation(
     mut commands: Commands,
-    // Query newly added AnimationPlayers
-    players: Query<Entity, Added<AnimationPlayer>>,
-    // Relationship querying: ancestors
+    animation_player_entities: Query<Entity, Added<AnimationPlayer>>,
     enemies: Query<Entity, With<Enemy>>,
     childof: Query<&ChildOf>,
 ) {
-    for animation_player_entity in &players {
+    for animation_player_entity in &animation_player_entities {
         // walk ancestors until you find an Enemy
         for ancestor in childof.iter_ancestors(animation_player_entity) {
             if enemies.get(ancestor).is_ok() {
-                info!("found enemy component from animation player!");
-                // Found the Enemy root
-                // Insert EnemyAnimation on the root pointing to this player entity
-                // commands.entity(ancestor).insert(EnemyAnimation(player_ent));
-                // break;
+                // ancestor == enemy
+                commands
+                    .entity(ancestor)
+                    .insert(AnimationPlayerEntityPointer(
+                        animation_player_entity,
+                    ));
+                break;
             }
         }
     }
 }
 
 fn update_enemy_animation_on_state_changed(
-    enemies: Query<Entity, With<Enemy>>,
-    children_of_enemies: Query<&Children, With<Enemy>>,
-    // mut commands: Commands,
-    // animations: Res<EnemyAnimations>,
-    // changed_enemies: Query<(&Enemy, &Children, Entity), Changed<Enemy>>,
+    animations: Res<EnemyAnimations>,
+    changed_enemies: Query<
+        (&Enemy, &AnimationPlayerEntityPointer),
+        Changed<Enemy>,
+    >,
     mut animation_players_and_animation_transitions: Query<(
         Entity,
         &mut AnimationPlayer,
         &mut AnimationTransitions,
     )>,
-    // res: Query<&AnimationPlayer>,
 ) {
-    // for enemy_entity in enemies {
-    //     info!("enemy entity: {}", enemy_entity);
-    //     if let Ok(children) = children_of_enemies.get(enemy_entity) {
-    //         for child in children.iter() {
-    //             info!("child entity of enemy: {}", child);
-    //         }
-    //     }
-    // }
-    // for (entity, animation_player, animation_transitions) in
-    //     animation_players_and_animation_transitions
-    // {
-    //     info!("animation player and transition entity: {}", entity);
-    // }
+    for (enemy, animation_player_entity_pointer) in changed_enemies {
+        let Some(res) =
+            animation_players_and_animation_transitions.iter_mut().find(
+                |(entity, _, _)| *entity == animation_player_entity_pointer.0,
+            )
+        else {
+            warn!(
+                "could not find animation player and transitions for changed enemy!"
+            );
+            continue;
+        };
 
-    // for (enemy, children, entity) in changed_enemies {
-    //     info!("found enemy changed that has children");
-    //     for child in children {
-    //         commands.entity(*child).log_components();
-    //         match animation_players_and_animation_transitions.get_mut(*child) {
-    //             Ok(res) => {
-    //                 info!("found");
-    //             }
-    //             Err(error) => {
-    //                 error!("{}", error)
-    //             }
-    //         }
-    //         if let Ok((mut animation_player, mut transitions)) =
-    //             animation_players_and_animation_transitions.get_mut(*child)
-    //         {
-    //             let new_animation_index = match enemy.state {
-    //                 EnemyState::AttackPlayer => 3,
-    //                 _ => IDLE_ANIMATION,
-    //             };
-    //             transitions
-    //                 .play(
-    //                     &mut animation_player,
-    //                     animations.animation_node_indices[new_animation_index],
-    //                     Duration::from_millis(250),
-    //                 )
-    //                 .repeat();
-    //         } else {
-    //             info!("couldnt find");
-    //         }
-    //     }
-    // }
+        let (_, mut animation_player, mut animation_transitions) = res;
+
+        let new_animation_index = match enemy.state {
+            EnemyState::AttackPlayer => ENEMY_IDLE_GUN_POINTING_ANIMATION,
+            _ => ENEMY_IDLE_GUN_ANIMATION,
+        };
+        animation_transitions
+            .play(
+                &mut animation_player,
+                animations.animation_node_indices[new_animation_index],
+                Duration::from_millis(250),
+            )
+            .repeat();
+    }
 }
