@@ -5,22 +5,24 @@ use bevy::prelude::*;
 
 use crate::{
     common::{BULLET_VELOCITY, components::DespawnTimer},
-    enemy::EnemyBullet,
+    enemy::{Enemy, EnemyBullet},
     game_flow::GameState,
     particles::SpawnBulletImpactEffectEvent,
     player::{
         Player,
         camera::components::PlayerCamera,
-        shooting::components::{
-            BloodScreenEffect, MuzzleFlash, PlayerBullet, PlayerWeapon,
-            PlayerWeaponShootCooldownTimer,
+        shooting::{
+            components::{
+                BloodScreenEffect, MuzzleFlash, PlayerBullet, PlayerWeapon,
+                PlayerWeaponShootCooldownTimer,
+            },
+            events::PlayerWeaponFiredEvent,
         },
     },
     utils::random::get_random_number_from_range_i32,
 };
 
-// TODO: refactor me ): plsss
-pub fn basic_shooting(
+pub fn player_shooting(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mouse_input: Res<ButtonInput<MouseButton>>,
@@ -28,18 +30,11 @@ pub fn basic_shooting(
         &GlobalTransform,
         (With<PlayerCamera>, Without<Player>),
     >,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
     player_weapon_shoot_cooldown_timer_query: Query<
         &PlayerWeaponShootCooldownTimer,
     >,
     mut player_weapon: Single<&mut PlayerWeapon>,
-    player_camera_entity: Single<Entity, With<PlayerCamera>>,
-    spatial_query: SpatialQuery,
-    player_query: Single<(Entity, &Transform), With<Player>>,
-    mut bullet_effect_spawn_event_writer: EventWriter<
-        SpawnBulletImpactEffectEvent,
-    >,
+    mut player_shot_event_writer: EventWriter<PlayerWeaponFiredEvent>,
 ) {
     if !mouse_input.pressed(MouseButton::Left) {
         return;
@@ -60,36 +55,7 @@ pub fn basic_shooting(
         TimerMode::Once,
     )));
 
-    let random_rotation_angle = get_random_number_from_range_i32(0, 5);
-    commands.entity(*player_camera_entity).with_child((
-        Transform {
-            translation: Vec3 {
-                x: 0.3,
-                y: -0.1,
-                z: -1.0,
-            },
-            rotation: Quat::from_axis_angle(
-                Vec3::Z,
-                random_rotation_angle as f32,
-            ),
-            ..default()
-        },
-        MuzzleFlash,
-        Mesh3d(meshes.add(Plane3d {
-            half_size: Vec2::splat(0.1),
-            normal: Dir3::Z,
-            ..default()
-        })),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color_texture: Some(
-                asset_server.load("muzzle_flash_cropped.png"),
-            ),
-            alpha_mode: AlphaMode::Blend,
-            unlit: true,
-            ..default()
-        })),
-        DespawnTimer(Timer::from_seconds(0.05, TimerMode::Once)),
-    ));
+    player_shot_event_writer.write(PlayerWeaponFiredEvent);
 
     let audio = asset_server
         .load("weapons/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 Single MP3.mp3");
@@ -108,6 +74,7 @@ pub fn basic_shooting(
         player_camera_global_transform.translation();
 
     commands.spawn((
+        PlayerBullet { damage: 15.0 },
         Transform {
             translation: Vec3 {
                 x: player_camera_global_transform_translation.x,
@@ -121,37 +88,8 @@ pub fn basic_shooting(
         LinearVelocity(world_bullet_velocity),
         RigidBody::Kinematic,
         DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
-        PlayerBullet { damage: 20.0 },
         CollisionEventsEnabled,
     ));
-
-    let (player_entity, player_transform) = *player_query;
-
-    // cast a ray in direction player is shooting, to check if there is a wall or ground, and get
-    // accurate location to know where to spawn the bullet impact effect
-
-    //  ray-cast settings
-    let origin = player_transform.translation;
-    let direction = player_camera_global_transform.forward();
-    let max_distance = 100.0;
-    let solid = true;
-    let filter =
-        SpatialQueryFilter::default().with_excluded_entities([player_entity]);
-
-    if let Some(first_hit) =
-        spatial_query.cast_ray(origin, direction, max_distance, solid, &filter)
-    {
-        let hit_point = origin + direction * first_hit.distance;
-
-        bullet_effect_spawn_event_writer.write(SpawnBulletImpactEffectEvent {
-            spawn_location: hit_point,
-        });
-    }
-
-    // let perpendicular_point_to_player = player_camera_global_transform
-    //     .forward()
-    //     .cross(Vec3::Y)
-    //     .normalize();
 }
 
 pub fn tick_player_weapon_timer(
@@ -264,5 +202,96 @@ pub fn reload_player_weapon(
     } else {
         player_weapon.loaded_ammo = player_weapon.carried_ammo;
         player_weapon.carried_ammo = 0;
+    }
+}
+
+pub fn spawn_muzzle_flash(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut player_shot_event_reader: EventReader<PlayerWeaponFiredEvent>,
+    player_camera_entity: Single<Entity, With<PlayerCamera>>,
+) {
+    for _ in player_shot_event_reader.read() {
+        let random_rotation_angle = get_random_number_from_range_i32(0, 5);
+        commands.entity(*player_camera_entity).with_child((
+            Transform {
+                translation: Vec3 {
+                    x: 0.3,
+                    y: -0.1,
+                    z: -1.0,
+                },
+                rotation: Quat::from_axis_angle(
+                    Vec3::Z,
+                    random_rotation_angle as f32,
+                ),
+                ..default()
+            },
+            MuzzleFlash,
+            Mesh3d(meshes.add(Plane3d {
+                half_size: Vec2::splat(0.1),
+                normal: Dir3::Z,
+                ..default()
+            })),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color_texture: Some(
+                    asset_server.load("muzzle_flash_cropped.png"),
+                ),
+                alpha_mode: AlphaMode::Blend,
+                unlit: true,
+                ..default()
+            })),
+            DespawnTimer(Timer::from_seconds(0.05, TimerMode::Once)),
+        ));
+    }
+}
+
+/// cast a ray in direction player is shooting, to check if there is a wall or ground, and get
+/// accurate location to know where to spawn the bullet impact effect
+/// just checking for collision events doesnt work, as we would only get the center transform of the
+/// collided entity, which may be very inaccurate, as the object may be large
+pub fn accurate_check_bullet_collision_for_impact_particle(
+    spatial_query: SpatialQuery,
+    player_query: Single<(Entity, &Transform), With<Player>>,
+    mut bullet_effect_spawn_event_writer: EventWriter<
+        SpawnBulletImpactEffectEvent,
+    >,
+    enemy_entities: Query<Entity, With<Enemy>>,
+    player_camera_global_transform: Single<
+        &GlobalTransform,
+        (With<PlayerCamera>, Without<Player>),
+    >,
+    mut player_shot_event_reader: EventReader<PlayerWeaponFiredEvent>,
+) {
+    for _ in player_shot_event_reader.read() {
+        let (player_entity, player_transform) = *player_query;
+
+        let enemy_entities: Vec<Entity> = enemy_entities.iter().collect();
+
+        // ray-cast settings
+        let origin = player_transform.translation;
+        let direction = player_camera_global_transform.forward();
+        let max_distance = 100.0;
+        let solid = true;
+        let filter = SpatialQueryFilter::default().with_excluded_entities(
+            [vec![player_entity], enemy_entities].concat(),
+        );
+
+        if let Some(first_hit) = spatial_query.cast_ray(
+            origin,
+            direction,
+            max_distance,
+            solid,
+            &filter,
+        ) {
+            let hit_point = origin + direction * first_hit.distance;
+
+            bullet_effect_spawn_event_writer.write(
+                SpawnBulletImpactEffectEvent {
+                    spawn_location: hit_point,
+                },
+            );
+        }
     }
 }

@@ -2,28 +2,35 @@ use bevy::prelude::*;
 
 use crate::{
     game_flow::GameState,
-    player::shooting::systems::{
-        basic_shooting, detect_enemy_bullet_collision_with_player,
-        handle_blood_screen_effect, reload_player_weapon,
-        tick_player_weapon_timer,
+    player::shooting::{
+        events::PlayerWeaponFiredEvent,
+        systems::{
+            accurate_check_bullet_collision_for_impact_particle,
+            detect_enemy_bullet_collision_with_player,
+            handle_blood_screen_effect, player_shooting, reload_player_weapon,
+            spawn_muzzle_flash, tick_player_weapon_timer,
+        },
     },
 };
 
 pub mod components;
+mod events;
 mod systems;
 
 pub struct PlayerShootingPlugin;
 
 impl Plugin for PlayerShootingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.add_event::<PlayerWeaponFiredEvent>().add_systems(
             Update,
             (
-                basic_shooting,
+                player_shooting,
                 tick_player_weapon_timer,
                 detect_enemy_bullet_collision_with_player,
                 handle_blood_screen_effect,
                 reload_player_weapon,
+                spawn_muzzle_flash,
+                accurate_check_bullet_collision_for_impact_particle,
             )
                 .run_if(in_state(GameState::InGame)),
         );
