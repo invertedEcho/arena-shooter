@@ -22,7 +22,7 @@ pub struct Player {
 }
 
 #[derive(Reflect, PartialEq)]
-enum PlayerState {
+pub enum PlayerState {
     Idle,
     Walking,
     Running,

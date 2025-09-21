@@ -1,8 +1,22 @@
 use bevy::prelude::*;
 
-use crate::game_flow::systems::{free_mouse, grab_mouse};
+use crate::game_flow::systems::{
+    free_mouse, grab_mouse, handle_escape, handle_player_death_event,
+};
 
 pub mod systems;
+
+pub struct GameFlowPlugin;
+
+impl Plugin for GameFlowPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_event::<PlayerDeathEvent>()
+            .add_systems(OnEnter(GameState::InGame), grab_mouse)
+            .add_systems(OnEnter(GameState::Paused), free_mouse)
+            .add_systems(Update, (handle_escape, handle_player_death_event))
+            .init_state::<GameState>();
+    }
+}
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[states(scoped_entities)]
@@ -14,34 +28,5 @@ pub enum GameState {
     Settings,
 }
 
-pub struct GameFlowPlugin;
-
-impl Plugin for GameFlowPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::InGame), grab_mouse)
-            .add_systems(OnEnter(GameState::Paused), free_mouse)
-            .add_systems(Update, handle_escape)
-            .init_state::<GameState>();
-    }
-}
-
-fn handle_escape(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    current_game_state: Res<State<GameState>>,
-    mut next_game_state: ResMut<NextState<GameState>>,
-) {
-    if keyboard_input.just_pressed(KeyCode::Escape) {
-        match *current_game_state.get() {
-            GameState::InGame => {
-                next_game_state.set(GameState::Paused);
-            }
-            GameState::Paused => {
-                next_game_state.set(GameState::InGame);
-            }
-            GameState::Settings => {
-                next_game_state.set(GameState::Paused);
-            }
-            GameState::Death => {}
-        }
-    }
-}
+#[derive(Event)]
+pub struct PlayerDeathEvent;

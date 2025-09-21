@@ -36,7 +36,6 @@ fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(8.0),
                 ..default()
             },
             ImageNode::new(
@@ -66,7 +65,13 @@ fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
                 .with_child(Text::new("Respawn"));
             parent
                 .spawn((
-                    Node { ..default() },
+                    Node {
+                        padding: UiRect {
+                            top: Val::Px(16.0),
+                            ..default()
+                        },
+                        ..default()
+                    },
                     Button,
                     CommonUiButton(CommonUiButtonType::Quit),
                 ))

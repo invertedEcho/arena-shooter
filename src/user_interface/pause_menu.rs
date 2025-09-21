@@ -71,7 +71,13 @@ fn spawn_pause_menu(mut commands: Commands) {
                 .with_child(Text::new("Settings"));
             parent
                 .spawn((
-                    Node { ..default() },
+                    Node {
+                        padding: UiRect {
+                            top: Val::Px(16.0),
+                            ..default()
+                        },
+                        ..default()
+                    },
                     Button,
                     CommonUiButton(CommonUiButtonType::Quit),
                     TextColor::WHITE,

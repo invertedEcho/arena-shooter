@@ -46,7 +46,13 @@ fn spawn_settings_menu(mut commands: Commands) {
         .with_children(|parent| {
             parent
                 .spawn((
-                    Node { ..default() },
+                    Node {
+                        padding: UiRect {
+                            top: Val::Px(16.0),
+                            ..default()
+                        },
+                        ..default()
+                    },
                     Button,
                     CommonUiButton(CommonUiButtonType::Back),
                 ))
