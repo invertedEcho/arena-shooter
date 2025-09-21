@@ -1,10 +1,10 @@
+use crate::enemy::shooting::EnemyBullet;
 use std::f32::consts::PI;
 
-use avian3d::prelude::CollisionStarted;
+use avian3d::{math::FRAC_PI_2, prelude::CollisionStarted};
 use bevy::prelude::*;
 
 use crate::{
-    enemy::EnemyBullet,
     player::shooting::components::PlayerBullet,
     world::components::{Ground, Wall},
 };
@@ -40,25 +40,21 @@ pub fn detect_bullet_collision_with_wall_and_grounds(
     for CollisionStarted(first_entity, second_entity) in
         collision_event_reader.read()
     {
-        let is_bullet = bullet_query
+        let Some(bullet_entity) = bullet_query
             .iter()
-            .any(|e| e == *first_entity || e == *second_entity);
-        if !is_bullet {
-            continue;
-        }
-
-        let Some(collided_wall_or_ground_entity) =
-            wall_and_ground_query.iter().find(|(entity, _)| {
-                entity == first_entity || entity == second_entity
-            })
+            .find(|e| e == first_entity || e == second_entity)
         else {
             continue;
         };
 
-        if collided_wall_or_ground_entity.0 == *first_entity {
-            commands.entity(*second_entity).despawn();
-        } else {
-            commands.entity(*first_entity).despawn();
+        let collided_entities_is_wall_or_ground =
+            wall_and_ground_query.iter().any(|(entity, _)| {
+                entity == *first_entity || entity == *second_entity
+            });
+        if !collided_entities_is_wall_or_ground {
+            continue;
         }
+
+        commands.entity(bullet_entity).despawn();
     }
 }

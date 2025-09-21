@@ -6296,7 +6296,8 @@
 					},
 					{
 						"fun_shooter::player::Player":{
-							"health":100.0
+							"health":100.0,
+							"state":"Idle"
 						}
 					},
 					{
@@ -6316,7 +6317,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::EnemySpawnLocation":{}
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},

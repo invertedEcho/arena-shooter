@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
-use crate::enemy::{Enemy, EnemyState, SWAT_MODEL_PATH};
+use crate::enemy::{Enemy, EnemyAiState};
 
 const TOTAL_ENEMY_MODEL_ANIMATIONS: usize = 24;
 // https://poly.pizza/m/Btfn3G5Xv4 index is equal to list option select thing on preview
@@ -12,6 +12,8 @@ const _ENEMY_HIT_RECEIVE_ANIMATION: usize = 2;
 const _ENEMY_IDLE_ANIMATION: usize = 4;
 const ENEMY_IDLE_GUN_ANIMATION: usize = 5;
 const ENEMY_IDLE_GUN_POINTING_ANIMATION: usize = 6;
+
+pub const SWAT_MODEL_PATH: &str = "models/animated/SWAT.glb";
 
 #[derive(Resource)]
 struct EnemyAnimations {
@@ -65,7 +67,6 @@ fn setup_enemy_animation(
     >,
 ) {
     for (entity, mut player) in animation_players {
-        info!("setting up enemy animation");
         let mut transitions = AnimationTransitions::new();
         transitions
             .play(
@@ -138,7 +139,7 @@ fn update_enemy_animation_on_state_changed(
         let (_, mut animation_player, mut animation_transitions) = res;
 
         let new_animation_index = match enemy.state {
-            EnemyState::AttackPlayer => ENEMY_IDLE_GUN_POINTING_ANIMATION,
+            EnemyAiState::AttackPlayer => ENEMY_IDLE_GUN_POINTING_ANIMATION,
             _ => ENEMY_IDLE_GUN_ANIMATION,
         };
         animation_transitions

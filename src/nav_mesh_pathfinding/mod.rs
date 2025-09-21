@@ -50,7 +50,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn setup_scene(
-    asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -65,7 +64,6 @@ fn setup_scene(
         return;
     }
     if let Some(gltf) = gltfs.get(gltf.id()) {
-        info!("gltf.named_meshes: {:?}", gltf.named_meshes);
         let navmesh = NavMesh::from_bevy_mesh(
             meshes
                 .get(
@@ -86,7 +84,7 @@ fn setup_scene(
             Mesh3d(meshes.add(navmesh.to_wireframe_mesh())),
             MeshMaterial3d(materials.add(material)),
             Transform::from_xyz(0.0, 0.0, 0.0),
-            Visibility::Hidden,
+            Visibility::Visible,
             NavMeshDisp(HANDLE_TRIMESH_OPTIMIZED),
         ));
 

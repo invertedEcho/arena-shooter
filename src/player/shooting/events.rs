@@ -4,4 +4,6 @@ use bevy::prelude::*;
 pub struct PlayerWeaponFiredEvent;
 
 #[derive(Event)]
-pub struct PlayerBulletHitEnemy;
+pub struct PlayerBulletHitEnemy {
+    pub enemy_hit: Entity,
+}

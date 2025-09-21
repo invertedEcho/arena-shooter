@@ -1,21 +1,32 @@
+use crate::enemy::{
+    animate::SWAT_MODEL_PATH, shooting::EnemyShootPlayerCooldownTimer,
+};
 use avian3d::{math::PI, prelude::*};
 use bevy::prelude::*;
 
-use crate::enemy::{
-    Enemy, EnemyShootPlayerCooldownTimer, EnemySpawnLocation, SWAT_MODEL_PATH,
-};
+use crate::enemy::Enemy;
 
 pub struct EnemySpawnPlugin;
 
 impl Plugin for EnemySpawnPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (random_spawn_enemies, tick_enemy_spawn_timer))
-            .insert_resource(EnemySpawnTimer(Timer::from_seconds(
-                1.0,
-                TimerMode::Repeating,
-            )));
+        app.add_systems(
+            Update,
+            (
+                spawn_enemies_at_enemy_spawn_locations,
+                tick_enemy_spawn_timer,
+            ),
+        )
+        .insert_resource(EnemySpawnTimer(Timer::from_seconds(
+            1.0,
+            TimerMode::Repeating,
+        )));
     }
 }
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct EnemySpawnLocation;
 
 #[derive(Resource)]
 struct EnemySpawnTimer(pub Timer);
@@ -27,33 +38,15 @@ fn tick_enemy_spawn_timer(
     enemy_spawn_timer.0.tick(time.delta());
 }
 
-// randomly spawn enemies over time
-// we need to know possible places where enemies can be spawned.
-// so we just have some marker components set around the map
-// where enemies can spawn, set in blender
-fn random_spawn_enemies(
+fn spawn_enemies_at_enemy_spawn_locations(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    enemy_spawn_timer: Res<EnemySpawnTimer>,
-    current_enemies: Query<Entity, With<Enemy>>,
     enemy_spawn_locations: Query<&Transform, Added<EnemySpawnLocation>>,
 ) {
-    // if current_enemies.iter().len() > MAX_ENEMY_COUNT {
-    //     return;
-    // }
-    //
-    // if !enemy_spawn_timer.0.just_finished() {
-    //     return;
-    // }
-    //
-
     for added_enemy_spawn_location in enemy_spawn_locations {
         let enemy_model = asset_server
             .load(GltfAssetLabel::Scene(0).from_asset(SWAT_MODEL_PATH));
-        info!(
-            "spawning enemy at: {}",
-            added_enemy_spawn_location.translation
-        );
+
         commands
             .spawn((
                 Transform::from_translation(
@@ -85,11 +78,4 @@ fn random_spawn_enemies(
                 Visibility::Visible,
             ));
     }
-
-    // let enemy_spawn_location_count = enemy_spawn_locations.iter().len();
-    //
-    // let random_index = rand::random_range(0..enemy_spawn_location_count);
-    //
-    // let random_enemy_spawn_location =
-    //     enemy_spawn_locations.iter().collect::<Vec<&Transform>>()[random_index];
 }
