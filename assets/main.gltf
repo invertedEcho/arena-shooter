@@ -15,10 +15,7 @@
 				294,
 				295,
 				296,
-				297,
-				298,
-				299,
-				300
+				297
 			]
 		}
 	],
@@ -6341,39 +6338,9 @@
 			"mesh":294,
 			"name":"Player",
 			"translation":[
-				6.864091873168945,
+				-10.057206153869629,
 				1,
-				6.1716814041137695
-			]
-		},
-		{
-			"extras":{
-				"skein":[
-					{
-						"fun_shooter::enemy::EnemySpawnLocation":{}
-					}
-				]
-			},
-			"name":"EnemySpawnLocation",
-			"translation":[
-				7.384005546569824,
-				1,
-				3.285188674926758
-			]
-		},
-		{
-			"extras":{
-				"skein":[
-					{
-						"fun_shooter::enemy::EnemySpawnLocation":{}
-					}
-				]
-			},
-			"name":"EnemySpawnLocation.001",
-			"translation":[
-				7.370150566101074,
-				1,
-				-3.2670493125915527
+				0.8252768516540527
 			]
 		},
 		{
@@ -6388,22 +6355,7 @@
 			"translation":[
 				-7.408838272094727,
 				1,
-				-2.9455230236053467
-			]
-		},
-		{
-			"extras":{
-				"skein":[
-					{
-						"fun_shooter::enemy::EnemySpawnLocation":{}
-					}
-				]
-			},
-			"name":"EnemySpawnLocation.003",
-			"translation":[
-				-7.863809108734131,
-				1.0047128200531006,
-				3.5504167079925537
+				5.844718933105469
 			]
 		}
 	],

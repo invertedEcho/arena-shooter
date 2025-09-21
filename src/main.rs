@@ -1,12 +1,14 @@
 use avian3d::prelude::*;
-use bevy::{prelude::*, window::PresentMode};
+use bevy::{prelude::*, render::primitives::Aabb, window::PresentMode};
 use bevy_hanabi::HanabiPlugin;
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 use bevy_skein::SkeinPlugin;
+use vleue_navigator::{VleueNavigatorPlugin, prelude::NavmeshUpdaterPlugin};
 
 use crate::{
     common::CommonPlugin, enemy::EnemyPlugin, game_flow::GameFlowPlugin,
-    ground_detection::GroundDetectionPlugin, particles::ParticlesPlugin,
+    ground_detection::GroundDetectionPlugin,
+    nav_mesh_pathfinding::NavMeshPathfindingPlugin, particles::ParticlesPlugin,
     player::PlayerPlugin, user_interface::UserInterfacePlugin,
     world::WorldPlugin,
 };
@@ -15,6 +17,7 @@ mod common;
 mod enemy;
 mod game_flow;
 mod ground_detection;
+mod nav_mesh_pathfinding;
 mod particles;
 mod player;
 mod user_interface;
@@ -66,6 +69,11 @@ fn main() {
     // hanabi plugins (particles)
     app.add_plugins(HanabiPlugin);
 
+    app.add_plugins((
+        VleueNavigatorPlugin,
+        NavmeshUpdaterPlugin::<Aabb>::default(),
+    ));
+
     // own plugins
     app.add_plugins(PlayerPlugin)
         .add_plugins(WorldPlugin)
@@ -74,6 +82,7 @@ fn main() {
         .add_plugins(CommonPlugin)
         .add_plugins(EnemyPlugin)
         .add_plugins(UserInterfacePlugin)
-        .add_plugins(ParticlesPlugin);
+        .add_plugins(ParticlesPlugin)
+        .add_plugins(NavMeshPathfindingPlugin);
     app.run();
 }

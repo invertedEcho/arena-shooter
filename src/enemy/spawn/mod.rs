@@ -5,8 +5,6 @@ use crate::enemy::{
     Enemy, EnemyShootPlayerCooldownTimer, EnemySpawnLocation, SWAT_MODEL_PATH,
 };
 
-const MAX_ENEMY_COUNT: usize = 4;
-
 pub struct EnemySpawnPlugin;
 
 impl Plugin for EnemySpawnPlugin {

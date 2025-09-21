@@ -53,7 +53,7 @@ pub struct Enemy {
 #[derive(Default, Reflect, PartialEq)]
 enum EnemyState {
     #[default]
-    SearchForPlayer,
+    Idle,
     ChasingPlayer,
     AttackPlayer,
 }
@@ -72,7 +72,6 @@ pub struct EnemyShootPlayerCooldownTimer(pub Timer);
 pub struct EnemySpawnLocation;
 
 fn detect_player_bullet_collision_with_enemy(
-    asset_server: Res<AssetServer>,
     mut commands: Commands,
     player_bullet_query: Query<(Entity, &PlayerBullet)>,
     mut enemy_query: Query<(Entity, &mut Enemy)>,
@@ -160,10 +159,6 @@ fn check_if_enemy_can_see_player_and_look_at_player(
                     }
                     enemy_transform
                         .look_at(player_transform.translation, Dir3::Y);
-                } else {
-                    if enemy.state != EnemyState::SearchForPlayer {
-                        enemy.state = EnemyState::SearchForPlayer;
-                    }
                 }
             }
         }
