@@ -1,8 +1,12 @@
 use bevy::prelude::*;
 
 use crate::{
+    common::components::DespawnTimer,
     game_flow::GameState,
-    player::{Player, shooting::components::PlayerWeapon},
+    player::{
+        Player,
+        shooting::{components::PlayerWeapon, events::PlayerBulletHitEnemy},
+    },
 };
 
 const WHITE_CROSSHAIR_PATH: &str =
@@ -23,7 +27,11 @@ impl Plugin for PlayerHudPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (update_player_health_text, update_player_ammo_text),
+            (
+                update_player_health_text,
+                update_player_ammo_text,
+                spawn_bullet_hit_crosshair,
+            ),
         )
         .add_systems(OnEnter(GameState::InGame), spawn_player_hud);
     }
@@ -98,4 +106,29 @@ fn update_player_ammo_text(
 ) {
     ***player_loaded_ammo_text = player_weapon.loaded_ammo.to_string();
     ***player_carried_ammo_text = player_weapon.carried_ammo.to_string();
+}
+
+fn spawn_bullet_hit_crosshair(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    mut player_bullet_hit_enemy_event_reader: EventReader<PlayerBulletHitEnemy>,
+) {
+    for _ in player_bullet_hit_enemy_event_reader.read() {
+        commands
+            .spawn(Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            })
+            .with_child((
+                ImageNode::new(
+                    asset_server.load(
+                        "kenney_crosshair-pack/PNG/White/crosshair002.png",
+                    ),
+                ),
+                DespawnTimer(Timer::from_seconds(0.05, TimerMode::Once)),
+            ));
+    }
 }

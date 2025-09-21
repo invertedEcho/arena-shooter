@@ -7,7 +7,10 @@ use crate::{
     common::{BULLET_VELOCITY, components::DespawnTimer},
     enemy::{animate::AnimateEnemyPlugin, spawn::EnemySpawnPlugin},
     game_flow::GameState,
-    player::{Player, shooting::components::PlayerBullet},
+    player::{
+        Player,
+        shooting::{components::PlayerBullet, events::PlayerBulletHitEnemy},
+    },
 };
 
 mod animate;
@@ -69,10 +72,12 @@ pub struct EnemyShootPlayerCooldownTimer(pub Timer);
 pub struct EnemySpawnLocation;
 
 fn detect_player_bullet_collision_with_enemy(
+    asset_server: Res<AssetServer>,
     mut commands: Commands,
     player_bullet_query: Query<(Entity, &PlayerBullet)>,
     mut enemy_query: Query<(Entity, &mut Enemy)>,
     mut collision_event_reader: EventReader<CollisionStarted>,
+    mut player_bullet_hit_enemy_event_writer: EventWriter<PlayerBulletHitEnemy>,
 ) {
     for CollisionStarted(first_entity, second_entity) in
         collision_event_reader.read()
@@ -96,6 +101,8 @@ fn detect_player_bullet_collision_with_enemy(
             commands.entity(enemy.0).despawn();
         }
         commands.entity(player_bullet.0).despawn();
+
+        player_bullet_hit_enemy_event_writer.write(PlayerBulletHitEnemy);
     }
 }
 
