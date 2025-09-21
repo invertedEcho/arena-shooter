@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use avian3d::prelude::CollisionStarted;
 use bevy::prelude::*;
 
@@ -8,6 +10,19 @@ use crate::{
 };
 
 pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
+    commands.spawn((
+        DirectionalLight {
+            illuminance: light_consts::lux::OVERCAST_DAY,
+            shadows_enabled: true,
+            ..default()
+        },
+        Transform {
+            translation: Vec3::new(0.0, 2.0, 0.0),
+            rotation: Quat::from_rotation_x(-PI / 4.),
+            ..default()
+        },
+    ));
+
     commands.spawn(SceneRoot(
         asset_server.load(GltfAssetLabel::Scene(0).from_asset("main.gltf")),
     ));
