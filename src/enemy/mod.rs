@@ -33,4 +33,10 @@ impl Plugin for EnemyPlugin {
 pub struct Enemy {
     state: EnemyAiState,
     pub health: f32,
+    // TODO: doesnt belong here, should be in EnemyAI plugin, but i first need to figure out how i
+    // actually wanna do this, so for now it will just live here.
+    // enemy
+    // I THINK I GOT IT: insert path component into enemy.
+    current_patrol_destination: Option<Vec3>,
+    next_patrol_destinations: Option<Vec<Vec3>>,
 }

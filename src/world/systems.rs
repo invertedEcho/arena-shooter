@@ -1,7 +1,7 @@
 use crate::enemy::shooting::EnemyBullet;
 use std::f32::consts::PI;
 
-use avian3d::{math::FRAC_PI_2, prelude::CollisionStarted};
+use avian3d::prelude::CollisionStarted;
 use bevy::prelude::*;
 
 use crate::{

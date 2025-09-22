@@ -56,7 +56,11 @@ fn spawn_enemies_at_enemy_spawn_locations(
                     health: 100.0,
                     ..default()
                 },
-                RigidBody::Static,
+                RigidBody::Dynamic,
+                LockedAxes::new()
+                    .lock_rotation_x()
+                    .lock_rotation_y()
+                    .lock_rotation_z(),
                 Collider::cuboid(0.3, 1.7, 0.3),
                 AngularVelocity::ZERO,
                 LinearVelocity::ZERO,

@@ -4,7 +4,7 @@ use bevy::{
     gltf::GltfMesh,
     prelude::*,
 };
-use vleue_navigator::NavMesh;
+use vleue_navigator::prelude::*;
 
 use crate::{enemy::Enemy, player::Player};
 
@@ -23,7 +23,7 @@ impl Plugin for NavMeshPathfindingPlugin {
     }
 }
 
-// TODO: what is this?
+// A predefined "slot" in bevy asset storage where our navigation mesh will later be inserted into
 const HANDLE_TRIMESH_OPTIMIZED: Handle<NavMesh> =
     weak_handle!("100AD183-2C5C-49A1-AB32-142000E87828");
 
@@ -31,7 +31,7 @@ const HANDLE_TRIMESH_OPTIMIZED: Handle<NavMesh> =
 struct GltfHandle(Handle<Gltf>);
 
 #[derive(Resource)]
-struct CurrentNavMesh(Handle<NavMesh>);
+pub struct CurrentNavMesh(pub Handle<NavMesh>);
 
 #[derive(Component)]
 struct Path {
@@ -47,6 +47,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         asset_server.load("maps/main/navmesh.gltf"),
     ));
     commands.insert_resource(CurrentNavMesh(HANDLE_TRIMESH_OPTIMIZED));
+
+    commands.spawn((
+        NavMeshSettings {
+            agent_radius: 10.0,
+            default_search_delta: 10.0,
+            ..default()
+        },
+        NavMeshUpdateMode::Direct,
+    ));
 }
 
 fn setup_scene(
@@ -139,7 +148,7 @@ fn get_path_from_enemy_to_player_on_enter(
                 Some(res) => {
                     for coord in res.path {
                         commands.spawn((
-                            Mesh3d(meshes.add(Capsule3d::default())),
+                            Mesh3d(meshes.add(Sphere::new(0.1))),
                             MeshMaterial3d(materials.add(StandardMaterial {
                                 base_color: RED.into(),
                                 ..Default::default()
