@@ -41,6 +41,7 @@ pub fn handle_escape(
                 next_game_state.set(GameState::Paused);
             }
             GameState::Death => {}
+            GameState::MainMenu => {}
         }
     }
 }

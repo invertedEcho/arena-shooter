@@ -22,6 +22,7 @@ impl Plugin for GameFlowPlugin {
 #[states(scoped_entities)]
 pub enum GameState {
     #[default]
+    MainMenu,
     InGame,
     Paused,
     Death,
