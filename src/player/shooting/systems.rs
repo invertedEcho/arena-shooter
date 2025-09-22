@@ -217,10 +217,13 @@ pub fn spawn_muzzle_flash(
         let random_rotation_angle = get_random_number_from_range_i32(0, 5);
         commands.entity(*player_camera_entity).with_child((
             Transform {
+                // TODO: this is really not good. we need a better way to get the correct position
+                // to spawn the muzzle flash to relative to player view. this must also change
+                // depending on the cameras FOV
                 translation: Vec3 {
                     x: 0.3,
                     y: -0.1,
-                    z: -1.0,
+                    z: -0.5,
                 },
                 rotation: Quat::from_axis_angle(
                     Vec3::Z,
