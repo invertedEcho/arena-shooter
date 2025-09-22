@@ -81,10 +81,10 @@ fn check_if_enemy_can_see_player_and_look_at_player(
         let player_transform = player_query.1;
 
         for (mut enemy, enemy_entity, mut enemy_transform) in enemy_query {
-            // TODO: of course, while chasing, once the enemy sees the player, it should start shoot him..
-            if enemy.state == EnemyAiState::ChasingPlayer {
-                continue;
-            }
+            // // TODO: of course, while chasing, once the enemy sees the player, it should start shoot him..
+            // if enemy.state == EnemyAiState::ChasingPlayer {
+            //     continue;
+            // }
             let enemy_translation = enemy_transform.translation;
             let player_translation = player_transform.translation;
 
@@ -115,11 +115,14 @@ fn check_if_enemy_can_see_player_and_look_at_player(
                     enemy_transform
                         .look_at(player_transform.translation, Dir3::Y);
                 } else {
-                    if enemy.state != EnemyAiState::ChasingPlayer {
-                        enemy.state = EnemyAiState::ChasingPlayer;
+                    if enemy.state != EnemyAiState::Idle {
+                        enemy.state = EnemyAiState::Idle;
                     }
-                    start_chasing_player_event_writer
-                        .write(StartChasingPlayerEvent { enemy_entity });
+                    // if enemy.state != EnemyAiState::ChasingPlayer {
+                    //     enemy.state = EnemyAiState::ChasingPlayer;
+                    // }
+                    // start_chasing_player_event_writer
+                    //     .write(StartChasingPlayerEvent { enemy_entity });
                 }
             }
         }
