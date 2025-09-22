@@ -14,7 +14,12 @@
 				293,
 				294,
 				295,
-				296
+				296,
+				297,
+				298,
+				299,
+				300,
+				301
 			]
 		}
 	],
@@ -6308,9 +6313,9 @@
 			"mesh":293,
 			"name":"Player",
 			"translation":[
-				-10.057206153869629,
+				0.03980329632759094,
 				1,
-				-1.1160863637924194
+				-2.9812660217285156
 			]
 		},
 		{
@@ -6323,9 +6328,84 @@
 			},
 			"name":"EnemySpawnLocation.002",
 			"translation":[
+				-7.286757469177246,
+				1,
+				0.2827296555042267
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+					}
+				]
+			},
+			"name":"EnemySpawnLocation.001",
+			"translation":[
+				7.306053161621094,
+				1,
+				-4.419414520263672
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+					}
+				]
+			},
+			"name":"EnemySpawnLocation.003",
+			"translation":[
 				-7.408838272094727,
 				1,
-				5.844718933105469
+				-4.250664234161377
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+					}
+				]
+			},
+			"name":"EnemySpawnLocation.004",
+			"translation":[
+				7.306053161621094,
+				1,
+				5.128504753112793
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+					}
+				]
+			},
+			"name":"EnemySpawnLocation.005",
+			"translation":[
+				7.306053161621094,
+				1,
+				0.2572364807128906
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+					}
+				]
+			},
+			"name":"EnemySpawnLocation.006",
+			"translation":[
+				-7.494506359100342,
+				1,
+				4.908145427703857
 			]
 		}
 	],
