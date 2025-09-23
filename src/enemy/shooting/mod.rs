@@ -1,4 +1,4 @@
-use crate::enemy::animate::play_enemy_hit_animation;
+use crate::enemy::animate::systems::play_enemy_hit_animation;
 use crate::enemy::shooting::systems::{
     detect_player_bullet_collision_with_enemy, enemy_shoot_player,
     tick_enemy_shoot_player_cooldown_timer,

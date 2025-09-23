@@ -6,4 +6,4 @@ use bevy::prelude::*;
 pub struct AnimationPlayerEntityPointer(pub Entity);
 
 #[derive(Component)]
-pub struct PlayHitAnimation(pub Timer);
+pub struct PlayHitAnimationTimer(pub Timer);

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::enemy::{
-    ai::{EnemyAiPlugin, EnemyAiState},
+    ai::{EnemyAiPlugin, EnemyState},
     animate::AnimateEnemyPlugin,
     shooting::EnemyShootingPlugin,
     spawn::{EnemySpawnLocation, EnemySpawnPlugin},
@@ -28,7 +28,7 @@ impl Plugin for EnemyPlugin {
 #[derive(Component, Reflect, Default)]
 #[reflect(Component, Default)]
 pub struct Enemy {
-    state: EnemyAiState,
+    state: EnemyState,
     pub health: f32,
     // TODO: doesnt belong here, should be in EnemyAI plugin, but i first need to figure out how i
     // actually wanna do this, so for now it will just live here.

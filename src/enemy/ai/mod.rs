@@ -39,13 +39,16 @@ impl Plugin for EnemyAiPlugin {
 }
 
 #[derive(Default, Reflect, PartialEq)]
-pub enum EnemyAiState {
+pub enum EnemyState {
     #[default]
     Idle,
     /// Going to the last known location of player
     ChasingPlayer,
     /// Enemy can see the player, will shoot the player now
     AttackPlayer,
+    /// This state will be set when the enemy has 0 health. It will just play a death animation and
+    /// afterwards be despawned.
+    Dead,
 }
 
 /// This event will get fired when the enemy can not directly see the player.
@@ -73,50 +76,59 @@ fn check_if_enemy_can_see_player_and_look_at_player(
         (Without<Player>, With<Enemy>),
     >,
     player_query: Single<(Entity, &Transform), With<Player>>,
-    timer: Res<CheckIfEnemyCanSeePlayerCooldownTimer>,
+    check_if_enemy_can_see_player_cooldown_timer: Res<
+        CheckIfEnemyCanSeePlayerCooldownTimer,
+    >,
 ) {
-    if timer.0.just_finished() {
-        let player_entity = player_query.0;
-        let player_transform = player_query.1;
+    // TODO: WAAAIT This means enemies can only shoot all at once, not independtly...
+    if !check_if_enemy_can_see_player_cooldown_timer
+        .0
+        .just_finished()
+    {
+        return;
+    }
+    let player_entity = player_query.0;
+    let player_transform = player_query.1;
 
-        for (mut enemy, enemy_entity, mut enemy_transform) in enemy_query {
-            // // TODO: of course, while chasing, once the enemy sees the player, it should start shoot him..
-            // if enemy.state == EnemyAiState::ChasingPlayer {
-            //     continue;
-            // }
-            let enemy_translation = enemy_transform.translation;
-            let player_translation = player_transform.translation;
+    for (mut enemy, enemy_entity, mut enemy_transform) in enemy_query {
+        if enemy.state == EnemyState::Dead {
+            continue;
+        }
+        // // TODO: of course, while chasing, once the enemy sees the player, it should start shoot him..
+        // if enemy.state == EnemyState::ChasingPlayer {
+        //     continue;
+        // }
+        let enemy_translation = enemy_transform.translation;
+        let player_translation = player_transform.translation;
 
-            let origin = enemy_translation;
+        let origin = enemy_translation;
 
-            // direction towards player
-            let vector_not_normalized = player_translation - enemy_translation;
-            let direction = Dir3::new(vector_not_normalized).unwrap();
+        // direction towards player
+        let vector_not_normalized = player_translation - enemy_translation;
+        let direction = Dir3::new(vector_not_normalized).unwrap();
 
-            let max_distance = 1000.0;
-            let solid = false;
+        let max_distance = 1000.0;
+        let solid = false;
 
-            // raycast shouldnt hit enemy itself
-            let filter = SpatialQueryFilter::default()
-                .with_excluded_entities([enemy_entity]);
+        // raycast shouldnt hit enemy itself
+        let filter = SpatialQueryFilter::default()
+            .with_excluded_entities([enemy_entity]);
 
-            if let Some(first_hit) = spatial_query.cast_ray(
-                origin,
-                direction,
-                max_distance,
-                solid,
-                &filter,
-            ) {
-                if first_hit.entity == player_entity {
-                    if enemy.state != EnemyAiState::AttackPlayer {
-                        enemy.state = EnemyAiState::AttackPlayer;
-                    }
-                    enemy_transform
-                        .look_at(player_transform.translation, Dir3::Y);
-                } else {
-                    if enemy.state != EnemyAiState::Idle {
-                        enemy.state = EnemyAiState::Idle;
-                    }
+        if let Some(first_hit) = spatial_query.cast_ray(
+            origin,
+            direction,
+            max_distance,
+            solid,
+            &filter,
+        ) {
+            if first_hit.entity == player_entity {
+                if enemy.state != EnemyState::AttackPlayer {
+                    enemy.state = EnemyState::AttackPlayer;
+                }
+                enemy_transform.look_at(player_transform.translation, Dir3::Y);
+            } else {
+                if enemy.state != EnemyState::Idle {
+                    enemy.state = EnemyState::Idle;
                 }
             }
         }
@@ -162,7 +174,7 @@ fn handle_start_chasing_player_event(
         );
         match path {
             Some(res) => {
-                enemy.state = EnemyAiState::ChasingPlayer;
+                enemy.state = EnemyState::ChasingPlayer;
                 enemy.current_patrol_destination = Some(res.path[0]);
                 enemy.next_patrol_destinations = Some(res.path[1..].to_vec());
                 for point in res.path {
