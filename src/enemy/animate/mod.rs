@@ -1,16 +1,12 @@
 use bevy::prelude::*;
 
-use crate::enemy::animate::{
-    events::PlayEnemyDeathAnimationEvent,
-    systems::{
-        handle_play_enemy_death_animation_event, handle_play_hit_animation,
-        link_enemy_animation, load_enemy_animations, play_enemy_hit_animation,
-        setup_enemy_animation, update_enemy_animation_on_state_changed,
-    },
+use crate::enemy::animate::systems::{
+    handle_play_hit_animation, link_enemy_animation, load_enemy_animations,
+    play_enemy_hit_animation, reflect_enemy_state_to_current_animation,
+    setup_enemy_animation,
 };
 
 mod components;
-pub mod events;
 mod resources;
 pub mod systems;
 
@@ -29,18 +25,15 @@ pub struct AnimateEnemyPlugin;
 
 impl Plugin for AnimateEnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<PlayEnemyDeathAnimationEvent>()
-            .add_systems(Startup, load_enemy_animations)
-            .add_systems(
-                Update,
-                (
-                    setup_enemy_animation,
-                    update_enemy_animation_on_state_changed,
-                    link_enemy_animation,
-                    play_enemy_hit_animation,
-                    handle_play_hit_animation,
-                    handle_play_enemy_death_animation_event,
-                ),
-            );
+        app.add_systems(Startup, load_enemy_animations).add_systems(
+            Update,
+            (
+                setup_enemy_animation,
+                reflect_enemy_state_to_current_animation,
+                link_enemy_animation,
+                play_enemy_hit_animation,
+                handle_play_hit_animation,
+            ),
+        );
     }
 }

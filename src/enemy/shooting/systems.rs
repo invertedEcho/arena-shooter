@@ -8,7 +8,6 @@ use crate::{
     enemy::{
         Enemy,
         ai::EnemyState,
-        animate::events::PlayEnemyDeathAnimationEvent,
         shooting::components::{EnemyBullet, EnemyShootPlayerCooldownTimer},
         spawn::SpawnEnemiesAtSpawnLocationsEvent,
     },
@@ -30,9 +29,6 @@ pub fn detect_player_bullet_collision_with_enemy(
         SpawnEnemiesAtSpawnLocationsEvent,
     >,
     mut game_score: ResMut<GameScore>,
-    mut play_enemy_death_animation_event_writer: EventWriter<
-        PlayEnemyDeathAnimationEvent,
-    >,
 ) {
     for CollisionStarted(first_entity, second_entity) in
         collision_event_reader.read()
@@ -57,12 +53,12 @@ pub fn detect_player_bullet_collision_with_enemy(
         enemy.health -= player_bullet.1.damage;
         if enemy.health <= 0.0 {
             enemy.state = EnemyState::Dead;
+            // TODO: perhaps this should be handled elsewhere.
+            // move this elsewhere when we do even more stuff here on initial death of enemy
             commands
                 .entity(enemy_entity)
                 .remove::<RigidBody>()
                 .remove::<Collider>();
-            play_enemy_death_animation_event_writer
-                .write(PlayEnemyDeathAnimationEvent(enemy_entity));
             game_score.player += 1;
 
             // check if this was the last enemy
