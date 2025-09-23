@@ -23,7 +23,6 @@ impl Plugin for NavMeshPathfindingPlugin {
     }
 }
 
-// A predefined "slot" in bevy asset storage where our navigation mesh will later be inserted into
 const HANDLE_TRIMESH_OPTIMIZED: Handle<NavMesh> =
     weak_handle!("100AD183-2C5C-49A1-AB32-142000E87828");
 
@@ -50,8 +49,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn((
         NavMeshSettings {
-            agent_radius: 10.0,
-            default_search_delta: 10.0,
+            default_search_delta: 0.5,
             ..default()
         },
         NavMeshUpdateMode::Direct,

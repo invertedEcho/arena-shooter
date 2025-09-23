@@ -11,7 +11,7 @@ use crate::{
     enemy::Enemy,
     game_flow::GameState,
     player::shooting::{
-        components::PlayerBullet, events::PlayerBulletHitEnemy,
+        components::PlayerBullet, events::PlayerBulletHitEnemyEvent,
     },
 };
 
@@ -42,7 +42,9 @@ fn detect_player_bullet_collision_with_enemy(
     player_bullet_query: Query<(Entity, &PlayerBullet)>,
     mut enemy_query: Query<(Entity, &mut Enemy)>,
     mut collision_event_reader: EventReader<CollisionStarted>,
-    mut player_bullet_hit_enemy_event_writer: EventWriter<PlayerBulletHitEnemy>,
+    mut player_bullet_hit_enemy_event_writer: EventWriter<
+        PlayerBulletHitEnemyEvent,
+    >,
     mut spawn_enemies_event_writer: EventWriter<
         SpawnEnemiesAtSpawnLocationsEvent,
     >,
@@ -92,7 +94,7 @@ fn detect_player_bullet_collision_with_enemy(
         commands.entity(player_bullet.0).despawn();
 
         player_bullet_hit_enemy_event_writer
-            .write(PlayerBulletHitEnemy { enemy_hit: enemy.0 });
+            .write(PlayerBulletHitEnemyEvent { enemy_hit: enemy.0 });
     }
 }
 

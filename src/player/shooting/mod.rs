@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     game_flow::GameState,
     player::shooting::{
-        events::{PlayerBulletHitEnemy, PlayerWeaponFiredEvent},
+        events::{PlayerBulletHitEnemyEvent, PlayerWeaponFiredEvent},
         systems::{
             accurate_check_bullet_collision_for_impact_particle,
             detect_enemy_bullet_collision_with_player,
@@ -22,7 +22,7 @@ pub struct PlayerShootingPlugin;
 impl Plugin for PlayerShootingPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<PlayerWeaponFiredEvent>()
-            .add_event::<PlayerBulletHitEnemy>()
+            .add_event::<PlayerBulletHitEnemyEvent>()
             .add_systems(
                 Update,
                 (

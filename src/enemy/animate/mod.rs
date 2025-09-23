@@ -2,24 +2,30 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
-use crate::enemy::{Enemy, EnemyAiState};
+use crate::{
+    enemy::{
+        Enemy, EnemyAiState,
+        animate::{
+            components::{AnimationPlayerEntityPointer, PlayHitAnimation},
+            resources::EnemyAnimations,
+        },
+    },
+    player::shooting::events::PlayerBulletHitEnemyEvent,
+};
+
+mod components;
+mod resources;
 
 const TOTAL_ENEMY_MODEL_ANIMATIONS: usize = 24;
 // https://poly.pizza/m/Btfn3G5Xv4 index is equal to list option select thing on preview
 const _ENEMY_DEATH_ANIMATION: usize = 0;
 const _ENEMY_GUN_SHOOT_ANIMATION: usize = 1;
-const _ENEMY_HIT_RECEIVE_ANIMATION: usize = 2;
+const ENEMY_HIT_RECEIVE_ANIMATION: usize = 2;
 const _ENEMY_IDLE_ANIMATION: usize = 4;
 const ENEMY_IDLE_GUN_ANIMATION: usize = 5;
 const ENEMY_IDLE_GUN_POINTING_ANIMATION: usize = 6;
 
 pub const SWAT_MODEL_PATH: &str = "models/animated/SWAT.glb";
-
-#[derive(Resource)]
-struct EnemyAnimations {
-    animation_node_indices: Vec<AnimationNodeIndex>,
-    current_graph_handle: Handle<AnimationGraph>,
-}
 
 pub struct AnimateEnemyPlugin;
 
@@ -31,6 +37,8 @@ impl Plugin for AnimateEnemyPlugin {
                 setup_enemy_animation,
                 update_enemy_animation_on_state_changed,
                 link_enemy_animation,
+                play_enemy_hit_animation,
+                handle_play_hit_animation,
             ),
         );
     }
@@ -85,11 +93,6 @@ fn setup_enemy_animation(
             .insert(transitions);
     }
 }
-
-/// To be inserted into an Enemy entity, pointing to the Entity of the AnimationPlayer and
-/// AnimationTransitions.
-#[derive(Component)]
-struct AnimationPlayerEntityPointer(pub Entity);
 
 fn link_enemy_animation(
     mut commands: Commands,
@@ -149,5 +152,103 @@ fn update_enemy_animation_on_state_changed(
                 Duration::from_millis(250),
             )
             .repeat();
+    }
+}
+
+fn play_enemy_hit_animation(
+    mut commands: Commands,
+    animations: Res<EnemyAnimations>,
+    mut event_reader: EventReader<PlayerBulletHitEnemyEvent>,
+    animation_player_entity_pointers: Query<
+        (Entity, &AnimationPlayerEntityPointer),
+        With<Enemy>,
+    >,
+    mut animation_players_and_transitions: Query<(
+        Entity,
+        &mut AnimationPlayer,
+        &mut AnimationTransitions,
+    )>,
+) {
+    for event in event_reader.read() {
+        let Some(enemy) = animation_player_entity_pointers
+            .iter()
+            .find(|(e, _)| *e == event.enemy_hit)
+        else {
+            warn!("lksjdfjkldfs");
+            continue;
+        };
+
+        let Some((_, mut animation_player, mut animation_transitions)) =
+            animation_players_and_transitions
+                .iter_mut()
+                .find(|(e, _, _)| *e == enemy.1.0)
+        else {
+            warn!(
+                "Could not find animation player and transitions for enemy entity from PlayerBulletHitEnemyEvent"
+            );
+            continue;
+        };
+
+        animation_transitions.play(
+            &mut animation_player,
+            animations.animation_node_indices[ENEMY_HIT_RECEIVE_ANIMATION],
+            Duration::ZERO,
+        );
+
+        // after 0.5 seconds play normal animation again
+        commands
+            .entity(enemy.0)
+            .insert(PlayHitAnimation(Timer::from_seconds(
+                0.5,
+                TimerMode::Once,
+            )));
+    }
+}
+
+// maybe its possible to queue animations? so we dont have to do this manually
+fn handle_play_hit_animation(
+    time: Res<Time>,
+    query: Query<(
+        &Enemy,
+        &mut PlayHitAnimation,
+        &AnimationPlayerEntityPointer,
+    )>,
+    mut animation_players_and_transitions: Query<(
+        Entity,
+        &mut AnimationPlayer,
+        &mut AnimationTransitions,
+    )>,
+    animations: Res<EnemyAnimations>,
+) {
+    for (enemy, mut play_hit_animation, animation_player_entity_pointer) in
+        query
+    {
+        play_hit_animation.0.tick(time.delta());
+
+        let Some((_, mut animation_player, mut animation_transitions)) =
+            animation_players_and_transitions
+                .iter_mut()
+                .find(|(e, _, _)| *e == animation_player_entity_pointer.0)
+        else {
+            warn!(
+                "Could not find animation player and transitions for enemy entity"
+            );
+            continue;
+        };
+
+        let new_animation_index = match enemy.state {
+            EnemyAiState::AttackPlayer => ENEMY_IDLE_GUN_POINTING_ANIMATION,
+            EnemyAiState::Idle | EnemyAiState::ChasingPlayer => {
+                ENEMY_IDLE_GUN_ANIMATION
+            }
+        };
+
+        if play_hit_animation.0.just_finished() {
+            animation_transitions.play(
+                &mut animation_player,
+                animations.animation_node_indices[new_animation_index],
+                Duration::from_millis(250),
+            );
+        }
     }
 }

@@ -5,7 +5,9 @@ use crate::{
     game_flow::GameState,
     player::{
         Player,
-        shooting::{components::PlayerWeapon, events::PlayerBulletHitEnemy},
+        shooting::{
+            components::PlayerWeapon, events::PlayerBulletHitEnemyEvent,
+        },
     },
 };
 
@@ -111,7 +113,9 @@ fn update_player_ammo_text(
 fn spawn_bullet_hit_crosshair(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    mut player_bullet_hit_enemy_event_reader: EventReader<PlayerBulletHitEnemy>,
+    mut player_bullet_hit_enemy_event_reader: EventReader<
+        PlayerBulletHitEnemyEvent,
+    >,
 ) {
     for _ in player_bullet_hit_enemy_event_reader.read() {
         commands
