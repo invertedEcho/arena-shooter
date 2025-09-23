@@ -1,13 +1,10 @@
 use bevy::prelude::*;
 
-use crate::{
-    common::BULLET_VELOCITY,
-    enemy::{
-        ai::{EnemyAiPlugin, EnemyAiState},
-        animate::AnimateEnemyPlugin,
-        shooting::EnemyShootingPlugin,
-        spawn::{EnemySpawnLocation, EnemySpawnPlugin},
-    },
+use crate::enemy::{
+    ai::{EnemyAiPlugin, EnemyAiState},
+    animate::AnimateEnemyPlugin,
+    shooting::EnemyShootingPlugin,
+    spawn::{EnemySpawnLocation, EnemySpawnPlugin},
 };
 
 mod ai;

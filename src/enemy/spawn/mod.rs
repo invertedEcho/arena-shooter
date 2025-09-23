@@ -1,5 +1,6 @@
 use crate::enemy::{
-    animate::SWAT_MODEL_PATH, shooting::EnemyShootPlayerCooldownTimer,
+    animate::SWAT_MODEL_PATH,
+    shooting::components::EnemyShootPlayerCooldownTimer,
 };
 use avian3d::{math::PI, prelude::*};
 use bevy::prelude::*;

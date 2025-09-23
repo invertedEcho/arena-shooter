@@ -32,12 +32,6 @@ struct GltfHandle(Handle<Gltf>);
 #[derive(Resource)]
 pub struct CurrentNavMesh(pub Handle<NavMesh>);
 
-#[derive(Component)]
-struct Path {
-    current: Vec3,
-    next: Vec<Vec3>,
-}
-
 #[derive(Component, Clone)]
 struct NavMeshDisp(Handle<NavMesh>);
 

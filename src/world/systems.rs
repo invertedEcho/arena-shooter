@@ -1,10 +1,10 @@
-use crate::enemy::shooting::EnemyBullet;
 use std::f32::consts::PI;
 
 use avian3d::prelude::CollisionStarted;
 use bevy::prelude::*;
 
 use crate::{
+    enemy::shooting::components::EnemyBullet,
     player::shooting::components::PlayerBullet,
     world::components::{Ground, Wall},
 };

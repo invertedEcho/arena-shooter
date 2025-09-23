@@ -5,7 +5,7 @@ use bevy::prelude::*;
 
 use crate::{
     common::{BULLET_VELOCITY, components::DespawnTimer},
-    enemy::{Enemy, shooting::EnemyBullet},
+    enemy::{Enemy, shooting::components::EnemyBullet},
     game_flow::{GameState, score::GameScore},
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectEvent},
     player::{

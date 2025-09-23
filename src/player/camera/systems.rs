@@ -71,7 +71,6 @@ pub fn setup_player_camera(
                     carried_ammo: 99999999,
                     max_loaded_ammo: 30,
                     moving_to_right: false,
-                    moving_to_bottom: true,
                 },
             ))
             .observe(apply_render_layers_to_children);

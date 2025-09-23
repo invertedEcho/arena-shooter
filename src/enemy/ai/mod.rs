@@ -74,7 +74,6 @@ fn check_if_enemy_can_see_player_and_look_at_player(
     >,
     player_query: Single<(Entity, &Transform), With<Player>>,
     timer: Res<CheckIfEnemyCanSeePlayerCooldownTimer>,
-    mut start_chasing_player_event_writer: EventWriter<StartChasingPlayerEvent>,
 ) {
     if timer.0.just_finished() {
         let player_entity = player_query.0;
@@ -118,11 +117,6 @@ fn check_if_enemy_can_see_player_and_look_at_player(
                     if enemy.state != EnemyAiState::Idle {
                         enemy.state = EnemyAiState::Idle;
                     }
-                    // if enemy.state != EnemyAiState::ChasingPlayer {
-                    //     enemy.state = EnemyAiState::ChasingPlayer;
-                    // }
-                    // start_chasing_player_event_writer
-                    //     .write(StartChasingPlayerEvent { enemy_entity });
                 }
             }
         }
