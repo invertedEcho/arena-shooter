@@ -155,7 +155,7 @@ fn update_enemy_animation_on_state_changed(
     }
 }
 
-fn play_enemy_hit_animation(
+pub fn play_enemy_hit_animation(
     mut commands: Commands,
     animations: Res<EnemyAnimations>,
     mut event_reader: EventReader<PlayerBulletHitEnemyEvent>,
@@ -170,18 +170,31 @@ fn play_enemy_hit_animation(
     )>,
 ) {
     for event in event_reader.read() {
-        let Some(enemy) = animation_player_entity_pointers
-            .iter()
-            .find(|(e, _)| *e == event.enemy_hit)
+        info!(
+            "Received play enemy hit animation  event for enemy entity: {}",
+            event.enemy_hit
+        );
+        let Some((enemy_entity, animation_player_entity_pointer)) =
+            animation_player_entity_pointers
+                .iter()
+                .find(|(e, _)| *e == event.enemy_hit)
         else {
             warn!("lksjdfjkldfs");
             continue;
         };
+        info!(
+            "Found enemy with animation_player_entity_pointers: {}",
+            enemy_entity
+        );
+        info!(
+            "Now finding animation player, using AnimationPlayerEntityPointer, pointing to AnimationPlayer entity: {}",
+            animation_player_entity_pointer.0
+        );
 
         let Some((_, mut animation_player, mut animation_transitions)) =
             animation_players_and_transitions
                 .iter_mut()
-                .find(|(e, _, _)| *e == enemy.1.0)
+                .find(|(e, _, _)| *e == animation_player_entity_pointer.0)
         else {
             warn!(
                 "Could not find animation player and transitions for enemy entity from PlayerBulletHitEnemyEvent"
@@ -189,19 +202,22 @@ fn play_enemy_hit_animation(
             continue;
         };
 
+        info!("Now playing hit receive animation");
         animation_transitions.play(
             &mut animation_player,
             animations.animation_node_indices[ENEMY_HIT_RECEIVE_ANIMATION],
             Duration::ZERO,
         );
 
+        info!(
+            "Now inserting playhitanimation timer, so that after 0.5 seconds the previous animation is played again."
+        );
+        info!("Inserting into entity: {}", enemy_entity);
+        // FIXME: this will panic when enemy is hit and dead
         // after 0.5 seconds play normal animation again
-        commands
-            .entity(enemy.0)
-            .insert(PlayHitAnimation(Timer::from_seconds(
-                0.5,
-                TimerMode::Once,
-            )));
+        commands.entity(enemy_entity).insert(PlayHitAnimation(
+            Timer::from_seconds(0.5, TimerMode::Once),
+        ));
     }
 }
 
@@ -223,8 +239,12 @@ fn handle_play_hit_animation(
     for (enemy, mut play_hit_animation, animation_player_entity_pointer) in
         query
     {
+        info!("Ticking timer of PlayHitAnimation");
         play_hit_animation.0.tick(time.delta());
 
+        info!(
+            "Finding animation player, using the AnimationPlayerEntityPointer that exists on the Enemy"
+        );
         let Some((_, mut animation_player, mut animation_transitions)) =
             animation_players_and_transitions
                 .iter_mut()
@@ -235,6 +255,7 @@ fn handle_play_hit_animation(
             );
             continue;
         };
+        info!("Found animation player!");
 
         let new_animation_index = match enemy.state {
             EnemyAiState::AttackPlayer => ENEMY_IDLE_GUN_POINTING_ANIMATION,
@@ -244,6 +265,9 @@ fn handle_play_hit_animation(
         };
 
         if play_hit_animation.0.just_finished() {
+            info!(
+                "PlayHitAnimation timerr just finished, now playing previous animation again"
+            );
             animation_transitions.play(
                 &mut animation_player,
                 animations.animation_node_indices[new_animation_index],

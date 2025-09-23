@@ -37,7 +37,7 @@ fn main() {
             ..default()
         }).set(WindowPlugin {
                 primary_window: Some(Window {
-                    title: "fun-shooter".into(),
+                    title: "Fun Shooter".into(),
                     name: Some("fun-shooter".into()),
                     present_mode: PresentMode::AutoNoVsync,
                     ..default()
