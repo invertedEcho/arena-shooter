@@ -25,9 +25,6 @@ pub fn detect_player_bullet_collision_with_enemy(
     mut player_bullet_hit_enemy_event_writer: EventWriter<
         PlayerBulletHitEnemyEvent,
     >,
-    mut spawn_enemies_event_writer: EventWriter<
-        SpawnEnemiesAtSpawnLocationsEvent,
-    >,
     mut game_score: ResMut<GameScore>,
 ) {
     for CollisionStarted(first_entity, second_entity) in
@@ -41,7 +38,6 @@ pub fn detect_player_bullet_collision_with_enemy(
             continue;
         };
 
-        let count_of_enemies = enemy_query.iter().len();
         let Some((enemy_entity, mut enemy)) =
             enemy_query.iter_mut().find(|(entity, _)| {
                 entity == first_entity || entity == second_entity
@@ -60,26 +56,9 @@ pub fn detect_player_bullet_collision_with_enemy(
                 .remove::<RigidBody>()
                 .remove::<Collider>();
             game_score.player += 1;
-
-            // check if this was the last enemy
-            if count_of_enemies == 1 {
-                spawn_enemies_event_writer
-                    .write(SpawnEnemiesAtSpawnLocationsEvent);
-                commands
-                    .spawn((
-                        Node {
-                            width: Val::Percent(100.0),
-                            height: Val::Percent(100.0),
-                            justify_content: JustifyContent::End,
-                            align_items: AlignItems::End,
-                            ..default()
-                        },
-                        DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
-                    ))
-                    .with_child(Text::new(
-                        "A new wave of enemies has been spawned!",
-                    ));
-            }
+            commands.entity(enemy_entity).insert(DespawnTimer(
+                Timer::from_seconds(3.0, TimerMode::Once),
+            ));
         }
         commands.entity(player_bullet.0).despawn();
 
