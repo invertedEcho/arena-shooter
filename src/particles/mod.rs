@@ -25,19 +25,35 @@ const BULLET_IMPACT_PARTICLE_VELOCITY: f32 = 3.0;
 #[derive(Resource, Default)]
 pub struct BulletImpactEffectHandle(Option<Handle<EffectAsset>>);
 
+#[derive(Resource, Default)]
+pub struct PlayerBulletHitEnemyImpactEffectHandle(Option<Handle<EffectAsset>>);
+
 #[derive(Event)]
 pub struct SpawnBulletImpactEffectEvent {
     pub spawn_location: Vec3,
+    pub variant: BulletImpactEffectVariant,
+}
+
+pub enum BulletImpactEffectVariant {
+    World,
+    Enemy,
 }
 
 pub struct ParticlesPlugin;
 
 impl Plugin for ParticlesPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_bullet_effect_handle)
-            .add_systems(Update, handle_spawn_bullet_impact_effect)
-            .add_event::<SpawnBulletImpactEffectEvent>()
-            .insert_resource(BulletImpactEffectHandle::default());
+        app.add_systems(
+            Startup,
+            (
+                setup_bullet_effect_handle,
+                setup_player_bullet_impact_enemy_handle,
+            ),
+        )
+        .add_systems(Update, handle_spawn_bullet_impact_effect)
+        .add_event::<SpawnBulletImpactEffectEvent>()
+        .insert_resource(BulletImpactEffectHandle::default())
+        .insert_resource(PlayerBulletHitEnemyImpactEffectHandle::default());
     }
 }
 
@@ -112,12 +128,20 @@ fn handle_spawn_bullet_impact_effect(
     mut commands: Commands,
     mut event_reader: EventReader<SpawnBulletImpactEffectEvent>,
     bullet_impact_effect_resource: Res<BulletImpactEffectHandle>,
+    bullet_impact_body_effect_resource: Res<
+        PlayerBulletHitEnemyImpactEffectHandle,
+    >,
     player_camera_transform_global: Single<&Transform, With<PlayerCamera>>,
 ) {
     for event in event_reader.read() {
-        let Some(ref bullet_impact_effect_handle) =
-            bullet_impact_effect_resource.0
-        else {
+        let Some(bullet_impact_effect_handle) = (match event.variant {
+            BulletImpactEffectVariant::World => {
+                &bullet_impact_effect_resource.0
+            }
+            BulletImpactEffectVariant::Enemy => {
+                &bullet_impact_body_effect_resource.0
+            }
+        }) else {
             continue;
         };
 
@@ -146,9 +170,84 @@ fn handle_spawn_bullet_impact_effect(
             ..default()
         };
 
+        // cloning handles in bevy is very cheap. note that handles are just references to the
+        // actual asset thats stored somewhere. as always, the handle will get dropped after this
+        // call, e.g. at function end
         commands.spawn((
             ParticleEffect::new(bullet_impact_effect_handle.clone()),
             transform,
         ));
     }
+}
+
+// i really need to figure out how to dynamically change properties like gradient color of the
+// particles
+fn setup_player_bullet_impact_enemy_handle(
+    mut effects: ResMut<Assets<EffectAsset>>,
+    mut player_bullet_impact_enemy: ResMut<
+        PlayerBulletHitEnemyImpactEffectHandle,
+    >,
+) {
+    let expression_writer = ExprWriter::new();
+
+    // gradient colors
+    let mut gradient = Gradient::new();
+
+    gradient.add_key(0.0, Vec4::new(0.8, 0.0, 0.0, 1.0));
+    gradient.add_key(0.25, Vec4::new(0.6, 0.0, 0.0, 0.9));
+    gradient.add_key(0.6, Vec4::new(0.3, 0.0, 0.0, 0.7));
+    gradient.add_key(1.0, Vec4::new(0.15, 0.05, 0.05, 0.0));
+
+    // where the origin of the particles is (randomly)
+    let init_position_modifier = SetPositionCircleModifier {
+        center: expression_writer.lit(Vec3::ZERO).expr(),
+        axis: expression_writer.lit(Vec3::Z).expr(),
+        radius: expression_writer.lit(0.1).expr(),
+        dimension: ShapeDimension::Surface,
+    };
+
+    // particles "fly" away from center by speed of 3 units/sec
+    let init_velocity = SetVelocityCircleModifier {
+        center: expression_writer.lit(Vec3::ZERO).expr(),
+        axis: expression_writer.lit(Vec3::Z).expr(),
+        speed: expression_writer
+            .lit(BULLET_IMPACT_PARTICLE_VELOCITY)
+            .expr(),
+    };
+
+    // how long the particles are visible
+    let lifetime_handle = expression_writer
+        .lit(BULLET_IMPACT_PARTICLE_LIFETIME)
+        .expr();
+    let init_lifetime =
+        SetAttributeModifier::new(Attribute::LIFETIME, lifetime_handle);
+
+    // the scale/size of the particles
+    let size_attribute = SetAttributeModifier {
+        attribute: Attribute::SIZE,
+        value: expression_writer.lit(0.1).expr(),
+    };
+
+    // face particles towards camera
+    let orient_modifier_billboard = OrientModifier {
+        mode: OrientMode::FaceCameraPosition,
+        rotation: None,
+    };
+
+    let module = expression_writer.finish();
+    let bullet_impact_effect =
+        EffectAsset::new(1000, SpawnerSettings::once(4.0.into()), module)
+            .with_name("BulletImpactStraight")
+            .init(init_position_modifier)
+            .init(init_velocity)
+            .init(init_lifetime)
+            .init(size_attribute)
+            .render(orient_modifier_billboard)
+            .render(ColorOverLifetimeModifier {
+                gradient,
+                ..default()
+            });
+
+    let effect_handle = effects.add(bullet_impact_effect);
+    player_bullet_impact_enemy.0 = Some(effect_handle);
 }

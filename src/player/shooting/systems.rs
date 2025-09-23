@@ -7,7 +7,7 @@ use crate::{
     common::{BULLET_VELOCITY, components::DespawnTimer},
     enemy::{Enemy, shooting::EnemyBullet},
     game_flow::GameState,
-    particles::SpawnBulletImpactEffectEvent,
+    particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectEvent},
     player::{
         Player,
         camera::components::PlayerCamera,
@@ -254,6 +254,7 @@ pub fn spawn_muzzle_flash(
 /// accurate location to know where to spawn the bullet impact effect
 /// just checking for collision events doesnt work, as we would only get the center transform of the
 /// collided entity, which may be very inaccurate, as the object may be large
+// need to check if world or enemy
 pub fn accurate_check_bullet_collision_for_impact_particle(
     spatial_query: SpatialQuery,
     player_query: Single<(Entity, &Transform), With<Player>>,
@@ -270,16 +271,13 @@ pub fn accurate_check_bullet_collision_for_impact_particle(
     for _ in player_shot_event_reader.read() {
         let (player_entity, player_transform) = *player_query;
 
-        let enemy_entities: Vec<Entity> = enemy_entities.iter().collect();
-
         // ray-cast settings
         let origin = player_transform.translation;
         let direction = player_camera_global_transform.forward();
         let max_distance = 100.0;
         let solid = true;
-        let filter = SpatialQueryFilter::default().with_excluded_entities(
-            [vec![player_entity], enemy_entities].concat(),
-        );
+        let filter = SpatialQueryFilter::default()
+            .with_excluded_entities([player_entity]);
 
         if let Some(first_hit) = spatial_query.cast_ray(
             origin,
@@ -288,11 +286,21 @@ pub fn accurate_check_bullet_collision_for_impact_particle(
             solid,
             &filter,
         ) {
+            let did_hit_enemy =
+                enemy_entities.iter().any(|e| e == first_hit.entity);
+
             let hit_point = origin + direction * first_hit.distance;
+
+            let variant = if did_hit_enemy {
+                BulletImpactEffectVariant::Enemy
+            } else {
+                BulletImpactEffectVariant::World
+            };
 
             bullet_effect_spawn_event_writer.write(
                 SpawnBulletImpactEffectEvent {
                     spawn_location: hit_point,
+                    variant,
                 },
             );
         }
