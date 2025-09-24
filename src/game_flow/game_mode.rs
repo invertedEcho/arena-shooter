@@ -36,7 +36,7 @@ pub struct StartGameModeEvent(pub GameMode);
 // generalize it? how?
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 pub struct GameStateWave {
-    pub current_wave_index: usize,
+    pub current_wave: usize,
     pub enemies_left_from_current_wave: usize,
 }
 
@@ -49,13 +49,14 @@ fn handle_start_game_mode_event(
     for event in event_reader.read() {
         match event.0 {
             GameMode::Waves => {
+                let enemy_count = get_enemy_count_per_wave(1);
                 next_game_state_wave.set(GameStateWave {
-                    current_wave_index: 0,
-                    enemies_left_from_current_wave: 3,
+                    current_wave: 1,
+                    enemies_left_from_current_wave: enemy_count,
                 });
                 next_app_state.set(AppState::InGame);
                 spawn_enemies_event_writer.write(SpawnEnemiesEvent {
-                    enemy_count: 3,
+                    enemy_count,
                     spawn_method: EnemySpawnMethod::RandomSelection,
                 });
             }
@@ -65,14 +66,14 @@ fn handle_start_game_mode_event(
     }
 }
 
-pub fn get_enemy_count_per_wave(wave_index: usize) -> usize {
-    return match wave_index {
-        0 => 3,
-        1 => 4,
-        2 => 6,
-        3 => 8,
-        4 => 10,
-        5 => 12,
+pub fn get_enemy_count_per_wave(wave: usize) -> usize {
+    return match wave {
+        1 => 3,
+        2 => 4,
+        3 => 6,
+        4 => 8,
+        5 => 10,
+        6 => 12,
         _ => 14,
     };
     // TODO: spawn enemies that make the player take more damage
@@ -80,18 +81,20 @@ pub fn get_enemy_count_per_wave(wave_index: usize) -> usize {
 }
 
 fn handle_game_state_wave_changed(
-    current_game_mode: Res<State<GameMode>>,
     game_state_wave: Res<State<GameStateWave>>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     mut spawn_enemies_event_writer: EventWriter<SpawnEnemiesEvent>,
 ) {
-    if game_state_wave.is_changed() {
+    if game_state_wave.is_changed() && !game_state_wave.is_changed() {
         if game_state_wave.enemies_left_from_current_wave == 0 {
-            let new_wave_index = game_state_wave.current_wave_index + 1;
-            let new_enemy_count = get_enemy_count_per_wave(new_wave_index);
+            info!(
+                "no enemies left from current, spawning new enemies and increasing current_wave"
+            );
+            let new_wave = game_state_wave.current_wave + 1;
+            let new_enemy_count = get_enemy_count_per_wave(new_wave);
 
             next_game_state_wave.set(GameStateWave {
-                current_wave_index: new_wave_index,
+                current_wave: new_wave,
                 enemies_left_from_current_wave: new_enemy_count,
             });
             spawn_enemies_event_writer.write(SpawnEnemiesEvent {

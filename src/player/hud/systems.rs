@@ -210,7 +210,7 @@ pub fn update_wave_info_hud(
 ) {
     if game_state_wave.is_changed() {
         **current_wave_text =
-            Text::new((game_state_wave.current_wave_index + 1).to_string());
+            Text::new((game_state_wave.current_wave).to_string());
         **enemies_left_text = Text::new(
             game_state_wave.enemies_left_from_current_wave.to_string(),
         );

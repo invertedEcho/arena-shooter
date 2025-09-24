@@ -12,10 +12,10 @@ use crate::{
             components::{EnemyBullet, EnemyShootPlayerCooldownTimer},
             events::EnemyKilledEvent,
         },
-        spawn::SpawnEnemiesEvent,
+        spawn::{EnemySpawnMethod, SpawnEnemiesEvent},
     },
     game_flow::{
-        game_mode::{GameMode, GameStateWave},
+        game_mode::{GameMode, GameStateWave, get_enemy_count_per_wave},
         score::GameScore,
     },
     player::shooting::{
@@ -127,12 +127,17 @@ pub fn handle_enemy_killed_event(
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     mut enemy_query: Query<(Entity, &mut Enemy)>,
     mut game_score: ResMut<GameScore>,
+    mut spawn_enemies_event_writer: EventWriter<SpawnEnemiesEvent>,
 ) {
     for event in event_reader.read() {
         let Some((enemy_entity, mut enemy)) = enemy_query
             .iter_mut()
             .find(|(entity, _)| *entity == event.0)
         else {
+            warn!(
+                "An EnemyKilledEvent was fired, but the containing enemy entity does not seem to exist: {}",
+                event.0
+            );
             continue;
         };
 
@@ -147,12 +152,25 @@ pub fn handle_enemy_killed_event(
 
         match *current_game_mode.get() {
             GameMode::Waves => {
+                let new_enemies_left_count =
+                    game_state_wave.enemies_left_from_current_wave - 1;
                 next_game_state_wave.set(GameStateWave {
-                    current_wave_index: game_state_wave.current_wave_index,
-                    enemies_left_from_current_wave: game_state_wave
-                        .enemies_left_from_current_wave
-                        - 1,
+                    current_wave: game_state_wave.current_wave,
+                    enemies_left_from_current_wave: new_enemies_left_count,
                 });
+                if new_enemies_left_count == 0 {
+                    info!("no enemies left, spawning new wave!");
+                    let new_wave = game_state_wave.current_wave + 1;
+                    let enemy_count = get_enemy_count_per_wave(new_wave);
+                    next_game_state_wave.set(GameStateWave {
+                        current_wave: new_wave,
+                        enemies_left_from_current_wave: enemy_count,
+                    });
+                    spawn_enemies_event_writer.write(SpawnEnemiesEvent {
+                        enemy_count,
+                        spawn_method: EnemySpawnMethod::RandomSelection,
+                    });
+                }
             }
             GameMode::None => {}
         }
