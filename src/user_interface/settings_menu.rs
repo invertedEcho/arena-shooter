@@ -11,6 +11,10 @@ impl Plugin for SettingsMenuPlugin {
             spawn_settings_menu,
         )
         .add_systems(OnEnter(AppState::SettingsPauseMenu), spawn_settings_menu)
+        // cant use StateScoped for settings menu, as we need the settings menu to be despawned in two exists of
+        // state
+        .add_systems(OnExit(AppState::SettingsMainMenu), despawn_settings_menu)
+        .add_systems(OnExit(AppState::SettingsPauseMenu), despawn_settings_menu)
         .add_systems(Update, handle_settings_menu_button_pressed);
     }
 }
@@ -23,6 +27,9 @@ enum SettingsButtonType {
     Back,
 }
 
+#[derive(Component)]
+struct SettingsMenuRoot;
+
 fn spawn_settings_menu(mut commands: Commands) {
     commands
         .spawn((
@@ -34,8 +41,7 @@ fn spawn_settings_menu(mut commands: Commands) {
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
-            StateScoped(AppState::SettingsMainMenu),
-            StateScoped(AppState::SettingsPauseMenu),
+            SettingsMenuRoot,
         ))
         .with_children(|parent| {
             parent
@@ -63,6 +69,13 @@ fn spawn_settings_menu(mut commands: Commands) {
         });
 }
 
+fn despawn_settings_menu(
+    mut commands: Commands,
+    settings_menu_root: Single<Entity, With<SettingsMenuRoot>>,
+) {
+    commands.entity(*settings_menu_root).despawn();
+}
+
 fn handle_settings_menu_button_pressed(
     mut window: Single<&mut Window>,
     query: Query<(&Interaction, &SettingsMenuButton), Changed<Interaction>>,
@@ -77,9 +90,8 @@ fn handle_settings_menu_button_pressed(
             SettingsButtonType::ToggleFullscreen => {
                 let current_window_mode = window.mode;
                 if current_window_mode == WindowMode::Windowed {
-                    window.mode = WindowMode::Fullscreen(
+                    window.mode = WindowMode::BorderlessFullscreen(
                         MonitorSelection::Current,
-                        VideoModeSelection::Current,
                     );
                 } else {
                     window.mode = WindowMode::Windowed;
