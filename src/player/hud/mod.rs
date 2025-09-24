@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::GameState,
+    game_flow::{AppState, game_mode::GameMode},
     player::hud::systems::{
         spawn_bullet_hit_crosshair, spawn_player_hud, spawn_score_hud,
-        update_player_ammo_text, update_player_health_text, update_score_hud,
+        spawn_wave_info_hud, update_player_ammo_text,
+        update_player_health_text, update_score_hud, update_wave_info_hud,
     },
 };
 
@@ -26,11 +27,16 @@ impl Plugin for PlayerHudPlugin {
                 spawn_bullet_hit_crosshair,
                 update_score_hud,
             )
-                .run_if(in_state(GameState::InGame)),
+                .run_if(in_state(AppState::InGame)),
         )
         .add_systems(
-            OnEnter(GameState::InGame),
+            OnEnter(AppState::InGame),
             (spawn_player_hud, spawn_score_hud),
+        )
+        .add_systems(OnEnter(GameMode::Waves), spawn_wave_info_hud)
+        .add_systems(
+            Update,
+            (update_wave_info_hud).run_if(in_state(GameMode::Waves)),
         );
     }
 }

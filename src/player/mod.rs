@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::GameState,
+    game_flow::AppState,
     player::{
         camera::PlayerCameraPlugin, hud::PlayerHudPlugin,
         movement::player_movement, shooting::PlayerShootingPlugin,
@@ -47,7 +47,7 @@ impl Plugin for PlayerPlugin {
             .add_plugins(PlayerHudPlugin)
             .add_systems(
                 Update,
-                (player_movement).run_if(in_state(GameState::InGame)),
+                (player_movement).run_if(in_state(AppState::InGame)),
             );
     }
 }

@@ -175,7 +175,6 @@ pub fn play_enemy_hit_animation(
             continue;
         };
 
-        info!("Playing HIT_RECEIVE_ANIMATION on enemy {}", enemy_entity);
         animation_transitions.play(
             &mut animation_player,
             animations.animation_node_indices[ENEMY_HIT_RECEIVE_ANIMATION],
@@ -237,10 +236,6 @@ pub fn handle_play_hit_animation(
                 ENEMY_IDLE_GUN_ANIMATION
             }
         };
-        info!(
-            "Playing idle animation pointing/gun on enemy {}",
-            enemy_entity
-        );
         animation_transitions.play(
             &mut animation_player,
             animations.animation_node_indices[new_animation_index],

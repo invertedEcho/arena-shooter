@@ -65,13 +65,14 @@ pub fn setup_player_camera(
                 },
                 RenderLayers::layer(1),
                 NotShadowCaster,
-                // TODO: Its kinda weid that we spawn "PlayerWeapon" in `player/camera` module
+                // TODO: Its kinda weird that we spawn "PlayerWeapon" in `player/camera` module
                 PlayerWeapon {
                     loaded_ammo: 30,
                     carried_ammo: 99999999,
                     max_loaded_ammo: 30,
                     moving_to_right: false,
                 },
+                Visibility::Hidden,
             ))
             .observe(apply_render_layers_to_children);
     });

@@ -2,12 +2,15 @@ use bevy::prelude::*;
 
 use crate::user_interface::{
     common::CommonUiPlugin, death_screen::DeathScreenPlugin,
-    main_menu::MainMenuPlugin, pause_menu::PauseMenuPlugin,
-    settings_menu::SettingsMenuPlugin,
+    debug_overlay::DebugOverlayPlugin,
+    game_mode_selection::GameModeSelectionUIPlugin, main_menu::MainMenuPlugin,
+    pause_menu::PauseMenuPlugin, settings_menu::SettingsMenuPlugin,
 };
 
 mod common;
 mod death_screen;
+mod debug_overlay;
+mod game_mode_selection;
 mod main_menu;
 mod pause_menu;
 mod settings_menu;
@@ -20,6 +23,8 @@ impl Plugin for UserInterfacePlugin {
             .add_plugins(CommonUiPlugin)
             .add_plugins(DeathScreenPlugin)
             .add_plugins(SettingsMenuPlugin)
-            .add_plugins(MainMenuPlugin);
+            .add_plugins(MainMenuPlugin)
+            .add_plugins(GameModeSelectionUIPlugin)
+            .add_plugins(DebugOverlayPlugin);
     }
 }

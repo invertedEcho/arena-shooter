@@ -1,3 +1,5 @@
+use std::thread::current;
+
 use bevy::{
     color::palettes::tailwind::{BLUE_500, RED_500},
     prelude::*,
@@ -5,14 +7,19 @@ use bevy::{
 
 use crate::{
     common::components::DespawnTimer,
-    game_flow::{GameState, score::GameScore},
+    game_flow::{
+        AppState,
+        game_mode::{GameMode, GameStateWave},
+        score::GameScore,
+    },
     player::{
         Player,
         hud::{
             WHITE_CROSSHAIR_PATH,
             components::{
-                EnemyScoreText, PlayerCarriedAmmoText, PlayerHealthText,
-                PlayerLoadedAmmoText, PlayerScoreText,
+                CurrentWaveText, EnemiesLeftText, EnemyScoreText,
+                PlayerCarriedAmmoText, PlayerHealthText, PlayerLoadedAmmoText,
+                PlayerScoreText,
             },
         },
         shooting::{
@@ -36,7 +43,7 @@ pub fn spawn_player_hud(
                 padding: UiRect::all(Val::Px(16.0)),
                 ..default()
             },
-            StateScoped(GameState::InGame),
+            StateScoped(AppState::InGame),
         ))
         .with_children(|parent| {
             parent
@@ -68,7 +75,7 @@ pub fn spawn_player_hud(
                 align_items: AlignItems::Center,
                 ..default()
             },
-            StateScoped(GameState::InGame),
+            StateScoped(AppState::InGame),
         ))
         .with_child(ImageNode::new(asset_server.load(WHITE_CROSSHAIR_PATH)));
 }
@@ -131,9 +138,10 @@ pub fn spawn_score_hud(mut commands: Commands, game_score: Res<GameScore>) {
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Start,
                 column_gap: Val::Px(32.0),
+                padding: UiRect::all(Val::Px(16.0)),
                 ..default()
             },
-            StateScoped(GameState::InGame),
+            StateScoped(AppState::InGame),
         ))
         .with_children(|parent| {
             parent.spawn(Node { ..default() }).with_child((
@@ -167,5 +175,44 @@ pub fn update_score_hud(
         info!("Game score changed, updating score hud");
         **player_score_text = Text::new(game_score.player.to_string());
         **enemy_score_text = Text::new(game_score.enemy.to_string());
+    }
+}
+
+pub fn spawn_wave_info_hud(mut commands: Commands) {
+    commands
+        .spawn((
+            StateScoped(GameMode::Waves),
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::End,
+                padding: UiRect::all(Val::Px(16.0)),
+                ..default()
+            },
+        ))
+        .with_children(|parent| {
+            parent.spawn(Text::new("Current wave:"));
+            parent.spawn((Text::new(""), CurrentWaveText));
+            parent.spawn(Text::new("Enemies left:"));
+            parent.spawn((Text::new(""), EnemiesLeftText));
+        });
+}
+
+pub fn update_wave_info_hud(
+    game_state_wave: Res<State<GameStateWave>>,
+    mut current_wave_text: Single<
+        &mut Text,
+        (With<CurrentWaveText>, Without<EnemiesLeftText>),
+    >,
+    mut enemies_left_text: Single<&mut Text, With<EnemiesLeftText>>,
+) {
+    if game_state_wave.is_changed() {
+        **current_wave_text =
+            Text::new((game_state_wave.current_wave_index + 1).to_string());
+        **enemies_left_text = Text::new(
+            game_state_wave.enemies_left_from_current_wave.to_string(),
+        );
     }
 }

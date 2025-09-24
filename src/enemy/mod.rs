@@ -10,7 +10,7 @@ use crate::enemy::{
 mod ai;
 mod animate;
 pub mod shooting;
-mod spawn;
+pub mod spawn;
 
 pub struct EnemyPlugin;
 

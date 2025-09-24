@@ -1,8 +1,8 @@
 use bevy::{prelude::*, window::CursorGrabMode};
 
 use crate::{
-    game_flow::{GameState, PlayerDeathEvent},
-    player::{Player, PlayerState},
+    game_flow::{AppState, PlayerDeathEvent},
+    player::{Player, PlayerState, shooting::components::PlayerWeapon},
 };
 
 pub fn grab_mouse(mut window: Single<&mut Window>) {
@@ -26,22 +26,39 @@ pub fn handle_player_death_event(
 
 pub fn handle_escape(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    current_game_state: Res<State<GameState>>,
-    mut next_game_state: ResMut<NextState<GameState>>,
+    current_app_state: Res<State<AppState>>,
+    mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
-        match *current_game_state.get() {
-            GameState::InGame => {
-                next_game_state.set(GameState::Paused);
+        match *current_app_state.get() {
+            AppState::InGame => {
+                next_app_state.set(AppState::PauseMenu);
             }
-            GameState::Paused => {
-                next_game_state.set(GameState::InGame);
+            AppState::PauseMenu => {
+                next_app_state.set(AppState::InGame);
             }
-            GameState::Settings => {
-                next_game_state.set(GameState::Paused);
+            AppState::SettingsPauseMenu => {
+                next_app_state.set(AppState::PauseMenu);
             }
-            GameState::Death => {}
-            GameState::MainMenu => {}
+            AppState::PlayerDead => {}
+            AppState::MainMenu => {}
+            AppState::GameModeSelection => {
+                next_app_state.set(AppState::MainMenu);
+            }
+            AppState::SettingsMainMenu => {}
         }
     }
+}
+
+// TODO: should maybe be moved to player module
+pub fn handle_enter_in_game_state(
+    mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
+) {
+    **player_weapon = Visibility::Visible;
+}
+
+pub fn handle_exit_in_game_state(
+    mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
+) {
+    **player_weapon = Visibility::Hidden;
 }

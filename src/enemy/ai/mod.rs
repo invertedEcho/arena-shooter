@@ -3,7 +3,7 @@ use bevy::{color::palettes::css::RED, prelude::*};
 use vleue_navigator::{NavMesh, prelude::NavMeshSettings};
 
 use crate::{
-    enemy::Enemy, game_flow::GameState, nav_mesh_pathfinding::CurrentNavMesh,
+    enemy::Enemy, game_flow::AppState, nav_mesh_pathfinding::CurrentNavMesh,
     player::Player,
 };
 
@@ -33,7 +33,7 @@ impl Plugin for EnemyAiPlugin {
                 handle_start_chasing_player_event,
                 enemy_patrol,
             )
-                .run_if(in_state(GameState::InGame)),
+                .run_if(in_state(AppState::InGame)),
         );
     }
 }

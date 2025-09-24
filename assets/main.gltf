@@ -19,7 +19,15 @@
 				298,
 				299,
 				300,
-				301
+				301,
+				302,
+				303,
+				304,
+				305,
+				306,
+				307,
+				308,
+				309
 			]
 		}
 	],
@@ -6406,6 +6414,126 @@
 				-7.494506359100342,
 				1,
 				4.908145427703857
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+					}
+				]
+			},
+			"name":"EnemySpawnLocation.007",
+			"translation":[
+				0.08358994871377945,
+				1,
+				6.205173015594482
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+					}
+				]
+			},
+			"name":"EnemySpawnLocation.008",
+			"translation":[
+				-0.009505987167358398,
+				1,
+				-5.0044074058532715
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+					}
+				]
+			},
+			"name":"EnemySpawnLocation.009",
+			"translation":[
+				0.08358994871377945,
+				1,
+				2.91328763961792
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+					}
+				]
+			},
+			"name":"EnemySpawnLocation.010",
+			"translation":[
+				0.08358994871377945,
+				1,
+				-2.3184638023376465
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+					}
+				]
+			},
+			"name":"EnemySpawnLocation.011",
+			"translation":[
+				2.866222858428955,
+				1,
+				-6.806901454925537
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+					}
+				]
+			},
+			"name":"EnemySpawnLocation.012",
+			"translation":[
+				-2.943129539489746,
+				1,
+				-6.806901454925537
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+					}
+				]
+			},
+			"name":"EnemySpawnLocation.013",
+			"translation":[
+				-2.943129539489746,
+				1,
+				6.678691387176514
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+					}
+				]
+			},
+			"name":"EnemySpawnLocation.014",
+			"translation":[
+				2.794379234313965,
+				1,
+				6.678691387176514
 			]
 		}
 	],

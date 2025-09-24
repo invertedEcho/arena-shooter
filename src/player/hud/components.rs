@@ -14,3 +14,9 @@ pub struct PlayerScoreText;
 
 #[derive(Component)]
 pub struct EnemyScoreText;
+
+#[derive(Component)]
+pub struct CurrentWaveText;
+
+#[derive(Component)]
+pub struct EnemiesLeftText;

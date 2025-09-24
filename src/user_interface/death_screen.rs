@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::{GameState, systems::free_mouse},
+    game_flow::{AppState, systems::free_mouse},
     player::Player,
     user_interface::common::{CommonUiButton, CommonUiButtonType},
 };
@@ -11,7 +11,7 @@ pub struct DeathScreenPlugin;
 impl Plugin for DeathScreenPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            OnEnter(GameState::Death),
+            OnEnter(AppState::PlayerDead),
             (spawn_death_screen, free_mouse),
         )
         .add_systems(Update, handle_button_click);
@@ -29,7 +29,7 @@ enum DeathScreenButtonType {
 fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands
         .spawn((
-            StateScoped(GameState::Death),
+            StateScoped(AppState::PlayerDead),
             Node {
                 height: Val::Percent(100.0),
                 width: Val::Percent(100.0),
@@ -82,14 +82,14 @@ fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
 fn handle_button_click(
     query: Query<(&Interaction, &DeathScreenButton), Changed<Interaction>>,
     mut player: Single<&mut Player>,
-    mut next_game_state: ResMut<NextState<GameState>>,
+    mut next_game_state: ResMut<NextState<AppState>>,
 ) {
     for (interaction, button) in query {
         match interaction {
             Interaction::Pressed => {
                 if button.0 == DeathScreenButtonType::Respawn {
                     player.health = 100.0;
-                    next_game_state.set(GameState::InGame);
+                    next_game_state.set(AppState::InGame);
                 }
             }
             _ => {}

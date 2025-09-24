@@ -1,16 +1,17 @@
 use bevy::{prelude::*, window::WindowMode};
 
-use crate::{
-    game_flow::GameState,
-    user_interface::common::{CommonUiButton, CommonUiButtonType},
-};
+use crate::game_flow::AppState;
 
 pub struct SettingsMenuPlugin;
 
 impl Plugin for SettingsMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Settings), spawn_settings_menu)
-            .add_systems(Update, handle_settings_menu_button_pressed);
+        app.add_systems(
+            OnEnter(AppState::SettingsMainMenu),
+            spawn_settings_menu,
+        )
+        .add_systems(OnEnter(AppState::SettingsPauseMenu), spawn_settings_menu)
+        .add_systems(Update, handle_settings_menu_button_pressed);
     }
 }
 
@@ -19,6 +20,7 @@ struct SettingsMenuButton(pub SettingsButtonType);
 
 enum SettingsButtonType {
     ToggleFullscreen,
+    Back,
 }
 
 fn spawn_settings_menu(mut commands: Commands) {
@@ -32,7 +34,8 @@ fn spawn_settings_menu(mut commands: Commands) {
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
-            StateScoped(GameState::Settings),
+            StateScoped(AppState::SettingsMainMenu),
+            StateScoped(AppState::SettingsPauseMenu),
         ))
         .with_children(|parent| {
             parent
@@ -54,7 +57,7 @@ fn spawn_settings_menu(mut commands: Commands) {
                         ..default()
                     },
                     Button,
-                    CommonUiButton(CommonUiButtonType::Back),
+                    SettingsMenuButton(SettingsButtonType::Back),
                 ))
                 .with_child(Text::new("Back"));
         });
@@ -63,6 +66,8 @@ fn spawn_settings_menu(mut commands: Commands) {
 fn handle_settings_menu_button_pressed(
     mut window: Single<&mut Window>,
     query: Query<(&Interaction, &SettingsMenuButton), Changed<Interaction>>,
+    current_app_state: Res<State<AppState>>,
+    mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     for (interaction, settings_menu_button) in query {
         let Interaction::Pressed = interaction else {
@@ -79,6 +84,17 @@ fn handle_settings_menu_button_pressed(
                 } else {
                     window.mode = WindowMode::Windowed;
                 }
+            }
+            SettingsButtonType::Back => {
+                match *current_app_state.get() {
+                    AppState::SettingsMainMenu => {
+                        next_app_state.set(AppState::MainMenu);
+                    }
+                    AppState::SettingsPauseMenu => {
+                        next_app_state.set(AppState::PauseMenu);
+                    }
+                    _ => {}
+                };
             }
         }
     }

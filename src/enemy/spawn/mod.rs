@@ -11,11 +11,10 @@ pub struct EnemySpawnPlugin;
 
 impl Plugin for EnemySpawnPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<SpawnEnemiesAtSpawnLocationsEvent>()
+        app.add_event::<SpawnEnemiesEvent>()
             .add_systems(
                 Update,
                 (
-                    spawn_enemies_at_enemy_spawn_locations,
                     tick_enemy_spawn_timer,
                     handle_spawn_enemies_at_enemy_spawn_locations_event,
                 ),
@@ -35,7 +34,15 @@ pub struct EnemySpawnLocation;
 struct EnemySpawnTimer(pub Timer);
 
 #[derive(Event)]
-pub struct SpawnEnemiesAtSpawnLocationsEvent;
+pub struct SpawnEnemiesEvent {
+    pub enemy_count: usize,
+    pub spawn_method: EnemySpawnMethod,
+}
+
+pub enum EnemySpawnMethod {
+    /// Enemies will be spawned at randomly picked EnemySpawnLocations
+    RandomSelection,
+}
 
 fn tick_enemy_spawn_timer(
     mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
@@ -44,97 +51,86 @@ fn tick_enemy_spawn_timer(
     enemy_spawn_timer.0.tick(time.delta());
 }
 
-fn spawn_enemies_at_enemy_spawn_locations(
-    asset_server: Res<AssetServer>,
-    mut commands: Commands,
-    enemy_spawn_locations: Query<&Transform, Added<EnemySpawnLocation>>,
-) {
-    for added_enemy_spawn_location in enemy_spawn_locations {
-        let enemy_model = asset_server
-            .load(GltfAssetLabel::Scene(0).from_asset(SWAT_MODEL_PATH));
-
-        commands
-            .spawn((
-                Transform::from_translation(
-                    added_enemy_spawn_location.translation,
-                ),
-                Enemy {
-                    health: 100.0,
-                    ..default()
-                },
-                RigidBody::Dynamic,
-                LockedAxes::new()
-                    .lock_rotation_x()
-                    .lock_rotation_y()
-                    .lock_rotation_z(),
-                Collider::cuboid(0.3, 1.7, 0.3),
-                AngularVelocity::ZERO,
-                LinearVelocity::ZERO,
-                EnemyShootPlayerCooldownTimer(Timer::from_seconds(
-                    1.0,
-                    TimerMode::Repeating,
-                )),
-                Visibility::Visible,
-            ))
-            .with_child((
-                Transform {
-                    // we should probably just fix origin in blender instead of manual offset here
-                    translation: Vec3::new(0.0, -0.9, 0.0),
-                    // same with rotation here
-                    rotation: Quat::from_rotation_y(PI),
-                    scale: Vec3::splat(0.9),
-                },
-                SceneRoot(enemy_model),
-                Visibility::Visible,
-            ));
-    }
-}
-
 fn handle_spawn_enemies_at_enemy_spawn_locations_event(
-    mut event_writer: EventReader<SpawnEnemiesAtSpawnLocationsEvent>,
+    mut event_writer: EventReader<SpawnEnemiesEvent>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    enemy_spawn_locations: Query<&Transform, With<EnemySpawnLocation>>,
+    enemy_spawn_locations: Query<
+        (Entity, &Transform),
+        With<EnemySpawnLocation>,
+    >,
 ) {
-    for _ in event_writer.read() {
-        for added_enemy_spawn_location in enemy_spawn_locations {
-            let enemy_model = asset_server
-                .load(GltfAssetLabel::Scene(0).from_asset(SWAT_MODEL_PATH));
+    for event in event_writer.read() {
+        let spawn_enemy_count = event.enemy_count;
+        let spawn_method = &event.spawn_method;
 
-            commands
-                .spawn((
-                    Transform::from_translation(
-                        added_enemy_spawn_location.translation,
-                    ),
-                    Enemy {
-                        health: 100.0,
-                        ..default()
-                    },
-                    RigidBody::Dynamic,
-                    LockedAxes::new()
-                        .lock_rotation_x()
-                        .lock_rotation_y()
-                        .lock_rotation_z(),
-                    Collider::cuboid(0.3, 1.7, 0.3),
-                    AngularVelocity::ZERO,
-                    LinearVelocity::ZERO,
-                    EnemyShootPlayerCooldownTimer(Timer::from_seconds(
-                        1.0,
-                        TimerMode::Repeating,
-                    )),
-                    Visibility::Visible,
-                ))
-                .with_child((
-                    Transform {
-                        // we should probably just fix origin in blender instead of manual offset here
-                        translation: Vec3::new(0.0, -0.9, 0.0),
-                        // same with rotation here
-                        rotation: Quat::from_rotation_y(PI),
-                        scale: Vec3::splat(0.9),
-                    },
-                    SceneRoot(enemy_model),
-                    Visibility::Visible,
-                ));
+        match spawn_method {
+            EnemySpawnMethod::RandomSelection => {
+                let mut already_used_spawn_locations: Vec<Entity> = Vec::new();
+                while already_used_spawn_locations.len() != spawn_enemy_count {
+                    info!(
+                        "enemy spawn locations iter len: {}",
+                        enemy_spawn_locations.iter().len()
+                    );
+                    let chosen_spawn_location_index = rand::random_range(
+                        0..enemy_spawn_locations.iter().len(),
+                    );
+                    if already_used_spawn_locations.contains(
+                        &enemy_spawn_locations
+                            .iter()
+                            .collect::<Vec<(Entity, &Transform)>>()
+                            [chosen_spawn_location_index]
+                            .0,
+                    ) {
+                        continue;
+                    }
+
+                    let chosen_spawn_location = enemy_spawn_locations
+                        .iter()
+                        .collect::<Vec<(Entity, &Transform)>>()
+                        [chosen_spawn_location_index];
+                    already_used_spawn_locations.push(chosen_spawn_location.0);
+
+                    let enemy_model = asset_server.load(
+                        GltfAssetLabel::Scene(0).from_asset(SWAT_MODEL_PATH),
+                    );
+
+                    commands
+                        .spawn((
+                            Transform::from_translation(
+                                chosen_spawn_location.1.translation,
+                            ),
+                            Enemy {
+                                health: 100.0,
+                                ..default()
+                            },
+                            RigidBody::Dynamic,
+                            LockedAxes::new()
+                                .lock_rotation_x()
+                                .lock_rotation_y()
+                                .lock_rotation_z(),
+                            Collider::cuboid(0.3, 1.7, 0.3),
+                            AngularVelocity::ZERO,
+                            LinearVelocity::ZERO,
+                            EnemyShootPlayerCooldownTimer(Timer::from_seconds(
+                                1.0,
+                                TimerMode::Repeating,
+                            )),
+                            Visibility::Visible,
+                        ))
+                        .with_child((
+                            Transform {
+                                // we should probably just fix origin in blender instead of manual offset here
+                                translation: Vec3::new(0.0, -0.9, 0.0),
+                                // same with rotation here
+                                rotation: Quat::from_rotation_y(PI),
+                                scale: Vec3::splat(0.9),
+                            },
+                            SceneRoot(enemy_model),
+                            Visibility::Visible,
+                        ));
+                }
+            }
         }
     }
 }

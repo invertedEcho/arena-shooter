@@ -8,10 +8,16 @@ use crate::{
     enemy::{
         Enemy,
         ai::EnemyState,
-        shooting::components::{EnemyBullet, EnemyShootPlayerCooldownTimer},
-        spawn::SpawnEnemiesAtSpawnLocationsEvent,
+        shooting::{
+            components::{EnemyBullet, EnemyShootPlayerCooldownTimer},
+            events::EnemyKilledEvent,
+        },
+        spawn::SpawnEnemiesEvent,
     },
-    game_flow::score::GameScore,
+    game_flow::{
+        game_mode::{GameMode, GameStateWave},
+        score::GameScore,
+    },
     player::shooting::{
         components::PlayerBullet, events::PlayerBulletHitEnemyEvent,
     },
@@ -25,7 +31,7 @@ pub fn detect_player_bullet_collision_with_enemy(
     mut player_bullet_hit_enemy_event_writer: EventWriter<
         PlayerBulletHitEnemyEvent,
     >,
-    mut game_score: ResMut<GameScore>,
+    mut enemy_killed_event_writer: EventWriter<EnemyKilledEvent>,
 ) {
     for CollisionStarted(first_entity, second_entity) in
         collision_event_reader.read()
@@ -48,17 +54,7 @@ pub fn detect_player_bullet_collision_with_enemy(
 
         enemy.health -= player_bullet.1.damage;
         if enemy.health <= 0.0 {
-            enemy.state = EnemyState::Dead;
-            // TODO: perhaps this should be handled elsewhere.
-            // move this elsewhere when we do even more stuff here on initial death of enemy
-            commands
-                .entity(enemy_entity)
-                .remove::<RigidBody>()
-                .remove::<Collider>();
-            game_score.player += 1;
-            commands.entity(enemy_entity).insert(DespawnTimer(
-                Timer::from_seconds(3.0, TimerMode::Once),
-            ));
+            enemy_killed_event_writer.write(EnemyKilledEvent(enemy_entity));
         }
         commands.entity(player_bullet.0).despawn();
 
@@ -118,5 +114,47 @@ pub fn tick_enemy_shoot_player_cooldown_timer(
 ) {
     for mut timer in timer_query {
         timer.0.tick(time.delta());
+    }
+}
+
+// TODO: Does this really belong into the shooting module? its about spawning new enemies and game
+// flow/ game mode
+pub fn handle_enemy_killed_event(
+    mut commands: Commands,
+    mut event_reader: EventReader<EnemyKilledEvent>,
+    current_game_mode: Res<State<GameMode>>,
+    game_state_wave: Res<State<GameStateWave>>,
+    mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
+    mut enemy_query: Query<(Entity, &mut Enemy)>,
+    mut game_score: ResMut<GameScore>,
+) {
+    for event in event_reader.read() {
+        let Some((enemy_entity, mut enemy)) = enemy_query
+            .iter_mut()
+            .find(|(entity, _)| *entity == event.0)
+        else {
+            continue;
+        };
+
+        enemy.state = EnemyState::Dead;
+        commands
+            .entity(enemy_entity)
+            .remove::<RigidBody>()
+            .remove::<Collider>()
+            .insert(DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)));
+
+        game_score.player += 1;
+
+        match *current_game_mode.get() {
+            GameMode::Waves => {
+                next_game_state_wave.set(GameStateWave {
+                    current_wave_index: game_state_wave.current_wave_index,
+                    enemies_left_from_current_wave: game_state_wave
+                        .enemies_left_from_current_wave
+                        - 1,
+                });
+            }
+            GameMode::None => {}
+        }
     }
 }
