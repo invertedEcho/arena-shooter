@@ -68,10 +68,6 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_event(
             EnemySpawnMethod::RandomSelection => {
                 let mut already_used_spawn_locations: Vec<Entity> = Vec::new();
                 while already_used_spawn_locations.len() != spawn_enemy_count {
-                    info!(
-                        "enemy spawn locations iter len: {}",
-                        enemy_spawn_locations.iter().len()
-                    );
                     let chosen_spawn_location_index = rand::random_range(
                         0..enemy_spawn_locations.iter().len(),
                     );
