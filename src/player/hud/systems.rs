@@ -1,5 +1,3 @@
-use std::thread::current;
-
 use bevy::{
     color::palettes::tailwind::{BLUE_500, RED_500},
     prelude::*,

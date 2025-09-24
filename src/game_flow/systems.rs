@@ -50,7 +50,6 @@ pub fn handle_escape(
     }
 }
 
-// TODO: should maybe be moved to player module
 pub fn handle_enter_in_game_state(
     mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
 ) {

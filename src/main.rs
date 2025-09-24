@@ -7,7 +7,7 @@ use vleue_navigator::{VleueNavigatorPlugin, prelude::NavmeshUpdaterPlugin};
 
 use crate::{
     common::CommonPlugin, enemy::EnemyPlugin, game_flow::GameFlowPlugin,
-    ground_detection::GroundDetectionPlugin,
+    ground_detection::GroundDetectionPlugin, music::MusicPlugin,
     nav_mesh_pathfinding::NavMeshPathfindingPlugin, particles::ParticlesPlugin,
     player::PlayerPlugin, user_interface::UserInterfacePlugin,
     world::WorldPlugin,
@@ -17,6 +17,7 @@ mod common;
 mod enemy;
 mod game_flow;
 mod ground_detection;
+mod music;
 mod nav_mesh_pathfinding;
 mod particles;
 mod player;
@@ -78,6 +79,7 @@ fn main() {
         .add_plugins(EnemyPlugin)
         .add_plugins(UserInterfacePlugin)
         .add_plugins(ParticlesPlugin)
-        .add_plugins(NavMeshPathfindingPlugin);
+        .add_plugins(NavMeshPathfindingPlugin)
+        .add_plugins(MusicPlugin);
     app.run();
 }

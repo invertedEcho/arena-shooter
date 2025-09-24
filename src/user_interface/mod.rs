@@ -11,7 +11,7 @@ mod common;
 mod death_screen;
 mod debug_overlay;
 mod game_mode_selection;
-mod main_menu;
+pub mod main_menu;
 mod pause_menu;
 mod settings_menu;
 
