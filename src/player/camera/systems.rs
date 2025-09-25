@@ -84,7 +84,11 @@ pub fn setup_player_camera(
 
 pub fn camera_orbit_player(
     mouse_motion: Res<AccumulatedMouseMotion>,
-    mut player_camera_transform: Single<&mut Transform, With<PlayerCamera>>,
+    mut player_camera_transform: Single<
+        &mut Transform,
+        (With<PlayerCamera>, Without<Player>),
+    >,
+    mut player_transform: Single<&mut Transform, With<Player>>,
 ) {
     let delta = mouse_motion.delta;
 
@@ -96,22 +100,31 @@ pub fn camera_orbit_player(
         let delta_yaw = -delta.x * 0.002;
 
         // existing rotation
-        let (current_yaw, current_pitch, current_roll) =
+        let (current_yaw_camera, current_pitch_camera, current_roll_camera) =
             player_camera_transform.rotation.to_euler(EulerRot::YXZ);
 
-        let new_yaw = delta_yaw + current_yaw;
+        let (current_yaw_player, current_pitch_player, current_roll_player) =
+            player_transform.rotation.to_euler(EulerRot::YXZ);
 
-        let new_pitch =
-            (delta_pitch + current_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+        let new_yaw_player = delta_yaw + current_yaw_player;
 
-        player_camera_transform.rotation =
-            Quat::from_euler(EulerRot::YXZ, new_yaw, new_pitch, current_roll);
-        // now we just need to adjust yaw of player, so other players can also see in which direction
-        // the person is looking.
-        // note that we cant just simply update yaw of player, because then player camera yaw would
-        // be duplicated? or something like that
+        let new_pitch_camera = (delta_pitch + current_pitch_camera)
+            .clamp(-PITCH_LIMIT, PITCH_LIMIT);
 
-        // later, we can adjust pitch of player weapon so other players can also see if aiming to
+        player_camera_transform.rotation = Quat::from_euler(
+            EulerRot::YXZ,
+            current_yaw_camera,
+            new_pitch_camera,
+            current_roll_camera,
+        );
+        player_transform.rotation = Quat::from_euler(
+            EulerRot::YXZ,
+            new_yaw_player,
+            current_pitch_player,
+            current_roll_player,
+        );
+
+        // we should adjust pitch of player weapon so other players can also see if aiming to
         // sky or to bottom.
     }
 }

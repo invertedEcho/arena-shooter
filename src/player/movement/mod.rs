@@ -25,34 +25,31 @@ impl Plugin for PlayerMovementPlugin {
 }
 
 pub fn player_movement(
-    mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     player: Single<(Entity, &mut Player, &mut LinearVelocity, &Transform)>,
-    player_camera: Single<
-        (Entity, &Transform),
-        (With<PlayerCamera>, Without<Player>),
-    >,
+    player_camera_entity: Single<Entity, With<PlayerCamera>>,
     spatial_query: SpatialQuery,
 ) {
-    let (player_camera_entity, player_camera_transform) =
-        player_camera.into_inner();
-
     let (player_entity, mut player, mut velocity, player_transform) =
         player.into_inner();
 
     if let Some(first_hit) = spatial_query.cast_shape(
         &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
         player_transform.translation,
-        player_camera_transform.rotation,
-        player_camera_transform.forward(),
+        player_transform.rotation,
+        player_transform.forward(),
         &ShapeCastConfig {
-            max_distance: 5.0,
+            max_distance: 0.5,
             ..default()
         },
         &SpatialQueryFilter::default()
-            .with_excluded_entities([player_entity, player_camera_entity]),
+            .with_excluded_entities([player_entity, *player_camera_entity]),
     ) {
         if first_hit.distance < 0.1 {
+            info!(
+                "disallowing movement as there is a obstacle in direction of player: {:?}",
+                first_hit
+            );
             **velocity = Vec3::ZERO;
             info!("disallowing movement");
             return;
@@ -84,7 +81,7 @@ pub fn player_movement(
         local_velocity.y += 3.0;
     }
 
-    let world_velocity = player_camera_transform.rotation * local_velocity;
+    let world_velocity = player_transform.rotation * local_velocity;
     velocity.x = world_velocity.x;
     velocity.z = world_velocity.z;
 

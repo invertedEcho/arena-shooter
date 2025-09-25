@@ -12,5 +12,5 @@ impl Plugin for PlayerSpawnPlugin {
     }
 }
 
-pub const PLAYER_CAPSULE_RADIUS: f32 = 0.3;
-pub const PLAYER_CAPSULE_LENGTH: f32 = 1.5;
+pub const PLAYER_CAPSULE_RADIUS: f32 = 0.2;
+pub const PLAYER_CAPSULE_LENGTH: f32 = 1.0;
