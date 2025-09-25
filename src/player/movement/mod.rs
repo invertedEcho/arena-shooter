@@ -33,32 +33,6 @@ pub fn player_movement(
     let (player_entity, mut player, mut velocity, player_transform) =
         player.into_inner();
 
-    // okay so its not that easy.
-    info!("player forward: {:?}", player_transform.forward());
-    if let Some(first_hit) = spatial_query.cast_shape(
-        &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
-        player_transform.translation,
-        player_transform.rotation,
-        player_transform.forward(),
-        &ShapeCastConfig {
-            max_distance: 0.5,
-            ..default()
-        },
-        &SpatialQueryFilter::default()
-            .with_excluded_entities([player_entity, *player_camera_entity]),
-    ) {
-        if first_hit.distance < 0.1 {
-            info!(
-                "disallowing movement as there is a obstacle in direction of player: {:?}",
-                first_hit
-            );
-            **velocity = Vec3::ZERO;
-            info!("disallowing movement");
-            player.state = PlayerMovementState::Idle;
-            return;
-        }
-    }
-
     let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
         PLAYER_RUN_SPEED
     } else {
@@ -85,6 +59,39 @@ pub fn player_movement(
     }
 
     let world_velocity = player_transform.rotation * local_velocity;
+    let maybe_normalized_world_velocity = world_velocity.try_normalize();
+    let Some(normalized_world_velocity) = maybe_normalized_world_velocity
+    else {
+        **velocity = Vec3::ZERO;
+        return;
+    };
+
+    let direction_based_on_input =
+        Dir3::new_unchecked(normalized_world_velocity);
+
+    if let Some(first_hit) = spatial_query.cast_shape(
+        &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
+        player_transform.translation,
+        player_transform.rotation,
+        direction_based_on_input,
+        &ShapeCastConfig {
+            max_distance: 0.5,
+            ..default()
+        },
+        &SpatialQueryFilter::default()
+            .with_excluded_entities([player_entity, *player_camera_entity]),
+    ) {
+        if first_hit.distance < 0.1 {
+            info!(
+                "disallowing forward movement as there is a obstacle in direction of player: {:?}",
+                first_hit
+            );
+            **velocity = Vec3::ZERO;
+            player.state = PlayerMovementState::Idle;
+            return;
+        }
+    }
+
     velocity.x = world_velocity.x;
     velocity.z = world_velocity.z;
 
