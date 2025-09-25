@@ -7,8 +7,8 @@ use crate::player::{
 
 pub mod components;
 
-pub const PLAYER_CAPSULE_RADIUS: f32 = 0.2;
-pub const PLAYER_CAPSULE_LENGTH: f32 = 1.0;
+pub const PLAYER_CAPSULE_RADIUS: f32 = 0.1;
+pub const PLAYER_CAPSULE_LENGTH: f32 = 0.8;
 
 pub struct PlayerSpawnPlugin;
 
@@ -34,6 +34,7 @@ fn handle_player_spawn_event(
             Player {
                 health: 100.0,
                 state: PlayerMovementState::Idle,
+                on_ground: true,
             },
             Transform::from_translation(event.spawn_location),
             RigidBody::Kinematic,
@@ -44,6 +45,7 @@ fn handle_player_spawn_event(
                 .lock_rotation_z(),
             LinearVelocity::ZERO,
             Visibility::Visible,
+            CollisionEventsEnabled,
         ));
     }
 }

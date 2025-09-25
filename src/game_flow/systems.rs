@@ -53,13 +53,11 @@ pub fn handle_escape(
 pub fn handle_enter_in_game_state(
     mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
 ) {
-    info!("making player weapon visible");
     **player_weapon = Visibility::Visible;
 }
 
 pub fn handle_exit_in_game_state(
     mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
 ) {
-    info!("making player weapon hidden");
     **player_weapon = Visibility::Hidden;
 }

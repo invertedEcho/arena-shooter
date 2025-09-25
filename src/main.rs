@@ -25,6 +25,8 @@ mod user_interface;
 mod utils;
 mod world;
 
+const GRAVITY: f32 = 9.81;
+
 fn main() {
     let mut app = App::new();
 
@@ -53,7 +55,7 @@ fn main() {
     // avian (physics)
     app.add_plugins(PhysicsPlugins::default())
         .add_plugins(PhysicsDebugPlugin::default())
-        .insert_resource(Gravity(Vec3::NEG_Y * 9.81));
+        .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
 
     // skein
     app.add_plugins(SkeinPlugin::default());

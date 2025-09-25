@@ -16,6 +16,7 @@ pub mod spawn;
 pub struct Player {
     pub health: f32,
     pub state: PlayerMovementState,
+    pub on_ground: bool,
 }
 
 #[derive(Reflect, PartialEq)]
@@ -30,6 +31,7 @@ impl Default for Player {
         Player {
             health: 100.0,
             state: PlayerMovementState::Idle,
+            on_ground: true,
         }
     }
 }

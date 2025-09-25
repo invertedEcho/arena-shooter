@@ -2,6 +2,7 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
+    GRAVITY,
     game_flow::AppState,
     player::{
         Player, PlayerMovementState,
@@ -10,8 +11,9 @@ use crate::{
     },
 };
 
-const PLAYER_WALK_SPEED: f32 = 2.0;
-const PLAYER_RUN_SPEED: f32 = 5.0;
+const PLAYER_WALK_VELOCITY: f32 = 2.0;
+const PLAYER_RUN_VELOCITY: f32 = 5.0;
+const PLAYER_JUMP_VELOCITY: f32 = 3.0;
 
 pub struct PlayerMovementPlugin;
 
@@ -24,19 +26,21 @@ impl Plugin for PlayerMovementPlugin {
     }
 }
 
+// TODO: its time to split this up, so we can also re-use it for our enemies
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     player: Single<(Entity, &mut Player, &mut LinearVelocity, &Transform)>,
     player_camera_entity: Single<Entity, With<PlayerCamera>>,
     spatial_query: SpatialQuery,
+    time: Res<Time>,
 ) {
     let (player_entity, mut player, mut velocity, player_transform) =
         player.into_inner();
 
     let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
-        PLAYER_RUN_SPEED
+        PLAYER_RUN_VELOCITY
     } else {
-        PLAYER_WALK_SPEED
+        PLAYER_WALK_VELOCITY
     };
 
     let mut local_velocity = Vec3::ZERO;
@@ -53,16 +57,39 @@ pub fn player_movement(
     if keyboard_input.pressed(KeyCode::KeyS) {
         local_velocity.z += speed;
     }
-    // TODO: cast ray below us
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        local_velocity.y += 3.0;
+    if keyboard_input.just_pressed(KeyCode::Space) && player.on_ground {
+        velocity.y = PLAYER_JUMP_VELOCITY;
+    }
+
+    velocity.y -= GRAVITY * time.delta_secs();
+
+    if let Some(_) = spatial_query.cast_shape(
+        &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
+        player_transform.translation,
+        player_transform.rotation,
+        Dir3::NEG_Y,
+        &ShapeCastConfig {
+            max_distance: 0.5,
+            ..default()
+        },
+        &SpatialQueryFilter::default()
+            .with_excluded_entities([player_entity, *player_camera_entity]),
+    ) {
+        if velocity.y <= 0.0 {
+            velocity.y = 0.0;
+            player.on_ground = true;
+        }
+    } else {
+        player.on_ground = false;
     }
 
     let world_velocity = player_transform.rotation * local_velocity;
     let maybe_normalized_world_velocity = world_velocity.try_normalize();
     let Some(normalized_world_velocity) = maybe_normalized_world_velocity
     else {
-        **velocity = Vec3::ZERO;
+        velocity.x = 0.0;
+        velocity.z = 0.0;
+        player.state = PlayerMovementState::Idle;
         return;
     };
 
@@ -82,10 +109,6 @@ pub fn player_movement(
             .with_excluded_entities([player_entity, *player_camera_entity]),
     ) {
         if first_hit.distance < 0.1 {
-            info!(
-                "disallowing forward movement as there is a obstacle in direction of player: {:?}",
-                first_hit
-            );
             **velocity = Vec3::ZERO;
             player.state = PlayerMovementState::Idle;
             return;
@@ -95,7 +118,7 @@ pub fn player_movement(
     velocity.x = world_velocity.x;
     velocity.z = world_velocity.z;
 
-    if speed == PLAYER_RUN_SPEED {
+    if speed == PLAYER_RUN_VELOCITY {
         player.state = PlayerMovementState::Running;
     } else if local_velocity != Vec3::ZERO {
         player.state = PlayerMovementState::Walking;
