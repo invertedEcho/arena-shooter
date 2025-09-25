@@ -6281,55 +6281,6 @@
 			"extras":{
 				"skein":[
 					{
-						"avian3d::dynamics::rigid_body::LinearVelocity":[
-							0.0,
-							0.0,
-							0.0
-						]
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Dynamic"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.30000001192092896,
-								"y_length":1.7000000476837158,
-								"z_length":0.30000001192092896
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::locked_axes::LockedAxes":7
-					},
-					{
-						"fun_shooter::ground_detection::components::GroundDetection":{
-							"on_ground":true
-						}
-					},
-					{
-						"fun_shooter::player::Player":{
-							"health":100.0,
-							"state":"Idle"
-						}
-					},
-					{
-						"avian3d::collision::collision_events::CollisionEventsEnabled":{}
-					}
-				]
-			},
-			"mesh":293,
-			"name":"Player",
-			"translation":[
-				0.03980329632759094,
-				1,
-				-2.9812660217285156
-			]
-		},
-		{
-			"extras":{
-				"skein":[
-					{
 						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
@@ -6534,6 +6485,26 @@
 				2.794379234313965,
 				1,
 				6.678691387176514
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::player::spawn::components::PlayerSpawnLocation":{}
+					}
+				]
+			},
+			"name":"PlayerSpawnLocation",
+			"scale":[
+				0.6827024817466736,
+				0.6827024817466736,
+				0.6827024817466736
+			],
+			"translation":[
+				3.210940361022949,
+				1.0922584533691406,
+				0.14228332042694092
 			]
 		}
 	],
@@ -12479,19 +12450,6 @@
 						"POSITION":1298,
 						"NORMAL":1299,
 						"TEXCOORD_0":1300
-					},
-					"indices":1291
-				}
-			]
-		},
-		{
-			"name":"Cube.007",
-			"primitives":[
-				{
-					"attributes":{
-						"POSITION":1301,
-						"NORMAL":1302,
-						"TEXCOORD_0":1303
 					},
 					"indices":1291
 				}
@@ -23964,34 +23922,6 @@
 			"componentType":5126,
 			"count":24,
 			"type":"VEC2"
-		},
-		{
-			"bufferView":1301,
-			"componentType":5126,
-			"count":24,
-			"max":[
-				0.15000000596046448,
-				0.8500000238418579,
-				0.15000009536743164
-			],
-			"min":[
-				-0.15000000596046448,
-				-0.8500000238418579,
-				-0.1499999761581421
-			],
-			"type":"VEC3"
-		},
-		{
-			"bufferView":1302,
-			"componentType":5126,
-			"count":24,
-			"type":"VEC3"
-		},
-		{
-			"bufferView":1303,
-			"componentType":5126,
-			"count":24,
-			"type":"VEC2"
 		}
 	],
 	"bufferViews":[
@@ -31800,29 +31730,11 @@
 			"byteLength":192,
 			"byteOffset":27765004,
 			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":288,
-			"byteOffset":27765196,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":288,
-			"byteOffset":27765484,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":192,
-			"byteOffset":27765772,
-			"target":34962
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":27765964,
+			"byteLength":27765196,
 			"uri":"main.bin"
 		}
 	]

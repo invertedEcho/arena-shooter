@@ -12,7 +12,12 @@ pub struct NavMeshPathfindingPlugin;
 
 impl Plugin for NavMeshPathfindingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup).add_systems(
+        app.add_plugins((
+            VleueNavigatorPlugin,
+            NavmeshUpdaterPlugin::<PrimitiveObstacle>::default(),
+        ))
+        .add_systems(Startup, setup)
+        .add_systems(
             Update,
             (
                 setup_scene,
@@ -40,14 +45,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         asset_server.load("maps/main/navmesh.gltf"),
     ));
     commands.insert_resource(CurrentNavMesh(HANDLE_TRIMESH_OPTIMIZED));
-
-    commands.spawn((
-        NavMeshSettings {
-            default_search_delta: 0.5,
-            ..default()
-        },
-        NavMeshUpdateMode::Direct,
-    ));
 }
 
 fn setup_scene(
@@ -108,22 +105,6 @@ fn get_path_from_enemy_to_player_on_enter(
     if keyboard_input.just_pressed(KeyCode::Enter) {
         let navmesh = navmeshes.get(&current_mesh.0).unwrap();
         for enemy_transform in enemy_transform_query {
-            info!("player transform: {}", player_transform.translation);
-            info!(
-                "player is in navmesh: {}",
-                navmesh.is_in_mesh(Vec2 {
-                    x: player_transform.translation.x,
-                    y: player_transform.translation.z
-                })
-            );
-            info!("enemy transform: {}", enemy_transform.translation);
-            info!(
-                "enemy is in navmesh: {}",
-                navmesh.is_in_mesh(Vec2 {
-                    x: enemy_transform.translation.x,
-                    y: enemy_transform.translation.z
-                })
-            );
             let path = navmesh.transformed_path(
                 Vec3 {
                     x: enemy_transform.translation.x,

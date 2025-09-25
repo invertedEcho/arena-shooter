@@ -1,22 +1,19 @@
 use bevy::prelude::*;
 
-use crate::{
-    game_flow::AppState,
-    player::{
-        camera::PlayerCameraPlugin, hud::PlayerHudPlugin,
-        movement::player_movement, shooting::PlayerShootingPlugin,
-    },
+use crate::player::{
+    camera::PlayerCameraPlugin, hud::PlayerHudPlugin,
+    movement::PlayerMovementPlugin, shooting::PlayerShootingPlugin,
+    spawn::PlayerSpawnPlugin,
 };
 
 pub mod camera;
 mod hud;
 mod movement;
 pub mod shooting;
+pub mod spawn;
 
-#[derive(Component, Reflect)]
-#[reflect(Component, Default)]
+#[derive(Component)]
 pub struct Player {
-    // #[reflect(default)]
     pub health: f32,
     pub state: PlayerState,
 }
@@ -41,13 +38,10 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<Player>()
+        app.add_plugins(PlayerSpawnPlugin)
             .add_plugins(PlayerCameraPlugin)
             .add_plugins(PlayerShootingPlugin)
             .add_plugins(PlayerHudPlugin)
-            .add_systems(
-                Update,
-                (player_movement).run_if(in_state(AppState::InGame)),
-            );
+            .add_plugins(PlayerMovementPlugin);
     }
 }

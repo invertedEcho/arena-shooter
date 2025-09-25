@@ -11,6 +11,7 @@ use bevy::{
     input::mouse::AccumulatedMouseMotion, pbr::NotShadowCaster, prelude::*,
     render::view::RenderLayers,
 };
+use bevy_inspector_egui::bevy_egui;
 
 use crate::player::{Player, camera::PlayerCamera};
 
@@ -34,6 +35,9 @@ pub fn setup_player_camera(
                 ..default()
             },
             RenderLayers::layer(1),
+            // needed so our inspector is shown again when we enter game, as we despawn
+            // `WorldUiCamera` and spawn player camera
+            bevy_egui::PrimaryEguiContext,
         ));
 
         parent.spawn((

@@ -1,22 +1,22 @@
 use avian3d::prelude::*;
-use bevy::{prelude::*, render::primitives::Aabb, window::PresentMode};
+use bevy::{prelude::*, window::PresentMode};
 use bevy_hanabi::HanabiPlugin;
-use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
+use bevy_inspector_egui::{
+    bevy_egui::{self, EguiPlugin},
+    quick::WorldInspectorPlugin,
+};
 use bevy_skein::SkeinPlugin;
-use vleue_navigator::{VleueNavigatorPlugin, prelude::NavmeshUpdaterPlugin};
 
 use crate::{
     common::CommonPlugin, enemy::EnemyPlugin, game_flow::GameFlowPlugin,
-    ground_detection::GroundDetectionPlugin, music::MusicPlugin,
-    nav_mesh_pathfinding::NavMeshPathfindingPlugin, particles::ParticlesPlugin,
-    player::PlayerPlugin, user_interface::UserInterfacePlugin,
-    world::WorldPlugin,
+    music::MusicPlugin, nav_mesh_pathfinding::NavMeshPathfindingPlugin,
+    particles::ParticlesPlugin, player::PlayerPlugin,
+    user_interface::UserInterfacePlugin, world::WorldPlugin,
 };
 
 mod common;
 mod enemy;
 mod game_flow;
-mod ground_detection;
 mod music;
 mod nav_mesh_pathfinding;
 mod particles;
@@ -65,21 +65,35 @@ fn main() {
     // hanabi plugins (particles)
     app.add_plugins(HanabiPlugin);
 
-    app.add_plugins((
-        VleueNavigatorPlugin,
-        NavmeshUpdaterPlugin::<Aabb>::default(),
-    ));
-
     // own plugins
     app.add_plugins(PlayerPlugin)
         .add_plugins(WorldPlugin)
         .add_plugins(GameFlowPlugin)
-        .add_plugins(GroundDetectionPlugin)
         .add_plugins(CommonPlugin)
         .add_plugins(EnemyPlugin)
         .add_plugins(UserInterfacePlugin)
         .add_plugins(ParticlesPlugin)
         .add_plugins(NavMeshPathfindingPlugin)
         .add_plugins(MusicPlugin);
+
+    app.insert_resource(bevy_egui::EguiGlobalSettings {
+        auto_create_primary_context: false,
+        ..default()
+    });
+
+    app.add_systems(Startup, spawn_world_ui_camera);
     app.run();
+}
+
+// TODO: i need a a better name for this
+#[derive(Component)]
+pub struct WorldUiCamera;
+
+fn spawn_world_ui_camera(mut commands: Commands) {
+    commands.spawn((
+        Camera::default(),
+        Camera3d::default(),
+        Transform::from_xyz(5.0, 10.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        WorldUiCamera,
+    ));
 }

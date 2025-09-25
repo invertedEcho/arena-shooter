@@ -29,6 +29,15 @@ impl Plugin for GameFlowPlugin {
     }
 }
 
+// honestly i really start to dislike this AppState, introduces so much shit.
+// i think we should just have these states:
+// MainMenu,
+// InGame
+// and thats it for now.
+// then, main menu has a state, e.g. if its in settings menu right now, or game mode selection
+// and in game has a state, if its playing, paused, or player dead. but how do we do settings in
+// paused?
+
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[states(scoped_entities)]
 pub enum AppState {

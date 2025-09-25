@@ -2,22 +2,62 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    ground_detection::components::GroundDetection,
-    player::{Player, PlayerState, camera::components::PlayerCamera},
+    game_flow::AppState,
+    player::{
+        Player, PlayerState,
+        camera::components::PlayerCamera,
+        spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
+    },
 };
 
 const PLAYER_WALK_SPEED: f32 = 2.0;
 const PLAYER_RUN_SPEED: f32 = 5.0;
 
+pub struct PlayerMovementPlugin;
+
+impl Plugin for PlayerMovementPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            Update,
+            (player_movement).run_if(in_state(AppState::InGame)),
+        );
+    }
+}
+
 pub fn player_movement(
+    mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    player: Single<(&mut Player, &mut LinearVelocity, &GroundDetection)>,
-    player_camera_transform: Single<
-        &Transform,
+    player: Single<(Entity, &mut Player, &mut LinearVelocity, &Transform)>,
+    player_camera: Single<
+        (Entity, &Transform),
         (With<PlayerCamera>, Without<Player>),
     >,
+    spatial_query: SpatialQuery,
 ) {
-    let (mut player, mut velocity, ground_detection) = player.into_inner();
+    let (player_camera_entity, player_camera_transform) =
+        player_camera.into_inner();
+
+    let (player_entity, mut player, mut velocity, player_transform) =
+        player.into_inner();
+
+    if let Some(first_hit) = spatial_query.cast_shape(
+        &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
+        player_transform.translation,
+        player_camera_transform.rotation,
+        player_camera_transform.forward(),
+        &ShapeCastConfig {
+            max_distance: 5.0,
+            ..default()
+        },
+        &SpatialQueryFilter::default()
+            .with_excluded_entities([player_entity, player_camera_entity]),
+    ) {
+        if first_hit.distance < 0.1 {
+            **velocity = Vec3::ZERO;
+            info!("disallowing movement");
+            return;
+        }
+    }
 
     let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
         PLAYER_RUN_SPEED
@@ -39,9 +79,9 @@ pub fn player_movement(
     if keyboard_input.pressed(KeyCode::KeyS) {
         local_velocity.z += speed;
     }
-    if keyboard_input.just_pressed(KeyCode::Space) && ground_detection.on_ground
-    {
-        velocity.y = 3.0;
+    // TODO: cast ray below us
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        local_velocity.y += 3.0;
     }
 
     let world_velocity = player_camera_transform.rotation * local_velocity;

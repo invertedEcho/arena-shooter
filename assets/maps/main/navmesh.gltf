@@ -15,7 +15,7 @@
 	"nodes":[
 		{
 			"mesh":0,
-			"name":"Mesh_0"
+			"name":"Mesh_0.001"
 		}
 	],
 	"materials":[
@@ -45,55 +45,55 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":520,
+			"count":262,
 			"max":[
-				12.201082229614258,
-				2.8778443336486816,
-				8.077495574951172
+				12.101081848144531,
+				3.03784441947937,
+				7.877496242523193
 			],
 			"min":[
-				-12.198918342590332,
-				0.007844403386116028,
-				-8.022503852844238
+				-12.098918914794922,
+				0.03784440457820892,
+				-7.92250394821167
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":520,
+			"count":262,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5123,
-			"count":1434,
+			"count":735,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":6240,
+			"byteLength":3144,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":6240,
-			"byteOffset":6240,
+			"byteLength":3144,
+			"byteOffset":3144,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":2868,
-			"byteOffset":12480,
+			"byteLength":1470,
+			"byteOffset":6288,
 			"target":34963
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":15348,
+			"byteLength":7760,
 			"uri":"navmesh.bin"
 		}
 	]

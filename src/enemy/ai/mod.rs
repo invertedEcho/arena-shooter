@@ -1,6 +1,6 @@
 use avian3d::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*};
-use vleue_navigator::{NavMesh, prelude::NavMeshSettings};
+use vleue_navigator::NavMesh;
 
 use crate::{
     enemy::Enemy, game_flow::AppState, nav_mesh_pathfinding::CurrentNavMesh,
@@ -31,7 +31,7 @@ impl Plugin for EnemyAiPlugin {
                 check_if_enemy_can_see_player_and_look_at_player,
                 tick_enemy_can_see_player_cooldown_timer,
                 handle_start_chasing_player_event,
-                enemy_patrol,
+                // enemy_patrol,
             )
                 .run_if(in_state(AppState::InGame)),
         );
@@ -79,6 +79,7 @@ fn check_if_enemy_can_see_player_and_look_at_player(
     check_if_enemy_can_see_player_cooldown_timer: Res<
         CheckIfEnemyCanSeePlayerCooldownTimer,
     >,
+    mut start_chasing_player_event_writer: EventWriter<StartChasingPlayerEvent>,
 ) {
     // TODO: WAAAIT This means enemies can only shoot all at once, not independtly...
     if !check_if_enemy_can_see_player_cooldown_timer
@@ -127,8 +128,10 @@ fn check_if_enemy_can_see_player_and_look_at_player(
                 }
                 enemy_transform.look_at(player_transform.translation, Dir3::Y);
             } else {
-                if enemy.state != EnemyState::Idle {
-                    enemy.state = EnemyState::Idle;
+                if enemy.state != EnemyState::ChasingPlayer {
+                    enemy.state = EnemyState::ChasingPlayer;
+                    start_chasing_player_event_writer
+                        .write(StartChasingPlayerEvent { enemy_entity });
                 }
             }
         }
@@ -195,76 +198,73 @@ fn handle_start_chasing_player_event(
     }
 }
 
-fn enemy_patrol(
-    enemy_query: Query<(&mut Enemy, &mut LinearVelocity, &mut Transform)>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    nav_mesh_settings: Query<&NavMeshSettings>,
-) {
-    if !keyboard_input.pressed(KeyCode::KeyH) {
-        return;
-    }
-    for i in nav_mesh_settings {
-        info!("WOWO: {:?}", i);
-    }
-
-    for (mut enemy, mut velocity, mut transform) in enemy_query {
-        let Some(current_patrol_destination) = enemy.current_patrol_destination
-        else {
-            return;
-        };
-
-        info!("enemy transform: {}", transform.translation);
-        info!("current patrol point: {}", current_patrol_destination);
-
-        let fixed_enemy = Vec3 {
-            x: transform.translation.x,
-            y: 0.0,
-            z: transform.translation.z,
-        };
-
-        info!(
-            "distance: {}",
-            fixed_enemy.distance(current_patrol_destination)
-        );
-
-        let enemy_reached_patrol_point =
-            fixed_enemy.distance(current_patrol_destination) < 0.4;
-
-        if enemy_reached_patrol_point {}
-
-        if enemy_reached_patrol_point {
-            info!("ENEMY REACHED PATROL POINT!");
-            velocity.z = 0.0;
-
-            let Some(next_patrol_destinations) =
-                enemy.next_patrol_destinations.clone()
-            else {
-                info!(
-                    "Enemy reached patrol point and next next_patrol_destinations is None"
-                );
-                // TODO: should probably check if we can see the player now and if not, send
-                // StartChasingPlayerEvent.
-                continue;
-            };
-
-            enemy.current_patrol_destination =
-                Some(next_patrol_destinations[0]);
-            enemy.next_patrol_destinations =
-                Some(next_patrol_destinations[1..].to_vec());
-            info!("enemy reached patrol point, updated patrol destinations!");
-            transform.look_at(
-                enemy
-                    .current_patrol_destination
-                    .expect("current patrol destination must exist"),
-                Vec3::Y,
-            );
-            info!("enemy now looks at new current_patrol_destination");
-            continue;
-        };
-
-        let mut local_velocity = Vec3::ZERO;
-        local_velocity.z = -2.0;
-        let world_velocity = transform.rotation * local_velocity;
-        **velocity = world_velocity;
-    }
-}
+// fn enemy_patrol(
+//     enemy_query: Query<(&mut Enemy, &mut LinearVelocity, &mut Transform)>,
+// ) {
+//     for (mut enemy, mut velocity, mut transform) in enemy_query {
+//         let Some(current_patrol_destination) = enemy.current_patrol_destination
+//         else {
+//             if enemy.next_patrol_destinations.is_some() {
+//                 info!(
+//                     "current patrol destination is None, but next_patrol_destinations is not"
+//                 );
+//             }
+//             return;
+//         };
+//
+//         let fixed_enemy = Vec3 {
+//             x: transform.translation.x,
+//             y: 0.0,
+//             z: transform.translation.z,
+//         };
+//
+//         info!(
+//             "distance: {}",
+//             fixed_enemy.distance(current_patrol_destination)
+//         );
+//
+//         let enemy_reached_patrol_point =
+//             fixed_enemy.distance(current_patrol_destination) < 0.4;
+//
+//         if enemy_reached_patrol_point {}
+//
+//         if enemy_reached_patrol_point {
+//             info!("ENEMY REACHED PATROL POINT!");
+//             velocity.z = 0.0;
+//
+//             let Some(next_patrol_destinations) =
+//                 enemy.next_patrol_destinations.clone()
+//             else {
+//                 info!(
+//                     "Enemy reached patrol point and next next_patrol_destinations is None"
+//                 );
+//                 // TODO: should probably check if we can see the player now and if not, send
+//                 // StartChasingPlayerEvent.
+//                 continue;
+//             };
+//
+//             if next_patrol_destinations.len() == 0 {
+//                 info!("enemy has done patroling, no more patrol destinations");
+//             }
+//
+//             enemy.current_patrol_destination =
+//                 Some(next_patrol_destinations[0]);
+//             enemy.next_patrol_destinations =
+//                 Some(next_patrol_destinations[1..].to_vec());
+//             info!("enemy reached patrol point, updated patrol destinations!");
+//             transform.look_at(
+//                 enemy
+//                     .current_patrol_destination
+//                     .expect("current patrol destination must exist"),
+//                 Vec3::Y,
+//             );
+//             info!("enemy now looks at new current_patrol_destination");
+//             continue;
+//         };
+//
+//         let mut local_velocity = Vec3::ZERO;
+//         local_velocity.z = -2.0;
+//         let world_velocity = transform.rotation * local_velocity;
+//         **velocity = world_velocity;
+//     }
+// }
