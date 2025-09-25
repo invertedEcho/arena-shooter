@@ -1,13 +1,14 @@
-use crate::enemy::shooting::{
-    events::EnemyKilledEvent,
-    systems::{
-        detect_player_bullet_collision_with_enemy, enemy_shoot_player,
-        handle_enemy_killed_event, tick_enemy_shoot_player_cooldown_timer,
+use crate::{
+    enemy::shooting::{
+        events::EnemyKilledEvent,
+        systems::{
+            detect_player_bullet_collision_with_enemy, enemy_shoot_player,
+            handle_enemy_killed_event, tick_enemy_shoot_player_cooldown_timer,
+        },
     },
+    game_flow::states::InGameState,
 };
 use bevy::prelude::*;
-
-use crate::game_flow::AppState;
 
 pub mod components;
 mod events;
@@ -25,7 +26,7 @@ impl Plugin for EnemyShootingPlugin {
                 detect_player_bullet_collision_with_enemy,
                 handle_enemy_killed_event,
             )
-                .run_if(in_state(AppState::InGame)),
+                .run_if(in_state(InGameState::Playing)),
         );
     }
 }

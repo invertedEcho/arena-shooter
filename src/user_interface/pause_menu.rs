@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::AppState,
+    game_flow::states::InGameState,
     user_interface::common::{CommonUiButton, CommonUiButtonType},
 };
 
@@ -9,11 +9,11 @@ pub struct PauseMenuPlugin;
 
 impl Plugin for PauseMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::PauseMenu), spawn_pause_menu)
+        app.add_systems(OnEnter(InGameState::Paused), spawn_pause_menu)
             .add_systems(
                 Update,
                 (handle_pause_menu_button_pressed)
-                    .run_if(in_state(AppState::PauseMenu)),
+                    .run_if(in_state(InGameState::Paused)),
             );
     }
 }
@@ -26,7 +26,6 @@ pub struct PauseMenuButton(PauseMenuButtonType);
 
 pub enum PauseMenuButtonType {
     Resume,
-    SettingsPauseMenu,
 }
 
 fn spawn_pause_menu(mut commands: Commands) {
@@ -41,7 +40,7 @@ fn spawn_pause_menu(mut commands: Commands) {
                 ..default()
             },
             PauseMenuRoot,
-            StateScoped(AppState::PauseMenu),
+            StateScoped(InGameState::Paused),
         ))
         .with_children(|parent| {
             parent
@@ -63,13 +62,13 @@ fn spawn_pause_menu(mut commands: Commands) {
                     TextColor::WHITE,
                 ))
                 .with_child(Text::new("Resume"));
-            parent
-                .spawn((
-                    Node { ..default() },
-                    Button,
-                    PauseMenuButton(PauseMenuButtonType::SettingsPauseMenu),
-                ))
-                .with_child(Text::new("Settings"));
+            // parent
+            //     .spawn((
+            //         Node { ..default() },
+            //         Button,
+            //         PauseMenuButton(PauseMenuButtonType::SettingsPauseMenu),
+            //     ))
+            //     .with_child(Text::new("Settings"));
             parent
                 .spawn((
                     Node {
@@ -88,7 +87,7 @@ fn spawn_pause_menu(mut commands: Commands) {
 }
 
 fn handle_pause_menu_button_pressed(
-    mut next_game_state: ResMut<NextState<AppState>>,
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
     query: Query<(&Interaction, &PauseMenuButton), Changed<Interaction>>,
 ) {
     for (interaction, pause_menu_button) in query {
@@ -97,10 +96,7 @@ fn handle_pause_menu_button_pressed(
         };
         match pause_menu_button.0 {
             PauseMenuButtonType::Resume => {
-                next_game_state.set(AppState::InGame)
-            }
-            PauseMenuButtonType::SettingsPauseMenu => {
-                next_game_state.set(AppState::SettingsPauseMenu)
+                next_in_game_state.set(InGameState::Playing);
             }
         }
     }

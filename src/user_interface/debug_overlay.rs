@@ -1,18 +1,26 @@
 use bevy::prelude::*;
 
-use crate::game_flow::AppState;
+use crate::game_flow::states::{AppState, InGameState};
 
 pub struct DebugOverlayPlugin;
 
 impl Plugin for DebugOverlayPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_debug_overlay)
-            .add_systems(Update, update_current_app_state_text);
+        app.add_systems(Startup, spawn_debug_overlay).add_systems(
+            Update,
+            (
+                update_current_app_state_text,
+                update_current_in_game_state_text,
+            ),
+        );
     }
 }
 
 #[derive(Component)]
 struct CurrentAppStateText;
+
+#[derive(Component)]
+struct CurrentInGameStateText;
 
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
@@ -27,6 +35,8 @@ fn spawn_debug_overlay(mut commands: Commands) {
         .with_children(|parent| {
             parent.spawn(Text::new("Current AppState"));
             parent.spawn((Text::new(""), CurrentAppStateText));
+            parent.spawn(Text::new("Current InGameState"));
+            parent.spawn((Text::new(""), CurrentInGameStateText));
         });
 }
 
@@ -39,23 +49,30 @@ fn update_current_app_state_text(
             AppState::MainMenu => {
                 **current_app_state_text = Text::new("MainMenu");
             }
-            AppState::SettingsPauseMenu => {
-                **current_app_state_text = Text::new("SettingsPauseMenu");
-            }
             AppState::InGame => {
                 **current_app_state_text = Text::new("InGame");
             }
-            AppState::GameModeSelection => {
-                **current_app_state_text = Text::new("GameModeSelection");
+        }
+    }
+}
+
+fn update_current_in_game_state_text(
+    mut current_in_game_state_text: Single<
+        &mut Text,
+        With<CurrentInGameStateText>,
+    >,
+    in_game_state: Res<State<InGameState>>,
+) {
+    if in_game_state.is_changed() {
+        match *in_game_state.get() {
+            InGameState::Playing => {
+                **current_in_game_state_text = Text::new("Playing");
             }
-            AppState::PlayerDead => {
-                **current_app_state_text = Text::new("Death");
+            InGameState::PlayerDead => {
+                **current_in_game_state_text = Text::new("PlayerDead");
             }
-            AppState::SettingsMainMenu => {
-                **current_app_state_text = Text::new("SettingsMainMenu");
-            }
-            AppState::PauseMenu => {
-                **current_app_state_text = Text::new("PauseMenu");
+            InGameState::Paused => {
+                **current_in_game_state_text = Text::new("Paused");
             }
         }
     }

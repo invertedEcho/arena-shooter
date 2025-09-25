@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game_flow::AppState;
+use crate::game_flow::states::AppState;
 
 pub struct MusicPlugin;
 

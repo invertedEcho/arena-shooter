@@ -1,7 +1,7 @@
 use bevy::{prelude::*, window::CursorGrabMode};
 
 use crate::{
-    game_flow::{AppState, PlayerDeathEvent},
+    game_flow::{AppState, PlayerDeathEvent, states::InGameState},
     player::{Player, PlayerMovementState, shooting::components::PlayerWeapon},
 };
 
@@ -28,35 +28,32 @@ pub fn handle_escape(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     current_app_state: Res<State<AppState>>,
     mut next_app_state: ResMut<NextState<AppState>>,
+    current_in_game_state: Res<State<InGameState>>,
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
         match *current_app_state.get() {
-            AppState::InGame => {
-                next_app_state.set(AppState::PauseMenu);
-            }
-            AppState::PauseMenu => {
-                next_app_state.set(AppState::InGame);
-            }
-            AppState::SettingsPauseMenu => {
-                next_app_state.set(AppState::PauseMenu);
-            }
-            AppState::PlayerDead => {}
+            AppState::InGame => match *current_in_game_state.get() {
+                InGameState::Playing => {
+                    next_in_game_state.set(InGameState::Paused);
+                }
+                InGameState::PlayerDead => {}
+                InGameState::Paused => {
+                    next_in_game_state.set(InGameState::Playing)
+                }
+            },
             AppState::MainMenu => {}
-            AppState::GameModeSelection => {
-                next_app_state.set(AppState::MainMenu);
-            }
-            AppState::SettingsMainMenu => {}
         }
     }
 }
 
-pub fn handle_enter_in_game_state(
+pub fn make_player_weapon_visible(
     mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
 ) {
     **player_weapon = Visibility::Visible;
 }
 
-pub fn handle_exit_in_game_state(
+pub fn make_player_weapon_hidden(
     mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
 ) {
     **player_weapon = Visibility::Hidden;

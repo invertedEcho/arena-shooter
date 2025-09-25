@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::AppState,
+    game_flow::states::{AppState, InGameState},
     player::camera::{
         components::PlayerCamera,
         systems::{
@@ -22,7 +22,10 @@ impl Plugin for PlayerCameraPlugin {
         app.add_systems(
             Update,
             (
-                camera_orbit_player.run_if(in_state(AppState::InGame)),
+                camera_orbit_player.run_if(
+                    in_state(AppState::InGame)
+                        .and(in_state(InGameState::Playing)),
+                ),
                 setup_player_camera,
                 player_walk_animation,
             ),

@@ -55,10 +55,6 @@ fn handle_start_game_mode_event(
     for event in event_reader.read() {
         commands.entity(*world_ui_camera).despawn();
 
-        spawn_player_event_writer.write(PlayerSpawnEvent {
-            spawn_location: player_spawn_location.translation,
-        });
-
         match event.0 {
             GameMode::Waves => {
                 let enemy_count = get_enemy_count_per_wave(1);
@@ -75,6 +71,10 @@ fn handle_start_game_mode_event(
             // idk maybe this shouldnt even exist at the first place
             GameMode::None => {}
         }
+
+        spawn_player_event_writer.write(PlayerSpawnEvent {
+            spawn_location: player_spawn_location.translation,
+        });
     }
 }
 

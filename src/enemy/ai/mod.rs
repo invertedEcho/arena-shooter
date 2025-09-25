@@ -3,8 +3,8 @@ use bevy::{color::palettes::css::RED, prelude::*};
 use vleue_navigator::NavMesh;
 
 use crate::{
-    enemy::Enemy, game_flow::AppState, nav_mesh_pathfinding::CurrentNavMesh,
-    player::Player,
+    enemy::Enemy, game_flow::states::AppState,
+    nav_mesh_pathfinding::CurrentNavMesh, player::Player,
 };
 
 // TODO: actually implement this lol

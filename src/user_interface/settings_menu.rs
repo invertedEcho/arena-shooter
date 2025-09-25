@@ -1,21 +1,13 @@
 use bevy::{prelude::*, window::WindowMode};
 
-use crate::game_flow::AppState;
+use crate::game_flow::states::MainMenuState;
 
 pub struct SettingsMenuPlugin;
 
 impl Plugin for SettingsMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            OnEnter(AppState::SettingsMainMenu),
-            spawn_settings_menu,
-        )
-        .add_systems(OnEnter(AppState::SettingsPauseMenu), spawn_settings_menu)
-        // cant use StateScoped for settings menu, as we need the settings menu to be despawned in two exists of
-        // state
-        .add_systems(OnExit(AppState::SettingsMainMenu), despawn_settings_menu)
-        .add_systems(OnExit(AppState::SettingsPauseMenu), despawn_settings_menu)
-        .add_systems(Update, handle_settings_menu_button_pressed);
+        app.add_systems(OnEnter(MainMenuState::Settings), spawn_settings_menu)
+            .add_systems(Update, handle_settings_menu_button_pressed);
     }
 }
 
@@ -42,6 +34,7 @@ fn spawn_settings_menu(mut commands: Commands) {
                 ..default()
             },
             SettingsMenuRoot,
+            StateScoped(MainMenuState::Settings),
         ))
         .with_children(|parent| {
             parent
@@ -69,18 +62,10 @@ fn spawn_settings_menu(mut commands: Commands) {
         });
 }
 
-fn despawn_settings_menu(
-    mut commands: Commands,
-    settings_menu_root: Single<Entity, With<SettingsMenuRoot>>,
-) {
-    commands.entity(*settings_menu_root).despawn();
-}
-
 fn handle_settings_menu_button_pressed(
     mut window: Single<&mut Window>,
     query: Query<(&Interaction, &SettingsMenuButton), Changed<Interaction>>,
-    current_app_state: Res<State<AppState>>,
-    mut next_app_state: ResMut<NextState<AppState>>,
+    mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
 ) {
     for (interaction, settings_menu_button) in query {
         let Interaction::Pressed = interaction else {
@@ -98,15 +83,7 @@ fn handle_settings_menu_button_pressed(
                 }
             }
             SettingsButtonType::Back => {
-                match *current_app_state.get() {
-                    AppState::SettingsMainMenu => {
-                        next_app_state.set(AppState::MainMenu);
-                    }
-                    AppState::SettingsPauseMenu => {
-                        next_app_state.set(AppState::PauseMenu);
-                    }
-                    _ => {}
-                };
+                next_main_menu_state.set(MainMenuState::Root);
             }
         }
     }

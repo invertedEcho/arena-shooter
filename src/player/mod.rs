@@ -36,6 +36,9 @@ impl Default for Player {
     }
 }
 
+#[derive(Event)]
+pub struct PlayerDeathEvent;
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {

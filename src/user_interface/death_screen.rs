@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::{AppState, systems::free_mouse},
+    game_flow::{
+        states::{AppState, InGameState},
+        systems::free_mouse,
+    },
     player::Player,
     user_interface::common::{CommonUiButton, CommonUiButtonType},
 };
@@ -11,7 +14,7 @@ pub struct DeathScreenPlugin;
 impl Plugin for DeathScreenPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            OnEnter(AppState::PlayerDead),
+            OnEnter(InGameState::PlayerDead),
             (spawn_death_screen, free_mouse),
         )
         .add_systems(Update, handle_button_click);
@@ -29,7 +32,7 @@ enum DeathScreenButtonType {
 fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands
         .spawn((
-            StateScoped(AppState::PlayerDead),
+            StateScoped(InGameState::PlayerDead),
             Node {
                 height: Val::Percent(100.0),
                 width: Val::Percent(100.0),

@@ -1,5 +1,9 @@
 use bevy::prelude::*;
 
+/// To be inserted on all root nodes of anything thats part of the player HUD
+#[derive(Component)]
+pub struct PlayerHud;
+
 #[derive(Component)]
 pub struct PlayerHealthText;
 

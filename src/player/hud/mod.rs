@@ -1,10 +1,13 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::{AppState, game_mode::GameMode},
+    game_flow::{
+        game_mode::GameMode,
+        states::{AppState, InGameState},
+    },
     player::hud::systems::{
-        spawn_bullet_hit_crosshair, spawn_player_hud, spawn_score_hud,
-        spawn_wave_info_hud, update_player_ammo_text,
+        despawn_player_hud, spawn_bullet_hit_crosshair, spawn_player_hud,
+        spawn_score_hud, spawn_wave_info_hud, update_player_ammo_text,
         update_player_health_text, update_score_hud, update_wave_info_hud,
     },
 };
@@ -33,6 +36,11 @@ impl Plugin for PlayerHudPlugin {
             OnEnter(AppState::InGame),
             (spawn_player_hud, spawn_score_hud),
         )
+        .add_systems(
+            OnExit(InGameState::Paused),
+            (spawn_player_hud, spawn_score_hud),
+        )
+        .add_systems(OnExit(InGameState::Playing), despawn_player_hud)
         .add_systems(OnEnter(GameMode::Waves), spawn_wave_info_hud)
         .add_systems(
             Update,

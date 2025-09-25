@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 use crate::{
     GRAVITY,
-    game_flow::AppState,
+    game_flow::states::{AppState, InGameState},
     player::{
         Player, PlayerMovementState,
         camera::components::PlayerCamera,
@@ -26,14 +26,17 @@ impl Plugin for PlayerMovementPlugin {
     }
 }
 
-// TODO: its time to split this up, so we can also re-use it for our enemies
+// TODO: its time to split this up, so we can also the character controller for our enemies
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     player: Single<(Entity, &mut Player, &mut LinearVelocity, &Transform)>,
     player_camera_entity: Single<Entity, With<PlayerCamera>>,
     spatial_query: SpatialQuery,
     time: Res<Time>,
+    current_in_game_state: Res<State<InGameState>>,
 ) {
+    let currently_paused = *current_in_game_state.get() == InGameState::Paused;
+
     let (player_entity, mut player, mut velocity, player_transform) =
         player.into_inner();
 
@@ -57,7 +60,10 @@ pub fn player_movement(
     if keyboard_input.pressed(KeyCode::KeyS) {
         local_velocity.z += speed;
     }
-    if keyboard_input.just_pressed(KeyCode::Space) && player.on_ground {
+    if keyboard_input.just_pressed(KeyCode::Space)
+        && player.on_ground
+        && !currently_paused
+    {
         velocity.y = PLAYER_JUMP_VELOCITY;
     }
 
@@ -81,6 +87,12 @@ pub fn player_movement(
         }
     } else {
         player.on_ground = false;
+    }
+
+    // we want gravity for jumping and ground checks to always run, so if we pause while jumping, we wont just
+    // fall through our world. but normal movement should not be possible
+    if currently_paused {
+        return;
     }
 
     let world_velocity = player_transform.rotation * local_velocity;

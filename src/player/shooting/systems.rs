@@ -6,7 +6,7 @@ use bevy::prelude::*;
 use crate::{
     common::{BULLET_VELOCITY, components::DespawnTimer},
     enemy::{Enemy, shooting::components::EnemyBullet},
-    game_flow::{AppState, score::GameScore},
+    game_flow::{score::GameScore, states::InGameState},
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectEvent},
     player::{
         Player,
@@ -111,7 +111,7 @@ pub fn detect_enemy_bullet_collision_with_player(
     mut collision_event_reader: EventReader<CollisionStarted>,
     enemy_bullet_query: Query<Entity, With<EnemyBullet>>,
     player_query: Single<(Entity, &mut Player)>,
-    mut next_game_state: ResMut<NextState<AppState>>,
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
     mut game_score: ResMut<GameScore>,
 ) {
     let (player_entity, mut player) = player_query.into_inner();
@@ -145,7 +145,7 @@ pub fn detect_enemy_bullet_collision_with_player(
 
         player.health -= 10.0;
         if player.health <= 0.0 {
-            next_game_state.set(AppState::PlayerDead);
+            next_in_game_state.set(InGameState::PlayerDead);
             game_score.enemy += 1;
         }
     }

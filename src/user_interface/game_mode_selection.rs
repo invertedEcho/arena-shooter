@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
 use crate::game_flow::{
-    AppState,
     game_mode::{GameMode, StartGameModeEvent},
+    states::{AppState, MainMenuState},
 };
 
 pub struct GameModeSelectionUIPlugin;
@@ -10,12 +10,23 @@ pub struct GameModeSelectionUIPlugin;
 impl Plugin for GameModeSelectionUIPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            OnEnter(AppState::GameModeSelection),
+            OnEnter(MainMenuState::GameModeSelection),
             spawn_game_mode_selection_screen,
+        )
+        .add_systems(
+            OnExit(MainMenuState::GameModeSelection),
+            despawn_game_mode_selection_screen,
+        )
+        .add_systems(
+            OnExit(AppState::MainMenu),
+            despawn_game_mode_selection_screen,
         )
         .add_systems(Update, handle_game_mode_selection_button_press);
     }
 }
+
+#[derive(Component)]
+struct GameModeSelectionScreen;
 
 #[derive(Component)]
 struct GameModeSelectionButton(GameModeSelectionButtonType);
@@ -36,7 +47,7 @@ fn spawn_game_mode_selection_screen(mut commands: Commands) {
                 justify_content: JustifyContent::Center,
                 ..default()
             },
-            StateScoped(AppState::GameModeSelection),
+            GameModeSelectionScreen,
         ))
         .with_children(|parent| {
             parent
@@ -77,6 +88,13 @@ fn spawn_game_mode_selection_screen(mut commands: Commands) {
         });
 }
 
+fn despawn_game_mode_selection_screen(
+    mut commands: Commands,
+    game_mode_selection_screen: Single<Entity, With<GameModeSelectionScreen>>,
+) {
+    commands.entity(*game_mode_selection_screen).despawn();
+}
+
 fn handle_game_mode_selection_button_press(
     query: Query<
         (&Interaction, &GameModeSelectionButton),
@@ -85,16 +103,18 @@ fn handle_game_mode_selection_button_press(
     mut next_game_mode_state: ResMut<NextState<GameMode>>,
     mut event_writer: EventWriter<StartGameModeEvent>,
     mut next_app_state: ResMut<NextState<AppState>>,
+    mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
 ) {
     for (interaction, game_mode_selection_button) in query {
         if let Interaction::Pressed = interaction {
             match game_mode_selection_button.0 {
                 GameModeSelectionButtonType::Waves => {
+                    next_app_state.set(AppState::InGame);
                     next_game_mode_state.set(GameMode::Waves);
                     event_writer.write(StartGameModeEvent(GameMode::Waves));
                 }
                 GameModeSelectionButtonType::GoBack => {
-                    next_app_state.set(AppState::MainMenu);
+                    next_main_menu_state.set(MainMenuState::Root);
                 }
             }
         }

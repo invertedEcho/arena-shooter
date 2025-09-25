@@ -6,9 +6,9 @@ use bevy::{
 use crate::{
     common::components::DespawnTimer,
     game_flow::{
-        AppState,
         game_mode::{GameMode, GameStateWave},
         score::GameScore,
+        states::AppState,
     },
     player::{
         Player,
@@ -16,8 +16,8 @@ use crate::{
             WHITE_CROSSHAIR_PATH,
             components::{
                 CurrentWaveText, EnemiesLeftText, EnemyScoreText,
-                PlayerCarriedAmmoText, PlayerHealthText, PlayerLoadedAmmoText,
-                PlayerScoreText,
+                PlayerCarriedAmmoText, PlayerHealthText, PlayerHud,
+                PlayerLoadedAmmoText, PlayerScoreText,
             },
         },
         shooting::{
@@ -42,6 +42,7 @@ pub fn spawn_player_hud(
                 ..default()
             },
             StateScoped(AppState::InGame),
+            PlayerHud,
         ))
         .with_children(|parent| {
             parent
@@ -74,8 +75,18 @@ pub fn spawn_player_hud(
                 ..default()
             },
             StateScoped(AppState::InGame),
+            PlayerHud,
         ))
         .with_child(ImageNode::new(asset_server.load(WHITE_CROSSHAIR_PATH)));
+}
+
+pub fn despawn_player_hud(
+    mut commands: Commands,
+    player_hud_entity_query: Query<Entity, With<PlayerHud>>,
+) {
+    for player_hud_entity in player_hud_entity_query {
+        commands.entity(player_hud_entity).despawn();
+    }
 }
 
 pub fn update_player_health_text(

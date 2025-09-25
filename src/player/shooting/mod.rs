@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::AppState,
+    game_flow::states::InGameState,
     player::shooting::{
         events::{PlayerBulletHitEnemyEvent, PlayerWeaponFiredEvent},
         systems::{
@@ -34,7 +34,7 @@ impl Plugin for PlayerShootingPlugin {
                     spawn_muzzle_flash,
                     accurate_check_bullet_collision_for_impact_particle,
                 )
-                    .run_if(in_state(AppState::InGame)),
+                    .run_if(in_state(InGameState::Playing)),
             );
     }
 }

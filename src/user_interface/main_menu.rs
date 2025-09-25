@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 
-use crate::game_flow::AppState;
+use crate::game_flow::states::MainMenuState;
 
 pub struct MainMenuPlugin;
 
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::MainMenu), spawn_main_menu)
+        app.add_systems(OnEnter(MainMenuState::Root), spawn_main_menu)
             .add_systems(Update, handle_main_menu_button_pressed);
     }
 }
@@ -31,7 +31,7 @@ fn spawn_main_menu(mut commands: Commands) {
                 justify_content: JustifyContent::Center,
                 ..default()
             },
-            StateScoped(AppState::MainMenu),
+            StateScoped(MainMenuState::Root),
         ))
         .with_children(|parent| {
             parent
@@ -82,8 +82,8 @@ fn handle_main_menu_button_pressed(
         (&Interaction, &MainMenuButton),
         Changed<Interaction>,
     >,
-    mut next_game_state: ResMut<NextState<AppState>>,
     mut app_exit_event_writer: EventWriter<AppExit>,
+    mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
         let Interaction::Pressed = interaction else {
@@ -91,10 +91,10 @@ fn handle_main_menu_button_pressed(
         };
         match main_menu_button.0 {
             MainMenuButtonType::Singleplayer => {
-                next_game_state.set(AppState::GameModeSelection)
+                next_main_menu_state.set(MainMenuState::GameModeSelection);
             }
             MainMenuButtonType::SettingsMainMenu => {
-                next_game_state.set(AppState::SettingsMainMenu)
+                next_main_menu_state.set(MainMenuState::Settings);
             }
             MainMenuButtonType::Quit => {
                 app_exit_event_writer.write(AppExit::Success);
