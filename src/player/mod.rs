@@ -15,11 +15,11 @@ pub mod spawn;
 #[derive(Component)]
 pub struct Player {
     pub health: f32,
-    pub state: PlayerState,
+    pub state: PlayerMovementState,
 }
 
 #[derive(Reflect, PartialEq)]
-pub enum PlayerState {
+pub enum PlayerMovementState {
     Idle,
     Walking,
     Running,
@@ -29,7 +29,7 @@ impl Default for Player {
     fn default() -> Self {
         Player {
             health: 100.0,
-            state: PlayerState::Idle,
+            state: PlayerMovementState::Idle,
         }
     }
 }

@@ -2,7 +2,7 @@ use bevy::{prelude::*, window::CursorGrabMode};
 
 use crate::{
     game_flow::{AppState, PlayerDeathEvent},
-    player::{Player, PlayerState, shooting::components::PlayerWeapon},
+    player::{Player, PlayerMovementState, shooting::components::PlayerWeapon},
 };
 
 pub fn grab_mouse(mut window: Single<&mut Window>) {
@@ -20,7 +20,7 @@ pub fn handle_player_death_event(
     mut player: Single<&mut Player>,
 ) {
     for _ in event_reader.read() {
-        player.state = PlayerState::Idle;
+        player.state = PlayerMovementState::Idle;
     }
 }
 
@@ -53,11 +53,13 @@ pub fn handle_escape(
 pub fn handle_enter_in_game_state(
     mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
 ) {
+    info!("making player weapon visible");
     **player_weapon = Visibility::Visible;
 }
 
 pub fn handle_exit_in_game_state(
     mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
 ) {
+    info!("making player weapon hidden");
     **player_weapon = Visibility::Hidden;
 }

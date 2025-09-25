@@ -1,17 +1,10 @@
-use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
     WorldUiCamera,
     enemy::spawn::{EnemySpawnMethod, SpawnEnemiesEvent},
     game_flow::AppState,
-    player::{
-        Player, PlayerState,
-        spawn::{
-            PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS,
-            components::PlayerSpawnLocation,
-        },
-    },
+    player::spawn::{PlayerSpawnEvent, components::PlayerSpawnLocation},
 };
 
 pub struct GameModePlugin;
@@ -57,25 +50,14 @@ fn handle_start_game_mode_event(
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     player_spawn_location: Single<&Transform, With<PlayerSpawnLocation>>,
     world_ui_camera: Single<Entity, With<WorldUiCamera>>,
+    mut spawn_player_event_writer: EventWriter<PlayerSpawnEvent>,
 ) {
     for event in event_reader.read() {
         commands.entity(*world_ui_camera).despawn();
 
-        commands.spawn((
-            Player {
-                health: 100.0,
-                state: PlayerState::Idle,
-            },
-            Transform::from_translation(player_spawn_location.translation),
-            RigidBody::Kinematic,
-            Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
-            LockedAxes::new()
-                .lock_rotation_x()
-                .lock_rotation_y()
-                .lock_rotation_z(),
-            LinearVelocity::ZERO,
-            Visibility::Visible,
-        ));
+        spawn_player_event_writer.write(PlayerSpawnEvent {
+            spawn_location: player_spawn_location.translation,
+        });
 
         match event.0 {
             GameMode::Waves => {

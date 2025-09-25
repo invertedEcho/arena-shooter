@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use crate::{
     game_flow::AppState,
     player::{
-        Player, PlayerState,
+        Player, PlayerMovementState,
         camera::components::PlayerCamera,
         spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
     },
@@ -33,6 +33,8 @@ pub fn player_movement(
     let (player_entity, mut player, mut velocity, player_transform) =
         player.into_inner();
 
+    // okay so its not that easy.
+    info!("player forward: {:?}", player_transform.forward());
     if let Some(first_hit) = spatial_query.cast_shape(
         &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
         player_transform.translation,
@@ -52,6 +54,7 @@ pub fn player_movement(
             );
             **velocity = Vec3::ZERO;
             info!("disallowing movement");
+            player.state = PlayerMovementState::Idle;
             return;
         }
     }
@@ -86,10 +89,10 @@ pub fn player_movement(
     velocity.z = world_velocity.z;
 
     if speed == PLAYER_RUN_SPEED {
-        player.state = PlayerState::Running;
+        player.state = PlayerMovementState::Running;
     } else if local_velocity != Vec3::ZERO {
-        player.state = PlayerState::Walking;
+        player.state = PlayerMovementState::Walking;
     } else {
-        player.state = PlayerState::Idle;
+        player.state = PlayerMovementState::Idle;
     }
 }

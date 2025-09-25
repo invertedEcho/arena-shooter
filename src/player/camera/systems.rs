@@ -1,7 +1,7 @@
 use crate::{
     common::systems::apply_render_layers_to_children,
     player::{
-        PlayerState, camera::PLAYER_CAMERA_Y_OFFSET,
+        PlayerMovementState, camera::PLAYER_CAMERA_Y_OFFSET,
         shooting::components::PlayerWeapon,
     },
 };
@@ -76,7 +76,7 @@ pub fn setup_player_camera(
                     max_loaded_ammo: 30,
                     moving_to_right: false,
                 },
-                Visibility::Hidden,
+                Visibility::Visible,
             ))
             .observe(apply_render_layers_to_children);
     });
@@ -138,8 +138,8 @@ pub fn player_walk_animation(
     {
         // TODO: i feel like this can be simplified completely because we decrease/increase by
         // exact same step always, and boundary is always set to 0.5
-        if player.state != PlayerState::Idle {
-            let factor = if player.state == PlayerState::Walking {
+        if player.state != PlayerMovementState::Idle {
+            let factor = if player.state == PlayerMovementState::Walking {
                 0.1
             } else {
                 0.2
