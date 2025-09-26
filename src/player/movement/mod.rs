@@ -35,10 +35,12 @@ pub fn player_movement(
     time: Res<Time>,
     current_in_game_state: Res<State<InGameState>>,
 ) {
-    let currently_paused = *current_in_game_state.get() == InGameState::Paused;
+    let (entity, mut player, mut velocity, transform) = player.into_inner();
 
-    let (player_entity, mut player, mut velocity, player_transform) =
-        player.into_inner();
+    let movement_allowed = *current_in_game_state.get() == InGameState::Playing;
+    if !movement_allowed {
+        **velocity = Vec3::ZERO;
+    }
 
     let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
         PLAYER_RUN_VELOCITY
@@ -60,10 +62,7 @@ pub fn player_movement(
     if keyboard_input.pressed(KeyCode::KeyS) {
         local_velocity.z += speed;
     }
-    if keyboard_input.just_pressed(KeyCode::Space)
-        && player.on_ground
-        && !currently_paused
-    {
+    if keyboard_input.just_pressed(KeyCode::Space) && player.on_ground {
         velocity.y = PLAYER_JUMP_VELOCITY;
     }
 
@@ -71,15 +70,15 @@ pub fn player_movement(
 
     if let Some(_) = spatial_query.cast_shape(
         &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
-        player_transform.translation,
-        player_transform.rotation,
+        transform.translation,
+        transform.rotation,
         Dir3::NEG_Y,
         &ShapeCastConfig {
             max_distance: 0.5,
             ..default()
         },
         &SpatialQueryFilter::default()
-            .with_excluded_entities([player_entity, *player_camera_entity]),
+            .with_excluded_entities([entity, *player_camera_entity]),
     ) {
         if velocity.y <= 0.0 {
             velocity.y = 0.0;
@@ -89,13 +88,7 @@ pub fn player_movement(
         player.on_ground = false;
     }
 
-    // we want gravity for jumping and ground checks to always run, so if we pause while jumping, we wont just
-    // fall through our world. but normal movement should not be possible
-    if currently_paused {
-        return;
-    }
-
-    let world_velocity = player_transform.rotation * local_velocity;
+    let world_velocity = transform.rotation * local_velocity;
     let maybe_normalized_world_velocity = world_velocity.try_normalize();
     let Some(normalized_world_velocity) = maybe_normalized_world_velocity
     else {
@@ -110,15 +103,15 @@ pub fn player_movement(
 
     if let Some(first_hit) = spatial_query.cast_shape(
         &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
-        player_transform.translation,
-        player_transform.rotation,
+        transform.translation,
+        transform.rotation,
         direction_based_on_input,
         &ShapeCastConfig {
             max_distance: 0.5,
             ..default()
         },
         &SpatialQueryFilter::default()
-            .with_excluded_entities([player_entity, *player_camera_entity]),
+            .with_excluded_entities([entity, *player_camera_entity]),
     ) {
         if first_hit.distance < 0.1 {
             **velocity = Vec3::ZERO;

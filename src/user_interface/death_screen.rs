@@ -85,14 +85,14 @@ fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
 fn handle_button_click(
     query: Query<(&Interaction, &DeathScreenButton), Changed<Interaction>>,
     mut player: Single<&mut Player>,
-    mut next_game_state: ResMut<NextState<AppState>>,
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
     for (interaction, button) in query {
         match interaction {
             Interaction::Pressed => {
                 if button.0 == DeathScreenButtonType::Respawn {
                     player.health = 100.0;
-                    next_game_state.set(AppState::InGame);
+                    next_in_game_state.set(InGameState::Playing);
                 }
             }
             _ => {}
