@@ -1,23 +1,45 @@
 # fun-shooter
 
+## Features
+- [x] User interface
+- [x] Realistic kinematic player movement
+  - [ ] Using "collide and slide" algorithm: https://www.peroxide.dk/papers/collision/collision.pdf
+- [X] Game modes
+  - [x] Wave mode (the game gets more difficult each round, e.g. more enemies are spawned)
+  - [ ] Capture the flag
+  - [ ] Deathmatch
+- [x] Particle effects
+  - [x] Wall/ground bullet impact
+  - [x] Blood splatter when hitting enemies
+- [x] Enemy AI
+  - [x] Enemies check if they can see the player and shoot them
+  - [ ] Chasing the player
+  - [ ] Going to locations the player made noises
+- [ ] Multiplayer
+- and probably more stuff already implemented and coming soon..
+
 ## Project Structure and Coding Guidelines
 
-- Each part of the game is a seperate module
-- Every module of the game has its own plugin, e.g.:
+- This project relies heavily on modularization, to be specific, rust modules
+- Every module has its own plugin, e.g.
   - Everything player related goes into the PlayerPlugin
-  - World generation goes into the WorldPlugin
+  - Everything related to the user interface goes into the WorldPlugin
   - Plugin declarations must always live in the `mod.rs` of the given module
-- If a module has sub modules, like for example Player has the submodule movement, it will be in `movement/mod.rs`
+- Every module is split up into seperate files, following ECS structure, e.g.
+  - Components of a module go into `./components.rs`
+  - Events of a module go into `./events.rs`
+  - and so on
+  - This makes it very easy to navigate the codebase and scales well
+- If a module has sub modules, like for example movement logic of the player, it will be in `movement/mod.rs`
   - Note that a submodule may have its own plugin.
     - If the submodule doesnt have lots of logic, all code may be located in its `mod.rs` and then be used in the root plugin of given module
-  - Every module, no matter if submodule or not, needs to be split up into seperate files, always following ECS structure, e.g. one file `components.rs` for all components of the given module, or a `systems.rs` for all systems of the given module.
-    - This makes it very easy to navigate the codebase and scales well
 
 ## idk what to call this section
 this project assumes 1 unit = 1m, e.g. a unit is like `Transform::from_xyz(1.0, 1.0, 1.0)`
 
 ## Libraries used
 uses:
+- bevy for game engine
 - avian3d for physics
 - skein for bevy <-> blender integration (work with bevy components in blender)
 
