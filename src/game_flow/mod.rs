@@ -4,7 +4,7 @@ use crate::{
     game_flow::{
         game_mode::GameModePlugin,
         score::GameScorePlugin,
-        states::{AppState, InGameState, MainMenuState},
+        states::{AppDebugState, AppState, InGameState, MainMenuState},
         systems::{
             free_mouse, grab_mouse, handle_escape, handle_player_death_event,
             make_player_weapon_hidden, make_player_weapon_visible,
@@ -25,6 +25,7 @@ impl Plugin for GameFlowPlugin {
         app.init_state::<AppState>()
             .init_state::<InGameState>()
             .init_state::<MainMenuState>()
+            .init_state::<AppDebugState>()
             .add_event::<PlayerDeathEvent>()
             .add_plugins(GameScorePlugin)
             .add_plugins(GameModePlugin)

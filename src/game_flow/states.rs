@@ -25,3 +25,11 @@ pub enum InGameState {
     Paused,
     PlayerDead,
 }
+
+#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
+#[states(scoped_entities)]
+pub enum AppDebugState {
+    #[default]
+    DebugHidden,
+    DebugVisible,
+}

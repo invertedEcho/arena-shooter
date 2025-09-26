@@ -38,7 +38,7 @@ struct GltfHandle(Handle<Gltf>);
 pub struct CurrentNavMesh(pub Handle<NavMesh>);
 
 #[derive(Component, Clone)]
-struct NavMeshDisp(Handle<NavMesh>);
+pub struct NavMeshDisp(Handle<NavMesh>);
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(GltfHandle(
@@ -82,7 +82,7 @@ fn setup_scene(
             Mesh3d(meshes.add(navmesh.to_wireframe_mesh())),
             MeshMaterial3d(materials.add(material)),
             Transform::from_xyz(0.0, 0.0, 0.0),
-            Visibility::Visible,
+            Visibility::Hidden,
             NavMeshDisp(HANDLE_TRIMESH_OPTIMIZED),
         ));
 
