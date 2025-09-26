@@ -13,8 +13,8 @@ use crate::{
         camera::components::PlayerCamera,
         shooting::{
             components::{
-                BloodScreenEffect, MuzzleFlash, PlayerBullet, PlayerWeapon,
-                PlayerWeaponShootCooldownTimer,
+                BloodScreenEffect, MuzzleFlash, PlayerBullet,
+                PlayerShootCooldownTimer, PlayerWeapon,
             },
             events::PlayerWeaponFiredEvent,
         },
@@ -30,9 +30,7 @@ pub fn player_shooting(
         &GlobalTransform,
         (With<PlayerCamera>, Without<Player>),
     >,
-    player_weapon_shoot_cooldown_timer_query: Query<
-        &PlayerWeaponShootCooldownTimer,
-    >,
+    player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
     mut player_weapon: Single<&mut PlayerWeapon>,
     mut player_shot_event_writer: EventWriter<PlayerWeaponFiredEvent>,
 ) {
@@ -50,7 +48,7 @@ pub fn player_shooting(
     }
     player_weapon.loaded_ammo -= 1;
 
-    commands.spawn(PlayerWeaponShootCooldownTimer(Timer::from_seconds(
+    commands.spawn(PlayerShootCooldownTimer(Timer::from_seconds(
         0.1,
         TimerMode::Once,
     )));
@@ -92,9 +90,9 @@ pub fn player_shooting(
     player_shot_event_writer.write(PlayerWeaponFiredEvent);
 }
 
-pub fn tick_player_weapon_timer(
+pub fn tick_player_weapon_shoot_cooldown_timer(
     mut commands: Commands,
-    query: Query<(Entity, &mut PlayerWeaponShootCooldownTimer)>,
+    query: Query<(Entity, &mut PlayerShootCooldownTimer)>,
     time: Res<Time>,
 ) {
     for (entity, mut timer) in query {

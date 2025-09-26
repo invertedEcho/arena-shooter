@@ -40,6 +40,7 @@ pub fn player_movement(
     let movement_allowed = *current_in_game_state.get() == InGameState::Playing;
     if !movement_allowed {
         **velocity = Vec3::ZERO;
+        return;
     }
 
     let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {

@@ -21,15 +21,10 @@ pub struct EnemyAiPlugin;
 
 impl Plugin for EnemyAiPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(CheckIfEnemyCanSeePlayerCooldownTimer(
-            Timer::from_seconds(0.1, TimerMode::Repeating),
-        ))
-        .add_event::<StartChasingPlayerEvent>()
-        .add_systems(
+        app.add_event::<StartChasingPlayerEvent>().add_systems(
             Update,
             (
                 check_if_enemy_can_see_player_and_look_at_player,
-                tick_enemy_can_see_player_cooldown_timer,
                 handle_start_chasing_player_event,
                 // enemy_patrol,
             )
@@ -59,16 +54,6 @@ pub struct StartChasingPlayerEvent {
     pub enemy_entity: Entity,
 }
 
-#[derive(Resource)]
-pub struct CheckIfEnemyCanSeePlayerCooldownTimer(pub Timer);
-
-fn tick_enemy_can_see_player_cooldown_timer(
-    mut timer: ResMut<CheckIfEnemyCanSeePlayerCooldownTimer>,
-    time: Res<Time>,
-) {
-    timer.0.tick(time.delta());
-}
-
 fn check_if_enemy_can_see_player_and_look_at_player(
     spatial_query: SpatialQuery,
     enemy_query: Query<
@@ -76,18 +61,8 @@ fn check_if_enemy_can_see_player_and_look_at_player(
         (Without<Player>, With<Enemy>),
     >,
     player_query: Single<(Entity, &Transform), With<Player>>,
-    check_if_enemy_can_see_player_cooldown_timer: Res<
-        CheckIfEnemyCanSeePlayerCooldownTimer,
-    >,
     mut start_chasing_player_event_writer: EventWriter<StartChasingPlayerEvent>,
 ) {
-    // TODO: WAAAIT This means enemies can only shoot all at once, not independtly...
-    if !check_if_enemy_can_see_player_cooldown_timer
-        .0
-        .just_finished()
-    {
-        return;
-    }
     let player_entity = player_query.0;
     let player_transform = player_query.1;
 

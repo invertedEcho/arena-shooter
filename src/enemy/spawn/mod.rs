@@ -11,27 +11,16 @@ pub struct EnemySpawnPlugin;
 
 impl Plugin for EnemySpawnPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<SpawnEnemiesEvent>()
-            .add_systems(
-                Update,
-                (
-                    tick_enemy_spawn_timer,
-                    handle_spawn_enemies_at_enemy_spawn_locations_event,
-                ),
-            )
-            .insert_resource(EnemySpawnTimer(Timer::from_seconds(
-                1.0,
-                TimerMode::Repeating,
-            )));
+        app.add_event::<SpawnEnemiesEvent>().add_systems(
+            Update,
+            (handle_spawn_enemies_at_enemy_spawn_locations_event,),
+        );
     }
 }
 
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 pub struct EnemySpawnLocation;
-
-#[derive(Resource)]
-struct EnemySpawnTimer(pub Timer);
 
 #[derive(Event)]
 pub struct SpawnEnemiesEvent {
@@ -42,13 +31,6 @@ pub struct SpawnEnemiesEvent {
 pub enum EnemySpawnMethod {
     /// Enemies will be spawned at randomly picked EnemySpawnLocations
     RandomSelection,
-}
-
-fn tick_enemy_spawn_timer(
-    mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
-    time: Res<Time>,
-) {
-    enemy_spawn_timer.0.tick(time.delta());
 }
 
 fn handle_spawn_enemies_at_enemy_spawn_locations_event(
@@ -109,7 +91,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_event(
                             AngularVelocity::ZERO,
                             LinearVelocity::ZERO,
                             EnemyShootPlayerCooldownTimer(Timer::from_seconds(
-                                1.0,
+                                0.5,
                                 TimerMode::Repeating,
                             )),
                             Visibility::Visible,

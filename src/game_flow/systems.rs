@@ -27,7 +27,6 @@ pub fn handle_player_death_event(
 pub fn handle_escape(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     current_app_state: Res<State<AppState>>,
-    mut next_app_state: ResMut<NextState<AppState>>,
     current_in_game_state: Res<State<InGameState>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {

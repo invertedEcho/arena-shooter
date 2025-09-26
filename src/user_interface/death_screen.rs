@@ -1,10 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::{
-        states::{AppState, InGameState},
-        systems::free_mouse,
-    },
+    game_flow::{states::InGameState, systems::free_mouse},
     player::Player,
     user_interface::common::{CommonUiButton, CommonUiButtonType},
 };

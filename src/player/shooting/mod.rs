@@ -8,7 +8,7 @@ use crate::{
             accurate_check_bullet_collision_for_impact_particle,
             detect_enemy_bullet_collision_with_player,
             handle_blood_screen_effect, player_shooting, reload_player_weapon,
-            spawn_muzzle_flash, tick_player_weapon_timer,
+            spawn_muzzle_flash, tick_player_weapon_shoot_cooldown_timer,
         },
     },
 };
@@ -27,7 +27,7 @@ impl Plugin for PlayerShootingPlugin {
                 Update,
                 (
                     player_shooting,
-                    tick_player_weapon_timer,
+                    tick_player_weapon_shoot_cooldown_timer,
                     detect_enemy_bullet_collision_with_player,
                     handle_blood_screen_effect,
                     reload_player_weapon,

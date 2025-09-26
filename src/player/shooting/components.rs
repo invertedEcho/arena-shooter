@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 #[derive(Component)]
-pub struct PlayerWeaponShootCooldownTimer(pub Timer);
+pub struct PlayerShootCooldownTimer(pub Timer);
 
 #[derive(Component)]
 pub struct MuzzleFlash;
