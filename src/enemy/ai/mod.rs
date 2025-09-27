@@ -177,8 +177,6 @@ fn handle_start_chasing_player_event(
         );
         match path {
             Some(res) => {
-                enemy.state = EnemyState::ChasingPlayer;
-
                 commands.entity(enemy_entity).insert(EnemyPatrolPath {
                     current_destination: res.path[0],
                     next_destinations: res.path[1..].to_vec(),
