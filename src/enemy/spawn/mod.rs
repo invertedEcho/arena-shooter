@@ -82,7 +82,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_event(
                                 health: 100.0,
                                 ..default()
                             },
-                            RigidBody::Dynamic,
+                            RigidBody::Kinematic,
                             LockedAxes::new()
                                 .lock_rotation_x()
                                 .lock_rotation_y()

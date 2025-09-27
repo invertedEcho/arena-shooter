@@ -80,7 +80,7 @@ fn handle_start_game_mode_event(
 
 pub fn get_enemy_count_per_wave(wave: usize) -> usize {
     return match wave {
-        1 => 3,
+        1 => 1,
         2 => 4,
         3 => 6,
         4 => 8,

@@ -3,8 +3,13 @@ use bevy::{color::palettes::css::RED, prelude::*};
 use vleue_navigator::NavMesh;
 
 use crate::{
-    enemy::Enemy, game_flow::states::AppState,
-    nav_mesh_pathfinding::CurrentNavMesh, player::Player,
+    enemy::Enemy,
+    game_flow::states::AppState,
+    nav_mesh_pathfinding::CurrentNavMesh,
+    player::{
+        Player,
+        spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
+    },
 };
 
 // TODO: actually implement this lol
@@ -26,14 +31,14 @@ impl Plugin for EnemyAiPlugin {
             (
                 check_if_enemy_can_see_player_and_look_at_player,
                 handle_start_chasing_player_event,
-                // enemy_patrol,
+                enemy_patrol,
             )
                 .run_if(in_state(AppState::InGame)),
         );
     }
 }
 
-#[derive(Default, Reflect, PartialEq)]
+#[derive(Default, Reflect, PartialEq, Debug)]
 pub enum EnemyState {
     #[default]
     Idle,
@@ -41,8 +46,8 @@ pub enum EnemyState {
     ChasingPlayer,
     /// Enemy can see the player, will shoot the player now
     AttackPlayer,
-    /// This state will be set when the enemy has 0 health. It will just play a death animation and
-    /// afterwards be despawned.
+    /// This state will be set when `enemy.health == 0.0`. A death animation will be played and
+    /// afterwards the enemy will be despawned.
     Dead,
 }
 
@@ -52,6 +57,12 @@ pub enum EnemyState {
 pub struct StartChasingPlayerEvent {
     /// The enemy entity that should start chasing the player
     pub enemy_entity: Entity,
+}
+
+#[derive(Component)]
+pub struct EnemyPatrolPath {
+    current_destination: Vec3,
+    next_destinations: Vec<Vec3>,
 }
 
 fn check_if_enemy_can_see_player_and_look_at_player(
@@ -102,13 +113,15 @@ fn check_if_enemy_can_see_player_and_look_at_player(
                     enemy.state = EnemyState::AttackPlayer;
                 }
                 enemy_transform.look_at(player_transform.translation, Dir3::Y);
+                return;
             } else {
-                if enemy.state != EnemyState::ChasingPlayer {
-                    enemy.state = EnemyState::ChasingPlayer;
-                    start_chasing_player_event_writer
-                        .write(StartChasingPlayerEvent { enemy_entity });
-                }
             }
+        }
+
+        if enemy.state != EnemyState::ChasingPlayer {
+            enemy.state = EnemyState::ChasingPlayer;
+            start_chasing_player_event_writer
+                .write(StartChasingPlayerEvent { enemy_entity });
         }
     }
 }
@@ -131,11 +144,13 @@ fn handle_start_chasing_player_event(
             .iter_mut()
             .find(|(_, entity, _)| *entity == event.enemy_entity)
         else {
-            warn!("LKJSDFKL:JFDSKL");
+            warn!(
+                "A StartChasingPlayerEvent was read, but the enemy entity from the event couldn't be found."
+            );
             continue;
         };
 
-        let (mut enemy, _, enemy_transform) = enemy;
+        let (mut enemy, enemy_entity, enemy_transform) = enemy;
 
         let navmesh = navmeshes.get(&current_navmesh.0).unwrap();
         let path = navmesh.transformed_path(
@@ -153,8 +168,12 @@ fn handle_start_chasing_player_event(
         match path {
             Some(res) => {
                 enemy.state = EnemyState::ChasingPlayer;
-                enemy.current_patrol_destination = Some(res.path[0]);
-                enemy.next_patrol_destinations = Some(res.path[1..].to_vec());
+
+                commands.entity(enemy_entity).insert(EnemyPatrolPath {
+                    current_destination: res.path[0],
+                    next_destinations: res.path[1..].to_vec(),
+                });
+
                 for point in res.path {
                     commands.spawn((
                         Transform::from_translation(point),
@@ -173,73 +192,107 @@ fn handle_start_chasing_player_event(
     }
 }
 
-// fn enemy_patrol(
-//     enemy_query: Query<(&mut Enemy, &mut LinearVelocity, &mut Transform)>,
-// ) {
-//     for (mut enemy, mut velocity, mut transform) in enemy_query {
-//         let Some(current_patrol_destination) = enemy.current_patrol_destination
-//         else {
-//             if enemy.next_patrol_destinations.is_some() {
-//                 info!(
-//                     "current patrol destination is None, but next_patrol_destinations is not"
-//                 );
-//             }
-//             return;
-//         };
-//
-//         let fixed_enemy = Vec3 {
-//             x: transform.translation.x,
-//             y: 0.0,
-//             z: transform.translation.z,
-//         };
-//
-//         info!(
-//             "distance: {}",
-//             fixed_enemy.distance(current_patrol_destination)
-//         );
-//
-//         let enemy_reached_patrol_point =
-//             fixed_enemy.distance(current_patrol_destination) < 0.4;
-//
-//         if enemy_reached_patrol_point {}
-//
-//         if enemy_reached_patrol_point {
-//             info!("ENEMY REACHED PATROL POINT!");
-//             velocity.z = 0.0;
-//
-//             let Some(next_patrol_destinations) =
-//                 enemy.next_patrol_destinations.clone()
-//             else {
-//                 info!(
-//                     "Enemy reached patrol point and next next_patrol_destinations is None"
-//                 );
-//                 // TODO: should probably check if we can see the player now and if not, send
-//                 // StartChasingPlayerEvent.
-//                 continue;
-//             };
-//
-//             if next_patrol_destinations.len() == 0 {
-//                 info!("enemy has done patroling, no more patrol destinations");
-//             }
-//
-//             enemy.current_patrol_destination =
-//                 Some(next_patrol_destinations[0]);
-//             enemy.next_patrol_destinations =
-//                 Some(next_patrol_destinations[1..].to_vec());
-//             info!("enemy reached patrol point, updated patrol destinations!");
-//             transform.look_at(
-//                 enemy
-//                     .current_patrol_destination
-//                     .expect("current patrol destination must exist"),
-//                 Vec3::Y,
-//             );
-//             info!("enemy now looks at new current_patrol_destination");
-//             continue;
-//         };
-//
-//         let mut local_velocity = Vec3::ZERO;
-//         local_velocity.z = -2.0;
-//         let world_velocity = transform.rotation * local_velocity;
-//         **velocity = world_velocity;
-//     }
-// }
+fn enemy_patrol(
+    enemies_with_patrol_path: Query<(
+        Entity,
+        &mut Enemy,
+        &mut EnemyPatrolPath,
+        &mut LinearVelocity,
+        &mut Transform,
+    )>,
+    spatial_query: SpatialQuery,
+) {
+    for (
+        entity,
+        mut enemy,
+        mut enemy_patrol_path,
+        mut velocity,
+        mut transform,
+    ) in enemies_with_patrol_path
+    {
+        if enemy.state != EnemyState::ChasingPlayer {
+            continue;
+        }
+
+        info!("Enemy state: {:?}", enemy.state);
+        let fixed_enemy = Vec3 {
+            x: transform.translation.x,
+            y: 0.0,
+            z: transform.translation.z,
+        };
+
+        info!(
+            "distance from enemy to current patrol destination: {}",
+            fixed_enemy.distance(enemy_patrol_path.current_destination)
+        );
+
+        let enemy_reached_patrol_point =
+            fixed_enemy.distance(enemy_patrol_path.current_destination) < 0.1;
+
+        if enemy_reached_patrol_point {}
+
+        if enemy_reached_patrol_point {
+            info!("Enemy reached current patrol point!");
+            velocity.z = 0.0;
+
+            if enemy_patrol_path.next_destinations.len() == 0 {
+                info!("enemy has done patroling, no more patrol destinations");
+                // TODO: check if im correct, in this case,
+                // check_if_enemy_can_see_player_and_look_at_player system will try to locate the
+                // player if not, start patroling again?
+                enemy.state = EnemyState::Idle;
+                continue;
+            }
+
+            // TODO: use above check to do something
+            enemy_patrol_path.current_destination =
+                enemy_patrol_path.next_destinations[0];
+
+            enemy_patrol_path.next_destinations =
+                enemy_patrol_path.next_destinations[1..].to_vec();
+
+            transform.look_at(enemy_patrol_path.current_destination, Vec3::Y);
+            info!("enemy now looks at new current_patrol_destination");
+
+            continue;
+        };
+
+        let mut local_velocity = Vec3::ZERO;
+        local_velocity.z -= 2.0;
+
+        let world_velocity = transform.rotation * local_velocity;
+        let maybe_normalized_world_velocity = world_velocity.try_normalize();
+        let Some(normalized_world_velocity) = maybe_normalized_world_velocity
+        else {
+            velocity.x = 0.0;
+            velocity.z = 0.0;
+            return;
+        };
+
+        let direction_based_on_input =
+            Dir3::new_unchecked(normalized_world_velocity);
+
+        if let Some(first_hit) = spatial_query.cast_shape(
+            &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
+            transform.translation,
+            transform.rotation,
+            direction_based_on_input,
+            &ShapeCastConfig {
+                max_distance: 0.5,
+                ..default()
+            },
+            &SpatialQueryFilter::default().with_excluded_entities([entity]),
+        ) {
+            if first_hit.distance < 0.1 {
+                info!("Disallowing enemy movement, obstacle in the way!");
+                **velocity = Vec3::ZERO;
+                return;
+            }
+        }
+
+        let mut local_velocity = Vec3::ZERO;
+        local_velocity.z = -2.0;
+        let world_velocity = transform.rotation * local_velocity;
+        **velocity = world_velocity;
+    }
+}

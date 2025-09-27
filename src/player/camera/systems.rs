@@ -1,7 +1,11 @@
 use crate::{
     common::systems::apply_render_layers_to_children,
     player::{
-        PlayerMovementState, camera::PLAYER_CAMERA_Y_OFFSET,
+        PlayerMovementState,
+        camera::{
+            PLAYER_CAMERA_Y_OFFSET,
+            components::{FreeCam, PlayerCameraState},
+        },
         shooting::components::PlayerWeapon,
     },
 };
@@ -168,5 +172,110 @@ pub fn player_walk_animation(
             //         0.2 * time.delta_secs();
             // }
         }
+    }
+}
+
+pub fn toggle_freecam(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut player_camera: Single<&mut PlayerCamera>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyC) {
+        match player_camera.state {
+            PlayerCameraState::Normal => {
+                player_camera.state = PlayerCameraState::FreeCam;
+            }
+            PlayerCameraState::FreeCam => {
+                player_camera.state = PlayerCameraState::Normal;
+            }
+        }
+    }
+}
+
+pub fn update_player_camera_on_state_changed(
+    mut commands: Commands,
+    changed_player_camera: Single<
+        (Entity, &PlayerCamera, &Transform),
+        Changed<PlayerCamera>,
+    >,
+) {
+    let (entity, player_camera, transform) = *changed_player_camera;
+    if player_camera.state == PlayerCameraState::FreeCam {
+        info!("succesfully despawned player camera");
+        commands.entity(entity).despawn();
+        commands.spawn((
+            Camera3d::default(),
+            Projection::from(PerspectiveProjection {
+                fov: 80.0_f32.to_radians(),
+                ..default()
+            }),
+            Transform::from_xyz(
+                transform.translation.x,
+                transform.translation.y + 2.0,
+                transform.translation.z,
+            ),
+            FreeCam,
+        ));
+    }
+}
+
+pub fn handle_free_cam_movement(
+    mut free_cam_transform: Single<&mut Transform, With<FreeCam>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
+    let mut direction = Vec3::ZERO;
+    let speed = 0.05;
+
+    if keyboard_input.pressed(KeyCode::KeyW) {
+        direction += *free_cam_transform.forward();
+    }
+    if keyboard_input.pressed(KeyCode::KeyS) {
+        direction -= *free_cam_transform.forward();
+    }
+
+    if keyboard_input.pressed(KeyCode::KeyA) {
+        direction -= *free_cam_transform.right();
+    }
+    if keyboard_input.pressed(KeyCode::KeyD) {
+        direction += *free_cam_transform.right();
+    }
+
+    if keyboard_input.pressed(KeyCode::KeyQ) {
+        direction += *free_cam_transform.up();
+    }
+    if keyboard_input.pressed(KeyCode::KeyE) {
+        direction -= *free_cam_transform.up();
+    }
+
+    if direction != Vec3::ZERO {
+        direction = direction.normalize();
+    }
+
+    free_cam_transform.translation += direction * speed;
+}
+
+pub fn free_cam_orbit(
+    mouse_motion: Res<AccumulatedMouseMotion>,
+    mut free_cam_transform: Single<&mut Transform, With<FreeCam>>,
+) {
+    let delta = mouse_motion.delta;
+
+    if delta != Vec2::ZERO {
+        // pitch like nodding yes with your head
+        let delta_pitch = -delta.y * 0.001;
+
+        // yaw like nodding no with your head
+        let delta_yaw = -delta.x * 0.002;
+
+        // existing rotation
+        let (current_yaw, current_pitch, current_roll) =
+            free_cam_transform.rotation.to_euler(EulerRot::YXZ);
+
+        let new_yaw = delta_yaw + current_yaw;
+
+        let new_pitch =
+            (delta_pitch + current_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+
+        free_cam_transform.rotation =
+            Quat::from_euler(EulerRot::YXZ, new_yaw, new_pitch, current_roll);
     }
 }

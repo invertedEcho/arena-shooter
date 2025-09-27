@@ -69,6 +69,7 @@ pub fn player_movement(
 
     velocity.y -= GRAVITY * time.delta_secs();
 
+    // check if we are on ground
     if let Some(_) = spatial_query.cast_shape(
         &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
         transform.translation,
@@ -102,6 +103,7 @@ pub fn player_movement(
     let direction_based_on_input =
         Dir3::new_unchecked(normalized_world_velocity);
 
+    // check if there is an obstacle in the direction the player is trying to go
     if let Some(first_hit) = spatial_query.cast_shape(
         &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
         transform.translation,

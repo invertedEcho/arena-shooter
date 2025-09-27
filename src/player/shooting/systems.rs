@@ -124,13 +124,13 @@ pub fn detect_enemy_bullet_collision_with_player(
             continue;
         }
 
-        let Some(enemy_bullet) = enemy_bullet_query
+        let Some(bullet_entity) = enemy_bullet_query
             .iter()
-            .find(|bullet| bullet == first_entity || bullet == second_entity)
+            .find(|entity| entity == first_entity || entity == second_entity)
         else {
             continue;
         };
-        commands.entity(enemy_bullet).despawn();
+        commands.entity(bullet_entity).despawn();
 
         commands.spawn((
             ImageNode {
@@ -146,6 +146,39 @@ pub fn detect_enemy_bullet_collision_with_player(
             next_in_game_state.set(InGameState::PlayerDead);
             game_score.enemy += 1;
         }
+
+        // TODO: bullet damage indicator directional to enemy:
+        // Add once bevy 0.17 is released and all dependencies this project uses have migrated to
+        // 0.17
+        // let Ok(transform_of_enemy) =
+        //     enemy_transforms.get(enemy_bullet.origin_enemy)
+        // else {
+        //     continue;
+        // };
+        // let hit_direction = (transform_of_enemy.translation
+        //     - player_transform.translation)
+        //     .normalize();
+        // let local_direction =
+        //     player_transform.rotation.conjugate() * hit_direction;
+        // let flat_direction = Vec2::new(local_direction.x, local_direction.z);
+        // let angle_radians = flat_direction.x.atan2(flat_direction.y);
+        // let angle_degrees = angle_radians.to_degrees();
+        // commands
+        //     .spawn(Node {
+        //         width: Val::Percent(100.0),
+        //         height: Val::Percent(100.0),
+        //         justify_content: JustifyContent::Center,
+        //         align_items: AlignItems::Center,
+        //         ..default()
+        //     })
+        //     .with_child((
+        //         ImageNode {
+        //             image: asset_server.load("hud/damage_indicator.png"),
+        //             ..default()
+        //         },
+        //         UiTransform::new(),
+        //         BloodScreenEffect::default(),
+        //     ));
     }
 }
 
