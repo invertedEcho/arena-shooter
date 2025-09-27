@@ -1,4 +1,4 @@
-use bevy::{prelude::*, window::CursorGrabMode};
+use bevy::{input::keyboard, prelude::*, window::CursorGrabMode};
 
 use crate::{
     game_flow::{AppState, PlayerDeathEvent, states::InGameState},
@@ -40,6 +40,9 @@ pub fn handle_escape(
                 InGameState::Paused => {
                     next_in_game_state.set(InGameState::Playing)
                 }
+                InGameState::PausedDebug => {
+                    next_in_game_state.set(InGameState::Playing);
+                }
             },
             AppState::MainMenu => {}
         }
@@ -56,4 +59,13 @@ pub fn make_player_weapon_hidden(
     mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
 ) {
     **player_weapon = Visibility::Hidden;
+}
+
+pub fn enable_debug_paused(
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyP) {
+        next_in_game_state.set(InGameState::PausedDebug);
+    }
 }

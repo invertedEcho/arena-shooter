@@ -24,6 +24,9 @@ pub enum InGameState {
     Playing,
     Paused,
     PlayerDead,
+    /// Everything is paused, no pause menu is shown, useful in combination with
+    /// `PlayerCameraState::FreeCam`
+    PausedDebug,
 }
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]

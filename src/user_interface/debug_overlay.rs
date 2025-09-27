@@ -85,6 +85,9 @@ fn update_current_in_game_state_text(
             InGameState::Paused => {
                 **current_in_game_state_text = Text::new("Paused");
             }
+            InGameState::PausedDebug => {
+                **current_in_game_state_text = Text::new("PausedDebug");
+            }
         }
     }
 }

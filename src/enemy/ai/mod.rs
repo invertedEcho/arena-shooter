@@ -4,7 +4,7 @@ use vleue_navigator::NavMesh;
 
 use crate::{
     enemy::Enemy,
-    game_flow::states::AppState,
+    game_flow::states::{AppState, InGameState},
     nav_mesh_pathfinding::CurrentNavMesh,
     player::{
         Player,
@@ -201,24 +201,30 @@ fn enemy_patrol(
         &mut Transform,
     )>,
     spatial_query: SpatialQuery,
+    current_in_game_state: Res<State<InGameState>>,
 ) {
     for (
         entity,
         mut enemy,
         mut enemy_patrol_path,
         mut velocity,
-        mut transform,
+        mut enemy_transform,
     ) in enemies_with_patrol_path
     {
+        if *current_in_game_state.get() != InGameState::Playing {
+            **velocity = Vec3::ZERO;
+            continue;
+        }
+
         if enemy.state != EnemyState::ChasingPlayer {
             continue;
         }
 
         info!("Enemy state: {:?}", enemy.state);
         let fixed_enemy = Vec3 {
-            x: transform.translation.x,
+            x: enemy_transform.translation.x,
             y: 0.0,
-            z: transform.translation.z,
+            z: enemy_transform.translation.z,
         };
 
         info!(
@@ -233,7 +239,7 @@ fn enemy_patrol(
 
         if enemy_reached_patrol_point {
             info!("Enemy reached current patrol point!");
-            velocity.z = 0.0;
+            **velocity = Vec3::splat(0.0);
 
             if enemy_patrol_path.next_destinations.len() == 0 {
                 info!("enemy has done patroling, no more patrol destinations");
@@ -251,7 +257,8 @@ fn enemy_patrol(
             enemy_patrol_path.next_destinations =
                 enemy_patrol_path.next_destinations[1..].to_vec();
 
-            transform.look_at(enemy_patrol_path.current_destination, Vec3::Y);
+            enemy_transform
+                .look_at(enemy_patrol_path.current_destination, Vec3::Y);
             info!("enemy now looks at new current_patrol_destination");
 
             continue;
@@ -260,12 +267,11 @@ fn enemy_patrol(
         let mut local_velocity = Vec3::ZERO;
         local_velocity.z -= 2.0;
 
-        let world_velocity = transform.rotation * local_velocity;
+        let world_velocity = enemy_transform.rotation * local_velocity;
         let maybe_normalized_world_velocity = world_velocity.try_normalize();
         let Some(normalized_world_velocity) = maybe_normalized_world_velocity
         else {
-            velocity.x = 0.0;
-            velocity.z = 0.0;
+            **velocity = Vec3::splat(0.0);
             return;
         };
 
@@ -274,8 +280,8 @@ fn enemy_patrol(
 
         if let Some(first_hit) = spatial_query.cast_shape(
             &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
-            transform.translation,
-            transform.rotation,
+            enemy_transform.translation,
+            enemy_transform.rotation,
             direction_based_on_input,
             &ShapeCastConfig {
                 max_distance: 0.5,
@@ -292,7 +298,7 @@ fn enemy_patrol(
 
         let mut local_velocity = Vec3::ZERO;
         local_velocity.z = -2.0;
-        let world_velocity = transform.rotation * local_velocity;
+        let world_velocity = enemy_transform.rotation * local_velocity;
         **velocity = world_velocity;
     }
 }
