@@ -163,7 +163,7 @@ fn handle_start_chasing_player_event(
         );
 
         let navmesh = navmeshes.get(&current_navmesh.0).unwrap();
-        let path = navmesh.transformed_path(
+        let Some(transformed_path) = navmesh.transformed_path(
             Vec3 {
                 x: enemy_transform.translation.x,
                 y: 0.0,
@@ -174,36 +174,33 @@ fn handle_start_chasing_player_event(
                 y: 0.0,
                 z: player_transform.translation.z,
             },
-        );
-        match path {
-            Some(res) => {
-                commands.entity(enemy_entity).insert(EnemyPatrolPath {
-                    current_destination: res.path[0],
-                    next_destinations: res.path[1..].to_vec(),
-                });
+        ) else {
+            warn!("Could not find path from enemy to player");
+            continue;
+        };
 
-                // make the enemy look at the first patrol path
-                let current_destination_fixed = Vec3 {
-                    x: res.path[0].x,
-                    y: enemy_transform.translation.y,
-                    z: res.path[0].z,
-                };
-                enemy_transform.look_at(current_destination_fixed, Vec3::Y);
+        commands.entity(enemy_entity).insert(EnemyPatrolPath {
+            current_destination: transformed_path.path[0],
+            next_destinations: transformed_path.path[1..].to_vec(),
+        });
 
-                for point in res.path {
-                    commands.spawn((
-                        Transform::from_translation(point),
-                        Mesh3d(meshes.add(Sphere::new(0.05))),
-                        MeshMaterial3d(materials.add(StandardMaterial {
-                            base_color: RED.into(),
-                            ..Default::default()
-                        })),
-                    ));
-                }
-            }
-            None => {
-                warn!("Could not find path from enemy to player");
-            }
+        // make the enemy look at the first patrol path
+        let current_destination_fixed = Vec3 {
+            x: transformed_path.path[0].x,
+            y: enemy_transform.translation.y,
+            z: transformed_path.path[0].z,
+        };
+        enemy_transform.look_at(current_destination_fixed, Vec3::Y);
+
+        for point in transformed_path.path {
+            commands.spawn((
+                Transform::from_translation(point),
+                Mesh3d(meshes.add(Sphere::new(0.05))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: RED.into(),
+                    ..Default::default()
+                })),
+            ));
         }
     }
 }
