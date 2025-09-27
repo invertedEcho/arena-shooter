@@ -71,10 +71,6 @@ pub fn enemy_shoot_player(
     for (enemy, enemy_transform, enemy_shoot_player_cooldown_timer) in
         enemy_query
     {
-        if enemy.state == EnemyState::Dead {
-            continue;
-        }
-
         if enemy.state != EnemyState::AttackPlayer
             || !enemy_shoot_player_cooldown_timer.0.just_finished()
         {

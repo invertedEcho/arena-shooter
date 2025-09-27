@@ -1,4 +1,4 @@
-use bevy::{input::keyboard, prelude::*, window::CursorGrabMode};
+use bevy::{prelude::*, window::CursorGrabMode};
 
 use crate::{
     game_flow::{AppState, PlayerDeathEvent, states::InGameState},

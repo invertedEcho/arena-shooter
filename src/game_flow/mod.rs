@@ -45,6 +45,6 @@ impl Plugin for GameFlowPlugin {
                 OnExit(InGameState::Playing),
                 make_player_weapon_hidden,
             )
-            .add_systems(Update, (enable_debug_paused));
+            .add_systems(Update, enable_debug_paused);
     }
 }
