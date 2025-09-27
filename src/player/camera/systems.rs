@@ -133,6 +133,7 @@ pub fn camera_orbit_player(
     }
 }
 
+// TODO: move weapon up and down, like `f(x) = x^2`, e.g. at middle stop moving up/down
 pub fn player_walk_animation(
     player: Single<&Player>,
     player_weapon_query: Query<(&mut Transform, &mut PlayerWeapon)>,
@@ -162,59 +163,62 @@ pub fn player_walk_animation(
                     player_weapon.moving_to_right = true;
                 }
             }
-
-            // TODO: move weapon up and down, like `f(x) = x^2`, e.g. at middle stop moving up/down
-            // if player_weapon.moving_to_bottom {
-            //     player_weapon_transform.translation.y -=
-            //         0.2 * time.delta_secs();
-            // } else {
-            //     player_weapon_transform.translation.y +=
-            //         0.2 * time.delta_secs();
-            // }
         }
     }
 }
 
 pub fn toggle_freecam(
+    mut player_query: Single<(Entity, &Transform, &mut Player)>,
+    mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_camera: Single<&mut PlayerCamera>,
+    player_camera_entity_query: Query<Entity, With<PlayerCamera>>,
+    free_cam_entity_query: Query<Entity, With<FreeCam>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyC) {
-        match player_camera.state {
+        match player_query.2.camera_state {
             PlayerCameraState::Normal => {
-                player_camera.state = PlayerCameraState::FreeCam;
+                player_query.2.camera_state = PlayerCameraState::FreeCam;
+                for player_camera_entity in player_camera_entity_query {
+                    commands.entity(player_camera_entity).despawn();
+                }
+                let player_transform = player_query.1;
+                commands.spawn((
+                    Camera3d::default(),
+                    Projection::from(PerspectiveProjection {
+                        fov: 80.0_f32.to_radians(),
+                        ..default()
+                    }),
+                    Transform::from_xyz(
+                        player_transform.translation.x,
+                        player_transform.translation.y + 2.0,
+                        player_transform.translation.z,
+                    ),
+                    FreeCam,
+                ));
             }
             PlayerCameraState::FreeCam => {
-                player_camera.state = PlayerCameraState::Normal;
+                debug!("requested freecam -> normal");
+                player_query.2.camera_state = PlayerCameraState::Normal;
+                debug!("player camera state now set to normal");
+                for free_cam_entity in free_cam_entity_query {
+                    debug!("despawning free cam entity {}", free_cam_entity);
+                    commands.entity(free_cam_entity).despawn();
+                }
+                commands.entity(player_query.0).with_child((
+                    Camera3d::default(),
+                    PlayerCamera::default(),
+                    Projection::from(PerspectiveProjection {
+                        fov: 80.0_f32.to_radians(),
+                        ..default()
+                    }),
+                    Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
+                ));
+                debug!(
+                    "spawned playercamera as child of player {}",
+                    player_query.0
+                );
             }
         }
-    }
-}
-
-pub fn update_player_camera_on_state_changed(
-    mut commands: Commands,
-    changed_player_camera: Single<
-        (Entity, &PlayerCamera, &Transform),
-        Changed<PlayerCamera>,
-    >,
-) {
-    let (entity, player_camera, transform) = *changed_player_camera;
-    if player_camera.state == PlayerCameraState::FreeCam {
-        info!("succesfully despawned player camera");
-        commands.entity(entity).despawn();
-        commands.spawn((
-            Camera3d::default(),
-            Projection::from(PerspectiveProjection {
-                fov: 80.0_f32.to_radians(),
-                ..default()
-            }),
-            Transform::from_xyz(
-                transform.translation.x,
-                transform.translation.y + 2.0,
-                transform.translation.z,
-            ),
-            FreeCam,
-        ));
     }
 }
 

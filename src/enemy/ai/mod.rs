@@ -94,14 +94,14 @@ fn set_current_enemy_state(
             let enemy_can_see_player = first_hit.entity == player_entity;
             if enemy_can_see_player {
                 if enemy.state != EnemyState::AttackPlayer {
-                    info!(
+                    debug!(
                         "Enemy can see player, setting state to AttackPlayer!"
                     );
                     enemy.state = EnemyState::AttackPlayer;
                 };
             } else {
                 if enemy.state != EnemyState::ChasingPlayer {
-                    info!(
+                    debug!(
                         "Enemy can NOT see player, setting state to ChasingPlayer!"
                     );
                     enemy.state = EnemyState::ChasingPlayer;
@@ -118,13 +118,13 @@ fn handle_enemy_state_changed(
 ) {
     for (enemy, enemy_entity, mut enemy_transform) in changed_enemies {
         if enemy.state == EnemyState::AttackPlayer {
-            info!(
+            debug!(
                 "Enemy {} changed state to AttackPlayer, looking at Player, should start shooting player now",
                 enemy_entity
             );
             enemy_transform.look_at(player_transform.translation, Vec3::Y);
         } else if enemy.state == EnemyState::ChasingPlayer {
-            info!(
+            debug!(
                 "Enemy {} changed state to chasingplayer, firing StartChasingPlayerEvent",
                 enemy_entity
             );
@@ -138,7 +138,7 @@ fn handle_start_chasing_player_event(
     mut commands: Commands,
     mut start_chasing_player_event_reader: EventReader<StartChasingPlayerEvent>,
     mut enemy_query: Query<
-        (&mut Enemy, Entity, &mut Transform),
+        (Entity, &mut Transform),
         (Without<Player>, With<Enemy>),
     >,
     player_transform: Single<&Transform, With<Player>>,
@@ -148,20 +148,21 @@ fn handle_start_chasing_player_event(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for event in start_chasing_player_event_reader.read() {
-        let Some((mut enemy, enemy_entity, mut enemy_transform)) = enemy_query
+        let Some((enemy_entity, mut enemy_transform)) = enemy_query
             .iter_mut()
-            .find(|(_, entity, _)| *entity == event.enemy_entity)
+            .find(|(entity, _)| *entity == event.enemy_entity)
         else {
             warn!(
                 "A StartChasingPlayerEvent was read, but the enemy entity from the event couldn't be found."
             );
             continue;
         };
-        info!(
+        debug!(
             "StartChasingPlayerEvent was read for enemy_entity: {}",
             enemy_entity
         );
 
+        debug!("Trying to get path for enemy {}", enemy_entity);
         let navmesh = navmeshes.get(&current_navmesh.0).unwrap();
         let Some(transformed_path) = navmesh.transformed_path(
             Vec3 {
@@ -225,7 +226,7 @@ fn enemy_patrol(
     ) in enemies_with_patrol_path
     {
         let in_game_state_is_playing =
-            *current_in_game_state.get() != InGameState::Playing;
+            *current_in_game_state.get() == InGameState::Playing;
         if !in_game_state_is_playing {
             **velocity = Vec3::ZERO;
             continue;
@@ -252,6 +253,7 @@ fn enemy_patrol(
             **velocity = Vec3::splat(0.0);
 
             if enemy_patrol_path.next_destinations.len() == 0 {
+                info!("That was the last patrol point, state set to Idle now");
                 enemy.state = EnemyState::Idle;
                 continue;
             }
@@ -268,6 +270,9 @@ fn enemy_patrol(
                 z: enemy_patrol_path.current_destination.z,
             };
             enemy_transform.look_at(current_destination_fixed, Vec3::Y);
+            info!(
+                "Enemy reached current patrol point, destinations updated and enemy now looking at new current_destination"
+            );
             continue;
         };
 

@@ -7,7 +7,6 @@ use crate::{
         systems::{
             camera_orbit_player, free_cam_orbit, handle_free_cam_movement,
             player_walk_animation, setup_player_camera, toggle_freecam,
-            update_player_camera_on_state_changed,
         },
     },
 };
@@ -31,7 +30,6 @@ impl Plugin for PlayerCameraPlugin {
                 setup_player_camera,
                 player_walk_animation,
                 toggle_freecam,
-                update_player_camera_on_state_changed,
                 handle_free_cam_movement,
                 free_cam_orbit,
             ),

@@ -1,8 +1,10 @@
 use bevy::prelude::*;
 
 use crate::player::{
-    camera::PlayerCameraPlugin, hud::PlayerHudPlugin,
-    movement::PlayerMovementPlugin, shooting::PlayerShootingPlugin,
+    camera::{PlayerCameraPlugin, components::PlayerCameraState},
+    hud::PlayerHudPlugin,
+    movement::PlayerMovementPlugin,
+    shooting::PlayerShootingPlugin,
     spawn::PlayerSpawnPlugin,
 };
 
@@ -17,6 +19,8 @@ pub struct Player {
     pub health: f32,
     pub state: PlayerMovementState,
     pub on_ground: bool,
+    // TODO: get rid of me or move me somewhere else
+    pub camera_state: PlayerCameraState,
 }
 
 #[derive(Reflect, PartialEq)]
@@ -32,6 +36,7 @@ impl Default for Player {
             health: 100.0,
             state: PlayerMovementState::Idle,
             on_ground: true,
+            camera_state: PlayerCameraState::Normal,
         }
     }
 }

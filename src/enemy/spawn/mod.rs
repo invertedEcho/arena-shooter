@@ -1,6 +1,9 @@
-use crate::enemy::{
-    animate::SWAT_MODEL_PATH,
-    shooting::components::EnemyShootPlayerCooldownTimer,
+use crate::{
+    enemy::{
+        animate::SWAT_MODEL_PATH,
+        shooting::components::EnemyShootPlayerCooldownTimer,
+    },
+    player::spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
 };
 use avian3d::{math::PI, prelude::*};
 use bevy::prelude::*;
@@ -87,7 +90,10 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_event(
                                 .lock_rotation_x()
                                 .lock_rotation_y()
                                 .lock_rotation_z(),
-                            Collider::cuboid(0.3, 1.7, 0.3),
+                            Collider::capsule(
+                                PLAYER_CAPSULE_RADIUS,
+                                PLAYER_CAPSULE_LENGTH,
+                            ),
                             AngularVelocity::ZERO,
                             LinearVelocity::ZERO,
                             EnemyShootPlayerCooldownTimer(Timer::from_seconds(

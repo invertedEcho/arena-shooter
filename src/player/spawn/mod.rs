@@ -1,9 +1,7 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
-use crate::player::{
-    Player, PlayerMovementState, spawn::components::PlayerSpawnLocation,
-};
+use crate::player::{Player, spawn::components::PlayerSpawnLocation};
 
 pub mod components;
 
@@ -31,11 +29,7 @@ fn handle_player_spawn_event(
 ) {
     for event in player_spawn_event_reader.read() {
         commands.spawn((
-            Player {
-                health: 100.0,
-                state: PlayerMovementState::Idle,
-                on_ground: true,
-            },
+            Player::default(),
             Transform::from_translation(event.spawn_location),
             RigidBody::Kinematic,
             Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
