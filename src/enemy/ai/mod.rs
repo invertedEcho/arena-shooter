@@ -12,16 +12,14 @@ use crate::{
     },
 };
 
-// TODO: actually implement this lol
-// Enemy AI is currrently working like this:
-// A raycast is shot to the direction of the player
-//    If the raycast first hit is the player, the enemy state changes to AttackPlayer and will
-//    shoot him.
-//    If not, it means the enemy can not see the player. Then, we use the pathfinding library
-//    together with our navmesh to find the fastest path to the player
-//    (in the future we will of course not just take the fastest route, but have some kind of
-//    randomness?)
-
+/// Enemy AI is currrently working like this:
+/// - A raycast is shot to the direction of the player
+///    - If the raycast first hit is the player, the enemy state changes to AttackPlayer and will
+///      shoot him.
+///    - If not, it means the enemy can not see the player. Then, we use the pathfinding library
+///      together with our navmesh to find the fastest path to the player
+///      (in the future we will of course not just take the fastest route, but have some kind of
+///      randomness?)
 pub struct EnemyAiPlugin;
 
 impl Plugin for EnemyAiPlugin {
@@ -140,7 +138,7 @@ fn handle_start_chasing_player_event(
     mut commands: Commands,
     mut start_chasing_player_event_reader: EventReader<StartChasingPlayerEvent>,
     mut enemy_query: Query<
-        (&mut Enemy, Entity, &Transform),
+        (&mut Enemy, Entity, &mut Transform),
         (Without<Player>, With<Enemy>),
     >,
     player_transform: Single<&Transform, With<Player>>,
@@ -150,7 +148,7 @@ fn handle_start_chasing_player_event(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for event in start_chasing_player_event_reader.read() {
-        let Some((mut enemy, enemy_entity, enemy_transform)) = enemy_query
+        let Some((mut enemy, enemy_entity, mut enemy_transform)) = enemy_query
             .iter_mut()
             .find(|(_, entity, _)| *entity == event.enemy_entity)
         else {
@@ -185,6 +183,14 @@ fn handle_start_chasing_player_event(
                     current_destination: res.path[0],
                     next_destinations: res.path[1..].to_vec(),
                 });
+
+                // make the enemy look at the first patrol path
+                let current_destination_fixed = Vec3 {
+                    x: res.path[0].x,
+                    y: enemy_transform.translation.y,
+                    z: res.path[0].z,
+                };
+                enemy_transform.look_at(current_destination_fixed, Vec3::Y);
 
                 for point in res.path {
                     commands.spawn((
@@ -234,16 +240,6 @@ fn enemy_patrol(
             continue;
         }
 
-        let current_destination_fixed = Vec3 {
-            x: enemy_patrol_path.current_destination.x,
-            y: enemy_transform.translation.y,
-            z: enemy_patrol_path.current_destination.z,
-        };
-
-        // TODO: This doesnt have to be done every frame, just the first time we update
-        // current_destination_fixed
-        enemy_transform.look_at(current_destination_fixed, Vec3::Y);
-
         let fixed_enemy_transform = Vec3 {
             x: enemy_transform.translation.x,
             y: 0.0,
@@ -271,6 +267,12 @@ fn enemy_patrol(
             enemy_patrol_path.next_destinations =
                 enemy_patrol_path.next_destinations[1..].to_vec();
 
+            let current_destination_fixed = Vec3 {
+                x: enemy_patrol_path.current_destination.x,
+                y: enemy_transform.translation.y,
+                z: enemy_patrol_path.current_destination.z,
+            };
+            enemy_transform.look_at(current_destination_fixed, Vec3::Y);
             continue;
         };
 
