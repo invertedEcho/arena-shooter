@@ -76,10 +76,14 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_event(
                         GltfAssetLabel::Scene(0).from_asset(SWAT_MODEL_PATH),
                     );
 
+                    let spawn_location_translation =
+                        chosen_spawn_location.1.translation;
                     commands
                         .spawn((
-                            Transform::from_translation(
-                                chosen_spawn_location.1.translation,
+                            Transform::from_xyz(
+                                spawn_location_translation.x,
+                                spawn_location_translation.y - 0.15,
+                                spawn_location_translation.z,
                             ),
                             Enemy {
                                 health: 100.0,

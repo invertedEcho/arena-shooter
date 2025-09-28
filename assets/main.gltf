@@ -1,6 +1,6 @@
 {
 	"asset":{
-		"generator":"Khronos glTF Blender I/O v4.5.47",
+		"generator":"Khronos glTF Blender I/O v4.5.48",
 		"version":"2.0"
 	},
 	"scene":0,
@@ -6496,15 +6496,10 @@
 				]
 			},
 			"name":"PlayerSpawnLocation",
-			"scale":[
-				0.6827024817466736,
-				0.6827024817466736,
-				0.6827024817466736
-			],
 			"translation":[
-				3.210940361022949,
-				1.0922584533691406,
-				0.14228332042694092
+				3.1960625648498535,
+				1,
+				-0.14033013582229614
 			]
 		}
 	],

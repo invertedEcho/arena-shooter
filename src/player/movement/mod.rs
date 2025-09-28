@@ -76,7 +76,7 @@ pub fn player_movement(
         transform.rotation,
         Dir3::NEG_Y,
         &ShapeCastConfig {
-            max_distance: 0.5,
+            max_distance: 0.1,
             ..default()
         },
         &SpatialQueryFilter::default()
