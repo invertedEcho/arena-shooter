@@ -9,19 +9,6 @@ use crate::{
 const BULLET_IMPACT_PARTICLE_LIFETIME: f32 = 0.1;
 const BULLET_IMPACT_PARTICLE_VELOCITY: f32 = 3.0;
 
-/// This doesnt work as you cant really fully compare floats
-/// This resource holds all relevant EffectAssets for the BulletImpactEffect.
-/// This is used as a cache to not have to instantiate new effects every time.
-/// Note that we can't just instantiate one and use that as we need to set the axis of the
-/// CirclePositionModifier depending on the players rotation. In the future, it would be nice
-/// to just pre-populate this map at startup.
-/// todo: We shouldnt have exact float but round to something that makes sense so we dont have
-/// trillions of possible values -> the small rotation changes probably won't be visible anyways
-// #[derive(Resource, Default)]
-// pub struct BulletImpactEffectHandle {
-//     map: HashMap<f32, Handle<EffectAsset>>,
-// }
-
 #[derive(Resource, Default)]
 pub struct BulletImpactEffectHandle(Option<Handle<EffectAsset>>);
 

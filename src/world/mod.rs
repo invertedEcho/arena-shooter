@@ -1,4 +1,4 @@
-use crate::world::components::{Ground, Map, Wall};
+use crate::world::components::{Ground, Wall};
 use crate::world::systems::{
     detect_bullet_collision_with_wall_and_grounds, setup_world,
 };
@@ -17,7 +17,6 @@ impl Plugin for WorldPlugin {
                 (detect_bullet_collision_with_wall_and_grounds,),
             )
             .register_type::<Ground>()
-            .register_type::<Map>()
             .register_type::<Wall>();
     }
 }
