@@ -29,8 +29,8 @@ impl Plugin for EnemyAiPlugin {
             (
                 handle_start_chasing_player_event,
                 enemy_patrol,
-                handle_enemy_state_changed,
-                set_current_enemy_state,
+                handle_enemy_state_transition_to_chase_player,
+                check_if_enemy_can_see_player,
             )
                 .run_if(in_state(AppState::InGame)),
         );
@@ -51,10 +51,10 @@ pub enum EnemyState {
 }
 
 /// This event will get fired when the enemy can not directly see the player.
-/// A system will handle this event, and set current patrol destination and next patrol destinations
+/// A system will handle this event, and will insert an `EnemyPatrolPath` component into the given enemy
 #[derive(Event)]
 pub struct StartChasingPlayerEvent {
-    /// The enemy entity that should start chasing the player
+    /// The enemy entity in which the `EnemyPatrolPath` component should be inserted to
     pub enemy_entity: Entity,
 }
 
@@ -65,13 +65,17 @@ pub struct EnemyPatrolPath {
     next_destinations: Vec<Vec3>,
 }
 
-fn set_current_enemy_state(
-    enemy_query: Query<(&mut Enemy, Entity, &Transform)>,
+/// This system iterates over each enemy, and with a raycast, determines whether the enemy can see
+/// the player. If yes, the enemy transform will be updated so that it looks at the player
+/// transform. In addition, if the state hasn't been `AttackPlayer` yet, it will be set to
+/// `AttackPlayer`. If not, the enemy state will be set to `ChasingPlayer`, if not yet set.
+fn check_if_enemy_can_see_player(
+    enemy_query: Query<(&mut Enemy, Entity, &mut Transform), Without<Player>>,
     spatial_query: SpatialQuery,
     player_query: Single<(Entity, &Transform), With<Player>>,
 ) {
     let (player_entity, player_transform) = *player_query;
-    for (mut enemy, enemy_entity, enemy_transform) in enemy_query {
+    for (mut enemy, enemy_entity, mut enemy_transform) in enemy_query {
         // check if we can see the player
         // direction towards player
         let vector_not_normalized =
@@ -93,15 +97,13 @@ fn set_current_enemy_state(
         ) {
             let enemy_can_see_player = first_hit.entity == player_entity;
             if enemy_can_see_player {
+                enemy_transform.look_at(player_transform.translation, Vec3::Y);
                 if enemy.state != EnemyState::AttackPlayer {
-                    debug!(
-                        "Enemy can see player, setting state to AttackPlayer!"
-                    );
                     enemy.state = EnemyState::AttackPlayer;
                 };
             } else {
                 if enemy.state != EnemyState::ChasingPlayer {
-                    debug!(
+                    info!(
                         "Enemy can NOT see player, setting state to ChasingPlayer!"
                     );
                     enemy.state = EnemyState::ChasingPlayer;
@@ -111,21 +113,16 @@ fn set_current_enemy_state(
     }
 }
 
-fn handle_enemy_state_changed(
-    changed_enemies: Query<(&Enemy, Entity, &mut Transform), Changed<Enemy>>,
-    player_transform: Single<&Transform, (With<Player>, Without<Enemy>)>,
+// This is a seperate system, so we only actually fire the event on a change to chasing player, not
+// just every frame the enemy cant see the player
+fn handle_enemy_state_transition_to_chase_player(
+    changed_enemies: Query<(&Enemy, Entity), Changed<Enemy>>,
     mut start_chasing_player_event_writer: EventWriter<StartChasingPlayerEvent>,
 ) {
-    for (enemy, enemy_entity, mut enemy_transform) in changed_enemies {
-        if enemy.state == EnemyState::AttackPlayer {
-            debug!(
-                "Enemy {} changed state to AttackPlayer, looking at Player, should start shooting player now",
-                enemy_entity
-            );
-            enemy_transform.look_at(player_transform.translation, Vec3::Y);
-        } else if enemy.state == EnemyState::ChasingPlayer {
-            debug!(
-                "Enemy {} changed state to chasingplayer, firing StartChasingPlayerEvent",
+    for (enemy, enemy_entity) in changed_enemies {
+        if enemy.state == EnemyState::ChasingPlayer {
+            info!(
+                "Enemy {} changed state to ChasingPlayer, firing StartChasingPlayerEvent",
                 enemy_entity
             );
             start_chasing_player_event_writer
@@ -157,12 +154,12 @@ fn handle_start_chasing_player_event(
             );
             continue;
         };
-        debug!(
+        info!(
             "StartChasingPlayerEvent was read for enemy_entity: {}",
             enemy_entity
         );
 
-        debug!("Trying to get path for enemy {}", enemy_entity);
+        info!("Trying to get path for enemy {}", enemy_entity);
         let navmesh = navmeshes.get(&current_navmesh.0).unwrap();
         let Some(transformed_path) = navmesh.transformed_path(
             Vec3 {
