@@ -29,13 +29,21 @@ impl Plugin for PlayerMovementPlugin {
 // TODO: its time to split this up, so we can also the character controller for our enemies
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    player: Single<(Entity, &mut Player, &mut LinearVelocity, &Transform)>,
+    player: Single<(
+        Entity,
+        &mut Player,
+        &mut LinearVelocity,
+        &Transform,
+        &ShapeCaster,
+        &ShapeHits,
+    )>,
     player_camera_entity: Single<Entity, With<PlayerCamera>>,
     spatial_query: SpatialQuery,
     time: Res<Time>,
     current_in_game_state: Res<State<InGameState>>,
 ) {
-    let (entity, mut player, mut velocity, transform) = player.into_inner();
+    let (entity, mut player, mut velocity, transform, shape_caster, shape_hits) =
+        player.into_inner();
 
     let movement_allowed = *current_in_game_state.get() == InGameState::Playing;
     if !movement_allowed {
@@ -52,19 +60,26 @@ pub fn player_movement(
     let mut local_velocity = Vec3::ZERO;
 
     if keyboard_input.pressed(KeyCode::KeyW) {
-        local_velocity.z -= speed;
+        local_velocity.z -= 1.0;
     }
     if keyboard_input.pressed(KeyCode::KeyA) {
-        local_velocity.x -= speed;
+        local_velocity.x -= 1.0;
     }
     if keyboard_input.pressed(KeyCode::KeyD) {
-        local_velocity.x += speed;
+        local_velocity.x += 1.0;
     }
     if keyboard_input.pressed(KeyCode::KeyS) {
-        local_velocity.z += speed;
+        local_velocity.z += 1.0;
     }
     if keyboard_input.just_pressed(KeyCode::Space) && player.on_ground {
         velocity.y = PLAYER_JUMP_VELOCITY;
+    }
+
+    if local_velocity == Vec3::ZERO {
+        velocity.x = 0.0;
+        velocity.z = 0.0;
+        player.state = PlayerMovementState::Idle;
+        return;
     }
 
     velocity.y -= GRAVITY * time.delta_secs();
@@ -90,41 +105,39 @@ pub fn player_movement(
         player.on_ground = false;
     }
 
-    let world_velocity = transform.rotation * local_velocity;
-    let maybe_normalized_world_velocity = world_velocity.try_normalize();
-    let Some(normalized_world_velocity) = maybe_normalized_world_velocity
-    else {
-        velocity.x = 0.0;
-        velocity.z = 0.0;
-        player.state = PlayerMovementState::Idle;
+    for ray_cast_hit in shape_hits.iter() {
+        return;
+    }
+
+    // let mut ray_cast_hits = shape_hits.iter();
+    // ray_cast_hits = ray_cast_hits.collect();
+    //
+    // // check if there is an obstacle in the direction the player is trying to go
+    // if let Some(first_hit) = shape_caster(
+    //     &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
+    //     transform.translation,
+    //     transform.rotation,
+    //     Dir3::new(local_velocity).unwrap(),
+    //     &ShapeCastConfig {
+    //         max_distance: 0.1,
+    //         ..default()
+    //     },
+    //     &SpatialQueryFilter::default()
+    //         .with_excluded_entities([entity, *player_camera_entity]),
+    // ) {
+    //     info!("first_hit: {:?}", first_hit);
+    //     **velocity = Vec3::ZERO;
+    //     player.state = PlayerMovementState::Idle;
+    //     return;
+    // }
+    //
+    let world_velocity = transform.rotation * local_velocity * speed;
+    let Some(normalized_world_velocity) = world_velocity.try_normalize() else {
         return;
     };
 
-    let direction_based_on_input =
-        Dir3::new_unchecked(normalized_world_velocity);
-
-    // check if there is an obstacle in the direction the player is trying to go
-    if let Some(first_hit) = spatial_query.cast_shape(
-        &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
-        transform.translation,
-        transform.rotation,
-        direction_based_on_input,
-        &ShapeCastConfig {
-            max_distance: 0.5,
-            ..default()
-        },
-        &SpatialQueryFilter::default()
-            .with_excluded_entities([entity, *player_camera_entity]),
-    ) {
-        if first_hit.distance < 0.1 {
-            **velocity = Vec3::ZERO;
-            player.state = PlayerMovementState::Idle;
-            return;
-        }
-    }
-
-    velocity.x = world_velocity.x;
-    velocity.z = world_velocity.z;
+    velocity.x = normalized_world_velocity.x;
+    velocity.z = normalized_world_velocity.z;
 
     if speed == PLAYER_RUN_VELOCITY {
         player.state = PlayerMovementState::Running;

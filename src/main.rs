@@ -25,6 +25,9 @@ mod user_interface;
 mod utils;
 mod world;
 
+// TODO: convert all static things into one mesh for a single mesh instead of single ones ->
+// probably trimesh_from_mesh
+
 const GRAVITY: f32 = 9.81;
 
 fn main() {

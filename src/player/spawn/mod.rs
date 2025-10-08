@@ -28,11 +28,14 @@ fn handle_player_spawn_event(
     mut player_spawn_event_reader: EventReader<PlayerSpawnEvent>,
 ) {
     for event in player_spawn_event_reader.read() {
+        let player_collider_shape =
+            Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH);
+
         commands.spawn((
             Player::default(),
             Transform::from_translation(event.spawn_location),
             RigidBody::Kinematic,
-            Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
+            player_collider_shape.clone(),
             LockedAxes::new()
                 .lock_rotation_x()
                 .lock_rotation_y()
@@ -40,6 +43,13 @@ fn handle_player_spawn_event(
             LinearVelocity::ZERO,
             Visibility::Visible,
             CollisionEventsEnabled,
+            ShapeCaster::new(
+                player_collider_shape,
+                Vec3::ZERO,
+                Quat::IDENTITY,
+                Dir3::NEG_Z,
+            )
+            .with_max_distance(0.2),
         ));
     }
 }
