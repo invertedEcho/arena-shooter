@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     MainMenuCamera,
-    enemy::spawn::{EnemySpawnMethod, SpawnEnemiesEvent},
+    enemy::spawn::{EnemySpawnStrategy, SpawnEnemiesEvent},
     game_flow::AppState,
     player::spawn::{PlayerSpawnEvent, components::PlayerSpawnLocation},
 };
@@ -65,7 +65,7 @@ fn handle_start_game_mode_event(
                 next_app_state.set(AppState::InGame);
                 spawn_enemies_event_writer.write(SpawnEnemiesEvent {
                     enemy_count,
-                    spawn_method: EnemySpawnMethod::RandomSelection,
+                    spawn_strategy: EnemySpawnStrategy::RandomSelection,
                 });
             }
             // TODO: idk maybe this shouldnt even exist at the first place
@@ -111,7 +111,7 @@ fn handle_game_state_wave_changed(
             });
             spawn_enemies_event_writer.write(SpawnEnemiesEvent {
                 enemy_count: new_enemy_count,
-                spawn_method: EnemySpawnMethod::RandomSelection,
+                spawn_strategy: EnemySpawnStrategy::RandomSelection,
             });
         }
     }

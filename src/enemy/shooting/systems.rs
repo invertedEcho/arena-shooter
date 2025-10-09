@@ -12,7 +12,7 @@ use crate::{
             components::{EnemyBullet, EnemyShootPlayerCooldownTimer},
             events::EnemyKilledEvent,
         },
-        spawn::{EnemySpawnMethod, SpawnEnemiesEvent},
+        spawn::{EnemySpawnStrategy, SpawnEnemiesEvent},
     },
     game_flow::{
         game_mode::{GameMode, GameStateWave, get_enemy_count_per_wave},
@@ -164,7 +164,7 @@ pub fn handle_enemy_killed_event(
                     });
                     spawn_enemies_event_writer.write(SpawnEnemiesEvent {
                         enemy_count,
-                        spawn_method: EnemySpawnMethod::RandomSelection,
+                        spawn_strategy: EnemySpawnStrategy::RandomSelection,
                     });
                 }
             }

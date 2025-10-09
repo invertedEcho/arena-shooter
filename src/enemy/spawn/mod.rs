@@ -28,10 +28,10 @@ pub struct EnemySpawnLocation;
 #[derive(Event)]
 pub struct SpawnEnemiesEvent {
     pub enemy_count: usize,
-    pub spawn_method: EnemySpawnMethod,
+    pub spawn_strategy: EnemySpawnStrategy,
 }
 
-pub enum EnemySpawnMethod {
+pub enum EnemySpawnStrategy {
     /// Enemies will be spawned at randomly picked EnemySpawnLocations
     RandomSelection,
 }
@@ -48,10 +48,10 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_event(
     for event in event_writer.read() {
         continue;
         let spawn_enemy_count = event.enemy_count;
-        let spawn_method = &event.spawn_method;
+        let spawn_method = &event.spawn_strategy;
 
         match spawn_method {
-            EnemySpawnMethod::RandomSelection => {
+            EnemySpawnStrategy::RandomSelection => {
                 let mut already_used_spawn_locations: Vec<Entity> = Vec::new();
                 while already_used_spawn_locations.len() != spawn_enemy_count {
                     let chosen_spawn_location_index = rand::random_range(

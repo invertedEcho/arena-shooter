@@ -86,14 +86,14 @@ fn main() {
         ..default()
     });
 
-    app.add_systems(Startup, spawn_world_ui_camera);
+    app.add_systems(Startup, spawn_main_menu_camera);
     app.run();
 }
 
 #[derive(Component)]
 pub struct MainMenuCamera;
 
-fn spawn_world_ui_camera(mut commands: Commands) {
+fn spawn_main_menu_camera(mut commands: Commands) {
     commands.spawn((
         Camera::default(),
         Camera3d::default(),
