@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    WorldUiCamera,
+    MainMenuCamera,
     enemy::spawn::{EnemySpawnMethod, SpawnEnemiesEvent},
     game_flow::AppState,
     player::spawn::{PlayerSpawnEvent, components::PlayerSpawnLocation},
@@ -49,11 +49,11 @@ fn handle_start_game_mode_event(
     mut spawn_enemies_event_writer: EventWriter<SpawnEnemiesEvent>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     player_spawn_location: Single<&Transform, With<PlayerSpawnLocation>>,
-    world_ui_camera: Single<Entity, With<WorldUiCamera>>,
+    main_menu_camera: Single<Entity, With<MainMenuCamera>>,
     mut spawn_player_event_writer: EventWriter<PlayerSpawnEvent>,
 ) {
     for event in event_reader.read() {
-        commands.entity(*world_ui_camera).despawn();
+        commands.entity(*main_menu_camera).despawn();
 
         match event.0 {
             GameMode::Waves => {
@@ -68,7 +68,7 @@ fn handle_start_game_mode_event(
                     spawn_method: EnemySpawnMethod::RandomSelection,
                 });
             }
-            // idk maybe this shouldnt even exist at the first place
+            // TODO: idk maybe this shouldnt even exist at the first place
             GameMode::None => {}
         }
 

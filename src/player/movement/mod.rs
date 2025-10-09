@@ -1,5 +1,5 @@
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
     GRAVITY,
@@ -26,27 +26,31 @@ impl Plugin for PlayerMovementPlugin {
     }
 }
 
+#[derive(Component)]
+pub struct DebugHitPoints;
+
 // TODO: its time to split this up, so we can also the character controller for our enemies
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    player: Single<(
-        Entity,
-        &mut Player,
-        &mut LinearVelocity,
-        &Transform,
-        &ShapeCaster,
-        &ShapeHits,
-    )>,
+    player: Single<(Entity, &mut Player, &mut LinearVelocity, &Transform)>,
     player_camera_entity: Single<Entity, With<PlayerCamera>>,
     spatial_query: SpatialQuery,
     time: Res<Time>,
     current_in_game_state: Res<State<InGameState>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    debug_hit_points: Query<
+        &mut Transform,
+        (With<DebugHitPoints>, Without<Player>),
+    >,
 ) {
-    let (entity, mut player, mut velocity, transform, shape_caster, shape_hits) =
+    let (entity, mut player, mut velocity, player_transform) =
         player.into_inner();
 
-    let movement_allowed = *current_in_game_state.get() == InGameState::Playing;
-    if !movement_allowed {
+    let currently_playing =
+        *current_in_game_state.get() == InGameState::Playing;
+    if !currently_playing {
         **velocity = Vec3::ZERO;
         return;
     }
@@ -87,8 +91,8 @@ pub fn player_movement(
     // check if we are on ground
     if let Some(_) = spatial_query.cast_shape(
         &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
-        transform.translation,
-        transform.rotation,
+        player_transform.translation,
+        player_transform.rotation,
         Dir3::NEG_Y,
         &ShapeCastConfig {
             max_distance: 0.1,
@@ -105,39 +109,48 @@ pub fn player_movement(
         player.on_ground = false;
     }
 
-    for ray_cast_hit in shape_hits.iter() {
-        return;
-    }
-
-    // let mut ray_cast_hits = shape_hits.iter();
-    // ray_cast_hits = ray_cast_hits.collect();
-    //
-    // // check if there is an obstacle in the direction the player is trying to go
-    // if let Some(first_hit) = shape_caster(
-    //     &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
-    //     transform.translation,
-    //     transform.rotation,
-    //     Dir3::new(local_velocity).unwrap(),
-    //     &ShapeCastConfig {
-    //         max_distance: 0.1,
-    //         ..default()
-    //     },
-    //     &SpatialQueryFilter::default()
-    //         .with_excluded_entities([entity, *player_camera_entity]),
-    // ) {
-    //     info!("first_hit: {:?}", first_hit);
-    //     **velocity = Vec3::ZERO;
-    //     player.state = PlayerMovementState::Idle;
-    //     return;
-    // }
-    //
-    let world_velocity = transform.rotation * local_velocity * speed;
-    let Some(normalized_world_velocity) = world_velocity.try_normalize() else {
+    let world_velocity = player_transform.rotation * local_velocity * speed;
+    let Ok(direction) = Dir3::new(world_velocity) else {
         return;
     };
 
-    velocity.x = normalized_world_velocity.x;
-    velocity.z = normalized_world_velocity.z;
+    // all this origin, rotation and direction is definitely correct
+    if let Some(first_hit) = spatial_query.cast_shape(
+        &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
+        player_transform.translation - direction.as_vec3() * 0.025,
+        player_transform.rotation,
+        direction,
+        &ShapeCastConfig {
+            max_distance: 0.15,
+            ..default()
+        },
+        &SpatialQueryFilter::default()
+            .with_excluded_entities([entity, *player_camera_entity]),
+    ) {
+        info!("Disallowing movement, got hit: {:?}", first_hit);
+        if debug_hit_points.iter().len() == 0 {
+            commands.spawn((
+                Transform::from_translation(first_hit.point1),
+                Mesh3d(meshes.add(Sphere::new(0.1))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: RED.into(),
+                    ..Default::default()
+                })),
+                DebugHitPoints,
+            ));
+        } else {
+            for mut debug_hit_point_transform in debug_hit_points {
+                debug_hit_point_transform.translation = first_hit.point1;
+            }
+        }
+
+        velocity.x = 0.0;
+        velocity.z = 0.0;
+        return;
+    }
+
+    velocity.x = world_velocity.x;
+    velocity.z = world_velocity.z;
 
     if speed == PLAYER_RUN_VELOCITY {
         player.state = PlayerMovementState::Running;

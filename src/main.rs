@@ -90,15 +90,14 @@ fn main() {
     app.run();
 }
 
-// TODO: i need a a better name for this
 #[derive(Component)]
-pub struct WorldUiCamera;
+pub struct MainMenuCamera;
 
 fn spawn_world_ui_camera(mut commands: Commands) {
     commands.spawn((
         Camera::default(),
         Camera3d::default(),
         Transform::from_xyz(5.0, 10.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-        WorldUiCamera,
+        MainMenuCamera,
     ));
 }

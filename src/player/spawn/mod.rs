@@ -35,7 +35,7 @@ fn handle_player_spawn_event(
             Player::default(),
             Transform::from_translation(event.spawn_location),
             RigidBody::Kinematic,
-            player_collider_shape.clone(),
+            player_collider_shape,
             LockedAxes::new()
                 .lock_rotation_x()
                 .lock_rotation_y()
@@ -43,13 +43,6 @@ fn handle_player_spawn_event(
             LinearVelocity::ZERO,
             Visibility::Visible,
             CollisionEventsEnabled,
-            ShapeCaster::new(
-                player_collider_shape,
-                Vec3::ZERO,
-                Quat::IDENTITY,
-                Dir3::NEG_Z,
-            )
-            .with_max_distance(0.2),
         ));
     }
 }

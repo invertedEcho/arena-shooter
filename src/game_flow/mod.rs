@@ -8,7 +8,7 @@ use crate::{
         systems::{
             enable_debug_paused, free_mouse, grab_mouse, handle_escape,
             handle_player_death_event, make_player_weapon_hidden,
-            make_player_weapon_visible,
+            make_player_weapon_visible, reset_player_position,
         },
     },
     player::PlayerDeathEvent,
@@ -45,6 +45,6 @@ impl Plugin for GameFlowPlugin {
                 OnExit(InGameState::Playing),
                 make_player_weapon_hidden,
             )
-            .add_systems(Update, enable_debug_paused);
+            .add_systems(Update, (enable_debug_paused, reset_player_position));
     }
 }

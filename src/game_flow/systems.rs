@@ -69,3 +69,12 @@ pub fn enable_debug_paused(
         next_in_game_state.set(InGameState::PausedDebug);
     }
 }
+
+pub fn reset_player_position(
+    mut player_transform: Single<&mut Transform, With<Player>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyP) {
+        player_transform.translation = Vec3::ZERO;
+    }
+}
