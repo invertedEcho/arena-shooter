@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::{
     game_flow::states::{AppDebugState, AppState, InGameState},
     nav_mesh_pathfinding::NavMeshDisp,
+    player::Player,
 };
 
 pub struct DebugOverlayPlugin;
@@ -19,6 +20,7 @@ impl Plugin for DebugOverlayPlugin {
                 update_current_app_state_text,
                 update_current_in_game_state_text,
                 toggle_debug,
+                update_player_grounded_text,
             ),
         );
     }
@@ -29,6 +31,9 @@ struct CurrentAppStateText;
 
 #[derive(Component)]
 struct CurrentInGameStateText;
+
+#[derive(Component)]
+struct PlayerGroundedText;
 
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
@@ -48,6 +53,8 @@ fn spawn_debug_overlay(mut commands: Commands) {
             parent.spawn((Text::new(""), CurrentAppStateText));
             parent.spawn(Text::new("Current InGameState"));
             parent.spawn((Text::new(""), CurrentInGameStateText));
+            parent.spawn(Text::new("player.grounded"));
+            parent.spawn((Text::new(""), PlayerGroundedText));
         });
 }
 
@@ -113,5 +120,14 @@ fn toggle_debug(
                 }
             }
         }
+    }
+}
+
+fn update_player_grounded_text(
+    changed_player: Single<&Player, Changed<Player>>,
+    player_grounded_text: Query<&mut Text, With<PlayerGroundedText>>,
+) {
+    for mut player_grounded_text in player_grounded_text {
+        **player_grounded_text = format!("{}", changed_player.on_ground);
     }
 }

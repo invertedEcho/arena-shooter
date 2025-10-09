@@ -32,7 +32,7 @@ pub enum InGameState {
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[states(scoped_entities)]
 pub enum AppDebugState {
-    #[default]
     DebugHidden,
+    #[default]
     DebugVisible,
 }

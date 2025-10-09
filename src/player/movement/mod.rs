@@ -21,13 +21,18 @@ impl Plugin for PlayerMovementPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (player_movement).run_if(in_state(AppState::InGame)),
-        );
+            (player_movement, update_player_on_ground)
+                .run_if(in_state(AppState::InGame)),
+        )
+        .add_systems(Update, apply_gravity_over_time);
     }
 }
 
 #[derive(Component)]
 pub struct DebugHitPoints;
+
+#[derive(Component)]
+pub struct PlayerGroundCheckRayCaster;
 
 // TODO: its time to split this up, so we can also the character controller for our enemies
 pub fn player_movement(
@@ -35,7 +40,6 @@ pub fn player_movement(
     player: Single<(Entity, &mut Player, &mut LinearVelocity, &Transform)>,
     player_camera_entity: Single<Entity, With<PlayerCamera>>,
     spatial_query: SpatialQuery,
-    time: Res<Time>,
     current_in_game_state: Res<State<InGameState>>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -84,29 +88,6 @@ pub fn player_movement(
         velocity.z = 0.0;
         player.state = PlayerMovementState::Idle;
         return;
-    }
-
-    velocity.y -= GRAVITY * time.delta_secs();
-
-    // check if we are on ground
-    if let Some(_) = spatial_query.cast_shape(
-        &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
-        player_transform.translation,
-        player_transform.rotation,
-        Dir3::NEG_Y,
-        &ShapeCastConfig {
-            max_distance: 0.1,
-            ..default()
-        },
-        &SpatialQueryFilter::default()
-            .with_excluded_entities([entity, *player_camera_entity]),
-    ) {
-        if velocity.y <= 0.0 {
-            velocity.y = 0.0;
-            player.on_ground = true;
-        }
-    } else {
-        player.on_ground = false;
     }
 
     let world_velocity = player_transform.rotation * local_velocity * speed;
@@ -158,5 +139,43 @@ pub fn player_movement(
         player.state = PlayerMovementState::Walking;
     } else {
         player.state = PlayerMovementState::Idle;
+    }
+}
+
+fn apply_gravity_over_time(
+    mut player_velocity: Single<&mut LinearVelocity, With<Player>>,
+    time: Res<Time>,
+) {
+    if player_velocity.y > 0.0 {
+        player_velocity.y -= GRAVITY * time.delta_secs();
+    }
+}
+
+fn update_player_on_ground(
+    players: Query<(&mut Player, &Transform, Entity)>,
+    spatial_query: SpatialQuery,
+) {
+    for (mut player, transform, player_entity) in players {
+        if let Some(first_hit) = spatial_query.cast_shape(
+            &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
+            transform.translation,
+            transform.rotation,
+            Dir3::NEG_Y,
+            &ShapeCastConfig {
+                max_distance: 0.1,
+                ..default()
+            },
+            &SpatialQueryFilter::default()
+                .with_excluded_entities([player_entity]),
+        ) {
+            info!(
+                "Got hit, we are on ground. Entity that was hit: {}",
+                first_hit.entity
+            );
+            player.on_ground = true;
+        } else {
+            info!("No hit, we are not on ground");
+            player.on_ground = false;
+        }
     }
 }
