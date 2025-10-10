@@ -26,9 +26,8 @@ pub fn setup_player_camera(
     mut commands: Commands,
     player_query: Single<Entity, Added<Player>>,
 ) {
-    let weapon_model = asset_server.load(
-        GltfAssetLabel::Scene(0).from_asset("weapons/rifle/WA_2000.glb#Scene0"),
-    );
+    let weapon_model = asset_server
+        .load(GltfAssetLabel::Scene(0).from_asset("test.glb#Scene0"));
 
     commands.entity(*player_query).with_children(|parent| {
         // camera for weapon render only, so weapon model is always on top of everything
@@ -60,10 +59,9 @@ pub fn setup_player_camera(
                 Transform {
                     translation: Vec3 {
                         x: 1.0,
-                        y: -0.25,
+                        y: -1.0,
                         z: -2.0,
                     },
-                    scale: Vec3::splat(0.25),
                     // rotate 180 degrees as weapon is spawned wrong way
                     // radians are a different way of representing rotations
                     // PI = 180 degrees
@@ -130,40 +128,6 @@ pub fn camera_orbit_player(
 
         // we should adjust pitch of player weapon so other players can also see if aiming to
         // sky or to bottom.
-    }
-}
-
-// TODO: move weapon up and down, like `f(x) = x^2`, e.g. at middle stop moving up/down
-pub fn player_walk_animation(
-    player: Single<&Player>,
-    player_weapon_query: Query<(&mut Transform, &mut PlayerWeapon)>,
-    time: Res<Time>,
-) {
-    for (mut player_weapon_transform, mut player_weapon) in player_weapon_query
-    {
-        // TODO: i feel like this can be simplified completely because we decrease/increase by
-        // exact same step always, and boundary is always set to 0.5
-        if player.state != PlayerMovementState::Idle {
-            let factor = if player.state == PlayerMovementState::Walking {
-                0.1
-            } else {
-                0.2
-            };
-
-            if player_weapon.moving_to_right {
-                player_weapon_transform.translation.x +=
-                    factor * time.delta_secs();
-                if player_weapon_transform.translation.x >= 1.02 {
-                    player_weapon.moving_to_right = false;
-                }
-            } else {
-                player_weapon_transform.translation.x -=
-                    factor * time.delta_secs();
-                if player_weapon_transform.translation.x <= 0.98 {
-                    player_weapon.moving_to_right = true;
-                }
-            }
-        }
     }
 }
 

@@ -6,7 +6,7 @@ use crate::{
         components::PlayerCamera,
         systems::{
             camera_orbit_player, free_cam_orbit, handle_free_cam_movement,
-            player_walk_animation, setup_player_camera, toggle_freecam,
+            setup_player_camera, toggle_freecam,
         },
     },
 };
@@ -28,11 +28,12 @@ impl Plugin for PlayerCameraPlugin {
                         .and(in_state(InGameState::Playing)),
                 ),
                 setup_player_camera,
-                player_walk_animation,
                 toggle_freecam,
                 handle_free_cam_movement,
                 free_cam_orbit,
             ),
         );
+        // .add_systems(OnEnter(InGameState::Playing), make_player_weapon_visible)
+        // .add_systems(OnExit(InGameState::Playing), make_player_weapon_hidden)
     }
 }

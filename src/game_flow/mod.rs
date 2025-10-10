@@ -37,14 +37,6 @@ impl Plugin for GameFlowPlugin {
             )
             .add_systems(OnEnter(InGameState::Paused), free_mouse)
             .add_systems(Update, (handle_escape, handle_player_death_event))
-            .add_systems(
-                OnEnter(InGameState::Playing),
-                make_player_weapon_visible,
-            )
-            .add_systems(
-                OnExit(InGameState::Playing),
-                make_player_weapon_hidden,
-            )
             .add_systems(Update, (enable_debug_paused, reset_player_position));
     }
 }

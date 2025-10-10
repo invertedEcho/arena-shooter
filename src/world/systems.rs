@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::RenderLayers};
 
 use crate::{
     enemy::shooting::components::EnemyBullet,
@@ -21,6 +21,7 @@ pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
             rotation: Quat::from_rotation_x(-PI / 4.),
             ..default()
         },
+        RenderLayers::from_layers(&[0, 1]),
     ));
 
     commands.spawn(SceneRoot(
