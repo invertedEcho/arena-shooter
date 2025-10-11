@@ -3,10 +3,10 @@ use bevy::prelude::*;
 use crate::{
     game_flow::states::{AppState, InGameState},
     player::camera::{
-        components::PlayerCamera,
+        components::ViewModelCamera,
         systems::{
             camera_orbit_player, free_cam_orbit, handle_free_cam_movement,
-            setup_player_camera, toggle_freecam,
+            load_arms_animations, setup_arm_animation, setup_cameras,
         },
     },
 };
@@ -20,17 +20,18 @@ pub struct PlayerCameraPlugin;
 
 impl Plugin for PlayerCameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.add_systems(Startup, load_arms_animations).add_systems(
             Update,
             (
                 camera_orbit_player.run_if(
                     in_state(AppState::InGame)
                         .and(in_state(InGameState::Playing)),
                 ),
-                setup_player_camera,
-                toggle_freecam,
+                setup_cameras,
+                // toggle_freecam,
                 handle_free_cam_movement,
                 free_cam_orbit,
+                setup_arm_animation,
             ),
         );
         // .add_systems(OnEnter(InGameState::Playing), make_player_weapon_visible)

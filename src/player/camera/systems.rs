@@ -1,15 +1,14 @@
 use crate::{
     common::systems::apply_render_layers_to_children,
-    player::{
-        PlayerMovementState,
-        camera::{
-            PLAYER_CAMERA_Y_OFFSET,
-            components::{FreeCam, PlayerCameraState},
-        },
-        shooting::components::PlayerWeapon,
+    player::camera::{
+        PLAYER_CAMERA_Y_OFFSET,
+        components::{FreeCam, PlayerCameraState, PlayerWeaponModel},
     },
 };
-use std::f32::consts::{FRAC_PI_2, PI};
+use std::{
+    f32::consts::{FRAC_PI_2, PI},
+    time::Duration,
+};
 
 use bevy::{
     input::mouse::AccumulatedMouseMotion, pbr::NotShadowCaster, prelude::*,
@@ -17,39 +16,47 @@ use bevy::{
 };
 use bevy_inspector_egui::bevy_egui;
 
-use crate::player::{Player, camera::PlayerCamera};
+use crate::player::{Player, camera::ViewModelCamera};
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 
-pub fn setup_player_camera(
+#[derive(Component)]
+pub struct WorldModelCamera;
+
+pub fn setup_cameras(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    player_query: Single<Entity, Added<Player>>,
+    player_entity: Single<Entity, Added<Player>>,
 ) {
     let weapon_model = asset_server
         .load(GltfAssetLabel::Scene(0).from_asset("test.glb#Scene0"));
 
-    commands.entity(*player_query).with_children(|parent| {
-        // camera for weapon render only, so weapon model is always on top of everything
+    commands.entity(*player_entity).with_children(|parent| {
         parent.spawn((
+            WorldModelCamera,
+            Camera3d::default(),
+            Projection::from(PerspectiveProjection {
+                fov: 90.0_f32.to_radians(),
+                ..default()
+            }),
+        ));
+
+        parent.spawn((
+            ViewModelCamera,
             Camera3d::default(),
             Camera {
                 order: 1,
                 ..default()
             },
-            RenderLayers::layer(1),
+            Projection::from(PerspectiveProjection {
+                near: 0.0000001,
+                far: 1000.0,
+                ..default()
+            }),
             // needed so our inspector is shown again when we enter game, as we despawn
             // `WorldUiCamera` and spawn player camera
             bevy_egui::PrimaryEguiContext,
-        ));
-
-        parent.spawn((
-            Camera3d::default(),
-            PlayerCamera::default(),
-            Projection::from(PerspectiveProjection {
-                fov: 80.0_f32.to_radians(),
-                ..default()
-            }),
+            RenderLayers::layer(1),
             Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
         ));
 
@@ -58,9 +65,9 @@ pub fn setup_player_camera(
                 SceneRoot(weapon_model),
                 Transform {
                     translation: Vec3 {
-                        x: 1.0,
-                        y: -1.0,
-                        z: -2.0,
+                        x: 0.0,
+                        y: -0.1,
+                        z: -0.7,
                     },
                     // rotate 180 degrees as weapon is spawned wrong way
                     // radians are a different way of representing rotations
@@ -71,13 +78,7 @@ pub fn setup_player_camera(
                 },
                 RenderLayers::layer(1),
                 NotShadowCaster,
-                // TODO: Its kinda weird that we spawn "PlayerWeapon" in `player/camera` module
-                PlayerWeapon {
-                    loaded_ammo: 30,
-                    carried_ammo: 99999999,
-                    max_loaded_ammo: 30,
-                    moving_to_right: false,
-                },
+                PlayerWeaponModel,
                 Visibility::Visible,
             ))
             .observe(apply_render_layers_to_children);
@@ -86,12 +87,16 @@ pub fn setup_player_camera(
 
 pub fn camera_orbit_player(
     mouse_motion: Res<AccumulatedMouseMotion>,
-    mut player_camera_transform: Single<
+    mut view_model_camera_transform: Single<
         &mut Transform,
-        (With<PlayerCamera>, Without<Player>),
+        (With<WorldModelCamera>, Without<Player>),
     >,
     mut player_transform: Single<&mut Transform, With<Player>>,
 ) {
+    info!(
+        "view model camera transform: {:?}",
+        *view_model_camera_transform
+    );
     let delta = mouse_motion.delta;
 
     if delta != Vec2::ZERO {
@@ -103,7 +108,7 @@ pub fn camera_orbit_player(
 
         // existing rotation
         let (current_yaw_camera, current_pitch_camera, current_roll_camera) =
-            player_camera_transform.rotation.to_euler(EulerRot::YXZ);
+            view_model_camera_transform.rotation.to_euler(EulerRot::YXZ);
 
         let (current_yaw_player, current_pitch_player, current_roll_player) =
             player_transform.rotation.to_euler(EulerRot::YXZ);
@@ -113,7 +118,7 @@ pub fn camera_orbit_player(
         let new_pitch_camera = (delta_pitch + current_pitch_camera)
             .clamp(-PITCH_LIMIT, PITCH_LIMIT);
 
-        player_camera_transform.rotation = Quat::from_euler(
+        view_model_camera_transform.rotation = Quat::from_euler(
             EulerRot::YXZ,
             current_yaw_camera,
             new_pitch_camera,
@@ -135,15 +140,15 @@ pub fn toggle_freecam(
     mut player_query: Single<(Entity, &Transform, &mut Player)>,
     mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    player_camera_entity_query: Query<Entity, With<PlayerCamera>>,
+    view_model_camera_entity_query: Query<Entity, With<ViewModelCamera>>,
     free_cam_entity_query: Query<Entity, With<FreeCam>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyC) {
         match player_query.2.camera_state {
             PlayerCameraState::Normal => {
                 player_query.2.camera_state = PlayerCameraState::FreeCam;
-                for player_camera_entity in player_camera_entity_query {
-                    commands.entity(player_camera_entity).despawn();
+                for view_model_entity in view_model_camera_entity_query {
+                    commands.entity(view_model_entity).despawn();
                 }
                 let player_transform = player_query.1;
                 commands.spawn((
@@ -170,7 +175,7 @@ pub fn toggle_freecam(
                 }
                 commands.entity(player_query.0).with_child((
                     Camera3d::default(),
-                    PlayerCamera::default(),
+                    ViewModelCamera::default(),
                     Projection::from(PerspectiveProjection {
                         fov: 80.0_f32.to_radians(),
                         ..default()
@@ -245,5 +250,61 @@ pub fn free_cam_orbit(
 
         free_cam_transform.rotation =
             Quat::from_euler(EulerRot::YXZ, new_yaw, new_pitch, current_roll);
+    }
+}
+
+#[derive(Resource)]
+pub struct ArmAnimations {
+    pub animation_node_indices: Vec<AnimationNodeIndex>,
+    pub current_graph_handle: Handle<AnimationGraph>,
+}
+
+pub fn load_arms_animations(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
+) {
+    let mut animation_clips: Vec<Handle<AnimationClip>> = Vec::new();
+
+    for i in 0..9 {
+        let res: Handle<AnimationClip> = asset_server
+            .load(GltfAssetLabel::Animation(i).from_asset("test.glb"));
+        animation_clips.push(res);
+    }
+
+    let (graph, node_indices) = AnimationGraph::from_clips(animation_clips);
+
+    let graph_handle = graphs.add(graph);
+    commands.insert_resource(ArmAnimations {
+        animation_node_indices: node_indices,
+        current_graph_handle: graph_handle,
+    });
+}
+
+pub fn setup_arm_animation(
+    mut commands: Commands,
+    animation_players: Query<
+        (Entity, &mut AnimationPlayer, &Name),
+        Added<AnimationPlayer>,
+    >,
+    arm_animations: Res<ArmAnimations>,
+) {
+    for (entity, mut player, name) in animation_players {
+        info!("animation player name: {}", name);
+        let mut transitions = AnimationTransitions::new();
+        transitions
+            .play(
+                &mut player,
+                arm_animations.animation_node_indices[3],
+                Duration::ZERO,
+            )
+            .repeat();
+
+        commands
+            .entity(entity)
+            .insert(AnimationGraphHandle(
+                arm_animations.current_graph_handle.clone(),
+            ))
+            .insert(transitions);
     }
 }

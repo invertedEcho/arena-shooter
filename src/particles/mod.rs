@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
 
 use crate::{
-    player::camera::components::PlayerCamera,
+    player::camera::components::ViewModelCamera,
     utils::random::get_random_number_from_range_i32_to_f32_with_fixed_step,
 };
 
@@ -118,7 +118,7 @@ fn handle_spawn_bullet_impact_effect(
     bullet_impact_body_effect_resource: Res<
         PlayerBulletHitEnemyImpactEffectHandle,
     >,
-    player_camera_transform_global: Single<&Transform, With<PlayerCamera>>,
+    player_camera_transform_global: Single<&Transform, With<ViewModelCamera>>,
 ) {
     for event in event_reader.read() {
         let Some(bullet_impact_effect_handle) = (match event.variant {

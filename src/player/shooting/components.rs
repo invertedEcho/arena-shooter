@@ -11,7 +11,6 @@ pub struct PlayerWeapon {
     pub loaded_ammo: u32,
     pub carried_ammo: u32,
     pub max_loaded_ammo: u32,
-    pub moving_to_right: bool,
 }
 
 #[derive(Component)]

@@ -10,7 +10,7 @@ use crate::{
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectEvent},
     player::{
         Player,
-        camera::components::PlayerCamera,
+        camera::components::ViewModelCamera,
         shooting::{
             components::{
                 BloodScreenEffect, MuzzleFlash, PlayerBullet,
@@ -22,13 +22,26 @@ use crate::{
     utils::random::get_random_number_from_range_i32,
 };
 
+pub fn setup_player_weapon(
+    added_players: Query<Entity, Added<Player>>,
+    mut commands: Commands,
+) {
+    for player_entity in added_players {
+        commands.entity(player_entity).insert(PlayerWeapon {
+            loaded_ammo: 30,
+            max_loaded_ammo: 30,
+            carried_ammo: 99999,
+        });
+    }
+}
+
 pub fn player_shooting(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mouse_input: Res<ButtonInput<MouseButton>>,
     player_camera_global_transform: Single<
         &GlobalTransform,
-        (With<PlayerCamera>, Without<Player>),
+        (With<ViewModelCamera>, Without<Player>),
     >,
     player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
     mut player_weapon: Single<&mut PlayerWeapon>,
@@ -53,8 +66,10 @@ pub fn player_shooting(
         TimerMode::Once,
     )));
 
-    let audio = asset_server
-        .load("weapons/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 Single MP3.mp3");
+    let audio = asset_server.load(
+        "weapons/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 \
+         Single MP3.mp3",
+    );
 
     commands.spawn((AudioPlayer::new(audio), PlaybackSettings::ONCE));
 
@@ -244,7 +259,7 @@ pub fn spawn_muzzle_flash(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut player_shot_event_reader: EventReader<PlayerWeaponFiredEvent>,
-    player_camera_entity: Single<Entity, With<PlayerCamera>>,
+    player_camera_entity: Single<Entity, With<ViewModelCamera>>,
 ) {
     for _ in player_shot_event_reader.read() {
         let random_rotation_angle = get_random_number_from_range_i32(0, 5);
@@ -297,7 +312,7 @@ pub fn accurate_check_bullet_collision_for_impact_particle(
     enemy_entities: Query<Entity, With<Enemy>>,
     player_camera_query: Single<
         (Entity, &GlobalTransform),
-        (With<PlayerCamera>, Without<Player>),
+        (With<ViewModelCamera>, Without<Player>),
     >,
     mut player_shot_event_reader: EventReader<PlayerWeaponFiredEvent>,
     // maybe only include player bullets. would be cool to be able to shoot enemy bullets and have

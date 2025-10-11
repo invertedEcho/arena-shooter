@@ -6,7 +6,7 @@ use crate::{
     game_flow::states::{AppState, InGameState},
     player::{
         Player, PlayerMovementState,
-        camera::components::PlayerCamera,
+        camera::components::ViewModelCamera,
         spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
     },
 };
@@ -38,7 +38,7 @@ pub struct DebugHitPoints;
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     player: Single<(Entity, &mut Player, &mut LinearVelocity, &Transform)>,
-    player_camera_entity: Single<Entity, With<PlayerCamera>>,
+    player_camera_entity: Single<Entity, With<ViewModelCamera>>,
     spatial_query: SpatialQuery,
     current_in_game_state: Res<State<InGameState>>,
     mut commands: Commands,
@@ -108,7 +108,7 @@ pub fn player_movement(
         &SpatialQueryFilter::default()
             .with_excluded_entities([entity, *player_camera_entity]),
     ) {
-        info!("Disallowing movement, got hit: {:?}", first_hit);
+        debug!("Disallowing movement, got hit: {:?}", first_hit);
         if debug_hit_points.iter().len() == 0 {
             commands.spawn((
                 Transform::from_translation(first_hit.point1),

@@ -42,11 +42,12 @@ pub fn setup_enemy_animation(
     mut commands: Commands,
     enemy_animations: Res<EnemyAnimations>,
     animation_players: Query<
-        (Entity, &mut AnimationPlayer),
-        Added<AnimationPlayer>,
+        (Entity, &mut AnimationPlayer, &Name),
+        (Added<AnimationPlayer>, Without<Name>),
     >,
 ) {
-    for (entity, mut player) in animation_players {
+    for (entity, mut player, name) in animation_players {
+        info!("animation player name: {}", name);
         let mut transitions = AnimationTransitions::new();
         transitions
             .play(
@@ -106,7 +107,8 @@ pub fn reflect_enemy_state_to_current_animation(
             )
         else {
             warn!(
-                "could not find animation player and transitions for changed enemy!"
+                "could not find animation player and transitions for changed \
+                 enemy!"
             );
             continue;
         };
@@ -170,7 +172,8 @@ pub fn play_enemy_hit_animation(
                 .find(|(e, _, _)| *e == animation_player_entity_pointer.0)
         else {
             warn!(
-                "Could not find animation player and transitions for enemy entity from PlayerBulletHitEnemyEvent"
+                "Could not find animation player and transitions for enemy \
+                 entity from PlayerBulletHitEnemyEvent"
             );
             continue;
         };
@@ -226,7 +229,8 @@ pub fn handle_play_hit_animation(
                 .find(|(e, _, _)| *e == animation_player_entity_pointer.0)
         else {
             warn!(
-                "Could not find animation player and transitions for enemy entity"
+                "Could not find animation player and transitions for enemy \
+                 entity"
             );
             continue;
         };
