@@ -2,7 +2,8 @@ use bevy::{prelude::*, window::CursorGrabMode};
 
 use crate::{
     game_flow::{AppState, PlayerDeathEvent, states::InGameState},
-    player::{Player, PlayerMovementState, shooting::components::PlayerWeapon},
+    player::{Player, PlayerMovementState},
+    user_interface::main_menu::MainMenuCamera,
 };
 
 pub fn grab_mouse(mut window: Single<&mut Window>) {
@@ -33,6 +34,7 @@ pub fn handle_escape(
     if keyboard_input.just_pressed(KeyCode::Escape) {
         match *current_app_state.get() {
             AppState::InGame => match *current_in_game_state.get() {
+                InGameState::None => {}
                 InGameState::Playing => {
                     next_in_game_state.set(InGameState::Paused);
                 }
@@ -49,17 +51,17 @@ pub fn handle_escape(
     }
 }
 
-pub fn make_player_weapon_visible(
-    mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
-) {
-    **player_weapon = Visibility::Visible;
-}
-
-pub fn make_player_weapon_hidden(
-    mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
-) {
-    **player_weapon = Visibility::Hidden;
-}
+// pub fn make_player_weapon_visible(
+//     mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
+// ) {
+//     **player_weapon = Visibility::Visible;
+// }
+//
+// pub fn make_player_weapon_hidden(
+//     mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
+// ) {
+//     **player_weapon = Visibility::Hidden;
+// }
 
 pub fn enable_debug_paused(
     mut next_in_game_state: ResMut<NextState<InGameState>>,
@@ -77,4 +79,28 @@ pub fn reset_player_position(
     if keyboard_input.just_pressed(KeyCode::KeyP) {
         player_transform.translation = Vec3::ZERO;
     }
+}
+
+pub fn spawn_main_menu_camera(mut commands: Commands) {
+    commands.spawn((
+        Camera::default(),
+        Camera3d::default(),
+        Transform::from_xyz(5.0, 10.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        MainMenuCamera,
+    ));
+}
+
+pub fn handle_enter_main_menu(
+    mut commands: Commands,
+    player: Single<Entity, With<Player>>,
+) {
+    info!("handling enter main menu");
+    commands.entity(*player).despawn();
+
+    commands.spawn((
+        Camera::default(),
+        Camera3d::default(),
+        Transform::from_xyz(5.0, 10.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        MainMenuCamera,
+    ));
 }

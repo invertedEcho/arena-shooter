@@ -12,6 +12,9 @@ impl Plugin for MainMenuPlugin {
 }
 
 #[derive(Component)]
+pub struct MainMenuCamera;
+
+#[derive(Component)]
 struct MainMenuButton(pub MainMenuButtonType);
 
 enum MainMenuButtonType {
@@ -21,6 +24,7 @@ enum MainMenuButtonType {
 }
 
 fn spawn_main_menu(mut commands: Commands) {
+    info!("Spawning Main Menu");
     commands
         .spawn((
             Node {

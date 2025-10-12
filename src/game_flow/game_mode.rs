@@ -1,10 +1,13 @@
 use bevy::prelude::*;
 
 use crate::{
-    MainMenuCamera,
     enemy::spawn::{EnemySpawnStrategy, SpawnEnemiesEvent},
-    game_flow::AppState,
+    game_flow::{
+        AppState,
+        states::{InGameState, MainMenuState},
+    },
     player::spawn::{PlayerSpawnEvent, components::PlayerSpawnLocation},
+    user_interface::main_menu::MainMenuCamera,
 };
 
 pub struct GameModePlugin;
@@ -50,10 +53,14 @@ fn handle_start_game_mode_event(
     player_spawn_location: Single<&Transform, With<PlayerSpawnLocation>>,
     main_menu_camera: Single<Entity, With<MainMenuCamera>>,
     mut spawn_player_event_writer: EventWriter<PlayerSpawnEvent>,
+    mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
     for event in event_reader.read() {
         info!("got start game mode event, despawning main menu camera");
         commands.entity(*main_menu_camera).despawn();
+        next_main_menu_state.set(MainMenuState::None);
+        next_in_game_state.set(InGameState::Playing);
 
         match event.0 {
             GameMode::Waves => {

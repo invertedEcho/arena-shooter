@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::states::{AppDebugState, AppState, InGameState},
+    game_flow::states::{AppDebugState, AppState, InGameState, MainMenuState},
     nav_mesh_pathfinding::NavMeshDisp,
     player::Player,
 };
@@ -21,6 +21,7 @@ impl Plugin for DebugOverlayPlugin {
                 update_current_in_game_state_text,
                 toggle_debug,
                 update_player_grounded_text,
+                update_current_main_menu_state,
             ),
         );
     }
@@ -31,6 +32,9 @@ struct CurrentAppStateText;
 
 #[derive(Component)]
 struct CurrentInGameStateText;
+
+#[derive(Component)]
+struct CurrentMainMenuStateText;
 
 #[derive(Component)]
 struct PlayerGroundedText;
@@ -53,6 +57,8 @@ fn spawn_debug_overlay(mut commands: Commands) {
             parent.spawn((Text::new(""), CurrentAppStateText));
             parent.spawn(Text::new("Current InGameState"));
             parent.spawn((Text::new(""), CurrentInGameStateText));
+            parent.spawn(Text::new("Current MainMenuState"));
+            parent.spawn((Text::new(""), CurrentMainMenuStateText));
             parent.spawn(Text::new("player.grounded"));
             parent.spawn((Text::new(""), PlayerGroundedText));
         });
@@ -69,6 +75,31 @@ fn update_current_app_state_text(
             }
             AppState::InGame => {
                 **current_app_state_text = Text::new("InGame");
+            }
+        }
+    }
+}
+
+fn update_current_main_menu_state(
+    mut current_main_menu_state_text: Single<
+        &mut Text,
+        With<CurrentMainMenuStateText>,
+    >,
+    main_menu_state: Res<State<MainMenuState>>,
+) {
+    if main_menu_state.is_changed() {
+        match *main_menu_state.get() {
+            MainMenuState::None => {
+                **current_main_menu_state_text = Text::new("None");
+            }
+            MainMenuState::Root => {
+                **current_main_menu_state_text = Text::new("Root");
+            }
+            MainMenuState::Settings => {
+                **current_main_menu_state_text = Text::new("Settings");
+            }
+            MainMenuState::GameModeSelection => {
+                **current_main_menu_state_text = Text::new("GameModeSelection");
             }
         }
     }
@@ -94,6 +125,9 @@ fn update_current_in_game_state_text(
             }
             InGameState::PausedDebug => {
                 **current_in_game_state_text = Text::new("PausedDebug");
+            }
+            InGameState::None => {
+                **current_in_game_state_text = Text::new("None");
             }
         }
     }

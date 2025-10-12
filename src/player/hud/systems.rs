@@ -30,6 +30,7 @@ pub fn spawn_player_hud(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) {
+    info!("Spawning player hud");
     commands
         .spawn((
             Node {
@@ -84,6 +85,7 @@ pub fn despawn_player_hud(
     mut commands: Commands,
     player_hud_entity_query: Query<Entity, With<PlayerHud>>,
 ) {
+    info!("Despawning player hud");
     for player_hud_entity in player_hud_entity_query {
         commands.entity(player_hud_entity).despawn();
     }

@@ -2,7 +2,7 @@ use crate::{
     common::systems::apply_render_layers_to_children,
     player::camera::{
         PLAYER_CAMERA_Y_OFFSET,
-        components::{FreeCam, PlayerCameraState, PlayerWeaponModel},
+        components::{FreeCam, PlayerWeaponModel},
     },
 };
 use std::{
@@ -142,60 +142,59 @@ pub fn update_yaw_pitch_on_mouse_motion(
     }
 }
 
-pub fn toggle_freecam(
-    mut player_query: Single<(Entity, &Transform, &mut Player)>,
-    mut commands: Commands,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    view_model_camera_entity_query: Query<Entity, With<ViewModelCamera>>,
-    free_cam_entity_query: Query<Entity, With<FreeCam>>,
-) {
-    if keyboard_input.just_pressed(KeyCode::KeyC) {
-        match player_query.2.camera_state {
-            PlayerCameraState::Normal => {
-                player_query.2.camera_state = PlayerCameraState::FreeCam;
-                for view_model_entity in view_model_camera_entity_query {
-                    commands.entity(view_model_entity).despawn();
-                }
-                let player_transform = player_query.1;
-                commands.spawn((
-                    Camera3d::default(),
-                    Projection::from(PerspectiveProjection {
-                        fov: 80.0_f32.to_radians(),
-                        ..default()
-                    }),
-                    Transform::from_xyz(
-                        player_transform.translation.x,
-                        player_transform.translation.y + 2.0,
-                        player_transform.translation.z,
-                    ),
-                    FreeCam,
-                ));
-            }
-            PlayerCameraState::FreeCam => {
-                debug!("requested freecam -> normal");
-                player_query.2.camera_state = PlayerCameraState::Normal;
-                debug!("player camera state now set to normal");
-                for free_cam_entity in free_cam_entity_query {
-                    debug!("despawning free cam entity {}", free_cam_entity);
-                    commands.entity(free_cam_entity).despawn();
-                }
-                commands.entity(player_query.0).with_child((
-                    Camera3d::default(),
-                    ViewModelCamera::default(),
-                    Projection::from(PerspectiveProjection {
-                        fov: 80.0_f32.to_radians(),
-                        ..default()
-                    }),
-                    Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
-                ));
-                debug!(
-                    "spawned playercamera as child of player {}",
-                    player_query.0
-                );
-            }
-        }
-    }
-}
+// pub fn toggle_freecam(
+//     mut player_query: Single<(Entity, &Transform, &mut Player)>,
+//     mut commands: Commands,
+//     keyboard_input: Res<ButtonInput<KeyCode>>,
+//     view_model_camera_entity_query: Query<Entity, With<ViewModelCamera>>,
+//     free_cam_entity_query: Query<Entity, With<FreeCam>>,
+// ) {
+//     if keyboard_input.just_pressed(KeyCode::KeyC) {
+//         match player_query.2.camera_state {
+//             PlayerCameraState::Normal => {
+// player_query.2.camera_state = PlayerCameraState::FreeCam;
+//                 for view_model_entity in view_model_camera_entity_query {
+//                     commands.entity(view_model_entity).despawn();
+//                 }
+//                 let player_transform = player_query.1;
+//                 commands.spawn((
+//                     Camera3d::default(),
+//                     Projection::from(PerspectiveProjection {
+//                         fov: 80.0_f32.to_radians(),
+//                         ..default()
+//                     }),
+//                     Transform::from_xyz(
+//                         player_transform.translation.x,
+//                         player_transform.translation.y + 2.0,
+//                         player_transform.translation.z,
+//                     ),
+//                     FreeCam,
+//                 ));
+//             } // PlayerCameraState::FreeCam => {
+//               //     debug!("requested freecam -> normal");
+//               //     player_query.2.camera_state = PlayerCameraState::Normal;
+//               //     debug!("player camera state now set to normal");
+//               //     for free_cam_entity in free_cam_entity_query {
+//               //         debug!("despawning free cam entity {}", free_cam_entity);
+//               //         commands.entity(free_cam_entity).despawn();
+//               //     }
+//               //     commands.entity(player_query.0).with_child((
+//               //         Camera3d::default(),
+//               //         ViewModelCamera::default(),
+//               //         Projection::from(PerspectiveProjection {
+//               //             fov: 80.0_f32.to_radians(),
+//               //             ..default()
+//               //         }),
+//               //         Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
+//               //     ));
+//               //     debug!(
+//               //         "spawned playercamera as child of player {}",
+//               //         player_query.0
+//               //     );
+//               // }
+//         }
+//     }
+// }
 
 pub fn handle_free_cam_movement(
     mut free_cam_transform: Single<&mut Transform, With<FreeCam>>,

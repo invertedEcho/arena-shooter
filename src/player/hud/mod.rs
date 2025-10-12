@@ -41,7 +41,7 @@ impl Plugin for PlayerHudPlugin {
             (spawn_player_hud, spawn_score_hud),
         )
         .add_systems(
-            OnExit(InGameState::Paused),
+            OnEnter(InGameState::Playing),
             (spawn_player_hud, spawn_score_hud),
         )
         .add_systems(OnExit(InGameState::Playing), despawn_player_hud)

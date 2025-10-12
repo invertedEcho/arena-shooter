@@ -8,10 +8,15 @@ use bevy_inspector_egui::{
 use bevy_skein::SkeinPlugin;
 
 use crate::{
-    common::CommonPlugin, enemy::EnemyPlugin, game_flow::GameFlowPlugin,
-    music::MusicPlugin, nav_mesh_pathfinding::NavMeshPathfindingPlugin,
-    particles::ParticlesPlugin, player::PlayerPlugin,
-    user_interface::UserInterfacePlugin, world::WorldPlugin,
+    common::CommonPlugin,
+    enemy::EnemyPlugin,
+    game_flow::{GameFlowPlugin, states::AppState},
+    music::MusicPlugin,
+    nav_mesh_pathfinding::NavMeshPathfindingPlugin,
+    particles::ParticlesPlugin,
+    player::PlayerPlugin,
+    user_interface::UserInterfacePlugin,
+    world::WorldPlugin,
 };
 
 mod common;
@@ -35,13 +40,15 @@ fn main() {
 
     // bevy-builtin plugins
     app.add_plugins(
-        DefaultPlugins.set(bevy::log::LogPlugin {
-            // stupid audio library bevy uses which uses info level for debug level messages.. smh
-            filter:
-                "symphonia_core=off,symphonia_bundle=off,wgpu=error,naga=warn"
+        DefaultPlugins
+            .set(bevy::log::LogPlugin {
+                // stupid audio library bevy uses which uses info level for debug level messages.. smh
+                filter: "symphonia_core=off,symphonia_bundle=off,wgpu=error,\
+                         naga=warn"
                     .to_string(),
-            ..default()
-        }).set(WindowPlugin {
+                ..default()
+            })
+            .set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "Fun Shooter".into(),
                     name: Some("fun-shooter".into()),
@@ -49,8 +56,7 @@ fn main() {
                     ..default()
                 }),
                 ..default()
-            })
-        ,
+            }),
     );
     // app.add_plugins(FrameTimeDiagnosticsPlugin::default());
     // app.add_plugins(LogDiagnosticsPlugin::default());
@@ -86,18 +92,11 @@ fn main() {
         ..default()
     });
 
-    app.add_systems(Startup, spawn_main_menu_camera);
+    app.add_systems(Startup, explicit_main_menu);
+
     app.run();
 }
 
-#[derive(Component)]
-pub struct MainMenuCamera;
-
-fn spawn_main_menu_camera(mut commands: Commands) {
-    commands.spawn((
-        Camera::default(),
-        Camera3d::default(),
-        Transform::from_xyz(5.0, 10.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-        MainMenuCamera,
-    ));
+fn explicit_main_menu(mut next_main_menu_state: ResMut<NextState<AppState>>) {
+    next_main_menu_state.set(AppState::MainMenu);
 }

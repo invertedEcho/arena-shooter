@@ -17,10 +17,10 @@ impl Plugin for GameModeSelectionUIPlugin {
             OnExit(MainMenuState::GameModeSelection),
             despawn_game_mode_selection_screen,
         )
-        .add_systems(
-            OnExit(AppState::MainMenu),
-            despawn_game_mode_selection_screen,
-        )
+        // .add_systems(
+        //     OnExit(AppState::MainMenu),
+        //     despawn_game_mode_selection_screen,
+        // )
         .add_systems(
             Update,
             (
@@ -45,6 +45,7 @@ enum GameModeSelectionActionButtonType {
 }
 
 fn spawn_game_mode_selection_screen(mut commands: Commands) {
+    info!("Spawning GameModeSelectionScreen");
     commands
         .spawn((
             Node {
@@ -108,6 +109,7 @@ fn despawn_game_mode_selection_screen(
     mut commands: Commands,
     game_mode_selection_screen: Single<Entity, With<GameModeSelectionScreen>>,
 ) {
+    info!("Despawning game mode selection screen");
     commands.entity(*game_mode_selection_screen).despawn();
 }
 
