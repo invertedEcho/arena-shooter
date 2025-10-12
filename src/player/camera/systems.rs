@@ -2,7 +2,8 @@ use crate::{
     common::systems::apply_render_layers_to_children,
     player::camera::{
         PLAYER_CAMERA_Y_OFFSET,
-        components::{FreeCam, PlayerWeaponModel},
+        components::{FreeCam, PlayerCameraState, PlayerWeaponModel},
+        events::SpawnPlayerCamerasEvent,
     },
 };
 use std::{
@@ -23,71 +24,74 @@ const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 #[derive(Component)]
 pub struct WorldModelCamera;
 
-pub fn setup_cameras(
+pub fn setup_player_cameras(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    player_entity: Single<Entity, Added<Player>>,
+    player_entity: Single<Entity, With<Player>>,
+    mut spawn_player_cameras_event_reader: EventReader<SpawnPlayerCamerasEvent>,
 ) {
-    let weapon_model = asset_server
-        .load(GltfAssetLabel::Scene(0).from_asset("test.glb#Scene0"));
+    for _ in spawn_player_cameras_event_reader.read() {
+        let weapon_model = asset_server
+            .load(GltfAssetLabel::Scene(0).from_asset("test.glb#Scene0"));
 
-    commands.entity(*player_entity).with_children(|parent| {
-        parent.spawn((
-            WorldModelCamera,
-            Camera {
-                order: 0,
-                ..default()
-            },
-            Camera3d::default(),
-            Projection::from(PerspectiveProjection {
-                fov: 90.0_f32.to_radians(),
-                near: 0.0000001,
-                far: 1000.0,
-                ..default()
-            }),
-        ));
-
-        parent.spawn((
-            ViewModelCamera,
-            Camera3d::default(),
-            Camera {
-                order: 1,
-                ..default()
-            },
-            Projection::from(PerspectiveProjection {
-                near: 0.0000001,
-                far: 1000.0,
-                ..default()
-            }),
-            // needed so our inspector is shown again when we enter game, as we despawn
-            // `WorldUiCamera` and spawn player camera
-            bevy_egui::PrimaryEguiContext,
-            RenderLayers::layer(1),
-            Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
-        ));
-        parent
-            .spawn((
-                SceneRoot(weapon_model),
-                Transform {
-                    translation: Vec3 {
-                        x: 0.05,
-                        y: -0.14,
-                        z: -0.2,
-                    },
-                    scale: Vec3::splat(1.0),
-                    // rotate 180 degrees as weapon is spawned wrong way
-                    // radians are a different way of representing rotations
-                    // PI = 180 degrees
-                    // FRAC_PI_2 (e.g. PI / 2) = 90 degrees
-                    rotation: Quat::from_rotation_y(PI),
+        commands.entity(*player_entity).with_children(|parent| {
+            parent.spawn((
+                WorldModelCamera,
+                Camera {
+                    order: 0,
+                    ..default()
                 },
+                Camera3d::default(),
+                Projection::from(PerspectiveProjection {
+                    fov: 90.0_f32.to_radians(),
+                    near: 0.0000001,
+                    far: 1000.0,
+                    ..default()
+                }),
+            ));
+
+            parent.spawn((
+                ViewModelCamera,
+                Camera3d::default(),
+                Camera {
+                    order: 1,
+                    ..default()
+                },
+                Projection::from(PerspectiveProjection {
+                    near: 0.0000001,
+                    far: 1000.0,
+                    ..default()
+                }),
+                // needed so our inspector is shown again when we enter game, as we despawn
+                // `WorldUiCamera` and spawn player camera
+                bevy_egui::PrimaryEguiContext,
                 RenderLayers::layer(1),
-                NotShadowCaster,
-                PlayerWeaponModel,
-                Visibility::Visible,
-            ))
-            .observe(apply_render_layers_to_children);
-    });
+                Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
+            ));
+            parent
+                .spawn((
+                    SceneRoot(weapon_model),
+                    Transform {
+                        translation: Vec3 {
+                            x: 0.05,
+                            y: -0.14,
+                            z: -0.2,
+                        },
+                        scale: Vec3::splat(1.0),
+                        // rotate 180 degrees as weapon is spawned wrong way
+                        // radians are a different way of representing rotations
+                        // PI = 180 degrees
+                        // FRAC_PI_2 (e.g. PI / 2) = 90 degrees
+                        rotation: Quat::from_rotation_y(PI),
+                    },
+                    RenderLayers::layer(1),
+                    NotShadowCaster,
+                    PlayerWeaponModel,
+                    Visibility::Visible,
+                ))
+                .observe(apply_render_layers_to_children);
+        });
+    }
 }
 
 /// We seperate between player transform and camera transform.
@@ -136,65 +140,56 @@ pub fn update_yaw_pitch_on_mouse_motion(
             current_pitch_player,
             current_roll_player,
         );
-
-        // we should adjust pitch of player weapon so other players can also see if aiming to
-        // sky or to bottom.
     }
 }
 
-// pub fn toggle_freecam(
-//     mut player_query: Single<(Entity, &Transform, &mut Player)>,
-//     mut commands: Commands,
-//     keyboard_input: Res<ButtonInput<KeyCode>>,
-//     view_model_camera_entity_query: Query<Entity, With<ViewModelCamera>>,
-//     free_cam_entity_query: Query<Entity, With<FreeCam>>,
-// ) {
-//     if keyboard_input.just_pressed(KeyCode::KeyC) {
-//         match player_query.2.camera_state {
-//             PlayerCameraState::Normal => {
-// player_query.2.camera_state = PlayerCameraState::FreeCam;
-//                 for view_model_entity in view_model_camera_entity_query {
-//                     commands.entity(view_model_entity).despawn();
-//                 }
-//                 let player_transform = player_query.1;
-//                 commands.spawn((
-//                     Camera3d::default(),
-//                     Projection::from(PerspectiveProjection {
-//                         fov: 80.0_f32.to_radians(),
-//                         ..default()
-//                     }),
-//                     Transform::from_xyz(
-//                         player_transform.translation.x,
-//                         player_transform.translation.y + 2.0,
-//                         player_transform.translation.z,
-//                     ),
-//                     FreeCam,
-//                 ));
-//             } // PlayerCameraState::FreeCam => {
-//               //     debug!("requested freecam -> normal");
-//               //     player_query.2.camera_state = PlayerCameraState::Normal;
-//               //     debug!("player camera state now set to normal");
-//               //     for free_cam_entity in free_cam_entity_query {
-//               //         debug!("despawning free cam entity {}", free_cam_entity);
-//               //         commands.entity(free_cam_entity).despawn();
-//               //     }
-//               //     commands.entity(player_query.0).with_child((
-//               //         Camera3d::default(),
-//               //         ViewModelCamera::default(),
-//               //         Projection::from(PerspectiveProjection {
-//               //             fov: 80.0_f32.to_radians(),
-//               //             ..default()
-//               //         }),
-//               //         Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
-//               //     ));
-//               //     debug!(
-//               //         "spawned playercamera as child of player {}",
-//               //         player_query.0
-//               //     );
-//               // }
-//         }
-//     }
-// }
+pub fn toggle_freecam(
+    mut player_query: Single<(Entity, &Transform, &mut Player)>,
+    mut commands: Commands,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    player_camera_entities_query: Query<
+        Entity,
+        Or<(With<ViewModelCamera>, With<WorldModelCamera>)>,
+    >,
+    free_cam_entity_query: Query<Entity, With<FreeCam>>,
+    mut spawn_player_cameras_event_writer: EventWriter<SpawnPlayerCamerasEvent>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyC) {
+        match player_query.2.camera_state {
+            PlayerCameraState::Normal => {
+                player_query.2.camera_state = PlayerCameraState::FreeCam;
+                for player_camera_entity in player_camera_entities_query {
+                    commands.entity(player_camera_entity).despawn();
+                }
+                let player_transform = player_query.1;
+                commands.spawn((
+                    Camera3d::default(),
+                    Projection::from(PerspectiveProjection {
+                        fov: 80.0_f32.to_radians(),
+                        ..default()
+                    }),
+                    Transform::from_xyz(
+                        player_transform.translation.x,
+                        player_transform.translation.y + 2.0,
+                        player_transform.translation.z,
+                    ),
+                    FreeCam,
+                ));
+            }
+            PlayerCameraState::FreeCam => {
+                info!("requested freecam -> normal");
+                player_query.2.camera_state = PlayerCameraState::Normal;
+                info!("player camera state now set to normal");
+                for free_cam_entity in free_cam_entity_query {
+                    debug!("despawning free cam entity {}", free_cam_entity);
+                    commands.entity(free_cam_entity).despawn();
+                }
+                spawn_player_cameras_event_writer
+                    .write(SpawnPlayerCamerasEvent);
+            }
+        }
+    }
+}
 
 pub fn handle_free_cam_movement(
     mut free_cam_transform: Single<&mut Transform, With<FreeCam>>,

@@ -28,7 +28,6 @@ pub enum InGameState {
     Paused,
     PlayerDead,
     /// Everything is paused, no pause menu is shown, useful in combination with
-    /// `PlayerCameraState::FreeCam`
     PausedDebug,
 }
 

@@ -6,7 +6,10 @@ use crate::{
         AppState,
         states::{InGameState, MainMenuState},
     },
-    player::spawn::{PlayerSpawnEvent, components::PlayerSpawnLocation},
+    player::{
+        camera::events::SpawnPlayerCamerasEvent,
+        spawn::{PlayerSpawnEvent, components::PlayerSpawnLocation},
+    },
     user_interface::main_menu::MainMenuCamera,
 };
 
@@ -44,6 +47,7 @@ pub struct GameStateWave {
     pub enemies_left_from_current_wave: usize,
 }
 
+// TODO: this function takes wayyyy to many arguments
 fn handle_start_game_mode_event(
     mut commands: Commands,
     mut event_reader: EventReader<StartGameModeEvent>,
@@ -55,6 +59,7 @@ fn handle_start_game_mode_event(
     mut spawn_player_event_writer: EventWriter<PlayerSpawnEvent>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
+    mut spawn_player_cameras_event_writer: EventWriter<SpawnPlayerCamerasEvent>,
 ) {
     for event in event_reader.read() {
         info!("got start game mode event, despawning main menu camera");
@@ -86,6 +91,8 @@ fn handle_start_game_mode_event(
         spawn_player_event_writer.write(PlayerSpawnEvent {
             spawn_location: player_spawn_location.translation,
         });
+        info!("writing SpawnPlayerCamerasEvent");
+        spawn_player_cameras_event_writer.write(SpawnPlayerCamerasEvent);
     }
 }
 
