@@ -5,8 +5,9 @@ use crate::{
     player::camera::{
         components::ViewModelCamera,
         systems::{
-            camera_orbit_player, free_cam_orbit, handle_free_cam_movement,
-            load_arms_animations, setup_arm_animation, setup_cameras,
+            free_cam_orbit, handle_free_cam_movement, load_arms_animations,
+            setup_arm_animation, setup_cameras,
+            update_yaw_pitch_on_mouse_motion,
         },
     },
 };
@@ -23,7 +24,7 @@ impl Plugin for PlayerCameraPlugin {
         app.add_systems(Startup, load_arms_animations).add_systems(
             Update,
             (
-                camera_orbit_player.run_if(
+                update_yaw_pitch_on_mouse_motion.run_if(
                     in_state(AppState::InGame)
                         .and(in_state(InGameState::Playing)),
                 ),

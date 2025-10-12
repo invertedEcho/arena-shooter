@@ -34,9 +34,15 @@ pub fn setup_cameras(
     commands.entity(*player_entity).with_children(|parent| {
         parent.spawn((
             WorldModelCamera,
+            Camera {
+                order: 0,
+                ..default()
+            },
             Camera3d::default(),
             Projection::from(PerspectiveProjection {
                 fov: 90.0_f32.to_radians(),
+                near: 0.0000001,
+                far: 1000.0,
                 ..default()
             }),
         ));
@@ -59,22 +65,21 @@ pub fn setup_cameras(
             RenderLayers::layer(1),
             Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
         ));
-
         parent
             .spawn((
                 SceneRoot(weapon_model),
                 Transform {
                     translation: Vec3 {
-                        x: 0.0,
-                        y: -0.1,
-                        z: -0.7,
+                        x: 0.05,
+                        y: -0.14,
+                        z: -0.2,
                     },
+                    scale: Vec3::splat(1.0),
                     // rotate 180 degrees as weapon is spawned wrong way
                     // radians are a different way of representing rotations
                     // PI = 180 degrees
                     // FRAC_PI_2 (e.g. PI / 2) = 90 degrees
                     rotation: Quat::from_rotation_y(PI),
-                    ..default()
                 },
                 RenderLayers::layer(1),
                 NotShadowCaster,
@@ -85,18 +90,17 @@ pub fn setup_cameras(
     });
 }
 
-pub fn camera_orbit_player(
+/// We seperate between player transform and camera transform.
+/// This is because if the user would look straight down, the collider would literally lay on the
+/// ground. So, we only change yaw of player, and do pitch via the camera transform
+pub fn update_yaw_pitch_on_mouse_motion(
     mouse_motion: Res<AccumulatedMouseMotion>,
-    mut view_model_camera_transform: Single<
+    mut world_model_camera_transform: Single<
         &mut Transform,
         (With<WorldModelCamera>, Without<Player>),
     >,
     mut player_transform: Single<&mut Transform, With<Player>>,
 ) {
-    info!(
-        "view model camera transform: {:?}",
-        *view_model_camera_transform
-    );
     let delta = mouse_motion.delta;
 
     if delta != Vec2::ZERO {
@@ -108,7 +112,9 @@ pub fn camera_orbit_player(
 
         // existing rotation
         let (current_yaw_camera, current_pitch_camera, current_roll_camera) =
-            view_model_camera_transform.rotation.to_euler(EulerRot::YXZ);
+            world_model_camera_transform
+                .rotation
+                .to_euler(EulerRot::YXZ);
 
         let (current_yaw_player, current_pitch_player, current_roll_player) =
             player_transform.rotation.to_euler(EulerRot::YXZ);
@@ -118,7 +124,7 @@ pub fn camera_orbit_player(
         let new_pitch_camera = (delta_pitch + current_pitch_camera)
             .clamp(-PITCH_LIMIT, PITCH_LIMIT);
 
-        view_model_camera_transform.rotation = Quat::from_euler(
+        world_model_camera_transform.rotation = Quat::from_euler(
             EulerRot::YXZ,
             current_yaw_camera,
             new_pitch_camera,

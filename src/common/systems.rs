@@ -1,4 +1,11 @@
-use bevy::{prelude::*, render::view::RenderLayers, scene::SceneInstanceReady};
+use bevy::{
+    prelude::*,
+    render::{
+        mesh::skinning::SkinnedMesh,
+        view::{NoFrustumCulling, RenderLayers},
+    },
+    scene::SceneInstanceReady,
+};
 
 use super::components::DespawnTimer;
 
@@ -35,4 +42,14 @@ pub fn apply_render_layers_to_children(
             commands.entity(entity).insert(render_layers.clone());
         }
     });
+}
+
+// https://github.com/bevyengine/bevy/issues/4971
+pub fn disable_culling_for_skinned_meshes(
+    mut commands: Commands,
+    skinned: Query<Entity, Added<SkinnedMesh>>,
+) {
+    for entity in &skinned {
+        commands.entity(entity).insert(NoFrustumCulling);
+    }
 }
