@@ -3,14 +3,14 @@ use std::time::Duration;
 use bevy::prelude::*;
 
 use crate::{
+    common::components::AnimationPlayerEntityPointer,
     enemy::{
         Enemy, EnemyState,
         animate::{
             ENEMY_DEATH_ANIMATION, ENEMY_HIT_RECEIVE_ANIMATION,
             ENEMY_IDLE_GUN_ANIMATION, ENEMY_IDLE_GUN_POINTING_ANIMATION,
             SWAT_MODEL_PATH, TOTAL_ENEMY_MODEL_ANIMATIONS,
-            components::{AnimationPlayerEntityPointer, PlayHitAnimationTimer},
-            resources::EnemyAnimations,
+            components::PlayHitAnimationTimer, resources::EnemyAnimations,
         },
     },
     player::shooting::events::PlayerBulletHitEnemyEvent,
@@ -69,7 +69,10 @@ pub fn setup_enemy_animation(
 
 pub fn link_enemy_animation(
     mut commands: Commands,
-    animation_player_entities: Query<Entity, Added<AnimationPlayer>>,
+    animation_player_entities: Query<
+        Entity,
+        (Added<AnimationPlayer>, Without<Name>),
+    >,
     enemies: Query<Entity, With<Enemy>>,
     childof: Query<&ChildOf>,
 ) {
@@ -118,6 +121,7 @@ pub fn reflect_enemy_state_to_current_animation(
         let new_animation_index = match enemy.state {
             EnemyState::AttackPlayer => ENEMY_IDLE_GUN_POINTING_ANIMATION,
             EnemyState::Dead => ENEMY_DEATH_ANIMATION,
+            // FIXME: correct animations
             _ => ENEMY_IDLE_GUN_ANIMATION,
         };
 

@@ -20,7 +20,7 @@ impl Plugin for DebugOverlayPlugin {
                 update_current_app_state_text,
                 update_current_in_game_state_text,
                 toggle_debug,
-                update_player_grounded_text,
+                update_player_info_text,
                 update_current_main_menu_state,
             ),
         );
@@ -37,7 +37,7 @@ struct CurrentInGameStateText;
 struct CurrentMainMenuStateText;
 
 #[derive(Component)]
-struct PlayerGroundedText;
+struct PlayerInfoText;
 
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
@@ -53,14 +53,14 @@ fn spawn_debug_overlay(mut commands: Commands) {
             StateScoped(AppDebugState::DebugVisible),
         ))
         .with_children(|parent| {
-            parent.spawn(Text::new("Current AppState"));
+            parent.spawn(Text::new("Player Info:"));
+            parent.spawn((Text::new(""), PlayerInfoText));
+            parent.spawn(Text::new("Current AppState:"));
             parent.spawn((Text::new(""), CurrentAppStateText));
-            parent.spawn(Text::new("Current InGameState"));
+            parent.spawn(Text::new("Current InGameState:"));
             parent.spawn((Text::new(""), CurrentInGameStateText));
-            parent.spawn(Text::new("Current MainMenuState"));
+            parent.spawn(Text::new("Current MainMenuState:"));
             parent.spawn((Text::new(""), CurrentMainMenuStateText));
-            parent.spawn(Text::new("player.grounded"));
-            parent.spawn((Text::new(""), PlayerGroundedText));
         });
 }
 
@@ -157,11 +157,11 @@ fn toggle_debug(
     }
 }
 
-fn update_player_grounded_text(
+fn update_player_info_text(
     changed_player: Single<&Player, Changed<Player>>,
-    player_grounded_text: Query<&mut Text, With<PlayerGroundedText>>,
+    player_text: Query<&mut Text, With<PlayerInfoText>>,
 ) {
-    for mut player_grounded_text in player_grounded_text {
-        **player_grounded_text = format!("{}", changed_player.on_ground);
+    for mut player_grounded_text in player_text {
+        **player_grounded_text = format!("{:?}", *changed_player);
     }
 }

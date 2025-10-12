@@ -3,6 +3,9 @@ use bevy::prelude::*;
 #[derive(Debug, Component, Default)]
 pub struct ViewModelCamera;
 
+#[derive(Component)]
+pub struct WorldModelCamera;
+
 #[derive(Debug, Default, PartialEq)]
 pub enum PlayerCameraState {
     #[default]

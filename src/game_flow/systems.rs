@@ -1,8 +1,8 @@
 use bevy::{prelude::*, window::CursorGrabMode};
 
 use crate::{
-    game_flow::{AppState, PlayerDeathEvent, states::InGameState},
-    player::{Player, PlayerMovementState},
+    game_flow::{AppState, states::InGameState},
+    player::Player,
     user_interface::main_menu::MainMenuCamera,
 };
 
@@ -14,15 +14,6 @@ pub fn grab_mouse(mut window: Single<&mut Window>) {
 pub fn free_mouse(mut window: Single<&mut Window>) {
     window.cursor_options.visible = true;
     window.cursor_options.grab_mode = CursorGrabMode::None;
-}
-
-pub fn handle_player_death_event(
-    mut event_reader: EventReader<PlayerDeathEvent>,
-    mut player: Single<&mut Player>,
-) {
-    for _ in event_reader.read() {
-        player.state = PlayerMovementState::Idle;
-    }
 }
 
 pub fn handle_escape(

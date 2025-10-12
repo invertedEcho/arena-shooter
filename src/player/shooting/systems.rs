@@ -4,13 +4,14 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    common::{BULLET_VELOCITY, components::DespawnTimer},
+    common::{BULLET_VELOCITY, MovementState, components::DespawnTimer},
     enemy::{Enemy, shooting::components::EnemyBullet},
     game_flow::{score::GameScore, states::InGameState},
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectEvent},
     player::{
-        Player,
+        Player, PlayerDeathEvent,
         camera::components::ViewModelCamera,
+        movement::PlayerMovementState,
         shooting::{
             components::{
                 BloodScreenEffect, MuzzleFlash, PlayerBullet,
@@ -360,5 +361,14 @@ pub fn accurate_check_bullet_collision_for_impact_particle(
                 },
             );
         }
+    }
+}
+
+pub fn handle_player_death_event(
+    mut event_reader: EventReader<PlayerDeathEvent>,
+    mut player_movement_state: Single<&mut PlayerMovementState>,
+) {
+    for _ in event_reader.read() {
+        player_movement_state.0 = MovementState::Idle;
     }
 }

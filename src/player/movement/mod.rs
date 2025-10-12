@@ -3,9 +3,10 @@ use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
     GRAVITY,
+    common::MovementState,
     game_flow::states::{AppState, InGameState},
     player::{
-        Player, PlayerMovementState,
+        Player,
         camera::components::ViewModelCamera,
         spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
     },
@@ -25,6 +26,7 @@ impl Plugin for PlayerMovementPlugin {
                 player_movement,
                 update_player_on_ground,
                 apply_gravity_over_time,
+                setup_player_movement_state_for_added_players,
             )
                 .run_if(in_state(AppState::InGame)),
         );
@@ -34,10 +36,30 @@ impl Plugin for PlayerMovementPlugin {
 #[derive(Component)]
 pub struct DebugHitPoints;
 
+#[derive(Component)]
+pub struct PlayerMovementState(pub MovementState);
+
+pub fn setup_player_movement_state_for_added_players(
+    mut commands: Commands,
+    added_players: Query<Entity, Added<Player>>,
+) {
+    for added_player in added_players {
+        commands
+            .entity(added_player)
+            .insert(PlayerMovementState(MovementState::Idle));
+    }
+}
+
 // TODO: its time to split this up, so we can also the character controller for our enemies
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    player: Single<(Entity, &mut Player, &mut LinearVelocity, &Transform)>,
+    player: Single<(
+        Entity,
+        &Player,
+        &mut LinearVelocity,
+        &Transform,
+        &mut PlayerMovementState,
+    )>,
     player_camera_entity: Single<Entity, With<ViewModelCamera>>,
     spatial_query: SpatialQuery,
     current_in_game_state: Res<State<InGameState>>,
@@ -49,8 +71,13 @@ pub fn player_movement(
         (With<DebugHitPoints>, Without<Player>),
     >,
 ) {
-    let (entity, mut player, mut velocity, player_transform) =
-        player.into_inner();
+    let (
+        entity,
+        player,
+        mut velocity,
+        player_transform,
+        mut player_movement_state,
+    ) = player.into_inner();
 
     let currently_playing =
         *current_in_game_state.get() == InGameState::Playing;
@@ -86,7 +113,7 @@ pub fn player_movement(
     if local_velocity == Vec3::ZERO {
         velocity.x = 0.0;
         velocity.z = 0.0;
-        player.state = PlayerMovementState::Idle;
+        player_movement_state.0 = MovementState::Idle;
         return;
     }
 
@@ -134,11 +161,17 @@ pub fn player_movement(
     velocity.z = world_velocity.z;
 
     if speed == PLAYER_RUN_VELOCITY {
-        player.state = PlayerMovementState::Running;
+        if player_movement_state.0 != MovementState::Running {
+            player_movement_state.0 = MovementState::Running;
+        }
     } else if local_velocity != Vec3::ZERO {
-        player.state = PlayerMovementState::Walking;
+        if player_movement_state.0 != MovementState::Walking {
+            player_movement_state.0 = MovementState::Walking;
+        }
     } else {
-        player.state = PlayerMovementState::Idle;
+        if player_movement_state.0 != MovementState::Idle {
+            player_movement_state.0 = MovementState::Idle;
+        }
     }
 }
 
@@ -174,12 +207,13 @@ fn update_player_on_ground(
                     .with_excluded_entities([player_entity]),
             )
             .is_some();
-        player.on_ground = on_ground;
+        if player.on_ground != on_ground {
+            player.on_ground = on_ground;
+        }
 
         if on_ground {
             if player_velocity.y <= 0.0 {
                 player_velocity.y = 0.0;
-                player.on_ground = on_ground;
             }
         }
     }

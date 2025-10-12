@@ -2,14 +2,13 @@ use crate::{
     common::systems::apply_render_layers_to_children,
     player::camera::{
         PLAYER_CAMERA_Y_OFFSET,
-        components::{FreeCam, PlayerCameraState, PlayerWeaponModel},
+        components::{
+            FreeCam, PlayerCameraState, PlayerWeaponModel, WorldModelCamera,
+        },
         events::SpawnPlayerCamerasEvent,
     },
 };
-use std::{
-    f32::consts::{FRAC_PI_2, PI},
-    time::Duration,
-};
+use std::f32::consts::{FRAC_PI_2, PI};
 
 use bevy::{
     input::mouse::AccumulatedMouseMotion, pbr::NotShadowCaster, prelude::*,
@@ -20,9 +19,6 @@ use bevy_inspector_egui::bevy_egui;
 use crate::player::{Player, camera::ViewModelCamera};
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
-
-#[derive(Component)]
-pub struct WorldModelCamera;
 
 pub fn setup_player_cameras(
     asset_server: Res<AssetServer>,
@@ -251,61 +247,5 @@ pub fn free_cam_orbit(
 
         free_cam_transform.rotation =
             Quat::from_euler(EulerRot::YXZ, new_yaw, new_pitch, current_roll);
-    }
-}
-
-#[derive(Resource)]
-pub struct ArmAnimations {
-    pub animation_node_indices: Vec<AnimationNodeIndex>,
-    pub current_graph_handle: Handle<AnimationGraph>,
-}
-
-pub fn load_arms_animations(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut graphs: ResMut<Assets<AnimationGraph>>,
-) {
-    let mut animation_clips: Vec<Handle<AnimationClip>> = Vec::new();
-
-    for i in 0..9 {
-        let res: Handle<AnimationClip> = asset_server
-            .load(GltfAssetLabel::Animation(i).from_asset("test.glb"));
-        animation_clips.push(res);
-    }
-
-    let (graph, node_indices) = AnimationGraph::from_clips(animation_clips);
-
-    let graph_handle = graphs.add(graph);
-    commands.insert_resource(ArmAnimations {
-        animation_node_indices: node_indices,
-        current_graph_handle: graph_handle,
-    });
-}
-
-pub fn setup_arm_animation(
-    mut commands: Commands,
-    animation_players: Query<
-        (Entity, &mut AnimationPlayer, &Name),
-        Added<AnimationPlayer>,
-    >,
-    arm_animations: Res<ArmAnimations>,
-) {
-    for (entity, mut player, name) in animation_players {
-        info!("animation player name: {}", name);
-        let mut transitions = AnimationTransitions::new();
-        transitions
-            .play(
-                &mut player,
-                arm_animations.animation_node_indices[3],
-                Duration::ZERO,
-            )
-            .repeat();
-
-        commands
-            .entity(entity)
-            .insert(AnimationGraphHandle(
-                arm_animations.current_graph_handle.clone(),
-            ))
-            .insert(transitions);
     }
 }

@@ -9,6 +9,13 @@ pub mod systems;
 
 pub const BULLET_VELOCITY: f32 = 100.0;
 
+#[derive(Debug, Reflect, PartialEq)]
+pub enum MovementState {
+    Idle,
+    Walking,
+    Running,
+}
+
 pub struct CommonPlugin;
 
 impl Plugin for CommonPlugin {

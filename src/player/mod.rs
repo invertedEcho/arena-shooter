@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::player::{
+    animate::PlayerAnimatePlugin,
     camera::{PlayerCameraPlugin, components::PlayerCameraState},
     hud::PlayerHudPlugin,
     movement::PlayerMovementPlugin,
@@ -8,33 +9,25 @@ use crate::player::{
     spawn::PlayerSpawnPlugin,
 };
 
+mod animate;
 pub mod camera;
 mod hud;
 mod movement;
 pub mod shooting;
 pub mod spawn;
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Player {
     pub health: f32,
-    pub state: PlayerMovementState,
     pub on_ground: bool,
     // TODO: get rid of me or move me somewhere else
     pub camera_state: PlayerCameraState,
-}
-
-#[derive(Reflect, PartialEq)]
-pub enum PlayerMovementState {
-    Idle,
-    Walking,
-    Running,
 }
 
 impl Default for Player {
     fn default() -> Self {
         Player {
             health: 100.0,
-            state: PlayerMovementState::Idle,
             on_ground: true,
             camera_state: PlayerCameraState::Normal,
         }
@@ -52,6 +45,7 @@ impl Plugin for PlayerPlugin {
             .add_plugins(PlayerCameraPlugin)
             .add_plugins(PlayerShootingPlugin)
             .add_plugins(PlayerHudPlugin)
-            .add_plugins(PlayerMovementPlugin);
+            .add_plugins(PlayerMovementPlugin)
+            .add_plugins(PlayerAnimatePlugin);
     }
 }
