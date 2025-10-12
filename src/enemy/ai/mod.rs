@@ -104,7 +104,8 @@ fn check_if_enemy_can_see_player(
             } else {
                 if enemy.state != EnemyState::ChasingPlayer {
                     info!(
-                        "Enemy can NOT see player, setting state to ChasingPlayer!"
+                        "Enemy can NOT see player, setting state to \
+                         ChasingPlayer!"
                     );
                     enemy.state = EnemyState::ChasingPlayer;
                 }
@@ -122,7 +123,8 @@ fn handle_enemy_state_transition_to_chase_player(
     for (enemy, enemy_entity) in changed_enemies {
         if enemy.state == EnemyState::ChasingPlayer {
             info!(
-                "Enemy {} changed state to ChasingPlayer, firing StartChasingPlayerEvent",
+                "Enemy {} changed state to ChasingPlayer, firing \
+                 StartChasingPlayerEvent",
                 enemy_entity
             );
             start_chasing_player_event_writer
@@ -150,16 +152,17 @@ fn handle_start_chasing_player_event(
             .find(|(entity, _)| *entity == event.enemy_entity)
         else {
             warn!(
-                "A StartChasingPlayerEvent was read, but the enemy entity from the event couldn't be found."
+                "A StartChasingPlayerEvent was read, but the enemy entity \
+                 from the event couldn't be found."
             );
             continue;
         };
-        info!(
+        debug!(
             "StartChasingPlayerEvent was read for enemy_entity: {}",
             enemy_entity
         );
 
-        info!("Trying to get path for enemy {}", enemy_entity);
+        debug!("Trying to get path for enemy {}", enemy_entity);
         let navmesh = navmeshes.get(&current_navmesh.0).unwrap();
         let Some(transformed_path) = navmesh.transformed_path(
             Vec3 {
@@ -176,6 +179,7 @@ fn handle_start_chasing_player_event(
             warn!("Could not find path from enemy to player");
             continue;
         };
+        debug!("Sucessfully found path for enemy!");
 
         commands.entity(enemy_entity).insert(EnemyPatrolPath {
             current_destination: transformed_path.path[0],
@@ -268,7 +272,8 @@ fn enemy_patrol(
             };
             enemy_transform.look_at(current_destination_fixed, Vec3::Y);
             info!(
-                "Enemy reached current patrol point, destinations updated and enemy now looking at new current_destination"
+                "Enemy reached current patrol point, destinations updated and \
+                 enemy now looking at new current_destination"
             );
             continue;
         };

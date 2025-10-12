@@ -46,7 +46,6 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_event(
     >,
 ) {
     for event in event_writer.read() {
-        continue;
         let spawn_enemy_count = event.enemy_count;
         let spawn_method = &event.spawn_strategy;
 
