@@ -42,6 +42,7 @@ pub fn setup_player_cameras(
                     ..default()
                 },
                 Camera3d::default(),
+                Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
                 Projection::from(PerspectiveProjection {
                     fov: 90.0_f32.to_radians(),
                     near: 0.0000001,
