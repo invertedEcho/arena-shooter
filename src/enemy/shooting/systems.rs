@@ -131,7 +131,8 @@ pub fn handle_enemy_killed_event(
             .find(|(entity, _)| *entity == event.0)
         else {
             warn!(
-                "An EnemyKilledEvent was fired, but the containing enemy entity does not seem to exist: {}",
+                "An EnemyKilledEvent was fired, but the containing enemy \
+                 entity does not seem to exist: {}",
                 event.0
             );
             continue;
@@ -168,7 +169,7 @@ pub fn handle_enemy_killed_event(
                     });
                 }
             }
-            GameMode::None => {}
+            GameMode::FreePlay => {}
         }
     }
 }

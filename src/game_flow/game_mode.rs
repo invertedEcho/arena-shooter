@@ -14,8 +14,7 @@ impl Plugin for GameModePlugin {
         app.add_event::<StartGameModeEvent>()
             .add_systems(
                 Update,
-                (handle_start_game_mode_event, handle_game_state_wave_changed)
-                    .run_if(in_state(GameMode::Waves)),
+                (handle_start_game_mode_event, handle_game_state_wave_changed),
             )
             .init_state::<GameMode>()
             .init_state::<GameStateWave>();
@@ -25,7 +24,7 @@ impl Plugin for GameModePlugin {
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 pub enum GameMode {
     #[default]
-    None,
+    FreePlay,
     Waves,
 }
 
@@ -53,6 +52,7 @@ fn handle_start_game_mode_event(
     mut spawn_player_event_writer: EventWriter<PlayerSpawnEvent>,
 ) {
     for event in event_reader.read() {
+        info!("got start game mode event, despawning main menu camera");
         commands.entity(*main_menu_camera).despawn();
 
         match event.0 {
@@ -68,10 +68,14 @@ fn handle_start_game_mode_event(
                     spawn_strategy: EnemySpawnStrategy::RandomSelection,
                 });
             }
-            // TODO: idk maybe this shouldnt even exist at the first place
-            GameMode::None => {}
+            GameMode::FreePlay => {
+                info!("does this happen?");
+                next_app_state.set(AppState::InGame);
+                info!("huh");
+            }
         }
 
+        info!("writing playerspawnevent");
         spawn_player_event_writer.write(PlayerSpawnEvent {
             spawn_location: player_spawn_location.translation,
         });
@@ -100,7 +104,8 @@ fn handle_game_state_wave_changed(
     if game_state_wave.is_changed() && !game_state_wave.is_changed() {
         if game_state_wave.enemies_left_from_current_wave == 0 {
             info!(
-                "no enemies left from current, spawning new enemies and increasing current_wave"
+                "no enemies left from current, spawning new enemies and \
+                 increasing current_wave"
             );
             let new_wave = game_state_wave.current_wave + 1;
             let new_enemy_count = get_enemy_count_per_wave(new_wave);

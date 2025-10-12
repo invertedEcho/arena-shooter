@@ -28,6 +28,7 @@ fn handle_player_spawn_event(
     mut player_spawn_event_reader: EventReader<PlayerSpawnEvent>,
 ) {
     for event in player_spawn_event_reader.read() {
+        info!("read player spawn event, spawning player");
         let player_collider_shape =
             Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH);
 
