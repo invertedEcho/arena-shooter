@@ -8,7 +8,7 @@ use crate::{
     game_flow::{
         game_mode::{GameMode, GameStateWave},
         score::GameScore,
-        states::AppState,
+        states::{AppState, InGameState},
     },
     player::{
         Player,
@@ -42,7 +42,7 @@ pub fn spawn_player_hud(
                 padding: UiRect::all(Val::Px(16.0)),
                 ..default()
             },
-            StateScoped(AppState::InGame),
+            StateScoped(InGameState::Playing),
             PlayerHud,
         ))
         .with_children(|parent| {
@@ -81,20 +81,14 @@ pub fn spawn_player_hud(
         .with_child(ImageNode::new(asset_server.load(WHITE_CROSSHAIR_PATH)));
 }
 
-pub fn despawn_player_hud(
-    mut commands: Commands,
-    player_hud_entity_query: Query<Entity, With<PlayerHud>>,
-) {
-    info!("Despawning player hud");
-    for player_hud_entity in player_hud_entity_query {
-        commands.entity(player_hud_entity).despawn();
-    }
-}
-
 pub fn update_player_health_text(
     player: Single<&Player, Changed<Player>>,
     mut player_health_text: Single<&mut Text, With<PlayerHealthText>>,
 ) {
+    info!(
+        "Updating player health text, new text: {}",
+        player.health.to_string()
+    );
     ***player_health_text = player.health.to_string();
 }
 
@@ -109,7 +103,15 @@ pub fn update_player_ammo_text(
         (With<PlayerCarriedAmmoText>, Without<PlayerLoadedAmmoText>),
     >,
 ) {
+    info!(
+        "Updating player loaded ammo text, new text: {}",
+        player_weapon.loaded_ammo.to_string()
+    );
     ***player_loaded_ammo_text = player_weapon.loaded_ammo.to_string();
+    info!(
+        "Updating player carried ammo text, new text: {}",
+        player_weapon.carried_ammo.to_string()
+    );
     ***player_carried_ammo_text = player_weapon.carried_ammo.to_string();
 }
 

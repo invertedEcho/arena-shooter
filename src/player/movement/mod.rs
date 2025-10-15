@@ -183,10 +183,6 @@ pub fn player_movement(
     velocity.x = world_velocity.x;
     velocity.z = world_velocity.z;
 
-    info!("speed: {} | local_velocity: {}", speed, local_velocity);
-
-    // TODO: this if block is quite weird
-
     if speed == PLAYER_RUN_VELOCITY {
         if player_movement_state.0 != MovementState::Running {
             info!("Changing player movement state to runnning");
