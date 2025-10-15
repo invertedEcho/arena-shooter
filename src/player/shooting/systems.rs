@@ -24,6 +24,12 @@ use crate::{
     utils::random::get_random_number_from_range_i32,
 };
 
+/// How long it takes to reload for a partial reload (and playing the corresponding animation), e.g. some bullets are left in
+/// the player weapon
+const PARTIAL_RELOAD_TIME: f32 = 2.81;
+/// How long it takes to reload for a full reload (and playing the corresponding animation), e.g. player's weapon is empty
+const FULL_RELOAD_TIME: f32 = 3.65;
+
 pub fn setup_player_weapon(
     added_players: Query<Entity, Added<Player>>,
     mut commands: Commands,
@@ -33,6 +39,7 @@ pub fn setup_player_weapon(
             loaded_ammo: 30,
             max_loaded_ammo: 30,
             carried_ammo: 99999,
+            reloading: false,
         });
     }
 }
@@ -244,6 +251,7 @@ pub fn handle_blood_screen_effect(
 }
 
 pub fn reload_player_weapon(
+    mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_weapon: Single<&mut PlayerWeapon>,
 ) {
@@ -254,6 +262,13 @@ pub fn reload_player_weapon(
     if player_weapon.loaded_ammo == player_weapon.max_loaded_ammo {
         return;
     }
+
+    player_weapon.reloading = true;
+
+    commands.spawn(ReloadTimer(Timer::from_seconds(
+        FULL_RELOAD_TIME,
+        TimerMode::Once,
+    )));
 
     let missing_bullets_to_load =
         player_weapon.max_loaded_ammo - player_weapon.loaded_ammo;
@@ -266,6 +281,8 @@ pub fn reload_player_weapon(
         player_weapon.carried_ammo = 0;
     }
 }
+
+fn handle_reload_timer() {}
 
 pub fn spawn_muzzle_flash(
     asset_server: Res<AssetServer>,
