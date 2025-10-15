@@ -2,13 +2,13 @@
 
 ## Setup
 
-1. If you're on linux, install `mold`, a linker, for faster iterative compiles
-  - Ubuntu: `sudo apt-get install mold clang`
+1. If you're on linux, install `mold`, a linker, for faster iterative compile times
+  - Ubuntu/Debian: `sudo apt-get install mold clang`
   - Fedora: `sudo dnf install mold clang`
   - Arch: `sudo pacman -S mold clang`
 2. Run the app
   - `cargo run`
-3. Please note that shipping the binary requires disabling dynamic linking. This can be achieved by removing the `dynamic_linking` feature from bevy in `Cargo.toml`
+3. Please note that shipping the binary requires disabling dynamic linking. This can be achieved by removing the `dynamic_linking` feature from the dependency `bevy` in `Cargo.toml`
 
 ## Features
 - [x] User interface
@@ -23,7 +23,7 @@
   - [x] Blood splatter when hitting enemies
 - [x] Enemy AI
   - [x] Enemies check if they can see the player and shoot them
-  - [ ] Chasing the player
+  - [ ] Chasing the player via pathfinding (WIP)
   - [ ] Going to locations the player made noises
 - [ ] Multiplayer
 - and probably more stuff already implemented and coming soon..
