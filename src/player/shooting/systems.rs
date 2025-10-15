@@ -10,6 +10,7 @@ use crate::{
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectEvent},
     player::{
         Player, PlayerDeathEvent,
+        animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationEvent},
         camera::components::ViewModelCamera,
         movement::PlayerMovementState,
         shooting::{
@@ -47,6 +48,10 @@ pub fn player_shooting(
     player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
     mut player_weapon: Single<&mut PlayerWeapon>,
     mut player_shot_event_writer: EventWriter<PlayerWeaponFiredEvent>,
+    mut play_arm_with_weapon_animation_event_writer: EventWriter<
+        PlayArmWithWeaponAnimationEvent,
+    >,
+    mut player_movement_type: Single<&mut PlayerMovementState>,
 ) {
     if !mouse_input.pressed(MouseButton::Left) {
         return;
@@ -66,6 +71,14 @@ pub fn player_shooting(
         0.1,
         TimerMode::Once,
     )));
+
+    play_arm_with_weapon_animation_event_writer.write(
+        PlayArmWithWeaponAnimationEvent {
+            animation_type: ArmWithWeaponAnimation::Shoot,
+            repeat: false,
+        },
+    );
+    player_movement_type.0 = MovementState::Else;
 
     let audio = asset_server.load(
         "weapons/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 \
@@ -266,9 +279,7 @@ pub fn spawn_muzzle_flash(
         let random_rotation_angle = get_random_number_from_range_i32(0, 5);
         commands.entity(*player_camera_entity).with_child((
             Transform {
-                // TODO: this is really not good. we need a better way to get the correct position
-                // to spawn the muzzle flash to relative to player view. this must also change
-                // depending on the cameras FOV
+                // TODO: this must change depending on the cameras FOV
                 translation: Vec3 {
                     x: 0.3,
                     y: -0.1,
@@ -288,6 +299,8 @@ pub fn spawn_muzzle_flash(
             })),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color_texture: Some(
+                    // TODO: dont use cropped version to avoid the bleeding
+                    // thing
                     asset_server.load("muzzle_flash_cropped.png"),
                 ),
                 alpha_mode: AlphaMode::Blend,

@@ -7,6 +7,7 @@ use crate::{
     game_flow::states::{AppState, InGameState},
     player::{
         Player,
+        animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationEvent},
         camera::components::ViewModelCamera,
         spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
     },
@@ -64,11 +65,16 @@ pub fn player_movement(
     spatial_query: SpatialQuery,
     current_in_game_state: Res<State<InGameState>>,
     mut commands: Commands,
+    // TODO: extract these debug hits into a system which listens for events where it should spawn
+    // debughitpoints
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     debug_hit_points: Query<
         &mut Transform,
         (With<DebugHitPoints>, Without<Player>),
+    >,
+    mut play_player_arm_weapon_animation_event_writer: EventWriter<
+        PlayArmWithWeaponAnimationEvent,
     >,
 ) {
     let (
@@ -83,6 +89,15 @@ pub fn player_movement(
         *current_in_game_state.get() == InGameState::Playing;
     if !currently_playing {
         **velocity = Vec3::ZERO;
+        if player_movement_state.0 != MovementState::Idle {
+            player_movement_state.0 = MovementState::Idle;
+            play_player_arm_weapon_animation_event_writer.write(
+                PlayArmWithWeaponAnimationEvent {
+                    animation_type: ArmWithWeaponAnimation::Idle,
+                    repeat: true,
+                },
+            );
+        }
         return;
     }
 
@@ -95,16 +110,16 @@ pub fn player_movement(
     let mut local_velocity = Vec3::ZERO;
 
     if keyboard_input.pressed(KeyCode::KeyW) {
-        local_velocity.z -= 1.0;
+        local_velocity.z -= 1.0 * speed;
     }
     if keyboard_input.pressed(KeyCode::KeyA) {
-        local_velocity.x -= 1.0;
+        local_velocity.x -= 1.0 * speed;
     }
     if keyboard_input.pressed(KeyCode::KeyD) {
-        local_velocity.x += 1.0;
+        local_velocity.x += 1.0 * speed;
     }
     if keyboard_input.pressed(KeyCode::KeyS) {
-        local_velocity.z += 1.0;
+        local_velocity.z += 1.0 * speed;
     }
     if keyboard_input.just_pressed(KeyCode::Space) && player.on_ground {
         velocity.y = PLAYER_JUMP_VELOCITY;
@@ -113,23 +128,31 @@ pub fn player_movement(
     if local_velocity == Vec3::ZERO {
         velocity.x = 0.0;
         velocity.z = 0.0;
-        player_movement_state.0 = MovementState::Idle;
+        if player_movement_state.0 != MovementState::Idle {
+            player_movement_state.0 = MovementState::Idle;
+            play_player_arm_weapon_animation_event_writer.write(
+                PlayArmWithWeaponAnimationEvent {
+                    animation_type: ArmWithWeaponAnimation::Idle,
+                    repeat: true,
+                },
+            );
+        };
         return;
     }
 
-    let world_velocity = player_transform.rotation * local_velocity * speed;
+    let world_velocity = player_transform.rotation * local_velocity;
     let Ok(direction) = Dir3::new(world_velocity) else {
+        warn!("probably previous will be kept!");
         return;
     };
 
-    // all this origin, rotation and direction is definitely correct
     if let Some(first_hit) = spatial_query.cast_shape(
         &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
         player_transform.translation - direction.as_vec3() * 0.025,
         player_transform.rotation,
         direction,
         &ShapeCastConfig {
-            max_distance: 0.15,
+            max_distance: 0.2,
             ..default()
         },
         &SpatialQueryFilter::default()
@@ -160,26 +183,53 @@ pub fn player_movement(
     velocity.x = world_velocity.x;
     velocity.z = world_velocity.z;
 
+    info!("speed: {} | local_velocity: {}", speed, local_velocity);
+
+    // TODO: this if block is quite weird
+
     if speed == PLAYER_RUN_VELOCITY {
         if player_movement_state.0 != MovementState::Running {
+            info!("Changing player movement state to runnning");
             player_movement_state.0 = MovementState::Running;
+            play_player_arm_weapon_animation_event_writer.write(
+                PlayArmWithWeaponAnimationEvent {
+                    animation_type: ArmWithWeaponAnimation::Run,
+                    repeat: true,
+                },
+            );
         }
-    } else if local_velocity != Vec3::ZERO {
+    } else if local_velocity.x != 0.0 || local_velocity.z != 0.0 {
         if player_movement_state.0 != MovementState::Walking {
             player_movement_state.0 = MovementState::Walking;
+            play_player_arm_weapon_animation_event_writer.write(
+                PlayArmWithWeaponAnimationEvent {
+                    animation_type: ArmWithWeaponAnimation::Walk,
+                    repeat: true,
+                },
+            );
+            info!("Changing player movement state to walking");
         }
-    } else {
+    } else if local_velocity.x == 0.0 && local_velocity.z == 0.0 {
         if player_movement_state.0 != MovementState::Idle {
             player_movement_state.0 = MovementState::Idle;
+            play_player_arm_weapon_animation_event_writer.write(
+                PlayArmWithWeaponAnimationEvent {
+                    animation_type: ArmWithWeaponAnimation::Idle,
+                    repeat: true,
+                },
+            );
+            info!("Changing player movement state to idle");
         }
     }
 }
 
 fn apply_gravity_over_time(
-    player: Single<&Player>,
-    mut player_velocity: Single<&mut LinearVelocity, With<Player>>,
+    mut player_query: Single<(&Player, &mut LinearVelocity)>,
     time: Res<Time>,
 ) {
+    let player = player_query.0;
+    let player_velocity = &mut player_query.1;
+
     if !player.on_ground {
         player_velocity.y -= GRAVITY * time.delta_secs();
     }

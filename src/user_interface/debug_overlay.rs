@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     game_flow::states::{AppDebugState, AppState, InGameState, MainMenuState},
     nav_mesh_pathfinding::NavMeshDisp,
-    player::Player,
+    player::{Player, movement::PlayerMovementState},
 };
 
 pub struct DebugOverlayPlugin;
@@ -22,6 +22,7 @@ impl Plugin for DebugOverlayPlugin {
                 toggle_debug,
                 update_player_info_text,
                 update_current_main_menu_state,
+                update_player_movement_state_text,
             ),
         );
     }
@@ -39,6 +40,9 @@ struct CurrentMainMenuStateText;
 #[derive(Component)]
 struct PlayerInfoText;
 
+#[derive(Component)]
+struct PlayerMovementStateText;
+
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
         .spawn((
@@ -55,6 +59,8 @@ fn spawn_debug_overlay(mut commands: Commands) {
         .with_children(|parent| {
             parent.spawn(Text::new("Player Info:"));
             parent.spawn((Text::new(""), PlayerInfoText));
+            parent.spawn(Text::new("Player Movement State:"));
+            parent.spawn((Text::new(""), PlayerMovementStateText));
             parent.spawn(Text::new("Current AppState:"));
             parent.spawn((Text::new(""), CurrentAppStateText));
             parent.spawn(Text::new("Current InGameState:"));
@@ -161,7 +167,20 @@ fn update_player_info_text(
     changed_player: Single<&Player, Changed<Player>>,
     player_text: Query<&mut Text, With<PlayerInfoText>>,
 ) {
-    for mut player_grounded_text in player_text {
-        **player_grounded_text = format!("{:?}", *changed_player);
+    for mut player_info_text in player_text {
+        **player_info_text = format!("{:?}", *changed_player);
+    }
+}
+
+fn update_player_movement_state_text(
+    changed_player_movement_state: Single<
+        &PlayerMovementState,
+        Changed<PlayerMovementState>,
+    >,
+    player_movement_state_text: Query<&mut Text, With<PlayerMovementStateText>>,
+) {
+    for mut player_movement_state_text in player_movement_state_text {
+        **player_movement_state_text =
+            format!("{:?}", changed_player_movement_state.0);
     }
 }

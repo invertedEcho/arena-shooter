@@ -12,7 +12,7 @@ use crate::player::{
 mod animate;
 pub mod camera;
 mod hud;
-mod movement;
+pub mod movement;
 pub mod shooting;
 pub mod spawn;
 
