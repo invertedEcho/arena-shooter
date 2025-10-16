@@ -6,10 +6,11 @@
   - Ubuntu/Debian: `sudo apt-get install mold clang`
   - Fedora: `sudo dnf install mold clang`
   - Arch: `sudo pacman -S mold clang`
-2. Run the app
-  - `cargo run`
+2. This repository uses Git LFS. Please install via `git lfs install`. You may need to pull again afterwards
 3. Please note that shipping the binary requires disabling dynamic linking. This can be achieved by removing the `dynamic_linking` feature from the dependency `bevy` in `Cargo.toml`
 4. Bevy itself also needs a couple of dependency. You can find installation instructions for Linux, Windows and MacOS [here](https://bevy.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
+5. Run the app
+  - `cargo run`
 
 ## Features
 - [x] User interface
