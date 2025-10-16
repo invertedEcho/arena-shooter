@@ -2,16 +2,16 @@ use std::time::Duration;
 
 use bevy::{animation::RepeatAnimation, prelude::*};
 
-use crate::{
-    common::{MovementState, components::AnimationPlayerEntityPointer},
-    player::{Player, movement::PlayerMovementState},
-};
+use crate::{common::components::AnimationPlayerEntityPointer, player::Player};
 
-const PLAYER_ARM_WEAPON_RELOAD_ANIMATION_INDEX: usize = 0;
+const PLAYER_ARM_WEAPON_DRAW_ANIMATION_INDEX: usize = 0;
 const PLAYER_ARM_WEAPON_SHOOT_ANIMATION_INDEX: usize = 1;
 const PLAYER_ARM_WEAPON_IDLE_ANIMATION_INDEX: usize = 3;
 const PLAYER_ARM_WEAPON_WALK_ANIMATION_INDEX: usize = 6;
 const PLAYER_ARM_WEAPON_RUN_ANIMATION_INDEX: usize = 7;
+const PLAYER_ARM_WEAPON_FULL_RELOAD_ANIMATION_INDEX: usize = 2;
+const PLAYER_ARM_WEAPON_INSPECT_ANIMATION_INDEX: usize = 4;
+const PLAYER_ARM_WEAPON_PARTIAL_RELOAD_ANIMATION_INDEX: usize = 5;
 
 pub struct PlayerAnimatePlugin;
 
@@ -23,7 +23,6 @@ impl Plugin for PlayerAnimatePlugin {
                 Update,
                 (
                     setup_arm_animation,
-                    // reflect_player_state_to_current_arm_animation,
                     link_player_animation,
                     handle_play_arm_with_weapon_animation_event,
                 ),
@@ -48,6 +47,8 @@ pub enum ArmWithWeaponAnimation {
     Walk,
     Run,
     Shoot,
+    PartialReload,
+    FullReload,
 }
 
 fn load_arms_animations(
@@ -207,6 +208,12 @@ fn handle_play_arm_with_weapon_animation_event(
             ArmWithWeaponAnimation::Run => {
                 PLAYER_ARM_WEAPON_RUN_ANIMATION_INDEX
             }
+            ArmWithWeaponAnimation::PartialReload => {
+                PLAYER_ARM_WEAPON_PARTIAL_RELOAD_ANIMATION_INDEX
+            }
+            ArmWithWeaponAnimation::FullReload => {
+                PLAYER_ARM_WEAPON_FULL_RELOAD_ANIMATION_INDEX
+            }
         };
 
         let Ok((_, mut animation_player, mut animation_transitions)) =
@@ -219,7 +226,13 @@ fn handle_play_arm_with_weapon_animation_event(
             );
             return;
         };
-        info!("received event, playing animation {}", animation_index);
+
+        info!(
+            "Received PlayArmWithWeaponAnimationEvent, playing animation with \
+             index {}",
+            animation_index
+        );
+
         let repeat_animation_mode = if repeat {
             RepeatAnimation::Forever
         } else {

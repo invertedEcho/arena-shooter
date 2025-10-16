@@ -19,6 +19,7 @@ use crate::{
                 PlayerShootCooldownTimer, PlayerWeapon,
             },
             events::PlayerWeaponFiredEvent,
+            resources::ReloadTimer,
         },
     },
     utils::random::get_random_number_from_range_i32,
@@ -72,6 +73,11 @@ pub fn player_shooting(
     if player_weapon.loaded_ammo == 0 {
         return;
     }
+
+    if player_weapon.reloading {
+        return;
+    }
+
     player_weapon.loaded_ammo -= 1;
 
     commands.spawn(PlayerShootCooldownTimer(Timer::from_seconds(
@@ -254,8 +260,14 @@ pub fn reload_player_weapon(
     mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_weapon: Single<&mut PlayerWeapon>,
+    mut animation_event_writer: EventWriter<PlayArmWithWeaponAnimationEvent>,
 ) {
     if !keyboard_input.just_pressed(KeyCode::KeyR) {
+        return;
+    }
+
+    // dont allow reloading when already reloading
+    if player_weapon.reloading {
         return;
     }
 
@@ -263,26 +275,64 @@ pub fn reload_player_weapon(
         return;
     }
 
-    player_weapon.reloading = true;
+    let reload_timer_duration = if player_weapon.loaded_ammo == 0 {
+        FULL_RELOAD_TIME
+    } else {
+        PARTIAL_RELOAD_TIME
+    };
 
-    commands.spawn(ReloadTimer(Timer::from_seconds(
-        FULL_RELOAD_TIME,
+    info!(
+        "Full reload timer animation: {}",
+        reload_timer_duration == FULL_RELOAD_TIME
+    );
+
+    commands.insert_resource(ReloadTimer(Timer::from_seconds(
+        reload_timer_duration,
         TimerMode::Once,
     )));
 
-    let missing_bullets_to_load =
-        player_weapon.max_loaded_ammo - player_weapon.loaded_ammo;
-
-    if player_weapon.carried_ammo > missing_bullets_to_load {
-        player_weapon.loaded_ammo += missing_bullets_to_load;
-        player_weapon.carried_ammo -= missing_bullets_to_load;
+    let animation_type = if player_weapon.loaded_ammo == 0 {
+        ArmWithWeaponAnimation::FullReload
     } else {
-        player_weapon.loaded_ammo = player_weapon.carried_ammo;
-        player_weapon.carried_ammo = 0;
-    }
+        ArmWithWeaponAnimation::PartialReload
+    };
+
+    player_weapon.reloading = true;
+    animation_event_writer.write(PlayArmWithWeaponAnimationEvent {
+        animation_type,
+        repeat: false,
+    });
 }
 
-fn handle_reload_timer() {}
+pub fn handle_reload_timer(
+    mut player_weapon: Single<&mut PlayerWeapon>,
+    reload_timer: Option<ResMut<ReloadTimer>>,
+    time: Res<Time>,
+) {
+    let Some(mut reload_timer) = reload_timer else {
+        return;
+    };
+
+    if !player_weapon.reloading {
+        return;
+    }
+    reload_timer.0.tick(time.delta());
+    if reload_timer.0.just_finished() {
+        player_weapon.reloading = false;
+        info!("Finished reloading!");
+
+        let missing_bullets_to_load =
+            player_weapon.max_loaded_ammo - player_weapon.loaded_ammo;
+
+        if player_weapon.carried_ammo > missing_bullets_to_load {
+            player_weapon.loaded_ammo += missing_bullets_to_load;
+            player_weapon.carried_ammo -= missing_bullets_to_load;
+        } else {
+            player_weapon.loaded_ammo = player_weapon.carried_ammo;
+            player_weapon.carried_ammo = 0;
+        }
+    }
+}
 
 pub fn spawn_muzzle_flash(
     asset_server: Res<AssetServer>,

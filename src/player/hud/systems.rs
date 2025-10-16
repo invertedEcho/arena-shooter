@@ -29,7 +29,13 @@ use crate::{
 pub fn spawn_player_hud(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
+    player_weapon: Query<&PlayerWeapon>,
 ) {
+    info!(
+        "Do we have access to player weapon?: {}",
+        player_weapon.iter().len() != 0
+    );
+
     info!("Spawning player hud");
     commands
         .spawn((

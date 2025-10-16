@@ -6,7 +6,8 @@ pub struct PlayerShootCooldownTimer(pub Timer);
 #[derive(Component)]
 pub struct MuzzleFlash;
 
-#[derive(Component)]
+#[derive(Component, Reflect)]
+#[reflect(Component)]
 pub struct PlayerWeapon {
     pub loaded_ammo: u32,
     pub carried_ammo: u32,
