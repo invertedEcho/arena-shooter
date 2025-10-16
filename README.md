@@ -9,6 +9,7 @@
 2. Run the app
   - `cargo run`
 3. Please note that shipping the binary requires disabling dynamic linking. This can be achieved by removing the `dynamic_linking` feature from the dependency `bevy` in `Cargo.toml`
+4. Bevy itself also needs a couple of dependency. You can find installation instructions for Linux, Windows and MacOS [here](https://bevy.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
 
 ## Features
 - [x] User interface
