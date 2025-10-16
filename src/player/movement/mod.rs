@@ -9,6 +9,7 @@ use crate::{
         Player,
         animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationEvent},
         camera::components::ViewModelCamera,
+        shooting::components::PlayerWeapon,
         spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
     },
 };
@@ -60,6 +61,7 @@ pub fn player_movement(
         &mut LinearVelocity,
         &Transform,
         &mut PlayerMovementState,
+        &PlayerWeapon,
     )>,
     player_camera_entity: Single<Entity, With<ViewModelCamera>>,
     spatial_query: SpatialQuery,
@@ -83,6 +85,7 @@ pub fn player_movement(
         mut velocity,
         player_transform,
         mut player_movement_state,
+        player_weapon,
     ) = player.into_inner();
 
     let currently_playing =
@@ -95,6 +98,7 @@ pub fn player_movement(
                 PlayArmWithWeaponAnimationEvent {
                     animation_type: ArmWithWeaponAnimation::Idle,
                     repeat: true,
+                    block_until_done: false,
                 },
             );
         }
@@ -134,6 +138,7 @@ pub fn player_movement(
                 PlayArmWithWeaponAnimationEvent {
                     animation_type: ArmWithWeaponAnimation::Idle,
                     repeat: true,
+                    block_until_done: false,
                 },
             );
         };
@@ -183,6 +188,10 @@ pub fn player_movement(
     velocity.x = world_velocity.x;
     velocity.z = world_velocity.z;
 
+    if player_weapon.reloading {
+        return;
+    }
+
     if speed == PLAYER_RUN_VELOCITY {
         if player_movement_state.0 != MovementState::Running {
             info!("Changing player movement state to runnning");
@@ -191,6 +200,7 @@ pub fn player_movement(
                 PlayArmWithWeaponAnimationEvent {
                     animation_type: ArmWithWeaponAnimation::Run,
                     repeat: true,
+                    block_until_done: false,
                 },
             );
         }
@@ -201,6 +211,7 @@ pub fn player_movement(
                 PlayArmWithWeaponAnimationEvent {
                     animation_type: ArmWithWeaponAnimation::Walk,
                     repeat: true,
+                    block_until_done: false,
                 },
             );
             info!("Changing player movement state to walking");
@@ -212,6 +223,7 @@ pub fn player_movement(
                 PlayArmWithWeaponAnimationEvent {
                     animation_type: ArmWithWeaponAnimation::Idle,
                     repeat: true,
+                    block_until_done: false,
                 },
             );
             info!("Changing player movement state to idle");

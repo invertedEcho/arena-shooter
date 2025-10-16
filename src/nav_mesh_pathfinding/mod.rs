@@ -57,7 +57,7 @@ fn setup_scene(
     mut navmeshes: ResMut<Assets<NavMesh>>,
     mut is_done: Local<bool>,
 ) {
-    // FIXME: properly implement loading and setup
+    // TODO: properly implement loading and setup
     if *is_done {
         return;
     }

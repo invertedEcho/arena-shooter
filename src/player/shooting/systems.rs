@@ -59,7 +59,6 @@ pub fn player_shooting(
     mut play_arm_with_weapon_animation_event_writer: EventWriter<
         PlayArmWithWeaponAnimationEvent,
     >,
-    mut player_movement_type: Single<&mut PlayerMovementState>,
 ) {
     if !mouse_input.pressed(MouseButton::Left) {
         return;
@@ -89,16 +88,16 @@ pub fn player_shooting(
         PlayArmWithWeaponAnimationEvent {
             animation_type: ArmWithWeaponAnimation::Shoot,
             repeat: false,
+            block_until_done: true,
         },
     );
-    player_movement_type.0 = MovementState::Else;
 
-    let audio = asset_server.load(
+    let shoot_sound = asset_server.load(
         "weapons/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 \
          Single MP3.mp3",
     );
 
-    commands.spawn((AudioPlayer::new(audio), PlaybackSettings::ONCE));
+    commands.spawn((AudioPlayer::new(shoot_sound), PlaybackSettings::ONCE));
 
     let local_bullet_velocity = Vec3 {
         z: BULLET_VELOCITY.neg(),
@@ -224,6 +223,7 @@ pub fn detect_enemy_bullet_collision_with_player(
     }
 }
 
+// TODO: this thing is too much
 pub fn handle_blood_screen_effect(
     mut blood_screen_effect_query: Query<(
         Entity,
@@ -301,6 +301,7 @@ pub fn reload_player_weapon(
     animation_event_writer.write(PlayArmWithWeaponAnimationEvent {
         animation_type,
         repeat: false,
+        block_until_done: true,
     });
 }
 

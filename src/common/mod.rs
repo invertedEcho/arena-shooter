@@ -15,9 +15,6 @@ pub enum MovementState {
     Idle,
     Walking,
     Running,
-    // TODO: i dont know if i like this but this is so when we play shoot animation during walking,
-    // we know that we must play different animation again and switch
-    Else,
 }
 
 pub struct CommonPlugin;
