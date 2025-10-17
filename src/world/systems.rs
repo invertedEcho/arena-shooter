@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use avian3d::prelude::*;
-use bevy::{prelude::*, render::view::RenderLayers};
+use bevy::{color::palettes, prelude::*, render::view::RenderLayers};
 
 use crate::{
     enemy::shooting::components::EnemyBullet,
@@ -12,12 +12,13 @@ use crate::{
 pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.spawn((
         DirectionalLight {
-            illuminance: light_consts::lux::OVERCAST_DAY,
+            illuminance: 3000.,
             shadows_enabled: true,
+            color: palettes::css::ANTIQUE_WHITE.into(),
             ..default()
         },
         Transform {
-            translation: Vec3::new(0.0, 2.0, 0.0),
+            translation: Vec3::new(0.0, 12.0, 0.0),
             rotation: Quat::from_rotation_x(-PI / 4.),
             ..default()
         },
