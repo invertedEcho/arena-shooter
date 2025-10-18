@@ -30,4 +30,5 @@ impl Plugin for EnemyPlugin {
 pub struct Enemy {
     state: EnemyState,
     pub health: f32,
+    on_ground: bool,
 }

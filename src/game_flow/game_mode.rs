@@ -47,7 +47,7 @@ pub struct GameStateWave {
     pub enemies_left_from_current_wave: usize,
 }
 
-// TODO: this function takes wayyyy to many arguments
+// TODO: this function takes wayyyy to many parameters
 fn handle_start_game_mode_event(
     mut commands: Commands,
     mut event_reader: EventReader<StartGameModeEvent>,

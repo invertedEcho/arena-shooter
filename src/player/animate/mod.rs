@@ -2,10 +2,7 @@ use std::time::Duration;
 
 use bevy::{animation::RepeatAnimation, prelude::*};
 
-use crate::{
-    common::{MovementState, components::AnimationPlayerEntityPointer},
-    player::{Player, movement::PlayerMovementState},
-};
+use crate::{common::components::AnimationPlayerEntityPointer, player::Player};
 
 const _PLAYER_ARM_WEAPON_DRAW_ANIMATION_INDEX: usize = 0;
 const PLAYER_ARM_WEAPON_SHOOT_ANIMATION_INDEX: usize = 1;
@@ -207,7 +204,7 @@ fn handle_play_arm_with_weapon_animation_event(
             }
         };
 
-        info!(
+        debug!(
             "Received PlayArmWithWeaponAnimationEvent, playing animation {:?}",
             animation_type
         );
@@ -221,9 +218,6 @@ fn handle_play_arm_with_weapon_animation_event(
         if event.block_until_done {
             let animation_duration =
                 get_animation_duration_for_animation_type(animation_type);
-            if *animation_type == ArmWithWeaponAnimation::Shoot {
-                info!("ANIMATION BLOCK TIMER DURATION: {}", animation_duration);
-            }
             commands.insert_resource(AnimationBlockTimer(Timer::from_seconds(
                 animation_duration,
                 TimerMode::Once,

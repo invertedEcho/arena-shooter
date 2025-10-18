@@ -3,6 +3,7 @@ use bevy::{color::palettes::css::RED, prelude::*};
 use vleue_navigator::NavMesh;
 
 use crate::{
+    GRAVITY,
     enemy::Enemy,
     game_flow::states::{AppState, InGameState},
     nav_mesh_pathfinding::CurrentNavMesh,
@@ -31,6 +32,8 @@ impl Plugin for EnemyAiPlugin {
                 enemy_patrol,
                 handle_enemy_state_transition_to_chase_player,
                 check_if_enemy_can_see_player,
+                update_enemy_on_ground,
+                apply_gravity_over_time,
             )
                 .run_if(in_state(AppState::InGame)),
         );
@@ -114,7 +117,7 @@ fn check_if_enemy_can_see_player(
     }
 }
 
-// This is a seperate system, so we only actually fire the event on a change to chasing player, not
+// This is a seperate system, so we only fire the event on a Change to chasing player, not
 // just every frame the enemy cant see the player
 fn handle_enemy_state_transition_to_chase_player(
     changed_enemies: Query<(&Enemy, Entity), Changed<Enemy>>,
@@ -208,6 +211,7 @@ fn handle_start_chasing_player_event(
 }
 
 fn enemy_patrol(
+    mut commands: Commands,
     enemies_with_patrol_path: Query<(
         Entity,
         &mut Enemy,
@@ -236,6 +240,8 @@ fn enemy_patrol(
         if enemy.state != EnemyState::ChasingPlayer {
             continue;
         }
+
+        info!("enemy patrol for entity {}", entity);
 
         let fixed_enemy_transform = Vec3 {
             x: enemy_transform.translation.x,
@@ -275,36 +281,84 @@ fn enemy_patrol(
                 "Enemy reached current patrol point, destinations updated and \
                  enemy now looking at new current_destination"
             );
-            continue;
+        } else {
+            let mut local_velocity = Vec3::ZERO;
+            local_velocity.z -= 2.0;
+
+            let world_velocity = enemy_transform.rotation * local_velocity;
+            let Ok(world_direction) = Dir3::new(world_velocity) else {
+                continue;
+            };
+
+            if let Some(first_hit) = spatial_query.cast_shape(
+                &Collider::capsule(
+                    PLAYER_CAPSULE_RADIUS,
+                    PLAYER_CAPSULE_LENGTH,
+                ),
+                enemy_transform.translation - world_direction.as_vec3() * 0.025,
+                enemy_transform.rotation,
+                world_direction,
+                &ShapeCastConfig {
+                    max_distance: 0.1,
+                    ..default()
+                },
+                &SpatialQueryFilter::default().with_excluded_entities([entity]),
+            ) {
+                info!("Zeroeing out enemy velocity, something is in the way");
+                commands.entity(first_hit.entity).log_components();
+
+                **velocity = Vec3::ZERO;
+                return;
+            }
+
+            info!("Enemy should move to patrol point");
+            **velocity = world_velocity;
         };
+    }
+}
 
-        let mut local_velocity = Vec3::ZERO;
-        local_velocity.z -= 2.0;
-
-        let world_velocity = enemy_transform.rotation * local_velocity;
-        let Some(normalized_world_velocity) = world_velocity.try_normalize()
-        else {
-            **velocity = Vec3::splat(0.0);
-            return;
-        };
-
-        let world_direction = Dir3::new_unchecked(normalized_world_velocity);
-
-        if let Some(_) = spatial_query.cast_shape(
-            &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
-            enemy_transform.translation,
-            enemy_transform.rotation,
-            world_direction,
-            &ShapeCastConfig {
-                max_distance: 0.1,
-                ..default()
-            },
-            &SpatialQueryFilter::default().with_excluded_entities([entity]),
-        ) {
-            **velocity = Vec3::ZERO;
-            return;
+fn update_enemy_on_ground(
+    enemies: Query<(&mut Enemy, &Transform, Entity, &mut LinearVelocity)>,
+    spatial_query: SpatialQuery,
+) {
+    for (mut enemy, transform, player_entity, mut player_velocity) in enemies {
+        let on_ground = spatial_query
+            .cast_shape(
+                &Collider::capsule(
+                    PLAYER_CAPSULE_RADIUS,
+                    PLAYER_CAPSULE_LENGTH,
+                ),
+                transform.translation,
+                transform.rotation,
+                Dir3::NEG_Y,
+                &ShapeCastConfig {
+                    max_distance: 0.1,
+                    ..default()
+                },
+                &SpatialQueryFilter::default()
+                    .with_excluded_entities([player_entity]),
+            )
+            .is_some();
+        if enemy.on_ground != on_ground {
+            enemy.on_ground = on_ground;
         }
 
-        **velocity = world_velocity;
+        if on_ground {
+            if player_velocity.y <= 0.0 {
+                player_velocity.y = 0.0;
+            }
+        }
+    }
+}
+
+fn apply_gravity_over_time(
+    mut enemy_query: Single<(&Enemy, &mut LinearVelocity)>,
+    time: Res<Time>,
+) {
+    let enemy = enemy_query.0;
+    let enemy_velocity = &mut enemy_query.1;
+
+    if !enemy.on_ground {
+        enemy_velocity.y -= GRAVITY * time.delta_secs();
     }
 }

@@ -29,13 +29,7 @@ use crate::{
 pub fn spawn_player_hud(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    player_weapon: Query<&PlayerWeapon>,
 ) {
-    info!(
-        "Do we have access to player weapon?: {}",
-        player_weapon.iter().len() != 0
-    );
-
     info!("Spawning player hud");
     commands
         .spawn((
@@ -91,10 +85,6 @@ pub fn update_player_health_text(
     player: Single<&Player, Changed<Player>>,
     mut player_health_text: Single<&mut Text, With<PlayerHealthText>>,
 ) {
-    info!(
-        "Updating player health text, new text: {}",
-        player.health.to_string()
-    );
     ***player_health_text = player.health.to_string();
 }
 
@@ -109,15 +99,7 @@ pub fn update_player_ammo_text(
         (With<PlayerCarriedAmmoText>, Without<PlayerLoadedAmmoText>),
     >,
 ) {
-    info!(
-        "Updating player loaded ammo text, new text: {}",
-        player_weapon.loaded_ammo.to_string()
-    );
     ***player_loaded_ammo_text = player_weapon.loaded_ammo.to_string();
-    info!(
-        "Updating player carried ammo text, new text: {}",
-        player_weapon.carried_ammo.to_string()
-    );
     ***player_carried_ammo_text = player_weapon.carried_ammo.to_string();
 }
 
@@ -191,7 +173,6 @@ pub fn update_score_hud(
     game_score: Res<GameScore>,
 ) {
     if game_score.is_changed() {
-        info!("Game score changed, updating score hud");
         **player_score_text = Text::new(game_score.player.to_string());
         **enemy_score_text = Text::new(game_score.enemy.to_string());
     }

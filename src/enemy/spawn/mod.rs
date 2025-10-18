@@ -82,7 +82,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_event(
                         .spawn((
                             Transform::from_xyz(
                                 spawn_location_translation.x,
-                                spawn_location_translation.y - 0.15,
+                                spawn_location_translation.y,
                                 spawn_location_translation.z,
                             ),
                             Enemy {

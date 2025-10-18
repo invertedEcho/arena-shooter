@@ -147,7 +147,6 @@ pub fn player_movement(
 
     let world_velocity = player_transform.rotation * local_velocity;
     let Ok(direction) = Dir3::new(world_velocity) else {
-        warn!("probably previous will be kept!");
         return;
     };
 
@@ -194,7 +193,6 @@ pub fn player_movement(
 
     if speed == PLAYER_RUN_VELOCITY {
         if player_movement_state.0 != MovementState::Running {
-            info!("Changing player movement state to runnning");
             player_movement_state.0 = MovementState::Running;
             play_player_arm_weapon_animation_event_writer.write(
                 PlayArmWithWeaponAnimationEvent {
@@ -214,7 +212,6 @@ pub fn player_movement(
                     block_until_done: false,
                 },
             );
-            info!("Changing player movement state to walking");
         }
     } else if local_velocity.x == 0.0 && local_velocity.z == 0.0 {
         if player_movement_state.0 != MovementState::Idle {
@@ -226,7 +223,6 @@ pub fn player_movement(
                     block_until_done: false,
                 },
             );
-            info!("Changing player movement state to idle");
         }
     }
 }
