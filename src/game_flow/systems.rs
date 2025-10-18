@@ -7,7 +7,7 @@ use crate::{
         game_mode::{GameMode, StartGameModeEvent},
         states::InGameState,
     },
-    player::Player,
+    player::{Player, camera::components::FreeCam},
     user_interface::main_menu::MainMenuCamera,
 };
 
@@ -86,6 +86,7 @@ pub fn handle_exit_in_game(
     mut commands: Commands,
     enemies: Query<Entity, With<Enemy>>,
     players: Query<Entity, (With<Player>, Without<Enemy>)>,
+    free_cam_cameras: Query<Entity, With<FreeCam>>,
 ) {
     info!("Despawning all enemies");
     for enemy in enemies {
@@ -94,6 +95,10 @@ pub fn handle_exit_in_game(
     info!("Despawning all players");
     for player in players {
         commands.entity(player).despawn();
+    }
+    for free_cam_camera in free_cam_cameras {
+        info!("Despawning free cam");
+        commands.entity(free_cam_camera).despawn();
     }
 
     info!("Spawning Main Menu Camera");
