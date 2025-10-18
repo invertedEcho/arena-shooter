@@ -1,11 +1,14 @@
 use crate::{
     common::systems::apply_render_layers_to_children,
-    player::camera::{
-        PLAYER_CAMERA_Y_OFFSET,
-        components::{
-            FreeCam, PlayerCameraState, PlayerWeaponModel, WorldModelCamera,
+    player::{
+        camera::{
+            PLAYER_CAMERA_Y_OFFSET,
+            components::{
+                FreeCam, PlayerCameraState, PlayerWeaponModel, WorldModelCamera,
+            },
+            events::SpawnPlayerCamerasEvent,
         },
-        events::SpawnPlayerCamerasEvent,
+        shooting::components::PlayerWeapon,
     },
 };
 use std::f32::consts::{FRAC_PI_2, PI};
@@ -27,6 +30,11 @@ pub fn setup_player_cameras(
     mut spawn_player_cameras_event_reader: EventReader<SpawnPlayerCamerasEvent>,
 ) {
     for _ in spawn_player_cameras_event_reader.read() {
+        info!(
+            "Received SpawnPlayerCamerasEvent, spawning weapon model and \
+             player cameras"
+        );
+
         let weapon_model = asset_server
             .load(GltfAssetLabel::Scene(0).from_asset("test.glb#Scene0"));
 
@@ -146,7 +154,11 @@ pub fn toggle_freecam(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     player_camera_entities_query: Query<
         Entity,
-        Or<(With<ViewModelCamera>, With<WorldModelCamera>)>,
+        Or<(
+            With<ViewModelCamera>,
+            With<WorldModelCamera>,
+            With<PlayerWeaponModel>,
+        )>,
     >,
     free_cam_entity_query: Query<Entity, With<FreeCam>>,
     mut spawn_player_cameras_event_writer: EventWriter<SpawnPlayerCamerasEvent>,
@@ -248,4 +260,16 @@ pub fn free_cam_orbit(
         free_cam_transform.rotation =
             Quat::from_euler(EulerRot::YXZ, new_yaw, new_pitch, current_roll);
     }
+}
+
+pub fn make_player_weapon_visible(
+    mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
+) {
+    **player_weapon = Visibility::Visible;
+}
+
+pub fn make_player_weapon_hidden(
+    mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
+) {
+    **player_weapon = Visibility::Hidden;
 }

@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_inspector_egui::egui::TextStyle;
 
 use crate::{
     game_flow::states::{AppDebugState, AppState, InGameState, MainMenuState},
@@ -135,14 +134,7 @@ fn update_current_app_state_text(
     app_state: Res<State<AppState>>,
 ) {
     if app_state.is_changed() {
-        match *app_state.get() {
-            AppState::MainMenu => {
-                **current_app_state_text = Text::new("MainMenu");
-            }
-            AppState::InGame => {
-                **current_app_state_text = Text::new("InGame");
-            }
-        }
+        **current_app_state_text = Text::new(format!("{:?}", *app_state.get()));
     }
 }
 
@@ -154,20 +146,8 @@ fn update_current_main_menu_state(
     main_menu_state: Res<State<MainMenuState>>,
 ) {
     if main_menu_state.is_changed() {
-        match *main_menu_state.get() {
-            MainMenuState::None => {
-                **current_main_menu_state_text = Text::new("None");
-            }
-            MainMenuState::Root => {
-                **current_main_menu_state_text = Text::new("Root");
-            }
-            MainMenuState::Settings => {
-                **current_main_menu_state_text = Text::new("Settings");
-            }
-            MainMenuState::GameModeSelection => {
-                **current_main_menu_state_text = Text::new("GameModeSelection");
-            }
-        }
+        **current_main_menu_state_text =
+            Text::new(format!("{:?}", *main_menu_state.get()));
     }
 }
 
@@ -179,23 +159,8 @@ fn update_current_in_game_state_text(
     in_game_state: Res<State<InGameState>>,
 ) {
     if in_game_state.is_changed() {
-        match *in_game_state.get() {
-            InGameState::Playing => {
-                **current_in_game_state_text = Text::new("Playing");
-            }
-            InGameState::PlayerDead => {
-                **current_in_game_state_text = Text::new("PlayerDead");
-            }
-            InGameState::Paused => {
-                **current_in_game_state_text = Text::new("Paused");
-            }
-            InGameState::PausedDebug => {
-                **current_in_game_state_text = Text::new("PausedDebug");
-            }
-            InGameState::None => {
-                **current_in_game_state_text = Text::new("None");
-            }
-        }
+        **current_in_game_state_text =
+            Text::new(format!("{:?}", *in_game_state.get()));
     }
 }
 
