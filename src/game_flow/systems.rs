@@ -1,7 +1,12 @@
 use bevy::{prelude::*, window::CursorGrabMode};
 
 use crate::{
-    game_flow::{AppState, states::InGameState},
+    enemy::Enemy,
+    game_flow::{
+        AppState,
+        game_mode::{GameMode, StartGameModeEvent},
+        states::InGameState,
+    },
     player::Player,
     user_interface::main_menu::MainMenuCamera,
 };
@@ -54,25 +59,36 @@ pub fn handle_escape(
 //     **player_weapon = Visibility::Hidden;
 // }
 
-pub fn enable_debug_paused(
-    mut next_in_game_state: ResMut<NextState<InGameState>>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-) {
-    if keyboard_input.just_pressed(KeyCode::KeyP) {
-        next_in_game_state.set(InGameState::PausedDebug);
-    }
-}
+// pub fn enable_debug_paused(
+//     mut next_in_game_state: ResMut<NextState<InGameState>>,
+//     keyboard_input: Res<ButtonInput<KeyCode>>,
+// ) {
+//     if keyboard_input.just_pressed(KeyCode::KeyP) {
+//         next_in_game_state.set(InGameState::PausedDebug);
+//     }
+// }
+//
+// pub fn reset_player_position(
+//     mut player_transform: Single<&mut Transform, With<Player>>,
+//     keyboard_input: Res<ButtonInput<KeyCode>>,
+// ) {
+//     if keyboard_input.just_pressed(KeyCode::KeyP) {
+//         player_transform.translation = Vec3::ZERO;
+//     }
+// }
 
-pub fn reset_player_position(
-    mut player_transform: Single<&mut Transform, With<Player>>,
+pub fn restart_game(
     keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut start_game_mode_writer: EventWriter<StartGameModeEvent>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyP) {
-        player_transform.translation = Vec3::ZERO;
+        info!("restarting game mode");
+        start_game_mode_writer.write(StartGameModeEvent(GameMode::Waves));
     }
 }
 
 pub fn spawn_main_menu_camera(mut commands: Commands) {
+    info!("Spawning Main Menu Camera");
     commands.spawn((
         Camera::default(),
         Camera3d::default(),
@@ -81,13 +97,21 @@ pub fn spawn_main_menu_camera(mut commands: Commands) {
     ));
 }
 
-pub fn handle_enter_main_menu(
+pub fn handle_exit_in_game(
     mut commands: Commands,
-    player: Single<Entity, With<Player>>,
+    enemies: Query<Entity, With<Enemy>>,
+    players: Query<Entity, (With<Player>, Without<Enemy>)>,
 ) {
-    info!("handling enter main menu");
-    commands.entity(*player).despawn();
+    info!("Despawning all enemies");
+    for enemy in enemies {
+        commands.entity(enemy).despawn();
+    }
+    info!("Despawning all players");
+    for player in players {
+        commands.entity(player).despawn();
+    }
 
+    info!("Spawning Main Menu Camera");
     commands.spawn((
         Camera::default(),
         Camera3d::default(),

@@ -1,10 +1,13 @@
 use bevy::prelude::*;
+use bevy_inspector_egui::egui::TextStyle;
 
 use crate::{
     game_flow::states::{AppDebugState, AppState, InGameState, MainMenuState},
     nav_mesh_pathfinding::NavMeshDisp,
     player::{Player, movement::PlayerMovementState},
 };
+
+const DEBUG_OVERLAY_TEXT_SIZE: f32 = 15.0;
 
 pub struct DebugOverlayPlugin;
 
@@ -57,16 +60,73 @@ fn spawn_debug_overlay(mut commands: Commands) {
             StateScoped(AppDebugState::DebugVisible),
         ))
         .with_children(|parent| {
-            parent.spawn(Text::new("Player Info:"));
-            parent.spawn((Text::new(""), PlayerInfoText));
-            parent.spawn(Text::new("Player Movement State:"));
-            parent.spawn((Text::new(""), PlayerMovementStateText));
-            parent.spawn(Text::new("Current AppState:"));
-            parent.spawn((Text::new(""), CurrentAppStateText));
-            parent.spawn(Text::new("Current InGameState:"));
-            parent.spawn((Text::new(""), CurrentInGameStateText));
-            parent.spawn(Text::new("Current MainMenuState:"));
-            parent.spawn((Text::new(""), CurrentMainMenuStateText));
+            parent.spawn((
+                Text::new(""),
+                PlayerInfoText,
+                TextFont {
+                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                    ..default()
+                },
+            ));
+            parent.spawn((
+                Text::new("Player Movement State:"),
+                TextFont {
+                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                    ..default()
+                },
+            ));
+            parent.spawn((
+                Text::new(""),
+                PlayerMovementStateText,
+                TextFont {
+                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                    ..default()
+                },
+            ));
+            parent.spawn((
+                Text::new("Current AppState:"),
+                TextFont {
+                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                    ..default()
+                },
+            ));
+            parent.spawn((
+                Text::new(""),
+                CurrentAppStateText,
+                TextFont {
+                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                    ..default()
+                },
+            ));
+            parent.spawn((
+                Text::new("Current InGameState:"),
+                TextFont {
+                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                    ..default()
+                },
+            ));
+            parent.spawn((
+                (Text::new(""), CurrentInGameStateText),
+                TextFont {
+                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                    ..default()
+                },
+            ));
+            parent.spawn((
+                Text::new("Current MainMenuState:"),
+                TextFont {
+                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                    ..default()
+                },
+            ));
+            parent.spawn((
+                Text::new(""),
+                CurrentMainMenuStateText,
+                TextFont {
+                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                    ..default()
+                },
+            ));
         });
 }
 

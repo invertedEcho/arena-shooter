@@ -6,9 +6,8 @@ use crate::{
         score::GameScorePlugin,
         states::{AppDebugState, AppState, InGameState, MainMenuState},
         systems::{
-            enable_debug_paused, free_mouse, grab_mouse,
-            handle_enter_main_menu, handle_escape, reset_player_position,
-            spawn_main_menu_camera,
+            free_mouse, grab_mouse, handle_escape, handle_exit_in_game,
+            restart_game, spawn_main_menu_camera,
         },
     },
     player::PlayerDeathEvent,
@@ -32,9 +31,9 @@ impl Plugin for GameFlowPlugin {
             .add_plugins(GameModePlugin)
             .add_systems(OnEnter(InGameState::Playing), grab_mouse)
             .add_systems(OnEnter(InGameState::Paused), free_mouse)
+            .add_systems(OnExit(AppState::InGame), handle_exit_in_game)
             .add_systems(Update, handle_escape)
-            .add_systems(Update, (enable_debug_paused, reset_player_position))
-            .add_systems(OnEnter(AppState::MainMenu), handle_enter_main_menu)
-            .add_systems(Startup, spawn_main_menu_camera);
+            .add_systems(Startup, spawn_main_menu_camera)
+            .add_systems(Update, restart_game);
     }
 }
