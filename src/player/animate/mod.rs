@@ -47,8 +47,11 @@ pub struct AnimationBlockTimer(pub Timer);
 pub struct PlayArmWithWeaponAnimationEvent {
     pub animation_type: ArmWithWeaponAnimation,
     pub repeat: bool,
+    // TODO: fix this, maybe wait a couple of milli seconds after last animation played beforre
+    // switching to movement state animation so we dont get scenarios like:
+    // Run -> Shoot -> Run (even though the user is still shooting) -> Shoot
     /// If true, this animation will block all other animation requests until the given animation
-    /// is done playing. When the animation is done playing, the animation will be played for the
+    /// is done playing. When the blocking animation is done playing, the animation will be played for the
     /// current PlayerMovementState.
     pub block_until_done: bool,
 }
@@ -240,29 +243,14 @@ fn handle_play_arm_with_weapon_animation_event(
 fn handle_player_arm_weapon_animation_block_timer(
     animation_block_timer: Option<ResMut<AnimationBlockTimer>>,
     mut commands: Commands,
-    mut event_writer: EventWriter<PlayArmWithWeaponAnimationEvent>,
     time: Res<Time>,
-    player_movement_state: Single<&PlayerMovementState>,
 ) {
     let Some(mut animation_block_timer) = animation_block_timer else {
         return;
     };
     animation_block_timer.0.tick(time.delta());
     if animation_block_timer.0.just_finished() {
-        let animation_type = match player_movement_state.0 {
-            MovementState::Idle => ArmWithWeaponAnimation::Idle,
-            MovementState::Walking => ArmWithWeaponAnimation::Walk,
-            MovementState::Running => ArmWithWeaponAnimation::Run,
-        };
-
-        // this is race condition, even though we remove the resource, and then write the event,
-        // the system says that the PlayArmWithWeaponAnimationEvent still exists
         commands.remove_resource::<AnimationBlockTimer>();
-        event_writer.write(PlayArmWithWeaponAnimationEvent {
-            animation_type,
-            repeat: true,
-            block_until_done: false,
-        });
     }
 }
 
