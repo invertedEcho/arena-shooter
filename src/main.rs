@@ -61,7 +61,7 @@ fn main() {
 
     // avian (physics)
     app.add_plugins(PhysicsPlugins::default())
-        .add_plugins(PhysicsDebugPlugin::default())
+        // .add_plugins(PhysicsDebugPlugin::default())
         .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
 
     // skein

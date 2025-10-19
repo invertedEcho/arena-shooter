@@ -6157,11 +6157,7 @@
 				289
 			],
 			"extras":{
-				"skein":[
-					{
-						"bevy_camera::visibility::Visibility":"Visible"
-					}
-				]
+				"skein":[]
 			},
 			"name":"Map"
 		},

@@ -283,11 +283,6 @@ pub fn reload_player_weapon(
         PARTIAL_RELOAD_TIME
     };
 
-    info!(
-        "Full reload timer animation: {}",
-        reload_timer_duration == FULL_RELOAD_TIME
-    );
-
     commands.insert_resource(ReloadTimer(Timer::from_seconds(
         reload_timer_duration,
         TimerMode::Once,

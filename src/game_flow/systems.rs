@@ -1,6 +1,6 @@
 use bevy::{
     prelude::*,
-    window::{CursorGrabMode, CursorOptions, PrimaryMonitor},
+    window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 
 use crate::{
@@ -15,10 +15,7 @@ use crate::{
 };
 
 pub fn grab_mouse(
-    mut primary_cursor_options: Single<
-        &mut CursorOptions,
-        With<PrimaryMonitor>,
-    >,
+    mut primary_cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
     info!("Grabbing mouse");
     primary_cursor_options.visible = false;
@@ -26,10 +23,7 @@ pub fn grab_mouse(
 }
 
 pub fn free_mouse(
-    mut primary_cursor_options: Single<
-        &mut CursorOptions,
-        With<PrimaryMonitor>,
-    >,
+    mut primary_cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
     primary_cursor_options.visible = true;
     primary_cursor_options.grab_mode = CursorGrabMode::None;

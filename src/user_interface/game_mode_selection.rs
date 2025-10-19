@@ -1,4 +1,4 @@
-use bevy::{ecs::message, prelude::*};
+use bevy::prelude::*;
 
 use crate::game_flow::{
     game_mode::{GameMode, StartGameModeMessage},
@@ -13,14 +13,6 @@ impl Plugin for GameModeSelectionUIPlugin {
             OnEnter(MainMenuState::GameModeSelection),
             spawn_game_mode_selection_screen,
         )
-        .add_systems(
-            OnExit(MainMenuState::GameModeSelection),
-            despawn_game_mode_selection_screen,
-        )
-        // .add_systems(
-        //     OnExit(AppState::MainMenu),
-        //     despawn_game_mode_selection_screen,
-        // )
         .add_systems(
             Update,
             (
@@ -57,6 +49,7 @@ fn spawn_game_mode_selection_screen(mut commands: Commands) {
                 ..default()
             },
             GameModeSelectionScreen,
+            DespawnOnExit(MainMenuState::GameModeSelection),
         ))
         .with_children(|parent| {
             parent
@@ -105,14 +98,6 @@ fn spawn_game_mode_selection_screen(mut commands: Commands) {
         });
 }
 
-fn despawn_game_mode_selection_screen(
-    mut commands: Commands,
-    game_mode_selection_screen: Single<Entity, With<GameModeSelectionScreen>>,
-) {
-    info!("Despawning game mode selection screen");
-    commands.entity(*game_mode_selection_screen).despawn();
-}
-
 fn handle_game_mode_selection_button_press(
     query: Query<
         (&Interaction, &GameModeSelectionButton),
@@ -133,12 +118,10 @@ fn handle_game_mode_selection_button_press(
                     message_writer.write(StartGameModeMessage(GameMode::Waves));
                 }
                 GameMode::FreePlay => {
-                    info!("ineraction pressed on free play mode");
                     next_app_state.set(AppState::InGame);
                     next_game_mode_state.set(GameMode::FreePlay);
                     message_writer
                         .write(StartGameModeMessage(GameMode::FreePlay));
-                    info!("fired start game mode event free play");
                 }
             }
         }
