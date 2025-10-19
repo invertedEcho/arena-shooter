@@ -21,8 +21,8 @@ jobs:
     steps:
     - name: Update apt repositories
       run: sudo apt update
-    - name: Install mold linker
-      run: sudo apt install mold
+    - name: Install system dependencies
+      run: sudo apt install mold libwayland-dev libxkbcommon-dev g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0
     - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
     - uses: actions/checkout@v4
     - name: Build
