@@ -17,7 +17,7 @@ pub struct PlayerAnimatePlugin;
 
 impl Plugin for PlayerAnimatePlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<PlayArmWithWeaponAnimationMessage>()
+        app.add_message::<PlayArmWithWeaponAnimationMessage>()
             .add_systems(Startup, load_arms_animations)
             .add_systems(
                 Update,
@@ -146,7 +146,7 @@ pub fn link_player_animation(
 
 fn handle_play_arm_with_weapon_animation_event(
     mut commands: Commands,
-    mut event_reader: EventReader<PlayArmWithWeaponAnimationMessage>,
+    mut message_reader: MessageReader<PlayArmWithWeaponAnimationMessage>,
     animation_player_entity_pointer: Single<
         &AnimationPlayerEntityPointer,
         With<Player>,
@@ -159,7 +159,7 @@ fn handle_play_arm_with_weapon_animation_event(
     animations: Res<PlayerArmWithWeaponAnimations>,
     animation_block_timer: Option<Res<AnimationBlockTimer>>,
 ) {
-    for event in event_reader.read() {
+    for event in message_reader.read() {
         let Ok((_, mut animation_player, mut animation_transitions)) =
             animation_players_and_animation_transitions
                 .get_mut(animation_player_entity_pointer.0)
@@ -205,7 +205,8 @@ fn handle_play_arm_with_weapon_animation_event(
         };
 
         debug!(
-            "Received PlayArmWithWeaponAnimationEvent, playing animation {:?}",
+            "Received PlayArmWithWeaponAnimationMessage, playing animation \
+             {:?}",
             animation_type
         );
 

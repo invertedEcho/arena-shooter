@@ -327,10 +327,10 @@ pub fn spawn_muzzle_flash(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut player_shot_event_reader: EventReader<PlayerWeaponFiredMessage>,
+    mut player_shot_message_reader: MessageReader<PlayerWeaponFiredMessage>,
     player_camera_entity: Single<Entity, With<ViewModelCamera>>,
 ) {
-    for _ in player_shot_event_reader.read() {
+    for _ in player_shot_message_reader.read() {
         let random_rotation_angle = get_random_number_from_range_i32(0, 5);
         commands.entity(*player_camera_entity).with_child((
             Transform {
@@ -375,7 +375,7 @@ pub fn spawn_muzzle_flash(
 pub fn accurate_check_bullet_collision_for_impact_particle(
     spatial_query: SpatialQuery,
     player_entity: Single<Entity, With<Player>>,
-    mut bullet_effect_spawn_event_writer: EventWriter<
+    mut bullet_effect_spawn_message_writer: MessageWriter<
         SpawnBulletImpactEffectMessage,
     >,
     enemy_entities: Query<Entity, With<Enemy>>,
@@ -383,7 +383,7 @@ pub fn accurate_check_bullet_collision_for_impact_particle(
         (Entity, &GlobalTransform),
         (With<ViewModelCamera>, Without<Player>),
     >,
-    mut player_shot_event_reader: EventReader<PlayerWeaponFiredMessage>,
+    mut player_shot_event_reader: MessageReader<PlayerWeaponFiredMessage>,
     // maybe only include player bullets. would be cool to be able to shoot enemy bullets and have
     // a special effect or something
     bullet_entities: Query<Entity, Or<(With<PlayerBullet>, With<EnemyBullet>)>>,
@@ -422,7 +422,7 @@ pub fn accurate_check_bullet_collision_for_impact_particle(
                 BulletImpactEffectVariant::World
             };
 
-            bullet_effect_spawn_event_writer.write(
+            bullet_effect_spawn_message_writer.write(
                 SpawnBulletImpactEffectMessage {
                     spawn_location: hit_point,
                     variant,
@@ -433,10 +433,10 @@ pub fn accurate_check_bullet_collision_for_impact_particle(
 }
 
 pub fn handle_player_death_event(
-    mut event_reader: EventReader<PlayerDeathMessage>,
+    mut message_reader: MessageReader<PlayerDeathMessage>,
     mut player_movement_state: Single<&mut PlayerMovementState>,
 ) {
-    for _ in event_reader.read() {
+    for _ in message_reader.read() {
         player_movement_state.0 = MovementState::Idle;
     }
 }

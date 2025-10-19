@@ -177,7 +177,7 @@ pub fn play_enemy_hit_animation(
         else {
             warn!(
                 "Could not find animation player and transitions for enemy \
-                 entity from PlayerBulletHitEnemyEvent"
+                 entity from PlayerBulletHitEnemyMessage"
             );
             continue;
         };

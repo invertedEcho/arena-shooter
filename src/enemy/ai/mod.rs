@@ -119,18 +119,20 @@ fn check_if_enemy_can_see_player(
 // just every frame the enemy cant see the player
 fn handle_enemy_state_transition_to_chase_player(
     changed_enemies: Query<(&Enemy, Entity), Changed<Enemy>>,
-    mut start_chasing_player_event_writer: EventWriter<
+    mut start_chasing_player_message_writer: MessageWriter<
         StartChasingPlayerMessage,
     >,
 ) {
     for (enemy, enemy_entity) in changed_enemies {
         if enemy.state == EnemyState::ChasingPlayer {
+            // TODO: this feels kinda useless? we just write a message when the state changes, why
+            // not directly write the message instead of changing the state
             info!(
                 "Enemy {} changed state to ChasingPlayer, firing \
-                 StartChasingPlayerEvent",
+                 StartChasingPlayerMessage",
                 enemy_entity
             );
-            start_chasing_player_event_writer
+            start_chasing_player_message_writer
                 .write(StartChasingPlayerMessage { enemy_entity });
         }
     }
@@ -151,13 +153,13 @@ fn handle_start_chasing_player_message(
             .find(|(entity, _)| *entity == event.enemy_entity)
         else {
             warn!(
-                "A StartChasingPlayerEvent was read, but the enemy entity \
+                "A StartChasingPlayerMessage was read, but the enemy entity \
                  from the event couldn't be found."
             );
             continue;
         };
         info!(
-            "StartChasingPlayerEvent was read for enemy_entity: {}",
+            "StartChasingPlayerMessage was read for enemy_entity: {}",
             enemy_entity
         );
     }

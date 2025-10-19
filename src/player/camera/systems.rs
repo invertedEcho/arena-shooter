@@ -33,7 +33,7 @@ pub fn setup_player_cameras(
 ) {
     for _ in spawn_player_cameras_message_reader.read() {
         info!(
-            "Received SpawnPlayerCamerasEvent, spawning weapon model and \
+            "Received SpawnPlayerCamerasMessage, spawning weapon model and \
              player cameras"
         );
 

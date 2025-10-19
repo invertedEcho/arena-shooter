@@ -50,20 +50,20 @@ pub struct GameStateWave {
 // TODO: this function takes wayyyy to many parameters
 fn handle_start_game_mode_event(
     mut commands: Commands,
-    mut event_reader: EventReader<StartGameModeMessage>,
+    mut message_reader: MessageReader<StartGameModeMessage>,
     mut next_app_state: ResMut<NextState<AppState>>,
-    mut spawn_enemies_event_writer: EventWriter<SpawnEnemiesMessage>,
+    mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     player_spawn_location: Single<&Transform, With<PlayerSpawnLocation>>,
     main_menu_camera: Single<Entity, With<MainMenuCamera>>,
-    mut spawn_player_event_writer: EventWriter<PlayerSpawnMessage>,
+    mut spawn_player_message_writer: MessageWriter<PlayerSpawnMessage>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
-    mut spawn_player_cameras_event_writer: EventWriter<
+    mut spawn_player_cameras_message_writer: MessageWriter<
         SpawnPlayerCamerasMessage,
     >,
 ) {
-    for event in event_reader.read() {
+    for event in message_reader.read() {
         info!("got start game mode event, despawning main menu camera");
         commands.entity(*main_menu_camera).despawn();
         next_main_menu_state.set(MainMenuState::None);
@@ -77,7 +77,7 @@ fn handle_start_game_mode_event(
                     enemies_left_from_current_wave: enemy_count,
                 });
                 next_app_state.set(AppState::InGame);
-                spawn_enemies_event_writer.write(SpawnEnemiesMessage {
+                spawn_enemies_message_writer.write(SpawnEnemiesMessage {
                     enemy_count,
                     spawn_strategy: EnemySpawnStrategy::RandomSelection,
                 });
@@ -87,18 +87,16 @@ fn handle_start_game_mode_event(
             }
         }
 
-        info!("writing playerspawnevent");
-        spawn_player_event_writer.write(PlayerSpawnMessage {
+        spawn_player_message_writer.write(PlayerSpawnMessage {
             spawn_location: player_spawn_location.translation,
         });
-        info!("writing SpawnPlayerCamerasEvent");
-        spawn_player_cameras_event_writer.write(SpawnPlayerCamerasMessage);
+        spawn_player_cameras_message_writer.write(SpawnPlayerCamerasMessage);
     }
 }
 
 pub fn get_enemy_count_per_wave(wave: usize) -> usize {
     return match wave {
-        1 => 1,
+        1 => 3,
         2 => 4,
         3 => 6,
         4 => 8,
@@ -113,7 +111,7 @@ pub fn get_enemy_count_per_wave(wave: usize) -> usize {
 fn handle_game_state_wave_changed(
     game_state_wave: Res<State<GameStateWave>>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
-    mut spawn_enemies_event_writer: EventWriter<SpawnEnemiesMessage>,
+    mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
 ) {
     if game_state_wave.is_changed() && !game_state_wave.is_changed() {
         if game_state_wave.enemies_left_from_current_wave == 0 {
@@ -128,7 +126,7 @@ fn handle_game_state_wave_changed(
                 current_wave: new_wave,
                 enemies_left_from_current_wave: new_enemy_count,
             });
-            spawn_enemies_event_writer.write(SpawnEnemiesMessage {
+            spawn_enemies_message_writer.write(SpawnEnemiesMessage {
                 enemy_count: new_enemy_count,
                 spawn_strategy: EnemySpawnStrategy::RandomSelection,
             });

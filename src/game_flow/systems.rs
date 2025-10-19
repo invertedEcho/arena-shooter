@@ -72,11 +72,12 @@ pub fn handle_escape(
 
 pub fn restart_game(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut start_game_mode_writer: EventWriter<StartGameModeMessage>,
+    mut start_game_mode_message_writer: MessageWriter<StartGameModeMessage>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyP) {
-        info!("restarting game mode");
-        start_game_mode_writer.write(StartGameModeMessage(GameMode::Waves));
+        info!("Restarting game");
+        start_game_mode_message_writer
+            .write(StartGameModeMessage(GameMode::Waves));
     }
 }
 

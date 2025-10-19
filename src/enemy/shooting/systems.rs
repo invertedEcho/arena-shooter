@@ -10,7 +10,7 @@ use crate::{
         ai::EnemyState,
         shooting::{
             components::{EnemyBullet, EnemyShootPlayerCooldownTimer},
-            events::EnemyKilledMessage,
+            messages::EnemyKilledMessage,
         },
         spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
     },
@@ -110,7 +110,7 @@ pub fn tick_enemy_shoot_player_cooldown_timer(
 // flow/ game mode
 pub fn handle_enemy_killed_event(
     mut commands: Commands,
-    mut event_reader: EventReader<EnemyKilledMessage>,
+    mut message_reader: MessageReader<EnemyKilledMessage>,
     current_game_mode: Res<State<GameMode>>,
     game_state_wave: Res<State<GameStateWave>>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
@@ -118,15 +118,15 @@ pub fn handle_enemy_killed_event(
     mut game_score: ResMut<GameScore>,
     mut spawn_enemies_event_writer: MessageWriter<SpawnEnemiesMessage>,
 ) {
-    for event in event_reader.read() {
+    for message in message_reader.read() {
         let Some((enemy_entity, mut enemy)) = enemy_query
             .iter_mut()
-            .find(|(entity, _)| *entity == event.0)
+            .find(|(entity, _)| *entity == message.0)
         else {
             warn!(
-                "An EnemyKilledEvent was fired, but the containing enemy \
+                "An EnemyKilledMessage was read, but the containing enemy \
                  entity does not seem to exist: {}",
-                event.0
+                message.0
             );
             continue;
         };
