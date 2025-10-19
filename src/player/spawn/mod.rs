@@ -33,6 +33,7 @@ fn handle_player_spawn_event(
             Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH);
 
         commands.spawn((
+            Name::new("Player"),
             Player::default(),
             Transform::from_translation(event.spawn_location),
             RigidBody::Kinematic,

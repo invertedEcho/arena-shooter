@@ -24,8 +24,12 @@ pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
         RenderLayers::from_layers(&[0, 1]),
     ));
 
-    commands.spawn(SceneRoot(
-        asset_server.load(GltfAssetLabel::Scene(0).from_asset("main.gltf")),
+    commands.spawn((
+        SceneRoot(
+            asset_server.load(GltfAssetLabel::Scene(0).from_asset("main.gltf")),
+        ),
+        Name::new("World Root main.gltf"),
+        Visibility::Visible,
     ));
 }
 

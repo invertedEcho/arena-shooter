@@ -80,6 +80,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                         chosen_spawn_location.1.translation;
                     commands
                         .spawn((
+                            Name::new("Enemy"),
                             Transform::from_xyz(
                                 spawn_location_translation.x,
                                 spawn_location_translation.y,
