@@ -105,6 +105,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 TimerMode::Repeating,
                             )),
                             Visibility::Visible,
+                            CollidingEntities::default(),
                         ))
                         .with_child((
                             Transform {

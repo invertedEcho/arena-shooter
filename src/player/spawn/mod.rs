@@ -44,6 +44,7 @@ fn handle_player_spawn_event(
             LinearVelocity::ZERO,
             Visibility::Visible,
             CollisionEventsEnabled,
+            CollidingEntities::default(),
         ));
     }
 }

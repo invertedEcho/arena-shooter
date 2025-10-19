@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use crate::{
     common::{BULLET_VELOCITY, MovementState, components::DespawnTimer},
     enemy::{Enemy, shooting::components::EnemyBullet},
+    game_flow::{score::GameScore, states::InGameState},
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
     player::{
         Player, PlayerDeathMessage,
@@ -143,85 +144,74 @@ pub fn tick_player_weapon_shoot_cooldown_timer(
     }
 }
 
-// FIXME: add again
-// pub fn detect_enemy_bullet_collision_with_player(
-//     asset_server: Res<AssetServer>,
-//     mut commands: Commands,
-//     mut collision_event_reader: EventReader<CollisionStarted>,
-//     enemy_bullet_query: Query<Entity, With<EnemyBullet>>,
-//     player_query: Single<(Entity, &mut Player)>,
-//     mut next_in_game_state: ResMut<NextState<InGameState>>,
-//     mut game_score: ResMut<GameScore>,
-// ) {
-//     let (player_entity, mut player) = player_query.into_inner();
-//
-//     for CollisionStarted(first_entity, second_entity) in
-//         collision_event_reader.read()
-//     {
-//         let collided_entities_is_player =
-//             player_entity == *first_entity || player_entity == *second_entity;
-//
-//         if !collided_entities_is_player {
-//             continue;
-//         }
-//
-//         let Some(bullet_entity) = enemy_bullet_query
-//             .iter()
-//             .find(|entity| entity == first_entity || entity == second_entity)
-//         else {
-//             continue;
-//         };
-//         commands.entity(bullet_entity).despawn();
-//
-//         commands.spawn((
-//             ImageNode {
-//                 image: asset_server.load("Bloody Screen Effects/Effect_5.png"),
-//                 color: Color::srgba(1.0, 1.0, 1.0, 1.0),
-//                 ..default()
-//             },
-//             BloodScreenEffect::default(),
-//         ));
-//
-//         player.health -= 10.0;
-//         if player.health <= 0.0 {
-//             next_in_game_state.set(InGameState::PlayerDead);
-//             game_score.enemy += 1;
-//         }
-//
-//         // TODO: bullet damage indicator directional to enemy:
-//         // Add once bevy 0.17 is released and all dependencies this project uses have migrated to
-//         // 0.17
-//         // let Ok(transform_of_enemy) =
-//         //     enemy_transforms.get(enemy_bullet.origin_enemy)
-//         // else {
-//         //     continue;
-//         // };
-//         // let hit_direction = (transform_of_enemy.translation
-//         //     - player_transform.translation)
-//         //     .normalize();
-//         // let local_direction =
-//         //     player_transform.rotation.conjugate() * hit_direction;
-//         // let flat_direction = Vec2::new(local_direction.x, local_direction.z);
-//         // let angle_radians = flat_direction.x.atan2(flat_direction.y);
-//         // let angle_degrees = angle_radians.to_degrees();
-//         // commands
-//         //     .spawn(Node {
-//         //         width: Val::Percent(100.0),
-//         //         height: Val::Percent(100.0),
-//         //         justify_content: JustifyContent::Center,
-//         //         align_items: AlignItems::Center,
-//         //         ..default()
-//         //     })
-//         //     .with_child((
-//         //         ImageNode {
-//         //             image: asset_server.load("hud/damage_indicator.png"),
-//         //             ..default()
-//         //         },
-//         //         UiTransform::new(),
-//         //         BloodScreenEffect::default(),
-//         //     ));
-//     }
-// }
+pub fn detect_enemy_bullet_collision_with_player(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    enemy_bullet_query: Query<Entity, With<EnemyBullet>>,
+    player_query: Query<(&mut Player, &CollidingEntities)>,
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
+    mut game_score: ResMut<GameScore>,
+) {
+    for (mut player, colliding_entities) in player_query {
+        let enemy_bullets_colliding_with_player =
+            enemy_bullet_query.iter().filter(|enemy_bullet_entity| {
+                colliding_entities.contains(enemy_bullet_entity)
+            });
+
+        for enemy_bullet_entity in enemy_bullets_colliding_with_player {
+            commands.entity(enemy_bullet_entity).despawn();
+
+            commands.spawn((
+                ImageNode {
+                    image: asset_server
+                        .load("Bloody Screen Effects/Effect_5.png"),
+                    color: Color::srgba(1.0, 1.0, 1.0, 1.0),
+                    ..default()
+                },
+                BloodScreenEffect::default(),
+            ));
+
+            player.health -= 10.0;
+            if player.health <= 0.0 {
+                next_in_game_state.set(InGameState::PlayerDead);
+                game_score.enemy += 1;
+            }
+        }
+    }
+
+    // TODO: bullet damage indicator directional to enemy:
+    // Add once bevy 0.17 is released and all dependencies this project uses have migrated to
+    // 0.17
+    // let Ok(transform_of_enemy) =
+    //     enemy_transforms.get(enemy_bullet.origin_enemy)
+    // else {
+    //     continue;
+    // };
+    // let hit_direction = (transform_of_enemy.translation
+    //     - player_transform.translation)
+    //     .normalize();
+    // let local_direction =
+    //     player_transform.rotation.conjugate() * hit_direction;
+    // let flat_direction = Vec2::new(local_direction.x, local_direction.z);
+    // let angle_radians = flat_direction.x.atan2(flat_direction.y);
+    // let angle_degrees = angle_radians.to_degrees();
+    // commands
+    //     .spawn(Node {
+    //         width: Val::Percent(100.0),
+    //         height: Val::Percent(100.0),
+    //         justify_content: JustifyContent::Center,
+    //         align_items: AlignItems::Center,
+    //         ..default()
+    //     })
+    //     .with_child((
+    //         ImageNode {
+    //             image: asset_server.load("hud/damage_indicator.png"),
+    //             ..default()
+    //         },
+    //         UiTransform::new(),
+    //         BloodScreenEffect::default(),
+    //     ));
+}
 
 // TODO: this thing is too much
 pub fn handle_blood_screen_effect(
