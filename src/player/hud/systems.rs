@@ -74,7 +74,7 @@ pub fn spawn_player_hud(
                 align_items: AlignItems::Center,
                 ..default()
             },
-            DespawnOnExit(AppState::InGame),
+            DespawnOnExit(InGameState::Playing),
             PlayerHud,
         ))
         .with_child(ImageNode::new(asset_server.load(MAIN_CROSSHAIR_PATH)));
