@@ -93,7 +93,7 @@ pub fn player_shooting(
     );
 
     let shoot_sound = asset_server.load(
-        "weapons/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 \
+        "sfx/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 \
          Single MP3.mp3",
     );
 
@@ -161,10 +161,11 @@ pub fn detect_enemy_bullet_collision_with_player(
         for enemy_bullet_entity in enemy_bullets_colliding_with_player {
             commands.entity(enemy_bullet_entity).despawn();
 
+            // TODO: this should happen in player/hud/systems
             commands.spawn((
                 ImageNode {
                     image: asset_server
-                        .load("Bloody Screen Effects/Effect_5.png"),
+                        .load("hud/blood_screen_effects/Effect_5.png"),
                     color: Color::srgba(1.0, 1.0, 1.0, 1.0),
                     ..default()
                 },

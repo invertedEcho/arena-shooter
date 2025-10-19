@@ -14,8 +14,9 @@ mod systems;
 
 // TODO: assert that only one player/score/wave_info hud can exist
 
-const WHITE_CROSSHAIR_PATH: &str =
-    "kenney_crosshair-pack/PNG/White/crosshair086.png";
+const MAIN_CROSSHAIR_PATH: &str =
+    "hud/crosshairs/PNG/White/crosshair086.png";
+const CROSSHAIR_BULLET_HIT_PATH: &str = "hud/crosshairs/PNG/White/crosshair002.png";
 
 pub struct PlayerHudPlugin;
 

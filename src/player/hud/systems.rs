@@ -1,5 +1,5 @@
 use bevy::{
-    color::palettes::tailwind::{BLUE_500, RED_500},
+    color::palettes::{tailwind::{BLUE_500, RED_500}},
     prelude::*,
 };
 
@@ -13,12 +13,11 @@ use crate::{
     player::{
         Player,
         hud::{
-            WHITE_CROSSHAIR_PATH,
-            components::{
+            CROSSHAIR_BULLET_HIT_PATH, MAIN_CROSSHAIR_PATH, components::{
                 CurrentWaveText, EnemiesLeftText, EnemyScoreText,
                 PlayerCarriedAmmoText, PlayerHealthText, PlayerHud,
                 PlayerLoadedAmmoText, PlayerScoreText,
-            },
+            }
         },
         shooting::{
             components::PlayerWeapon, messages::PlayerBulletHitEnemyMessage,
@@ -78,7 +77,7 @@ pub fn spawn_player_hud(
             DespawnOnExit(AppState::InGame),
             PlayerHud,
         ))
-        .with_child(ImageNode::new(asset_server.load(WHITE_CROSSHAIR_PATH)));
+        .with_child(ImageNode::new(asset_server.load(MAIN_CROSSHAIR_PATH)));
 }
 
 pub fn update_player_health_text(
@@ -121,9 +120,7 @@ pub fn spawn_bullet_hit_crosshair(
             })
             .with_child((
                 ImageNode::new(
-                    asset_server.load(
-                        "kenney_crosshair-pack/PNG/White/crosshair002.png",
-                    ),
+                    asset_server.load(CROSSHAIR_BULLET_HIT_PATH),
                 ),
                 DespawnTimer(Timer::from_seconds(0.05, TimerMode::Once)),
             ));

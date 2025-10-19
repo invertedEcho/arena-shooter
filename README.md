@@ -9,6 +9,7 @@
 2. This repository uses Git LFS. Please install via `git lfs install`. You may need to pull again afterwards
 3. Please note that shipping the binary requires disabling dynamic linking. This can be achieved by removing the `dynamic_linking` feature from the dependency `bevy` in `Cargo.toml`
 4. Bevy itself also needs a couple of dependency. You can find installation instructions for Linux, Windows and MacOS [here](https://bevy.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
+5. Install alternative codegen backend: `rustup component add rustc-codegen-cranelift-preview --toolchain-nightly`
 5. Run the app
   - `cargo run`
 
@@ -59,7 +60,6 @@ uses:
 ## Attributions
 
 ### 3D Models
-- WA 2000 by abc08002 [CC-BY](https://creativecommons.org/licenses/by/3.0/) via Poly Pizza (https://poly.pizza/m/wns2a88122)
 - fps/tps Map by theking1322 [CC-BY](https://creativecommons.org/licenses/by/3.0/) via Poly Pizza (https://poly.pizza/m/wna54gOjL7)
 - SWAT by Quaternius (https://poly.pizza/m/Btfn3G5Xv4)
 

@@ -4,6 +4,8 @@ use bevy::{animation::RepeatAnimation, prelude::*};
 
 use crate::{common::components::AnimationPlayerEntityPointer, player::Player};
 
+pub const PLAYER_ARM_WEAPON_PATH: &str = "models/player/arm_and_weapon.glb";
+
 const _PLAYER_ARM_WEAPON_DRAW_ANIMATION_INDEX: usize = 0;
 const PLAYER_ARM_WEAPON_SHOOT_ANIMATION_INDEX: usize = 1;
 const PLAYER_ARM_WEAPON_FULL_RELOAD_ANIMATION_INDEX: usize = 2;
@@ -72,7 +74,7 @@ fn load_arms_animations(
 
     for i in 0..9 {
         let res: Handle<AnimationClip> = asset_server
-            .load(GltfAssetLabel::Animation(i).from_asset("test.glb"));
+            .load(GltfAssetLabel::Animation(i).from_asset(PLAYER_ARM_WEAPON_PATH));
         animation_clips.push(res);
     }
 

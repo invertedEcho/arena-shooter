@@ -20,6 +20,7 @@ use bevy::{
 use bevy_inspector_egui::bevy_egui;
 
 use crate::player::{Player, camera::ViewModelCamera};
+use crate::player::animate::PLAYER_ARM_WEAPON_PATH;
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 
@@ -38,7 +39,7 @@ pub fn setup_player_cameras(
         );
 
         let weapon_model = asset_server
-            .load(GltfAssetLabel::Scene(0).from_asset("test.glb#Scene0"));
+            .load(GltfAssetLabel::Scene(0).from_asset(PLAYER_ARM_WEAPON_PATH));
 
         commands.entity(*player_entity).with_children(|parent| {
             parent.spawn((

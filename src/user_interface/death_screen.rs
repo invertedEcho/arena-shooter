@@ -39,7 +39,7 @@ fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
                 ..default()
             },
             ImageNode::new(
-                asset_server.load("Bloody Screen Effects/Effect_3.png"),
+                asset_server.load("hud/blood_screen_effects/Effect_3.png"),
             ),
         ))
         .with_children(|parent| {

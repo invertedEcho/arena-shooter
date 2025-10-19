@@ -26,7 +26,7 @@ pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
 
     commands.spawn((
         SceneRoot(
-            asset_server.load(GltfAssetLabel::Scene(0).from_asset("main.gltf")),
+            asset_server.load(GltfAssetLabel::Scene(0).from_asset("maps/main/main.gltf")),
         ),
         Name::new("World Root main.gltf"),
         Visibility::Visible,
