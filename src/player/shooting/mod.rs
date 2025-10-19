@@ -4,7 +4,7 @@ use crate::{
     game_flow::states::InGameState,
     player::shooting::{
         components::PlayerWeapon,
-        events::{PlayerBulletHitEnemyEvent, PlayerWeaponFiredEvent},
+        messages::{PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage},
         systems::{
             accurate_check_bullet_collision_for_impact_particle,
             detect_enemy_bullet_collision_with_player,
@@ -17,7 +17,7 @@ use crate::{
 };
 
 pub mod components;
-pub mod events;
+pub mod messages;
 mod resources;
 mod systems;
 
@@ -25,15 +25,14 @@ pub struct PlayerShootingPlugin;
 
 impl Plugin for PlayerShootingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<PlayerWeaponFiredEvent>()
+        app.add_message::<PlayerWeaponFiredMessage>()
+            .add_message::<PlayerBulletHitEnemyMessage>()
             .register_type::<PlayerWeapon>()
-            .add_event::<PlayerBulletHitEnemyEvent>()
             .add_systems(
                 Update,
                 (
                     player_shooting,
                     tick_player_weapon_shoot_cooldown_timer,
-                    detect_enemy_bullet_collision_with_player,
                     handle_blood_screen_effect,
                     reload_player_weapon,
                     spawn_muzzle_flash,
@@ -41,6 +40,7 @@ impl Plugin for PlayerShootingPlugin {
                     setup_player_weapon,
                     handle_player_death_event,
                     handle_reload_timer,
+                    detect_enemy_bullet_collision_with_player,
                 )
                     .run_if(in_state(InGameState::Playing)),
             );

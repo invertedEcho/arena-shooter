@@ -21,7 +21,7 @@ use crate::{
             },
         },
         shooting::{
-            components::PlayerWeapon, events::PlayerBulletHitEnemyEvent,
+            components::PlayerWeapon, messages::PlayerBulletHitEnemyMessage,
         },
     },
 };
@@ -42,7 +42,7 @@ pub fn spawn_player_hud(
                 padding: UiRect::all(Val::Px(16.0)),
                 ..default()
             },
-            StateScoped(InGameState::Playing),
+            DespawnOnExit(InGameState::Playing),
             PlayerHud,
         ))
         .with_children(|parent| {
@@ -75,7 +75,7 @@ pub fn spawn_player_hud(
                 align_items: AlignItems::Center,
                 ..default()
             },
-            StateScoped(AppState::InGame),
+            DespawnOnExit(AppState::InGame),
             PlayerHud,
         ))
         .with_child(ImageNode::new(asset_server.load(WHITE_CROSSHAIR_PATH)));
@@ -106,11 +106,11 @@ pub fn update_player_ammo_text(
 pub fn spawn_bullet_hit_crosshair(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    mut player_bullet_hit_enemy_event_reader: EventReader<
-        PlayerBulletHitEnemyEvent,
+    mut player_bullet_hit_enemy_message_reader: MessageReader<
+        PlayerBulletHitEnemyMessage,
     >,
 ) {
-    for _ in player_bullet_hit_enemy_event_reader.read() {
+    for _ in player_bullet_hit_enemy_message_reader.read() {
         commands
             .spawn(Node {
                 width: Val::Percent(100.0),
@@ -142,7 +142,7 @@ pub fn spawn_score_hud(mut commands: Commands, game_score: Res<GameScore>) {
                 padding: UiRect::all(Val::Px(16.0)),
                 ..default()
             },
-            StateScoped(AppState::InGame),
+            DespawnOnExit(AppState::InGame),
         ))
         .with_children(|parent| {
             parent.spawn(Node { ..default() }).with_child((
@@ -181,7 +181,7 @@ pub fn update_score_hud(
 pub fn spawn_wave_info_hud(mut commands: Commands) {
     commands
         .spawn((
-            StateScoped(GameMode::Waves),
+            DespawnOnExit(GameMode::Waves),
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),

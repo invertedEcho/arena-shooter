@@ -23,7 +23,7 @@ pub enum CommonUiButtonType {
 
 fn handle_common_ui_button_interaction(
     query: Query<(&Interaction, &CommonUiButton), Changed<Interaction>>,
-    mut app_exit_event_writer: EventWriter<AppExit>,
+    mut app_exit_message_writer: MessageWriter<AppExit>,
 ) {
     for (interaction, common_ui_button) in query {
         let Interaction::Pressed = interaction else {
@@ -31,7 +31,7 @@ fn handle_common_ui_button_interaction(
         };
         match common_ui_button.0 {
             CommonUiButtonType::Quit => {
-                app_exit_event_writer.write(AppExit::Success);
+                app_exit_message_writer.write(AppExit::Success);
             }
         }
     }

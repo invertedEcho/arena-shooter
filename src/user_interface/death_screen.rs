@@ -29,7 +29,7 @@ enum DeathScreenButtonType {
 fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands
         .spawn((
-            StateScoped(InGameState::PlayerDead),
+            DespawnOnExit(InGameState::PlayerDead),
             Node {
                 height: Val::Percent(100.0),
                 width: Val::Percent(100.0),

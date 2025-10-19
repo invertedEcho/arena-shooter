@@ -1,6 +1,6 @@
 use crate::{
     enemy::shooting::{
-        events::EnemyKilledEvent,
+        messages::EnemyKilledMessage,
         systems::{
             detect_player_bullet_collision_with_enemy, enemy_shoot_player,
             handle_enemy_killed_event, tick_enemy_shoot_player_cooldown_timer,
@@ -11,14 +11,14 @@ use crate::{
 use bevy::prelude::*;
 
 pub mod components;
-mod events;
+mod messages;
 mod systems;
 
 pub struct EnemyShootingPlugin;
 
 impl Plugin for EnemyShootingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<EnemyKilledEvent>().add_systems(
+        app.add_message::<EnemyKilledMessage>().add_systems(
             Update,
             (
                 enemy_shoot_player,

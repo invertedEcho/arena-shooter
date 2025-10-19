@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::game_flow::{
-    game_mode::{GameMode, StartGameModeEvent},
+    game_mode::{GameMode, StartGameModeMessage},
     states::{AppState, MainMenuState},
 };
 
@@ -13,14 +13,6 @@ impl Plugin for GameModeSelectionUIPlugin {
             OnEnter(MainMenuState::GameModeSelection),
             spawn_game_mode_selection_screen,
         )
-        .add_systems(
-            OnExit(MainMenuState::GameModeSelection),
-            despawn_game_mode_selection_screen,
-        )
-        // .add_systems(
-        //     OnExit(AppState::MainMenu),
-        //     despawn_game_mode_selection_screen,
-        // )
         .add_systems(
             Update,
             (
@@ -57,6 +49,7 @@ fn spawn_game_mode_selection_screen(mut commands: Commands) {
                 ..default()
             },
             GameModeSelectionScreen,
+            DespawnOnExit(MainMenuState::GameModeSelection),
         ))
         .with_children(|parent| {
             parent
@@ -105,21 +98,13 @@ fn spawn_game_mode_selection_screen(mut commands: Commands) {
         });
 }
 
-fn despawn_game_mode_selection_screen(
-    mut commands: Commands,
-    game_mode_selection_screen: Single<Entity, With<GameModeSelectionScreen>>,
-) {
-    info!("Despawning game mode selection screen");
-    commands.entity(*game_mode_selection_screen).despawn();
-}
-
 fn handle_game_mode_selection_button_press(
     query: Query<
         (&Interaction, &GameModeSelectionButton),
         Changed<Interaction>,
     >,
     mut next_game_mode_state: ResMut<NextState<GameMode>>,
-    mut event_writer: EventWriter<StartGameModeEvent>,
+    mut message_writer: MessageWriter<StartGameModeMessage>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     // honestly i really have the feeling all this game mode logic can be simplified,
@@ -130,14 +115,13 @@ fn handle_game_mode_selection_button_press(
                 GameMode::Waves => {
                     next_app_state.set(AppState::InGame);
                     next_game_mode_state.set(GameMode::Waves);
-                    event_writer.write(StartGameModeEvent(GameMode::Waves));
+                    message_writer.write(StartGameModeMessage(GameMode::Waves));
                 }
                 GameMode::FreePlay => {
-                    info!("ineraction pressed on free play mode");
                     next_app_state.set(AppState::InGame);
                     next_game_mode_state.set(GameMode::FreePlay);
-                    event_writer.write(StartGameModeEvent(GameMode::FreePlay));
-                    info!("fired start game mode event free play");
+                    message_writer
+                        .write(StartGameModeMessage(GameMode::FreePlay));
                 }
             }
         }

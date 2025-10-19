@@ -1,9 +1,7 @@
 use bevy::{
+    camera::visibility::{NoFrustumCulling, RenderLayers},
+    mesh::skinning::SkinnedMesh,
     prelude::*,
-    render::{
-        mesh::skinning::SkinnedMesh,
-        view::{NoFrustumCulling, RenderLayers},
-    },
     scene::SceneInstanceReady,
 };
 
@@ -28,13 +26,15 @@ pub fn handle_despawn_timer(
 ///
 /// See [#12461](https://github.com/bevyengine/bevy/issues/12461) for current status.
 pub fn apply_render_layers_to_children(
-    trigger: Trigger<SceneInstanceReady>,
+    on_scene_instance_ready: On<SceneInstanceReady>,
     mut commands: Commands,
     children: Query<&Children>,
     transforms: Query<&Transform, Without<RenderLayers>>,
     query: Query<(Entity, &RenderLayers)>,
 ) {
-    let Ok((parent, render_layers)) = query.get(trigger.target()) else {
+    let Ok((parent, render_layers)) =
+        query.get(on_scene_instance_ready.event().entity)
+    else {
         return;
     };
     children.iter_descendants(parent).for_each(|entity| {

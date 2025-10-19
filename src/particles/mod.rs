@@ -15,8 +15,8 @@ pub struct BulletImpactEffectHandle(Option<Handle<EffectAsset>>);
 #[derive(Resource, Default)]
 pub struct PlayerBulletHitEnemyImpactEffectHandle(Option<Handle<EffectAsset>>);
 
-#[derive(Event)]
-pub struct SpawnBulletImpactEffectEvent {
+#[derive(Message)]
+pub struct SpawnBulletImpactEffectMessage {
     pub spawn_location: Vec3,
     pub variant: BulletImpactEffectVariant,
 }
@@ -38,7 +38,7 @@ impl Plugin for ParticlesPlugin {
             ),
         )
         .add_systems(Update, handle_spawn_bullet_impact_effect)
-        .add_event::<SpawnBulletImpactEffectEvent>()
+        .add_message::<SpawnBulletImpactEffectMessage>()
         .insert_resource(BulletImpactEffectHandle::default())
         .insert_resource(PlayerBulletHitEnemyImpactEffectHandle::default());
     }
@@ -51,7 +51,7 @@ fn setup_bullet_effect_handle(
     let expression_writer = ExprWriter::new();
 
     // gradient colors
-    let mut gradient = Gradient::new();
+    let mut gradient = bevy_hanabi::Gradient::new();
     gradient.add_key(0.0, Vec4::new(0.69, 0.69, 0.69, 1.));
     gradient.add_key(0.25, Vec4::new(1.0, 0.843, 0.0, 1.0));
     gradient.add_key(0.75, Vec4::new(0.678, 0.849, 0.902, 1.0));
@@ -113,15 +113,15 @@ fn setup_bullet_effect_handle(
 
 fn handle_spawn_bullet_impact_effect(
     mut commands: Commands,
-    mut event_reader: EventReader<SpawnBulletImpactEffectEvent>,
+    mut message_reader: MessageReader<SpawnBulletImpactEffectMessage>,
     bullet_impact_effect_resource: Res<BulletImpactEffectHandle>,
     bullet_impact_body_effect_resource: Res<
         PlayerBulletHitEnemyImpactEffectHandle,
     >,
     player_camera_transform_global: Single<&Transform, With<ViewModelCamera>>,
 ) {
-    for event in event_reader.read() {
-        let Some(bullet_impact_effect_handle) = (match event.variant {
+    for message in message_reader.read() {
+        let Some(bullet_impact_effect_handle) = (match message.variant {
             BulletImpactEffectVariant::World => {
                 &bullet_impact_effect_resource.0
             }
@@ -144,11 +144,11 @@ fn handle_spawn_bullet_impact_effect(
 
         let transform = Transform {
             translation: Vec3 {
-                x: event.spawn_location.x,
-                y: event.spawn_location.y,
+                x: message.spawn_location.x,
+                y: message.spawn_location.y,
                 // maybe makes sense to change this value depending on what direction the player
                 // is facing, so particles are not "in the collided object", e.g. not visible
-                z: event.spawn_location.z,
+                z: message.spawn_location.z,
             },
             rotation: Quat::from_rotation_arc(
                 Vec3::X,
@@ -178,7 +178,7 @@ fn setup_player_bullet_impact_enemy_handle(
     let expression_writer = ExprWriter::new();
 
     // gradient colors
-    let mut gradient = Gradient::new();
+    let mut gradient = bevy_hanabi::Gradient::new();
 
     gradient.add_key(0.0, Vec4::new(0.8, 0.0, 0.0, 1.0));
     gradient.add_key(0.25, Vec4::new(0.6, 0.0, 0.0, 0.9));

@@ -12,7 +12,6 @@ use crate::{
     enemy::EnemyPlugin,
     game_flow::{GameFlowPlugin, states::AppState},
     music::MusicPlugin,
-    nav_mesh_pathfinding::NavMeshPathfindingPlugin,
     particles::ParticlesPlugin,
     player::PlayerPlugin,
     user_interface::UserInterfacePlugin,
@@ -23,7 +22,6 @@ mod common;
 mod enemy;
 mod game_flow;
 mod music;
-mod nav_mesh_pathfinding;
 mod particles;
 mod player;
 mod user_interface;
@@ -63,7 +61,7 @@ fn main() {
 
     // avian (physics)
     app.add_plugins(PhysicsPlugins::default())
-        .add_plugins(PhysicsDebugPlugin::default())
+        // .add_plugins(PhysicsDebugPlugin::default())
         .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
 
     // skein
@@ -84,7 +82,6 @@ fn main() {
         .add_plugins(EnemyPlugin)
         .add_plugins(UserInterfacePlugin)
         .add_plugins(ParticlesPlugin)
-        .add_plugins(NavMeshPathfindingPlugin)
         .add_plugins(MusicPlugin);
 
     app.insert_resource(bevy_egui::EguiGlobalSettings {

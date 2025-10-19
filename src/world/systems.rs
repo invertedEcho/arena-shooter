@@ -1,7 +1,6 @@
 use std::f32::consts::PI;
 
-use avian3d::prelude::*;
-use bevy::{color::palettes, prelude::*, render::view::RenderLayers};
+use bevy::{camera::visibility::RenderLayers, color::palettes, prelude::*};
 
 use crate::{
     enemy::shooting::components::EnemyBullet,
@@ -25,38 +24,42 @@ pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
         RenderLayers::from_layers(&[0, 1]),
     ));
 
-    commands.spawn(SceneRoot(
-        asset_server.load(GltfAssetLabel::Scene(0).from_asset("main.gltf")),
+    commands.spawn((
+        SceneRoot(
+            asset_server.load(GltfAssetLabel::Scene(0).from_asset("main.gltf")),
+        ),
+        Name::new("World Root main.gltf"),
+        Visibility::Visible,
     ));
 }
 
+// TODO: i mean we can just despawn any bullets that collide with anything
 pub fn detect_bullet_collision_with_wall_and_grounds(
     mut commands: Commands,
-    mut collision_event_reader: EventReader<CollisionStarted>,
     bullet_query: Query<Entity, Or<(With<PlayerBullet>, With<EnemyBullet>)>>,
     wall_and_ground_query: Query<
         (Entity, &Transform),
         Or<(With<Wall>, With<Ground>)>,
     >,
 ) {
-    for CollisionStarted(first_entity, second_entity) in
-        collision_event_reader.read()
-    {
-        let Some(bullet_entity) = bullet_query
-            .iter()
-            .find(|e| e == first_entity || e == second_entity)
-        else {
-            continue;
-        };
-
-        let collided_entities_is_wall_or_ground =
-            wall_and_ground_query.iter().any(|(entity, _)| {
-                entity == *first_entity || entity == *second_entity
-            });
-        if !collided_entities_is_wall_or_ground {
-            continue;
-        }
-
-        commands.entity(bullet_entity).despawn();
-    }
+    // for CollisionStarted(first_entity, second_entity) in
+    //     collision_event_reader.read()
+    // {
+    //     let Some(bullet_entity) = bullet_query
+    //         .iter()
+    //         .find(|e| e == first_entity || e == second_entity)
+    //     else {
+    //         continue;
+    //     };
+    //
+    //     let collided_entities_is_wall_or_ground =
+    //         wall_and_ground_query.iter().any(|(entity, _)| {
+    //             entity == *first_entity || entity == *second_entity
+    //         });
+    //     if !collided_entities_is_wall_or_ground {
+    //         continue;
+    //     }
+    //
+    //     commands.entity(bullet_entity).despawn();
+    // }
 }

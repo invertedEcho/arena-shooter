@@ -10,7 +10,7 @@ use crate::{
             restart_game, spawn_main_menu_camera,
         },
     },
-    player::PlayerDeathEvent,
+    player::PlayerDeathMessage,
 };
 
 pub mod game_mode;
@@ -26,7 +26,7 @@ impl Plugin for GameFlowPlugin {
             .init_state::<InGameState>()
             .init_state::<MainMenuState>()
             .init_state::<AppDebugState>()
-            .add_event::<PlayerDeathEvent>()
+            .add_message::<PlayerDeathMessage>()
             .add_plugins(GameScorePlugin)
             .add_plugins(GameModePlugin)
             .add_systems(OnEnter(InGameState::Playing), grab_mouse)

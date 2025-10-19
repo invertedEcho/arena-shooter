@@ -14,9 +14,9 @@ pub struct EnemySpawnPlugin;
 
 impl Plugin for EnemySpawnPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<SpawnEnemiesEvent>().add_systems(
+        app.add_message::<SpawnEnemiesMessage>().add_systems(
             Update,
-            (handle_spawn_enemies_at_enemy_spawn_locations_event,),
+            (handle_spawn_enemies_at_enemy_spawn_locations_message,),
         );
     }
 }
@@ -25,8 +25,8 @@ impl Plugin for EnemySpawnPlugin {
 #[reflect(Component)]
 pub struct EnemySpawnLocation;
 
-#[derive(Event)]
-pub struct SpawnEnemiesEvent {
+#[derive(Message)]
+pub struct SpawnEnemiesMessage {
     pub enemy_count: usize,
     pub spawn_strategy: EnemySpawnStrategy,
 }
@@ -36,8 +36,8 @@ pub enum EnemySpawnStrategy {
     RandomSelection,
 }
 
-fn handle_spawn_enemies_at_enemy_spawn_locations_event(
-    mut event_writer: EventReader<SpawnEnemiesEvent>,
+fn handle_spawn_enemies_at_enemy_spawn_locations_message(
+    mut message_reader: MessageReader<SpawnEnemiesMessage>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     enemy_spawn_locations: Query<
@@ -45,7 +45,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_event(
         With<EnemySpawnLocation>,
     >,
 ) {
-    for event in event_writer.read() {
+    for event in message_reader.read() {
         let spawn_enemy_count = event.enemy_count;
         let spawn_method = &event.spawn_strategy;
 
@@ -80,6 +80,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_event(
                         chosen_spawn_location.1.translation;
                     commands
                         .spawn((
+                            Name::new("Enemy"),
                             Transform::from_xyz(
                                 spawn_location_translation.x,
                                 spawn_location_translation.y,
@@ -105,6 +106,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_event(
                                 TimerMode::Repeating,
                             )),
                             Visibility::Visible,
+                            CollidingEntities::default(),
                         ))
                         .with_child((
                             Transform {

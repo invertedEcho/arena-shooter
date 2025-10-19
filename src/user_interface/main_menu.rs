@@ -35,7 +35,7 @@ fn spawn_main_menu(mut commands: Commands) {
                 justify_content: JustifyContent::Center,
                 ..default()
             },
-            StateScoped(MainMenuState::Root),
+            DespawnOnExit(MainMenuState::Root),
         ))
         .with_children(|parent| {
             parent
@@ -86,7 +86,7 @@ fn handle_main_menu_button_pressed(
         (&Interaction, &MainMenuButton),
         Changed<Interaction>,
     >,
-    mut app_exit_event_writer: EventWriter<AppExit>,
+    mut app_exit_message_writer: MessageWriter<AppExit>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
@@ -101,7 +101,7 @@ fn handle_main_menu_button_pressed(
                 next_main_menu_state.set(MainMenuState::Settings);
             }
             MainMenuButtonType::Quit => {
-                app_exit_event_writer.write(AppExit::Success);
+                app_exit_message_writer.write(AppExit::Success);
             }
         }
     }

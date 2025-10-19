@@ -4,7 +4,7 @@ use crate::{
     game_flow::states::{AppState, InGameState},
     player::camera::{
         components::ViewModelCamera,
-        events::SpawnPlayerCamerasEvent,
+        messages::SpawnPlayerCamerasMessage,
         systems::{
             free_cam_orbit, handle_free_cam_movement,
             make_player_weapon_hidden, make_player_weapon_visible,
@@ -15,7 +15,7 @@ use crate::{
 };
 
 pub mod components;
-pub mod events;
+pub mod messages;
 mod systems;
 
 pub const PLAYER_CAMERA_Y_OFFSET: f32 = 0.4;
@@ -24,7 +24,7 @@ pub struct PlayerCameraPlugin;
 
 impl Plugin for PlayerCameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<SpawnPlayerCamerasEvent>()
+        app.add_message::<SpawnPlayerCamerasMessage>()
             .add_systems(
                 Update,
                 (

@@ -34,8 +34,8 @@ impl Default for Player {
     }
 }
 
-#[derive(Event)]
-pub struct PlayerDeathEvent;
+#[derive(Message)]
+pub struct PlayerDeathMessage;
 
 pub struct PlayerPlugin;
 

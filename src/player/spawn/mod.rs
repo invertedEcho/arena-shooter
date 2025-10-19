@@ -12,27 +12,28 @@ pub struct PlayerSpawnPlugin;
 
 impl Plugin for PlayerSpawnPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<PlayerSpawnEvent>()
+        app.add_message::<PlayerSpawnMessage>()
             .register_type::<PlayerSpawnLocation>()
             .add_systems(Update, handle_player_spawn_event);
     }
 }
 
-#[derive(Event)]
-pub struct PlayerSpawnEvent {
+#[derive(Message)]
+pub struct PlayerSpawnMessage {
     pub spawn_location: Vec3,
 }
 
 fn handle_player_spawn_event(
     mut commands: Commands,
-    mut player_spawn_event_reader: EventReader<PlayerSpawnEvent>,
+    mut player_spawn_message_reader: MessageReader<PlayerSpawnMessage>,
 ) {
-    for event in player_spawn_event_reader.read() {
+    for event in player_spawn_message_reader.read() {
         info!("read player spawn event, spawning player");
         let player_collider_shape =
             Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH);
 
         commands.spawn((
+            Name::new("Player"),
             Player::default(),
             Transform::from_translation(event.spawn_location),
             RigidBody::Kinematic,
@@ -44,6 +45,7 @@ fn handle_player_spawn_event(
             LinearVelocity::ZERO,
             Visibility::Visible,
             CollisionEventsEnabled,
+            CollidingEntities::default(),
         ));
     }
 }
