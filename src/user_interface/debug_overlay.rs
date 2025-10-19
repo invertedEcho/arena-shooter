@@ -2,7 +2,6 @@ use bevy::prelude::*;
 
 use crate::{
     game_flow::states::{AppDebugState, AppState, InGameState, MainMenuState},
-    nav_mesh_pathfinding::NavMeshDisp,
     player::{Player, movement::PlayerMovementState},
 };
 
@@ -56,7 +55,7 @@ fn spawn_debug_overlay(mut commands: Commands) {
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
-            StateScoped(AppDebugState::DebugVisible),
+            DespawnOnExit(AppDebugState::DebugVisible),
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -168,21 +167,14 @@ fn toggle_debug(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     current_app_debug_state: Res<State<AppDebugState>>,
     mut next_app_debug_state: ResMut<NextState<AppDebugState>>,
-    nav_mesh_disp: Query<&mut Visibility, With<NavMeshDisp>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyH) {
         match *current_app_debug_state.get() {
             AppDebugState::DebugHidden => {
                 next_app_debug_state.set(AppDebugState::DebugVisible);
-                for mut nav_mesh_disp in nav_mesh_disp {
-                    *nav_mesh_disp = Visibility::Visible;
-                }
             }
             AppDebugState::DebugVisible => {
                 next_app_debug_state.set(AppDebugState::DebugHidden);
-                for mut nav_mesh_disp in nav_mesh_disp {
-                    *nav_mesh_disp = Visibility::Hidden;
-                }
             }
         }
     }

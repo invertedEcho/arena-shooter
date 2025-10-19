@@ -39,7 +39,8 @@
   - Plugin declarations must always live in the `mod.rs` of the given module
 - Every module is split up into seperate files, following ECS structure, e.g.
   - Components of a module go into `./components.rs`
-  - Events of a module go into `./events.rs`
+  - Systems of a module go into `./systems.rs`
+  - Messages of a module go into `./messages.rs`
   - and so on
   - This makes it very easy to navigate the codebase and scales well
 - If a module has sub modules, like for example movement logic of the player, it will be in `movement/mod.rs`

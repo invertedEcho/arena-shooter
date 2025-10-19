@@ -7,7 +7,7 @@ use crate::{
     game_flow::states::{AppState, InGameState},
     player::{
         Player,
-        animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationEvent},
+        animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
         camera::components::ViewModelCamera,
         shooting::components::PlayerWeapon,
         spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
@@ -75,8 +75,8 @@ pub fn player_movement(
         &mut Transform,
         (With<DebugHitPoints>, Without<Player>),
     >,
-    mut play_player_arm_weapon_animation_event_writer: EventWriter<
-        PlayArmWithWeaponAnimationEvent,
+    mut play_player_arm_weapon_animation_message_writer: MessageWriter<
+        PlayArmWithWeaponAnimationMessage,
     >,
 ) {
     let (
@@ -94,8 +94,8 @@ pub fn player_movement(
         **velocity = Vec3::ZERO;
         if player_movement_state.0 != MovementState::Idle {
             player_movement_state.0 = MovementState::Idle;
-            play_player_arm_weapon_animation_event_writer.write(
-                PlayArmWithWeaponAnimationEvent {
+            play_player_arm_weapon_animation_message_writer.write(
+                PlayArmWithWeaponAnimationMessage {
                     animation_type: ArmWithWeaponAnimation::Idle,
                     repeat: true,
                     block_until_done: false,
@@ -134,8 +134,8 @@ pub fn player_movement(
         velocity.z = 0.0;
         if player_movement_state.0 != MovementState::Idle {
             player_movement_state.0 = MovementState::Idle;
-            play_player_arm_weapon_animation_event_writer.write(
-                PlayArmWithWeaponAnimationEvent {
+            play_player_arm_weapon_animation_message_writer.write(
+                PlayArmWithWeaponAnimationMessage {
                     animation_type: ArmWithWeaponAnimation::Idle,
                     repeat: true,
                     block_until_done: false,
@@ -194,8 +194,8 @@ pub fn player_movement(
     if speed == PLAYER_RUN_VELOCITY {
         if player_movement_state.0 != MovementState::Running {
             player_movement_state.0 = MovementState::Running;
-            play_player_arm_weapon_animation_event_writer.write(
-                PlayArmWithWeaponAnimationEvent {
+            play_player_arm_weapon_animation_message_writer.write(
+                PlayArmWithWeaponAnimationMessage {
                     animation_type: ArmWithWeaponAnimation::Run,
                     repeat: true,
                     block_until_done: false,
@@ -205,8 +205,8 @@ pub fn player_movement(
     } else if local_velocity.x != 0.0 || local_velocity.z != 0.0 {
         if player_movement_state.0 != MovementState::Walking {
             player_movement_state.0 = MovementState::Walking;
-            play_player_arm_weapon_animation_event_writer.write(
-                PlayArmWithWeaponAnimationEvent {
+            play_player_arm_weapon_animation_message_writer.write(
+                PlayArmWithWeaponAnimationMessage {
                     animation_type: ArmWithWeaponAnimation::Walk,
                     repeat: true,
                     block_until_done: false,
@@ -216,8 +216,8 @@ pub fn player_movement(
     } else if local_velocity.x == 0.0 && local_velocity.z == 0.0 {
         if player_movement_state.0 != MovementState::Idle {
             player_movement_state.0 = MovementState::Idle;
-            play_player_arm_weapon_animation_event_writer.write(
-                PlayArmWithWeaponAnimationEvent {
+            play_player_arm_weapon_animation_message_writer.write(
+                PlayArmWithWeaponAnimationMessage {
                     animation_type: ArmWithWeaponAnimation::Idle,
                     repeat: true,
                     block_until_done: false,

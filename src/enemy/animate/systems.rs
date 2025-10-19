@@ -13,7 +13,7 @@ use crate::{
             components::PlayHitAnimationTimer, resources::EnemyAnimations,
         },
     },
-    player::shooting::events::PlayerBulletHitEnemyEvent,
+    player::shooting::messages::PlayerBulletHitEnemyMessage,
 };
 
 pub fn load_enemy_animations(
@@ -146,7 +146,7 @@ pub fn reflect_enemy_state_to_current_animation(
 pub fn play_enemy_hit_animation(
     mut commands: Commands,
     animations: Res<EnemyAnimations>,
-    mut event_reader: EventReader<PlayerBulletHitEnemyEvent>,
+    mut message_reader: MessageReader<PlayerBulletHitEnemyMessage>,
     animation_player_entity_pointers: Query<
         (Entity, &Enemy, &AnimationPlayerEntityPointer),
         With<Enemy>,
@@ -157,7 +157,7 @@ pub fn play_enemy_hit_animation(
         &mut AnimationTransitions,
     )>,
 ) {
-    for event in event_reader.read() {
+    for event in message_reader.read() {
         let Some((enemy_entity, enemy, animation_player_entity_pointer)) =
             animation_player_entity_pointers
                 .iter()

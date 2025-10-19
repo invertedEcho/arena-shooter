@@ -1,7 +1,7 @@
-use bevy::prelude::*;
+use bevy::{ecs::message, prelude::*};
 
 use crate::game_flow::{
-    game_mode::{GameMode, StartGameModeEvent},
+    game_mode::{GameMode, StartGameModeMessage},
     states::{AppState, MainMenuState},
 };
 
@@ -119,7 +119,7 @@ fn handle_game_mode_selection_button_press(
         Changed<Interaction>,
     >,
     mut next_game_mode_state: ResMut<NextState<GameMode>>,
-    mut event_writer: EventWriter<StartGameModeEvent>,
+    mut message_writer: MessageWriter<StartGameModeMessage>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     // honestly i really have the feeling all this game mode logic can be simplified,
@@ -130,13 +130,14 @@ fn handle_game_mode_selection_button_press(
                 GameMode::Waves => {
                     next_app_state.set(AppState::InGame);
                     next_game_mode_state.set(GameMode::Waves);
-                    event_writer.write(StartGameModeEvent(GameMode::Waves));
+                    message_writer.write(StartGameModeMessage(GameMode::Waves));
                 }
                 GameMode::FreePlay => {
                     info!("ineraction pressed on free play mode");
                     next_app_state.set(AppState::InGame);
                     next_game_mode_state.set(GameMode::FreePlay);
-                    event_writer.write(StartGameModeEvent(GameMode::FreePlay));
+                    message_writer
+                        .write(StartGameModeMessage(GameMode::FreePlay));
                     info!("fired start game mode event free play");
                 }
             }

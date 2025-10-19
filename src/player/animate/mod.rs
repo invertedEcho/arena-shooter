@@ -17,7 +17,7 @@ pub struct PlayerAnimatePlugin;
 
 impl Plugin for PlayerAnimatePlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<PlayArmWithWeaponAnimationEvent>()
+        app.add_event::<PlayArmWithWeaponAnimationMessage>()
             .add_systems(Startup, load_arms_animations)
             .add_systems(
                 Update,
@@ -40,8 +40,8 @@ struct PlayerArmWithWeaponAnimations {
 #[derive(Resource)]
 pub struct AnimationBlockTimer(pub Timer);
 
-#[derive(Event)]
-pub struct PlayArmWithWeaponAnimationEvent {
+#[derive(Message)]
+pub struct PlayArmWithWeaponAnimationMessage {
     pub animation_type: ArmWithWeaponAnimation,
     pub repeat: bool,
     // TODO: fix this, maybe wait a couple of milli seconds after last animation played beforre
@@ -146,7 +146,7 @@ pub fn link_player_animation(
 
 fn handle_play_arm_with_weapon_animation_event(
     mut commands: Commands,
-    mut event_reader: EventReader<PlayArmWithWeaponAnimationEvent>,
+    mut event_reader: EventReader<PlayArmWithWeaponAnimationMessage>,
     animation_player_entity_pointer: Single<
         &AnimationPlayerEntityPointer,
         With<Player>,

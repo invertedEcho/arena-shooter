@@ -10,59 +10,62 @@ use crate::{
         ai::EnemyState,
         shooting::{
             components::{EnemyBullet, EnemyShootPlayerCooldownTimer},
-            events::EnemyKilledEvent,
+            events::EnemyKilledMessage,
         },
-        spawn::{EnemySpawnStrategy, SpawnEnemiesEvent},
+        spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
     },
     game_flow::{
         game_mode::{GameMode, GameStateWave, get_enemy_count_per_wave},
         score::GameScore,
     },
     player::shooting::{
-        components::PlayerBullet, events::PlayerBulletHitEnemyEvent,
+        components::PlayerBullet, messages::PlayerBulletHitEnemyMessage,
     },
 };
 
-pub fn detect_player_bullet_collision_with_enemy(
-    mut commands: Commands,
-    player_bullet_query: Query<(Entity, &PlayerBullet)>,
-    mut enemy_query: Query<(Entity, &mut Enemy)>,
-    mut collision_event_reader: EventReader<CollisionStarted>,
-    mut player_bullet_hit_enemy_event_writer: EventWriter<
-        PlayerBulletHitEnemyEvent,
-    >,
-    mut enemy_killed_event_writer: EventWriter<EnemyKilledEvent>,
-) {
-    for CollisionStarted(first_entity, second_entity) in
-        collision_event_reader.read()
-    {
-        let Some(player_bullet) =
-            player_bullet_query.iter().find(|(entity, _)| {
-                entity == first_entity || entity == second_entity
-            })
-        else {
-            continue;
-        };
-
-        let Some((enemy_entity, mut enemy)) =
-            enemy_query.iter_mut().find(|(entity, _)| {
-                entity == first_entity || entity == second_entity
-            })
-        else {
-            continue;
-        };
-
-        enemy.health -= player_bullet.1.damage;
-        if enemy.health <= 0.0 {
-            enemy_killed_event_writer.write(EnemyKilledEvent(enemy_entity));
-        }
-        commands.entity(player_bullet.0).despawn();
-
-        player_bullet_hit_enemy_event_writer.write(PlayerBulletHitEnemyEvent {
-            enemy_hit: enemy_entity,
-        });
-    }
-}
+// FIXME: add again
+// pub fn detect_player_bullet_collision_with_enemy(
+//     mut commands: Commands,
+//     player_bullet_query: Query<(Entity, &PlayerBullet)>,
+//     mut enemy_query: Query<(Entity, &mut Enemy)>,
+//     mut collision_event_reader: EventReader<CollisionStarted>,
+//     mut player_bullet_hit_enemy_event_writer: EventWriter<
+//         PlayerBulletHitEnemyMessage,
+//     >,
+//     mut enemy_killed_event_writer: EventWriter<EnemyKilledMessage>,
+// ) {
+//     for CollisionStarted(first_entity, second_entity) in
+//         collision_event_reader.read()
+//     {
+//         let Some(player_bullet) =
+//             player_bullet_query.iter().find(|(entity, _)| {
+//                 entity == first_entity || entity == second_entity
+//             })
+//         else {
+//             continue;
+//         };
+//
+//         let Some((enemy_entity, mut enemy)) =
+//             enemy_query.iter_mut().find(|(entity, _)| {
+//                 entity == first_entity || entity == second_entity
+//             })
+//         else {
+//             continue;
+//         };
+//
+//         enemy.health -= player_bullet.1.damage;
+//         if enemy.health <= 0.0 {
+//             enemy_killed_event_writer.write(EnemyKilledMessage(enemy_entity));
+//         }
+//         commands.entity(player_bullet.0).despawn();
+//
+//         player_bullet_hit_enemy_event_writer.write(
+//             PlayerBulletHitEnemyMessage {
+//                 enemy_hit: enemy_entity,
+//             },
+//         );
+//     }
+// }
 
 pub fn enemy_shoot_player(
     mut commands: Commands,
@@ -117,13 +120,13 @@ pub fn tick_enemy_shoot_player_cooldown_timer(
 // flow/ game mode
 pub fn handle_enemy_killed_event(
     mut commands: Commands,
-    mut event_reader: EventReader<EnemyKilledEvent>,
+    mut event_reader: EventReader<EnemyKilledMessage>,
     current_game_mode: Res<State<GameMode>>,
     game_state_wave: Res<State<GameStateWave>>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     mut enemy_query: Query<(Entity, &mut Enemy)>,
     mut game_score: ResMut<GameScore>,
-    mut spawn_enemies_event_writer: EventWriter<SpawnEnemiesEvent>,
+    mut spawn_enemies_event_writer: MessageWriter<SpawnEnemiesMessage>,
 ) {
     for event in event_reader.read() {
         let Some((enemy_entity, mut enemy)) = enemy_query
@@ -163,7 +166,7 @@ pub fn handle_enemy_killed_event(
                         current_wave: new_wave,
                         enemies_left_from_current_wave: enemy_count,
                     });
-                    spawn_enemies_event_writer.write(SpawnEnemiesEvent {
+                    spawn_enemies_event_writer.write(SpawnEnemiesMessage {
                         enemy_count,
                         spawn_strategy: EnemySpawnStrategy::RandomSelection,
                     });

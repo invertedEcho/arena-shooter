@@ -1,12 +1,10 @@
 use avian3d::prelude::*;
-use bevy::{color::palettes::css::RED, prelude::*};
-use vleue_navigator::NavMesh;
+use bevy::prelude::*;
 
 use crate::{
     GRAVITY,
     enemy::Enemy,
     game_flow::states::{AppState, InGameState},
-    nav_mesh_pathfinding::CurrentNavMesh,
     player::{
         Player,
         spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
@@ -25,10 +23,9 @@ pub struct EnemyAiPlugin;
 
 impl Plugin for EnemyAiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<StartChasingPlayerEvent>().add_systems(
+        app.add_message::<StartChasingPlayerMessage>().add_systems(
             Update,
             (
-                handle_start_chasing_player_event,
                 enemy_patrol,
                 handle_enemy_state_transition_to_chase_player,
                 check_if_enemy_can_see_player,
@@ -55,8 +52,8 @@ pub enum EnemyState {
 
 /// This event will get fired when the enemy can not directly see the player.
 /// A system will handle this event, and will insert an `EnemyPatrolPath` component into the given enemy
-#[derive(Event)]
-pub struct StartChasingPlayerEvent {
+#[derive(Message)]
+pub struct StartChasingPlayerMessage {
     /// The enemy entity in which the `EnemyPatrolPath` component should be inserted to
     pub enemy_entity: Entity,
 }
@@ -121,7 +118,9 @@ fn check_if_enemy_can_see_player(
 // just every frame the enemy cant see the player
 fn handle_enemy_state_transition_to_chase_player(
     changed_enemies: Query<(&Enemy, Entity), Changed<Enemy>>,
-    mut start_chasing_player_event_writer: EventWriter<StartChasingPlayerEvent>,
+    mut start_chasing_player_event_writer: EventWriter<
+        StartChasingPlayerMessage,
+    >,
 ) {
     for (enemy, enemy_entity) in changed_enemies {
         if enemy.state == EnemyState::ChasingPlayer {
@@ -131,84 +130,87 @@ fn handle_enemy_state_transition_to_chase_player(
                 enemy_entity
             );
             start_chasing_player_event_writer
-                .write(StartChasingPlayerEvent { enemy_entity });
+                .write(StartChasingPlayerMessage { enemy_entity });
         }
     }
 }
 
-fn handle_start_chasing_player_event(
-    mut commands: Commands,
-    mut start_chasing_player_event_reader: EventReader<StartChasingPlayerEvent>,
-    mut enemy_query: Query<
-        (Entity, &mut Transform),
-        (Without<Player>, With<Enemy>),
-    >,
-    player_transform: Single<&Transform, With<Player>>,
-    navmeshes: Res<Assets<NavMesh>>,
-    current_navmesh: Res<CurrentNavMesh>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    for event in start_chasing_player_event_reader.read() {
-        let Some((enemy_entity, mut enemy_transform)) = enemy_query
-            .iter_mut()
-            .find(|(entity, _)| *entity == event.enemy_entity)
-        else {
-            warn!(
-                "A StartChasingPlayerEvent was read, but the enemy entity \
-                 from the event couldn't be found."
-            );
-            continue;
-        };
-        debug!(
-            "StartChasingPlayerEvent was read for enemy_entity: {}",
-            enemy_entity
-        );
-
-        debug!("Trying to get path for enemy {}", enemy_entity);
-        let navmesh = navmeshes.get(&current_navmesh.0).unwrap();
-        let Some(transformed_path) = navmesh.transformed_path(
-            Vec3 {
-                x: enemy_transform.translation.x,
-                y: 0.0,
-                z: enemy_transform.translation.z,
-            },
-            Vec3 {
-                x: player_transform.translation.x,
-                y: 0.0,
-                z: player_transform.translation.z,
-            },
-        ) else {
-            warn!("Could not find path from enemy to player");
-            continue;
-        };
-        debug!("Sucessfully found path for enemy!");
-
-        commands.entity(enemy_entity).insert(EnemyPatrolPath {
-            current_destination: transformed_path.path[0],
-            next_destinations: transformed_path.path[1..].to_vec(),
-        });
-
-        // make the enemy look at the first patrol path
-        let current_destination_fixed = Vec3 {
-            x: transformed_path.path[0].x,
-            y: enemy_transform.translation.y,
-            z: transformed_path.path[0].z,
-        };
-        enemy_transform.look_at(current_destination_fixed, Vec3::Y);
-
-        for point in transformed_path.path {
-            commands.spawn((
-                Transform::from_translation(point),
-                Mesh3d(meshes.add(Sphere::new(0.05))),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: RED.into(),
-                    ..Default::default()
-                })),
-            ));
-        }
-    }
-}
+// FIXME: add again
+// fn handle_start_chasing_player_event(
+//     mut commands: Commands,
+//     mut start_chasing_player_message_reader: MessageReader<
+//         StartChasingPlayerMessage,
+//     >,
+//     mut enemy_query: Query<
+//         (Entity, &mut Transform),
+//         (Without<Player>, With<Enemy>),
+//     >,
+//     player_transform: Single<&Transform, With<Player>>,
+//     navmeshes: Res<Assets<NavMesh>>,
+//     current_navmesh: Res<CurrentNavMesh>,
+//     mut meshes: ResMut<Assets<Mesh>>,
+//     mut materials: ResMut<Assets<StandardMaterial>>,
+// ) {
+//     for event in start_chasing_player_message_reader.read() {
+//         let Some((enemy_entity, mut enemy_transform)) = enemy_query
+//             .iter_mut()
+//             .find(|(entity, _)| *entity == event.enemy_entity)
+//         else {
+//             warn!(
+//                 "A StartChasingPlayerEvent was read, but the enemy entity \
+//                  from the event couldn't be found."
+//             );
+//             continue;
+//         };
+//         debug!(
+//             "StartChasingPlayerEvent was read for enemy_entity: {}",
+//             enemy_entity
+//         );
+//
+//         debug!("Trying to get path for enemy {}", enemy_entity);
+//         // let navmesh = navmeshes.get(&current_navmesh.0).unwrap();
+//         // let Some(transformed_path) = navmesh.transformed_path(
+//         //     Vec3 {
+//         //         x: enemy_transform.translation.x,
+//         //         y: 0.0,
+//         //         z: enemy_transform.translation.z,
+//         //     },
+//         //     Vec3 {
+//         //         x: player_transform.translation.x,
+//         //         y: 0.0,
+//         //         z: player_transform.translation.z,
+//         //     },
+//         // ) else {
+//         //     warn!("Could not find path from enemy to player");
+//         //     continue;
+//         // };
+//         // debug!("Sucessfully found path for enemy!");
+//         //
+//         // commands.entity(enemy_entity).insert(EnemyPatrolPath {
+//         //     current_destination: transformed_path.path[0],
+//         //     next_destinations: transformed_path.path[1..].to_vec(),
+//         // });
+//         //
+//         // // make the enemy look at the first patrol path
+//         // let current_destination_fixed = Vec3 {
+//         //     x: transformed_path.path[0].x,
+//         //     y: enemy_transform.translation.y,
+//         //     z: transformed_path.path[0].z,
+//         // };
+//         // enemy_transform.look_at(current_destination_fixed, Vec3::Y);
+//         //
+//         // for point in transformed_path.path {
+//         //     commands.spawn((
+//         //         Transform::from_translation(point),
+//         //         Mesh3d(meshes.add(Sphere::new(0.05))),
+//         //         MeshMaterial3d(materials.add(StandardMaterial {
+//         //             base_color: RED.into(),
+//         //             ..Default::default()
+//         //         })),
+//         //     ));
+//         // }
+//     }
+// }
 
 fn enemy_patrol(
     mut commands: Commands,

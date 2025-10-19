@@ -6,11 +6,10 @@ use bevy::prelude::*;
 use crate::{
     common::{BULLET_VELOCITY, MovementState, components::DespawnTimer},
     enemy::{Enemy, shooting::components::EnemyBullet},
-    game_flow::{score::GameScore, states::InGameState},
-    particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectEvent},
+    particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
     player::{
-        Player, PlayerDeathEvent,
-        animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationEvent},
+        Player, PlayerDeathMessage,
+        animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
         camera::components::ViewModelCamera,
         movement::PlayerMovementState,
         shooting::{
@@ -18,7 +17,7 @@ use crate::{
                 BloodScreenEffect, MuzzleFlash, PlayerBullet,
                 PlayerShootCooldownTimer, PlayerWeapon,
             },
-            events::PlayerWeaponFiredEvent,
+            messages::PlayerWeaponFiredMessage,
             resources::ReloadTimer,
         },
     },
@@ -55,9 +54,9 @@ pub fn player_shooting(
     >,
     player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
     mut player_weapon: Single<&mut PlayerWeapon>,
-    mut player_shot_event_writer: EventWriter<PlayerWeaponFiredEvent>,
-    mut play_arm_with_weapon_animation_event_writer: EventWriter<
-        PlayArmWithWeaponAnimationEvent,
+    mut player_shot_messsage_writer: MessageWriter<PlayerWeaponFiredMessage>,
+    mut play_arm_with_weapon_animation_message_writer: MessageWriter<
+        PlayArmWithWeaponAnimationMessage,
     >,
 ) {
     if !mouse_input.pressed(MouseButton::Left) {
@@ -84,8 +83,8 @@ pub fn player_shooting(
         TimerMode::Once,
     )));
 
-    play_arm_with_weapon_animation_event_writer.write(
-        PlayArmWithWeaponAnimationEvent {
+    play_arm_with_weapon_animation_message_writer.write(
+        PlayArmWithWeaponAnimationMessage {
             animation_type: ArmWithWeaponAnimation::Shoot,
             repeat: false,
             block_until_done: true,
@@ -128,7 +127,7 @@ pub fn player_shooting(
         CollisionEventsEnabled,
     ));
 
-    player_shot_event_writer.write(PlayerWeaponFiredEvent);
+    player_shot_messsage_writer.write(PlayerWeaponFiredMessage);
 }
 
 pub fn tick_player_weapon_shoot_cooldown_timer(
@@ -144,84 +143,85 @@ pub fn tick_player_weapon_shoot_cooldown_timer(
     }
 }
 
-pub fn detect_enemy_bullet_collision_with_player(
-    asset_server: Res<AssetServer>,
-    mut commands: Commands,
-    mut collision_event_reader: EventReader<CollisionStarted>,
-    enemy_bullet_query: Query<Entity, With<EnemyBullet>>,
-    player_query: Single<(Entity, &mut Player)>,
-    mut next_in_game_state: ResMut<NextState<InGameState>>,
-    mut game_score: ResMut<GameScore>,
-) {
-    let (player_entity, mut player) = player_query.into_inner();
-
-    for CollisionStarted(first_entity, second_entity) in
-        collision_event_reader.read()
-    {
-        let collided_entities_is_player =
-            player_entity == *first_entity || player_entity == *second_entity;
-
-        if !collided_entities_is_player {
-            continue;
-        }
-
-        let Some(bullet_entity) = enemy_bullet_query
-            .iter()
-            .find(|entity| entity == first_entity || entity == second_entity)
-        else {
-            continue;
-        };
-        commands.entity(bullet_entity).despawn();
-
-        commands.spawn((
-            ImageNode {
-                image: asset_server.load("Bloody Screen Effects/Effect_5.png"),
-                color: Color::srgba(1.0, 1.0, 1.0, 1.0),
-                ..default()
-            },
-            BloodScreenEffect::default(),
-        ));
-
-        player.health -= 10.0;
-        if player.health <= 0.0 {
-            next_in_game_state.set(InGameState::PlayerDead);
-            game_score.enemy += 1;
-        }
-
-        // TODO: bullet damage indicator directional to enemy:
-        // Add once bevy 0.17 is released and all dependencies this project uses have migrated to
-        // 0.17
-        // let Ok(transform_of_enemy) =
-        //     enemy_transforms.get(enemy_bullet.origin_enemy)
-        // else {
-        //     continue;
-        // };
-        // let hit_direction = (transform_of_enemy.translation
-        //     - player_transform.translation)
-        //     .normalize();
-        // let local_direction =
-        //     player_transform.rotation.conjugate() * hit_direction;
-        // let flat_direction = Vec2::new(local_direction.x, local_direction.z);
-        // let angle_radians = flat_direction.x.atan2(flat_direction.y);
-        // let angle_degrees = angle_radians.to_degrees();
-        // commands
-        //     .spawn(Node {
-        //         width: Val::Percent(100.0),
-        //         height: Val::Percent(100.0),
-        //         justify_content: JustifyContent::Center,
-        //         align_items: AlignItems::Center,
-        //         ..default()
-        //     })
-        //     .with_child((
-        //         ImageNode {
-        //             image: asset_server.load("hud/damage_indicator.png"),
-        //             ..default()
-        //         },
-        //         UiTransform::new(),
-        //         BloodScreenEffect::default(),
-        //     ));
-    }
-}
+// FIXME: add again
+// pub fn detect_enemy_bullet_collision_with_player(
+//     asset_server: Res<AssetServer>,
+//     mut commands: Commands,
+//     mut collision_event_reader: EventReader<CollisionStarted>,
+//     enemy_bullet_query: Query<Entity, With<EnemyBullet>>,
+//     player_query: Single<(Entity, &mut Player)>,
+//     mut next_in_game_state: ResMut<NextState<InGameState>>,
+//     mut game_score: ResMut<GameScore>,
+// ) {
+//     let (player_entity, mut player) = player_query.into_inner();
+//
+//     for CollisionStarted(first_entity, second_entity) in
+//         collision_event_reader.read()
+//     {
+//         let collided_entities_is_player =
+//             player_entity == *first_entity || player_entity == *second_entity;
+//
+//         if !collided_entities_is_player {
+//             continue;
+//         }
+//
+//         let Some(bullet_entity) = enemy_bullet_query
+//             .iter()
+//             .find(|entity| entity == first_entity || entity == second_entity)
+//         else {
+//             continue;
+//         };
+//         commands.entity(bullet_entity).despawn();
+//
+//         commands.spawn((
+//             ImageNode {
+//                 image: asset_server.load("Bloody Screen Effects/Effect_5.png"),
+//                 color: Color::srgba(1.0, 1.0, 1.0, 1.0),
+//                 ..default()
+//             },
+//             BloodScreenEffect::default(),
+//         ));
+//
+//         player.health -= 10.0;
+//         if player.health <= 0.0 {
+//             next_in_game_state.set(InGameState::PlayerDead);
+//             game_score.enemy += 1;
+//         }
+//
+//         // TODO: bullet damage indicator directional to enemy:
+//         // Add once bevy 0.17 is released and all dependencies this project uses have migrated to
+//         // 0.17
+//         // let Ok(transform_of_enemy) =
+//         //     enemy_transforms.get(enemy_bullet.origin_enemy)
+//         // else {
+//         //     continue;
+//         // };
+//         // let hit_direction = (transform_of_enemy.translation
+//         //     - player_transform.translation)
+//         //     .normalize();
+//         // let local_direction =
+//         //     player_transform.rotation.conjugate() * hit_direction;
+//         // let flat_direction = Vec2::new(local_direction.x, local_direction.z);
+//         // let angle_radians = flat_direction.x.atan2(flat_direction.y);
+//         // let angle_degrees = angle_radians.to_degrees();
+//         // commands
+//         //     .spawn(Node {
+//         //         width: Val::Percent(100.0),
+//         //         height: Val::Percent(100.0),
+//         //         justify_content: JustifyContent::Center,
+//         //         align_items: AlignItems::Center,
+//         //         ..default()
+//         //     })
+//         //     .with_child((
+//         //         ImageNode {
+//         //             image: asset_server.load("hud/damage_indicator.png"),
+//         //             ..default()
+//         //         },
+//         //         UiTransform::new(),
+//         //         BloodScreenEffect::default(),
+//         //     ));
+//     }
+// }
 
 // TODO: this thing is too much
 pub fn handle_blood_screen_effect(
@@ -260,7 +260,9 @@ pub fn reload_player_weapon(
     mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_weapon: Single<&mut PlayerWeapon>,
-    mut animation_event_writer: EventWriter<PlayArmWithWeaponAnimationEvent>,
+    mut animation_message_writer: MessageWriter<
+        PlayArmWithWeaponAnimationMessage,
+    >,
 ) {
     if !keyboard_input.just_pressed(KeyCode::KeyR) {
         return;
@@ -298,7 +300,7 @@ pub fn reload_player_weapon(
     };
 
     player_weapon.reloading = true;
-    animation_event_writer.write(PlayArmWithWeaponAnimationEvent {
+    animation_message_writer.write(PlayArmWithWeaponAnimationMessage {
         animation_type,
         repeat: false,
         block_until_done: true,
@@ -340,7 +342,7 @@ pub fn spawn_muzzle_flash(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut player_shot_event_reader: EventReader<PlayerWeaponFiredEvent>,
+    mut player_shot_event_reader: EventReader<PlayerWeaponFiredMessage>,
     player_camera_entity: Single<Entity, With<ViewModelCamera>>,
 ) {
     for _ in player_shot_event_reader.read() {
@@ -389,14 +391,14 @@ pub fn accurate_check_bullet_collision_for_impact_particle(
     spatial_query: SpatialQuery,
     player_entity: Single<Entity, With<Player>>,
     mut bullet_effect_spawn_event_writer: EventWriter<
-        SpawnBulletImpactEffectEvent,
+        SpawnBulletImpactEffectMessage,
     >,
     enemy_entities: Query<Entity, With<Enemy>>,
     player_camera_query: Single<
         (Entity, &GlobalTransform),
         (With<ViewModelCamera>, Without<Player>),
     >,
-    mut player_shot_event_reader: EventReader<PlayerWeaponFiredEvent>,
+    mut player_shot_event_reader: EventReader<PlayerWeaponFiredMessage>,
     // maybe only include player bullets. would be cool to be able to shoot enemy bullets and have
     // a special effect or something
     bullet_entities: Query<Entity, Or<(With<PlayerBullet>, With<EnemyBullet>)>>,
@@ -436,7 +438,7 @@ pub fn accurate_check_bullet_collision_for_impact_particle(
             };
 
             bullet_effect_spawn_event_writer.write(
-                SpawnBulletImpactEffectEvent {
+                SpawnBulletImpactEffectMessage {
                     spawn_location: hit_point,
                     variant,
                 },
@@ -446,7 +448,7 @@ pub fn accurate_check_bullet_collision_for_impact_particle(
 }
 
 pub fn handle_player_death_event(
-    mut event_reader: EventReader<PlayerDeathEvent>,
+    mut event_reader: EventReader<PlayerDeathMessage>,
     mut player_movement_state: Single<&mut PlayerMovementState>,
 ) {
     for _ in event_reader.read() {

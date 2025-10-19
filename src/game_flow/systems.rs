@@ -1,24 +1,38 @@
-use bevy::{prelude::*, window::CursorGrabMode};
+use bevy::{
+    prelude::*,
+    window::{CursorGrabMode, CursorOptions, PrimaryMonitor},
+};
 
 use crate::{
     enemy::Enemy,
     game_flow::{
         AppState,
-        game_mode::{GameMode, StartGameModeEvent},
+        game_mode::{GameMode, StartGameModeMessage},
         states::InGameState,
     },
     player::{Player, camera::components::FreeCam},
     user_interface::main_menu::MainMenuCamera,
 };
 
-pub fn grab_mouse(mut window: Single<&mut Window>) {
-    window.cursor_options.visible = false;
-    window.cursor_options.grab_mode = CursorGrabMode::Locked;
+pub fn grab_mouse(
+    mut primary_cursor_options: Single<
+        &mut CursorOptions,
+        With<PrimaryMonitor>,
+    >,
+) {
+    info!("Grabbing mouse");
+    primary_cursor_options.visible = false;
+    primary_cursor_options.grab_mode = CursorGrabMode::Locked;
 }
 
-pub fn free_mouse(mut window: Single<&mut Window>) {
-    window.cursor_options.visible = true;
-    window.cursor_options.grab_mode = CursorGrabMode::None;
+pub fn free_mouse(
+    mut primary_cursor_options: Single<
+        &mut CursorOptions,
+        With<PrimaryMonitor>,
+    >,
+) {
+    primary_cursor_options.visible = true;
+    primary_cursor_options.grab_mode = CursorGrabMode::None;
 }
 
 pub fn handle_escape(
@@ -64,11 +78,11 @@ pub fn handle_escape(
 
 pub fn restart_game(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut start_game_mode_writer: EventWriter<StartGameModeEvent>,
+    mut start_game_mode_writer: EventWriter<StartGameModeMessage>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyP) {
         info!("restarting game mode");
-        start_game_mode_writer.write(StartGameModeEvent(GameMode::Waves));
+        start_game_mode_writer.write(StartGameModeMessage(GameMode::Waves));
     }
 }
 

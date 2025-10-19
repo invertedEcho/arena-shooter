@@ -1,4 +1,4 @@
 use bevy::prelude::*;
 
-#[derive(Event)]
-pub struct EnemyKilledEvent(pub Entity);
+#[derive(Message)]
+pub struct EnemyKilledMessage(pub Entity);

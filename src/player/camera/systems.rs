@@ -6,7 +6,7 @@ use crate::{
             components::{
                 FreeCam, PlayerCameraState, PlayerWeaponModel, WorldModelCamera,
             },
-            events::SpawnPlayerCamerasEvent,
+            messages::SpawnPlayerCamerasMessage,
         },
         shooting::components::PlayerWeapon,
     },
@@ -14,8 +14,8 @@ use crate::{
 use std::f32::consts::{FRAC_PI_2, PI};
 
 use bevy::{
-    input::mouse::AccumulatedMouseMotion, pbr::NotShadowCaster, prelude::*,
-    render::view::RenderLayers,
+    camera::visibility::RenderLayers, input::mouse::AccumulatedMouseMotion,
+    light::NotShadowCaster, prelude::*,
 };
 use bevy_inspector_egui::bevy_egui;
 
@@ -27,9 +27,11 @@ pub fn setup_player_cameras(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     player_entity: Single<Entity, With<Player>>,
-    mut spawn_player_cameras_event_reader: EventReader<SpawnPlayerCamerasEvent>,
+    mut spawn_player_cameras_message_reader: MessageReader<
+        SpawnPlayerCamerasMessage,
+    >,
 ) {
-    for _ in spawn_player_cameras_event_reader.read() {
+    for _ in spawn_player_cameras_message_reader.read() {
         info!(
             "Received SpawnPlayerCamerasEvent, spawning weapon model and \
              player cameras"
@@ -161,7 +163,9 @@ pub fn toggle_freecam(
         )>,
     >,
     free_cam_entity_query: Query<Entity, With<FreeCam>>,
-    mut spawn_player_cameras_event_writer: EventWriter<SpawnPlayerCamerasEvent>,
+    mut spawn_player_cameras_message_writer: MessageWriter<
+        SpawnPlayerCamerasMessage,
+    >,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyC) {
         match player_query.2.camera_state {
@@ -193,8 +197,8 @@ pub fn toggle_freecam(
                     debug!("despawning free cam entity {}", free_cam_entity);
                     commands.entity(free_cam_entity).despawn();
                 }
-                spawn_player_cameras_event_writer
-                    .write(SpawnPlayerCamerasEvent);
+                spawn_player_cameras_message_writer
+                    .write(SpawnPlayerCamerasMessage);
             }
         }
     }

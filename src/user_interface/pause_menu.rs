@@ -42,7 +42,7 @@ fn spawn_pause_menu(mut commands: Commands) {
                 ..default()
             },
             PauseMenuRoot,
-            StateScoped(InGameState::Paused),
+            DespawnOnExit(InGameState::Paused),
         ))
         .with_children(|parent| {
             parent

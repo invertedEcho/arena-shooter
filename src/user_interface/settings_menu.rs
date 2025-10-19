@@ -34,7 +34,7 @@ fn spawn_settings_menu(mut commands: Commands) {
                 ..default()
             },
             SettingsMenuRoot,
-            StateScoped(MainMenuState::Settings),
+            DespawnOnExit(MainMenuState::Settings),
         ))
         .with_children(|parent| {
             parent

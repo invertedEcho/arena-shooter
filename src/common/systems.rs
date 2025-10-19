@@ -1,9 +1,7 @@
 use bevy::{
+    camera::visibility::{NoFrustumCulling, RenderLayers},
+    mesh::skinning::SkinnedMesh,
     prelude::*,
-    render::{
-        mesh::skinning::SkinnedMesh,
-        view::{NoFrustumCulling, RenderLayers},
-    },
     scene::SceneInstanceReady,
 };
 
