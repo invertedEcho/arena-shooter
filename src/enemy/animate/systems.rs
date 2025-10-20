@@ -42,12 +42,11 @@ pub fn setup_enemy_animation(
     mut commands: Commands,
     enemy_animations: Res<EnemyAnimations>,
     animation_players: Query<
-        (Entity, &mut AnimationPlayer, &Name),
+        (Entity, &mut AnimationPlayer),
         (Added<AnimationPlayer>, Without<Name>),
     >,
 ) {
-    for (entity, mut player, name) in animation_players {
-        info!("animation player name: {}", name);
+    for (entity, mut player) in animation_players {
         let mut transitions = AnimationTransitions::new();
         transitions
             .play(
@@ -70,12 +69,13 @@ pub fn setup_enemy_animation(
 pub fn link_enemy_animation(
     mut commands: Commands,
     animation_player_entities: Query<
-        Entity,
-        (Added<AnimationPlayer>, Without<Name>),
+    Entity,
+    Added<AnimationPlayer>,
     >,
     enemies: Query<Entity, With<Enemy>>,
     childof: Query<&ChildOf>,
 ) {
+
     for animation_player_entity in &animation_player_entities {
         for ancestor in childof.iter_ancestors(animation_player_entity) {
             if enemies.get(ancestor).is_ok() {
@@ -147,9 +147,8 @@ pub fn play_enemy_hit_animation(
     mut commands: Commands,
     animations: Res<EnemyAnimations>,
     mut message_reader: MessageReader<PlayerBulletHitEnemyMessage>,
-    animation_player_entity_pointers: Query<
+    enemy_query: Query<
         (Entity, &Enemy, &AnimationPlayerEntityPointer),
-        With<Enemy>,
     >,
     mut animation_players_and_transitions: Query<(
         Entity,
@@ -159,11 +158,12 @@ pub fn play_enemy_hit_animation(
 ) {
     for event in message_reader.read() {
         let Some((enemy_entity, enemy, animation_player_entity_pointer)) =
-            animation_player_entity_pointers
+            enemy_query
                 .iter()
                 .find(|(e, _, _)| *e == event.enemy_hit)
         else {
-            warn!("lksjdfjkldfs");
+            warn!("Tried to play enemy hit animation, but could not find an Enemy with the entity from the event {} that contains an AnimationPlayerEntityPointer!", event.enemy_hit);
+            info!("Count of entities that have AnimationPlayerEntityPointer component: {}", enemy_query.iter().len());
             continue;
         };
         if enemy.state == EnemyState::Dead {

@@ -19,7 +19,7 @@ const _ENEMY_IDLE_ANIMATION: usize = 4;
 const ENEMY_IDLE_GUN_ANIMATION: usize = 5;
 const ENEMY_IDLE_GUN_POINTING_ANIMATION: usize = 6;
 
-pub const SWAT_MODEL_PATH: &str = "models/animated/SWAT.glb";
+pub const SWAT_MODEL_PATH: &str = "models/enemy/SWAT.glb";
 
 pub struct AnimateEnemyPlugin;
 
