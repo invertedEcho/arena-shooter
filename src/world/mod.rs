@@ -4,7 +4,7 @@ use crate::world::systems::{handle_spawn_debug_points_message, setup_world};
 use bevy::prelude::*;
 
 pub mod components;
-mod messages;
+pub mod messages;
 mod systems;
 
 pub struct WorldPlugin;

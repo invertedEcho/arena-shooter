@@ -384,7 +384,7 @@ pub fn accurate_check_bullet_collision_for_impact_particle(
     enemy_entities: Query<Entity, With<Enemy>>,
     player_camera_query: Single<
         (Entity, &GlobalTransform),
-        (With<ViewModelCamera>, Without<Player>),
+        (With<WorldModelCamera>, Without<Player>),
     >,
     mut player_shot_event_reader: MessageReader<PlayerWeaponFiredMessage>,
     // maybe only include player bullets. would be cool to be able to shoot enemy bullets and have

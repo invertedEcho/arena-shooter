@@ -2,11 +2,9 @@ use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
 
 use crate::{
-    player::{
-        Player,
-        camera::components::{ViewModelCamera, WorldModelCamera},
-    },
+    player::Player,
     utils::random::get_random_number_from_range_i32_to_f32_with_fixed_step,
+    world::messages::SpawnDebugPointMessage,
 };
 
 const BULLET_IMPACT_PARTICLE_LIFETIME: f32 = 0.1;
@@ -153,10 +151,10 @@ fn handle_spawn_bullet_impact_effect(
                 // is facing, so particles are not "in the collided object", e.g. not visible
                 z: message.spawn_location.z,
             },
-            // rotation: Quat::from_rotation_arc(
-            //     Vec3::X,
-            //     rotation_towards_player_perpendicular,
-            // ) + rotation_z,
+            rotation: Quat::from_rotation_arc(
+                Vec3::X,
+                rotation_towards_player_perpendicular,
+            ) + rotation_z,
             ..default()
         };
 
