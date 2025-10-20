@@ -136,6 +136,7 @@ pub fn handle_enemy_killed_event(
             .entity(enemy_entity)
             .remove::<RigidBody>()
             .remove::<Collider>()
+            .remove::<CollidingEntities>()
             .insert(DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)));
 
         game_score.player += 1;

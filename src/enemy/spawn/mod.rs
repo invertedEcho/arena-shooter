@@ -1,6 +1,6 @@
 use crate::{
     enemy::{
-        animate::SWAT_MODEL_PATH,
+        animate::ENEMY_MODEL_PATH,
         shooting::components::EnemyShootPlayerCooldownTimer,
     },
     player::spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
@@ -73,7 +73,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                     already_used_spawn_locations.push(chosen_spawn_location.0);
 
                     let enemy_model = asset_server.load(
-                        GltfAssetLabel::Scene(0).from_asset(SWAT_MODEL_PATH),
+                        GltfAssetLabel::Scene(0).from_asset(ENEMY_MODEL_PATH),
                     );
 
                     let spawn_location_translation =

@@ -77,6 +77,10 @@ fn check_if_enemy_can_see_player(
 ) {
     let (player_entity, player_transform) = *player_query;
     for (mut enemy, enemy_entity, mut enemy_transform) in enemy_query {
+        if enemy.state == EnemyState::Dead {
+            continue;
+        }
+
         // check if we can see the player
         // direction towards player
         let vector_not_normalized =

@@ -15,6 +15,8 @@ const PLAYER_ARM_WEAPON_PARTIAL_RELOAD_ANIMATION_INDEX: usize = 5;
 const PLAYER_ARM_WEAPON_WALK_ANIMATION_INDEX: usize = 6;
 const PLAYER_ARM_WEAPON_RUN_ANIMATION_INDEX: usize = 7;
 
+const PLAYER_ARM_WEAPON_NAME: &str = "Arms";
+
 pub struct PlayerAnimatePlugin;
 
 impl Plugin for PlayerAnimatePlugin {
@@ -73,8 +75,9 @@ fn load_arms_animations(
     let mut animation_clips: Vec<Handle<AnimationClip>> = Vec::new();
 
     for i in 0..9 {
-        let res: Handle<AnimationClip> = asset_server
-            .load(GltfAssetLabel::Animation(i).from_asset(PLAYER_ARM_WEAPON_PATH));
+        let res: Handle<AnimationClip> = asset_server.load(
+            GltfAssetLabel::Animation(i).from_asset(PLAYER_ARM_WEAPON_PATH),
+        );
         animation_clips.push(res);
     }
 
@@ -90,17 +93,15 @@ fn load_arms_animations(
 fn setup_arm_animation(
     mut commands: Commands,
     animation_players: Query<
-        (Entity, &mut AnimationPlayer),
-        // TODO: this is kinda risky, we pretty much depend on this AnimationPlayer entity having the name
-        // component. we do this because the animationplayer for Enemy has no Name. if we add another
-        // animated model which has a name, things will conflict. so we need a better way to get correct
-        // AnimationPlayer for the entity we actually want
-        (Added<AnimationPlayer>, With<Name>),
+        (Entity, &mut AnimationPlayer, &Name),
+        Added<AnimationPlayer>,
     >,
     arm_animations: Res<PlayerArmWithWeaponAnimations>,
 ) {
-    for (entity, mut player) in animation_players {
-        debug!("Setting up player arm animation, playing idle on repeat");
+    for (entity, mut player, name) in animation_players {
+        if name.as_str() != PLAYER_ARM_WEAPON_NAME {
+            continue;
+        }
         let mut transitions = AnimationTransitions::new();
         transitions
             .play(
@@ -123,19 +124,18 @@ fn setup_arm_animation(
 pub fn link_player_animation(
     mut commands: Commands,
     animation_player_entities: Query<
-        Entity,
+        (Entity, &Name),
         (Added<AnimationPlayer>, With<Name>),
     >,
     player: Single<Entity, With<Player>>,
     child_of: Query<&ChildOf>,
 ) {
-    for animation_player_entity in &animation_player_entities {
+    for (animation_player_entity, name) in &animation_player_entities {
+        if name.as_str() != PLAYER_ARM_WEAPON_NAME {
+            continue;
+        }
         for ancestor in child_of.iter_ancestors(animation_player_entity) {
             if *player == ancestor {
-                info!(
-                    "Inserted animation player entity pointer into Player {}",
-                    *player
-                );
                 commands
                     .entity(ancestor)
                     .insert(AnimationPlayerEntityPointer(

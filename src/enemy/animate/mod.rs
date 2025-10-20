@@ -19,7 +19,10 @@ const _ENEMY_IDLE_ANIMATION: usize = 4;
 const ENEMY_IDLE_GUN_ANIMATION: usize = 5;
 const ENEMY_IDLE_GUN_POINTING_ANIMATION: usize = 6;
 
-pub const SWAT_MODEL_PATH: &str = "models/enemy/SWAT.glb";
+// TODO: give explicit name, maybe this needs to be done in Blender?
+const ENEMY_MODEL_NAME: &str = "RootNode";
+
+pub const ENEMY_MODEL_PATH: &str = "models/enemy/SWAT.glb";
 
 pub struct AnimateEnemyPlugin;
 
