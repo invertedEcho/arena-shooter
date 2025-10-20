@@ -1,14 +1,11 @@
 use crate::{
     common::systems::apply_render_layers_to_children,
-    player::{
-        camera::{
-            PLAYER_CAMERA_Y_OFFSET,
-            components::{
-                FreeCam, PlayerCameraState, PlayerWeaponModel, WorldModelCamera,
-            },
-            messages::SpawnPlayerCamerasMessage,
+    player::camera::{
+        PLAYER_CAMERA_Y_OFFSET,
+        components::{
+            FreeCam, PlayerCameraState, PlayerWeaponModel, WorldModelCamera,
         },
-        shooting::components::PlayerWeapon,
+        messages::SpawnPlayerCamerasMessage,
     },
 };
 use std::f32::consts::{FRAC_PI_2, PI};
@@ -19,8 +16,8 @@ use bevy::{
 };
 use bevy_inspector_egui::bevy_egui;
 
-use crate::player::{Player, camera::ViewModelCamera};
 use crate::player::animate::PLAYER_ARM_WEAPON_PATH;
+use crate::player::{Player, camera::ViewModelCamera};
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 
@@ -268,13 +265,13 @@ pub fn free_cam_orbit(
 }
 
 pub fn make_player_weapon_visible(
-    mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
+    mut player_weapon: Single<&mut Visibility, With<PlayerWeaponModel>>,
 ) {
     **player_weapon = Visibility::Visible;
 }
 
 pub fn make_player_weapon_hidden(
-    mut player_weapon: Single<&mut Visibility, With<PlayerWeapon>>,
+    mut player_weapon: Single<&mut Visibility, With<PlayerWeaponModel>>,
 ) {
     **player_weapon = Visibility::Hidden;
 }
