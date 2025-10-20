@@ -16,7 +16,7 @@ pub fn get_random_number_from_range_i32_to_f32_with_fixed_step(
     let mut rng = rand::rng();
 
     // TODO: i think this factor has to be adjusted depending on the step
-    // -> so we disable step feature and always assume 0.1
+    // -> so for now we disable step feature and always assume 0.1
     let fixed_start = start * 10;
     let fixed_end = end * 10;
 

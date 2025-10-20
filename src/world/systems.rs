@@ -1,11 +1,18 @@
 use std::f32::consts::PI;
 
-use bevy::{camera::visibility::RenderLayers, color::palettes, prelude::*};
+use bevy::{
+    camera::visibility::RenderLayers,
+    color::palettes::{self, css::RED},
+    prelude::*,
+};
 
 use crate::{
     enemy::shooting::components::EnemyBullet,
     player::shooting::components::PlayerBullet,
-    world::components::{Ground, Wall},
+    world::{
+        components::{DebugPoint, Ground, Wall},
+        messages::SpawnDebugPointMessage,
+    },
 };
 
 pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
@@ -26,7 +33,9 @@ pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
 
     commands.spawn((
         SceneRoot(
-            asset_server.load(GltfAssetLabel::Scene(0).from_asset("maps/main/main.gltf")),
+            asset_server.load(
+                GltfAssetLabel::Scene(0).from_asset("maps/main/main.gltf"),
+            ),
         ),
         Name::new("World Root main.gltf"),
         Visibility::Visible,
@@ -62,4 +71,23 @@ pub fn detect_bullet_collision_with_wall_and_grounds(
     //
     //     commands.entity(bullet_entity).despawn();
     // }
+}
+
+pub fn handle_spawn_debug_points_message(
+    mut commands: Commands,
+    mut message_reader: MessageReader<SpawnDebugPointMessage>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for message in message_reader.read() {
+        commands.spawn((
+            message.0,
+            Mesh3d(meshes.add(Sphere::new(0.1))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: RED.into(),
+                ..Default::default()
+            })),
+            DebugPoint,
+        ));
+    }
 }

@@ -11,7 +11,7 @@ use crate::{
     player::{
         Player, PlayerDeathMessage,
         animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
-        camera::components::ViewModelCamera,
+        camera::components::{ViewModelCamera, WorldModelCamera},
         movement::PlayerMovementState,
         shooting::{
             components::{
@@ -49,9 +49,9 @@ pub fn player_shooting(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mouse_input: Res<ButtonInput<MouseButton>>,
-    player_camera_global_transform: Single<
+    world_model_camera_global_transform: Single<
         &GlobalTransform,
-        (With<ViewModelCamera>, Without<Player>),
+        With<WorldModelCamera>,
     >,
     player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
     mut player_weapon: Single<&mut PlayerWeapon>,
@@ -105,10 +105,10 @@ pub fn player_shooting(
         y: 0.0,
     };
     let world_bullet_velocity =
-        player_camera_global_transform.rotation() * local_bullet_velocity;
+        world_model_camera_global_transform.rotation() * local_bullet_velocity;
 
     let player_camera_global_transform_translation =
-        player_camera_global_transform.translation();
+        world_model_camera_global_transform.translation();
 
     commands.spawn((
         PlayerBullet { damage: 15.0 },
@@ -127,7 +127,7 @@ pub fn player_shooting(
         DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
         CollisionEventsEnabled,
         // bullets are spawned at center of player camera
-        DebugRender::none(),
+        // DebugRender::none(),
     ));
 
     player_shot_messsage_writer.write(PlayerWeaponFiredMessage);

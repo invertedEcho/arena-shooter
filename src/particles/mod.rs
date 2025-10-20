@@ -2,7 +2,10 @@ use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
 
 use crate::{
-    player::camera::components::ViewModelCamera,
+    player::{
+        Player,
+        camera::components::{ViewModelCamera, WorldModelCamera},
+    },
     utils::random::get_random_number_from_range_i32_to_f32_with_fixed_step,
 };
 
@@ -118,7 +121,7 @@ fn handle_spawn_bullet_impact_effect(
     bullet_impact_body_effect_resource: Res<
         PlayerBulletHitEnemyImpactEffectHandle,
     >,
-    player_camera_transform_global: Single<&Transform, With<ViewModelCamera>>,
+    player_camera_transform_global: Single<&Transform, With<Player>>,
 ) {
     for message in message_reader.read() {
         let Some(bullet_impact_effect_handle) = (match message.variant {
@@ -150,10 +153,10 @@ fn handle_spawn_bullet_impact_effect(
                 // is facing, so particles are not "in the collided object", e.g. not visible
                 z: message.spawn_location.z,
             },
-            rotation: Quat::from_rotation_arc(
-                Vec3::X,
-                rotation_towards_player_perpendicular,
-            ) + rotation_z,
+            // rotation: Quat::from_rotation_arc(
+            //     Vec3::X,
+            //     rotation_towards_player_perpendicular,
+            // ) + rotation_z,
             ..default()
         };
 

@@ -36,9 +36,6 @@ impl Plugin for PlayerMovementPlugin {
 }
 
 #[derive(Component)]
-pub struct DebugHitPoints;
-
-#[derive(Component)]
 pub struct PlayerMovementState(pub MovementState);
 
 pub fn setup_player_movement_state_for_added_players(
@@ -66,15 +63,6 @@ pub fn player_movement(
     player_camera_entity: Single<Entity, With<ViewModelCamera>>,
     spatial_query: SpatialQuery,
     current_in_game_state: Res<State<InGameState>>,
-    mut commands: Commands,
-    // TODO: extract these debug hits into a system which listens for events where it should spawn
-    // debughitpoints
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    debug_hit_points: Query<
-        &mut Transform,
-        (With<DebugHitPoints>, Without<Player>),
-    >,
     mut play_player_arm_weapon_animation_message_writer: MessageWriter<
         PlayArmWithWeaponAnimationMessage,
     >,
@@ -150,7 +138,7 @@ pub fn player_movement(
         return;
     };
 
-    if let Some(first_hit) = spatial_query.cast_shape(
+    if let Some(_) = spatial_query.cast_shape(
         &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
         player_transform.translation - direction.as_vec3() * 0.025,
         player_transform.rotation,
@@ -162,23 +150,6 @@ pub fn player_movement(
         &SpatialQueryFilter::default()
             .with_excluded_entities([entity, *player_camera_entity]),
     ) {
-        debug!("Disallowing movement, got hit: {:?}", first_hit);
-        if debug_hit_points.iter().len() == 0 {
-            commands.spawn((
-                Transform::from_translation(first_hit.point1),
-                Mesh3d(meshes.add(Sphere::new(0.1))),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: RED.into(),
-                    ..Default::default()
-                })),
-                DebugHitPoints,
-            ));
-        } else {
-            for mut debug_hit_point_transform in debug_hit_points {
-                debug_hit_point_transform.translation = first_hit.point1;
-            }
-        }
-
         velocity.x = 0.0;
         velocity.z = 0.0;
         return;
