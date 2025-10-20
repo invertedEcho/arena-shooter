@@ -61,8 +61,16 @@ fn main() {
 
     // avian (physics)
     app.add_plugins(PhysicsPlugins::default())
-        // .add_plugins(PhysicsDebugPlugin::default())
-        .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
+        .add_plugins(PhysicsDebugPlugin::default())
+        .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY))
+        .insert_gizmo_config(
+            PhysicsGizmos {
+                // disable axis gizmos as player camera is exactly at center of collider
+                axis_lengths: Some(Vec3::splat(0.0)),
+                ..default()
+            },
+            GizmoConfig::default(),
+        );
 
     // skein
     app.add_plugins(SkeinPlugin::default());

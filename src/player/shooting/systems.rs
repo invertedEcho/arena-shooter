@@ -126,6 +126,8 @@ pub fn player_shooting(
         RigidBody::Kinematic,
         DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
         CollisionEventsEnabled,
+        // bullets are spawned at center of player camera
+        DebugRender::none(),
     ));
 
     player_shot_messsage_writer.write(PlayerWeaponFiredMessage);
