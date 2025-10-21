@@ -18,4 +18,4 @@ bevy-inspector-egui = "0.34"
 bevy_hanabi = "0.17"
 bevy_skein = "0.3"
 rand = "0.9.2"
-bevy_rerecast = "0.3"
+vleue_navigator = {version = "0.14.0", features = ["avian3d"]}

@@ -217,6 +217,9 @@
 					},
 					{
 						"fun_shooter::world::components::Wall":{}
+					},
+					{
+						"fun_shooter::nav_mesh_pathfinding::Obstacle":{}
 					}
 				]
 			},
@@ -860,6 +863,9 @@
 					},
 					{
 						"fun_shooter::world::components::Wall":{}
+					},
+					{
+						"fun_shooter::nav_mesh_pathfinding::Obstacle":{}
 					}
 				]
 			},
@@ -1493,6 +1499,9 @@
 					},
 					{
 						"fun_shooter::world::components::Wall":{}
+					},
+					{
+						"fun_shooter::nav_mesh_pathfinding::Obstacle":{}
 					}
 				]
 			},
@@ -2126,6 +2135,9 @@
 					},
 					{
 						"fun_shooter::world::components::Wall":{}
+					},
+					{
+						"fun_shooter::nav_mesh_pathfinding::Obstacle":{}
 					}
 				]
 			},
