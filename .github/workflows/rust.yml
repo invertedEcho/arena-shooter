@@ -24,7 +24,7 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt update
-        sudo apt install mold libwayland-dev libxkbcommon-dev g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0
+        sudo apt install -y --no-install-recommends mold libwayland-dev libxkbcommon-dev g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0
 
     - name: Set up Rust
       run: |
