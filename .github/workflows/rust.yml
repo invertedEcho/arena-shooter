@@ -19,20 +19,37 @@ jobs:
           - nightly
 
     steps:
-    - name: Cargo cache
+    - uses: actions/checkout@v4
+
+    - name: Install system dependencies
+      run: |
+        sudo apt update
+        sudo apt install mold libwayland-dev libxkbcommon-dev g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0
+
+    - name: Set up Rust
+      run: |
+        rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
+        rustup component add rustc-codegen-cranelift
+    
+    # Cache dependencies (registry, git)
+    - name: Cache cargo registry
       uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-    - name: Update apt repositories
-      run: sudo apt update
-    - name: Install system dependencies
-      run: sudo apt install mold libwayland-dev libxkbcommon-dev g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0
-    - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
-    - run: rustup component add rustc-codegen-cranelift
-    - uses: actions/checkout@v4
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+
+    # Cache build artifacts
+    - name: Cache build artifacts
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-build-${{ matrix.toolchain }}-
+
     - name: Build
-      run: cargo build --verbose
+      run: cargo build
