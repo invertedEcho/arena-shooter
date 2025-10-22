@@ -5,6 +5,7 @@ use bevy::prelude::*;
 
 pub mod components;
 pub mod messages;
+pub mod resources;
 mod systems;
 
 pub struct WorldPlugin;

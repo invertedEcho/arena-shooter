@@ -1,60 +1,62 @@
-use avian3d::prelude::*;
-use bevy::{
-    asset::uuid_handle, color::palettes::tailwind::RED_800, prelude::*,
+use avian_rerecast::AvianBackendPlugin;
+use bevy::prelude::*;
+use bevy_landmass::prelude::*;
+use bevy_rerecast::{debug::DetailNavmeshGizmo, prelude::*};
+use landmass_rerecast::{
+    Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
 };
-use vleue_navigator::prelude::*;
+
+use crate::game_flow::states::GameLoadingState;
 
 pub struct NavMeshPathfindingPlugin;
 
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-struct Obstacle;
-
 impl Plugin for NavMeshPathfindingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(VleueNavigatorPlugin);
-        app.add_plugins(NavmeshUpdaterPlugin::<Collider, Obstacle>::default());
-        app.add_systems(Startup, setup)
-            .add_systems(Update, view_navmesh);
-        app.register_type::<Obstacle>();
+        app.add_plugins(AvianBackendPlugin::default());
+        app.add_plugins(NavmeshPlugins::default());
+        app.add_plugins(Landmass3dPlugin::default());
+        app.add_plugins(LandmassRerecastPlugin::default());
+        app.add_systems(
+            OnEnter(GameLoadingState::WorldLoadedWithDependencies),
+            generate_navmesh,
+        );
+        app.add_systems(Update, check_agents);
     }
 }
 
-const NAVMESH_HANDLE: Handle<NavMesh> =
-    uuid_handle!("100AD183-2C5C-49A1-AB32-142000E87828");
-
 #[derive(Resource)]
-pub struct CurrentNavMesh(pub Handle<NavMesh>);
+pub struct ArchipelagoRef(pub Entity);
 
-#[derive(Component)]
-struct Path {
-    current: Vec3,
-    next: Vec<Vec3>,
+fn generate_navmesh(mut commands: Commands, mut generator: NavmeshGenerator) {
+    info!("generate_navmesh system called");
+    let archipelago_id = commands
+        .spawn(Archipelago3d::new(ArchipelagoOptions::from_agent_radius(
+            0.5,
+        )))
+        .id();
+    commands.insert_resource(ArchipelagoRef(archipelago_id));
+
+    let navmesh = generator.generate(NavmeshSettings {
+        agent_radius: 0.2,
+        ..default()
+    });
+
+    commands.spawn(DetailNavmeshGizmo::new(&navmesh));
+
+    commands.spawn(Island3dBundle {
+        island: Island,
+        archipelago_ref: ArchipelagoRef3d::new(archipelago_id),
+        nav_mesh: NavMeshHandle3d(navmesh),
+    });
+    info!(
+        "generated nav mesh and created landmass island for pathfinding with \
+         generated nav mesh!"
+    )
 }
 
-#[derive(Component, Clone)]
-struct NavMeshDisp(Handle<NavMesh>);
-
-fn setup(mut commands: Commands) {
-    commands.spawn((
-        NavMeshSettings { ..default() },
-        NavMeshUpdateMode::Direct,
-        Transform::from_xyz(0.0, 1.0, 0.0),
-    ));
-}
-fn view_navmesh(
-    mut commands: Commands,
-    navmeshes: Query<Entity, With<ManagedNavMesh>>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-) {
-    if keyboard_input.just_pressed(KeyCode::KeyV) {
-        if navmeshes.count() == 0 {
-            info!("No managed navmeshes found!");
-        } else {
-            info!("Found navmesh!");
-        }
-        for entity in navmeshes {
-            commands.entity(entity).insert(NavMeshDebug(RED_800.into()));
-        }
+fn check_agents(agents: Query<(&AgentState, &AgentDesiredVelocity3d)>) {
+    for agent in agents {
+        info!("agentstate {:?}", agent.0);
+        info!("Desired velocity: {:?}", agent.1);
     }
 }
