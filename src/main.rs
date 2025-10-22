@@ -8,19 +8,19 @@ use bevy_inspector_egui::{
 use bevy_skein::SkeinPlugin;
 
 use crate::{
-    common::CommonPlugin, enemy::EnemyPlugin, game_flow::GameFlowPlugin,
-    music::MusicPlugin, nav_mesh_pathfinding::NavMeshPathfindingPlugin,
-    particles::ParticlesPlugin, player::PlayerPlugin,
+    enemy::EnemyPlugin, game_flow::GameFlowPlugin, music::MusicPlugin,
+    nav_mesh_pathfinding::NavMeshPathfindingPlugin, particles::ParticlesPlugin,
+    player::PlayerPlugin, shared::CommonPlugin,
     user_interface::UserInterfacePlugin, world::WorldPlugin,
 };
 
-mod common;
 mod enemy;
 mod game_flow;
 mod music;
 mod nav_mesh_pathfinding;
 mod particles;
 mod player;
+mod shared;
 mod user_interface;
 mod utils;
 mod world;

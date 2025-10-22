@@ -3,7 +3,6 @@ use bevy::prelude::*;
 
 use crate::{
     GRAVITY,
-    common::MovementState,
     game_flow::states::{AppState, InGameState},
     player::{
         Player,
@@ -12,11 +11,8 @@ use crate::{
         shooting::components::PlayerWeapon,
         spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
     },
+    shared::{JUMP_VELOCITY, MovementState, RUN_VELOCITY, WALK_VELOCITY},
 };
-
-const PLAYER_WALK_VELOCITY: f32 = 2.0;
-const PLAYER_RUN_VELOCITY: f32 = 5.0;
-const PLAYER_JUMP_VELOCITY: f32 = 3.0;
 
 pub struct PlayerMovementPlugin;
 
@@ -94,9 +90,9 @@ pub fn player_movement(
     }
 
     let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
-        PLAYER_RUN_VELOCITY
+        RUN_VELOCITY
     } else {
-        PLAYER_WALK_VELOCITY
+        WALK_VELOCITY
     };
 
     let mut local_velocity = Vec3::ZERO;
@@ -114,7 +110,7 @@ pub fn player_movement(
         local_velocity.z += 1.0 * speed;
     }
     if keyboard_input.just_pressed(KeyCode::Space) && player.on_ground {
-        velocity.y = PLAYER_JUMP_VELOCITY;
+        velocity.y = JUMP_VELOCITY;
     }
 
     if local_velocity == Vec3::ZERO {
@@ -162,7 +158,7 @@ pub fn player_movement(
         return;
     }
 
-    if speed == PLAYER_RUN_VELOCITY {
+    if speed == RUN_VELOCITY {
         if player_movement_state.0 != MovementState::Running {
             player_movement_state.0 = MovementState::Running;
             play_player_arm_weapon_animation_message_writer.write(

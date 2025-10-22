@@ -1,6 +1,6 @@
 use avian_rerecast::AvianBackendPlugin;
 use bevy::prelude::*;
-use bevy_landmass::prelude::*;
+use bevy_landmass::{debug::Landmass3dDebugPlugin, prelude::*};
 use bevy_rerecast::{debug::DetailNavmeshGizmo, prelude::*};
 use landmass_rerecast::{
     Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
@@ -16,11 +16,12 @@ impl Plugin for NavMeshPathfindingPlugin {
         app.add_plugins(NavmeshPlugins::default());
         app.add_plugins(Landmass3dPlugin::default());
         app.add_plugins(LandmassRerecastPlugin::default());
+        app.add_plugins(Landmass3dDebugPlugin::default());
         app.add_systems(
             OnEnter(GameLoadingState::WorldLoadedWithDependencies),
             generate_navmesh,
         );
-        app.add_systems(Update, check_agents);
+        app.add_systems(Update, update_agent_velocity);
     }
 }
 
@@ -37,7 +38,7 @@ fn generate_navmesh(mut commands: Commands, mut generator: NavmeshGenerator) {
     commands.insert_resource(ArchipelagoRef(archipelago_id));
 
     let navmesh = generator.generate(NavmeshSettings {
-        agent_radius: 0.2,
+        agent_radius: 0.25,
         ..default()
     });
 
@@ -54,9 +55,10 @@ fn generate_navmesh(mut commands: Commands, mut generator: NavmeshGenerator) {
     )
 }
 
-fn check_agents(agents: Query<(&AgentState, &AgentDesiredVelocity3d)>) {
-    for agent in agents {
-        info!("agentstate {:?}", agent.0);
-        info!("Desired velocity: {:?}", agent.1);
+fn update_agent_velocity(
+    mut agent_query: Query<(&mut Velocity3d, &AgentDesiredVelocity3d)>,
+) {
+    for (mut velocity, desired_velocity) in agent_query.iter_mut() {
+        velocity.velocity = desired_velocity.velocity();
     }
 }

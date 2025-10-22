@@ -1,5 +1,4 @@
 use crate::{
-    common::systems::apply_render_layers_to_children,
     player::camera::{
         PLAYER_CAMERA_Y_OFFSET,
         components::{
@@ -7,6 +6,7 @@ use crate::{
         },
         messages::SpawnPlayerCamerasMessage,
     },
+    shared::systems::apply_render_layers_to_children,
 };
 use std::f32::consts::{FRAC_PI_2, PI};
 

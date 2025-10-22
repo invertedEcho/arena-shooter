@@ -4,7 +4,6 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    common::{BULLET_VELOCITY, MovementState, components::DespawnTimer},
     enemy::{Enemy, shooting::components::EnemyBullet},
     game_flow::{score::GameScore, states::InGameState},
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
@@ -22,6 +21,7 @@ use crate::{
             resources::ReloadTimer,
         },
     },
+    shared::{BULLET_VELOCITY, MovementState, components::DespawnTimer},
     utils::random::get_random_number_from_range_i32,
 };
 

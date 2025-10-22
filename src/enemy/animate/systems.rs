@@ -3,17 +3,18 @@ use std::time::Duration;
 use bevy::prelude::*;
 
 use crate::{
-    common::components::AnimationPlayerEntityPointer,
     enemy::{
         Enemy, EnemyState,
         animate::{
             ENEMY_DEATH_ANIMATION, ENEMY_HIT_RECEIVE_ANIMATION,
             ENEMY_IDLE_GUN_ANIMATION, ENEMY_IDLE_GUN_POINTING_ANIMATION,
-            ENEMY_MODEL_NAME, ENEMY_MODEL_PATH, TOTAL_ENEMY_MODEL_ANIMATIONS,
-            components::PlayHitAnimationTimer, resources::EnemyAnimations,
+            ENEMY_MODEL_NAME, ENEMY_MODEL_PATH, ENEMY_RUN_ANIMATION,
+            TOTAL_ENEMY_MODEL_ANIMATIONS, components::PlayHitAnimationTimer,
+            resources::EnemyAnimations,
         },
     },
     player::shooting::messages::PlayerBulletHitEnemyMessage,
+    shared::components::AnimationPlayerEntityPointer,
 };
 
 pub fn load_enemy_animations(
@@ -123,8 +124,8 @@ pub fn reflect_enemy_state_to_current_animation(
         let new_animation_index = match enemy.state {
             EnemyState::AttackPlayer => ENEMY_IDLE_GUN_POINTING_ANIMATION,
             EnemyState::Dead => ENEMY_DEATH_ANIMATION,
-            // FIXME: correct animations
-            _ => ENEMY_IDLE_GUN_ANIMATION,
+            EnemyState::ChasingPlayer => ENEMY_RUN_ANIMATION,
+            EnemyState::Idle => ENEMY_IDLE_GUN_ANIMATION,
         };
 
         if new_animation_index == ENEMY_DEATH_ANIMATION {
@@ -166,11 +167,6 @@ pub fn play_enemy_hit_animation(
                  AnimationPlayerEntityPointer!",
                 event.enemy_hit
             );
-            info!(
-                "Count of entities that have AnimationPlayerEntityPointer \
-                 component: {}",
-                enemy_query.iter().len()
-            );
             continue;
         };
         if enemy.state == EnemyState::Dead {
@@ -202,62 +198,24 @@ pub fn play_enemy_hit_animation(
 }
 
 // maybe its possible to queue animations? so we dont have to do this manually
-pub fn handle_play_hit_animation(
+pub fn handle_play_hit_animation_timer(
     mut commands: Commands,
     time: Res<Time>,
-    query: Query<(
-        Entity,
-        &Enemy,
-        &mut PlayHitAnimationTimer,
-        &AnimationPlayerEntityPointer,
-    )>,
-    mut animation_players_and_transitions: Query<(
-        Entity,
-        &mut AnimationPlayer,
-        &mut AnimationTransitions,
-    )>,
-    animations: Res<EnemyAnimations>,
+    query: Query<(Entity, &mut Enemy, &mut PlayHitAnimationTimer)>,
 ) {
-    for (
-        enemy_entity,
-        enemy,
-        mut play_hit_animation,
-        animation_player_entity_pointer,
-    ) in query
-    {
+    for (enemy_entity, mut enemy, mut play_hit_animation) in query {
         if enemy.state == EnemyState::Dead {
             continue;
         }
         play_hit_animation.0.tick(time.delta());
 
-        if !play_hit_animation.0.just_finished() {
-            continue;
+        if play_hit_animation.0.just_finished() {
+            // hm we need to set the correct animation to play now depending on the enemystate, but
+            // lets not do this here but have a MessageWriter
+            enemy.state = EnemyState::Idle;
+            commands
+                .entity(enemy_entity)
+                .remove::<PlayHitAnimationTimer>();
         }
-
-        let Some((_, mut animation_player, mut animation_transitions)) =
-            animation_players_and_transitions
-                .iter_mut()
-                .find(|(e, _, _)| *e == animation_player_entity_pointer.0)
-        else {
-            warn!(
-                "Could not find animation player and transitions for enemy \
-                 entity"
-            );
-            continue;
-        };
-        let new_animation_index = match enemy.state {
-            EnemyState::AttackPlayer => ENEMY_IDLE_GUN_POINTING_ANIMATION,
-            EnemyState::Idle | EnemyState::ChasingPlayer | EnemyState::Dead => {
-                ENEMY_IDLE_GUN_ANIMATION
-            }
-        };
-        animation_transitions.play(
-            &mut animation_player,
-            animations.animation_node_indices[new_animation_index],
-            Duration::from_millis(250),
-        );
-        commands
-            .entity(enemy_entity)
-            .remove::<PlayHitAnimationTimer>();
     }
 }
