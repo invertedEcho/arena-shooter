@@ -12,6 +12,7 @@ use crate::{
     world::{
         components::{DebugPoint, Ground, Wall},
         messages::SpawnDebugPointMessage,
+        resources::WorldSceneHandle,
     },
 };
 
@@ -31,12 +32,12 @@ pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
         RenderLayers::from_layers(&[0, 1]),
     ));
 
+    let world_scene_handle = asset_server
+        .load(GltfAssetLabel::Scene(0).from_asset("maps/main/main.gltf"));
+    commands.insert_resource(WorldSceneHandle(world_scene_handle.clone()));
+
     commands.spawn((
-        SceneRoot(
-            asset_server.load(
-                GltfAssetLabel::Scene(0).from_asset("maps/main/main.gltf"),
-            ),
-        ),
+        SceneRoot(world_scene_handle),
         Name::new("World Root main.gltf"),
         Visibility::Visible,
     ));

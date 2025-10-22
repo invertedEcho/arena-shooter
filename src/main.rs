@@ -8,20 +8,17 @@ use bevy_inspector_egui::{
 use bevy_skein::SkeinPlugin;
 
 use crate::{
-    common::CommonPlugin,
-    enemy::EnemyPlugin,
-    game_flow::{GameFlowPlugin, states::AppState},
-    music::MusicPlugin,
-    particles::ParticlesPlugin,
-    player::PlayerPlugin,
-    user_interface::UserInterfacePlugin,
-    world::WorldPlugin,
+    common::CommonPlugin, enemy::EnemyPlugin, game_flow::GameFlowPlugin,
+    music::MusicPlugin, nav_mesh_pathfinding::NavMeshPathfindingPlugin,
+    particles::ParticlesPlugin, player::PlayerPlugin,
+    user_interface::UserInterfacePlugin, world::WorldPlugin,
 };
 
 mod common;
 mod enemy;
 mod game_flow;
 mod music;
+mod nav_mesh_pathfinding;
 mod particles;
 mod player;
 mod user_interface;
@@ -59,7 +56,7 @@ fn main() {
     // app.add_plugins(FrameTimeDiagnosticsPlugin::default());
     // app.add_plugins(LogDiagnosticsPlugin::default());
 
-    // avian (physics)
+    // External plugins
     app.add_plugins(PhysicsPlugins::default())
         .add_plugins(PhysicsDebugPlugin::default())
         .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY))
@@ -71,15 +68,9 @@ fn main() {
             },
             GizmoConfig::default(),
         );
-
-    // skein
     app.add_plugins(SkeinPlugin::default());
-
-    // misc plugins
     app.add_plugins(EguiPlugin::default())
         .add_plugins(WorldInspectorPlugin::new());
-
-    // hanabi plugins (particles)
     app.add_plugins(HanabiPlugin);
 
     // own plugins
@@ -90,18 +81,13 @@ fn main() {
         .add_plugins(EnemyPlugin)
         .add_plugins(UserInterfacePlugin)
         .add_plugins(ParticlesPlugin)
-        .add_plugins(MusicPlugin);
+        .add_plugins(MusicPlugin)
+        .add_plugins(NavMeshPathfindingPlugin);
 
     app.insert_resource(bevy_egui::EguiGlobalSettings {
         auto_create_primary_context: false,
         ..default()
     });
 
-    app.add_systems(Startup, explicit_main_menu);
-
     app.run();
-}
-
-fn explicit_main_menu(mut next_main_menu_state: ResMut<NextState<AppState>>) {
-    next_main_menu_state.set(AppState::MainMenu);
 }
