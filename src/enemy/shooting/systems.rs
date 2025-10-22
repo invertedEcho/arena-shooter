@@ -12,11 +12,6 @@ use crate::{
             components::{EnemyBullet, EnemyShootPlayerCooldownTimer},
             messages::EnemyKilledMessage,
         },
-        spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
-    },
-    game_flow::{
-        game_mode::{GameMode, GameStateWave, get_enemy_count_per_wave},
-        score::GameScore,
     },
     player::shooting::{
         components::PlayerBullet, messages::PlayerBulletHitEnemyMessage,
@@ -93,6 +88,7 @@ pub fn enemy_shoot_player(
             RigidBody::Kinematic,
             DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
             EnemyBullet,
+            CollidingEntities::default(),
         ));
     }
 }
@@ -106,17 +102,10 @@ pub fn tick_enemy_shoot_player_cooldown_timer(
     }
 }
 
-// TODO: Does this really belong into the shooting module? its about spawning new enemies and game
-// flow/ game mode
-pub fn handle_enemy_killed_event(
+pub fn handle_enemy_killed_message(
     mut commands: Commands,
     mut message_reader: MessageReader<EnemyKilledMessage>,
-    current_game_mode: Res<State<GameMode>>,
-    game_state_wave: Res<State<GameStateWave>>,
-    mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     mut enemy_query: Query<(Entity, &mut Enemy)>,
-    mut game_score: ResMut<GameScore>,
-    mut spawn_enemies_event_writer: MessageWriter<SpawnEnemiesMessage>,
 ) {
     for message in message_reader.read() {
         let Some((enemy_entity, mut enemy)) = enemy_query
@@ -138,32 +127,5 @@ pub fn handle_enemy_killed_event(
             .remove::<Collider>()
             .remove::<CollidingEntities>()
             .insert(DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)));
-
-        game_score.player += 1;
-
-        match *current_game_mode.get() {
-            GameMode::Waves => {
-                let new_enemies_left_count =
-                    game_state_wave.enemies_left_from_current_wave - 1;
-                next_game_state_wave.set(GameStateWave {
-                    current_wave: game_state_wave.current_wave,
-                    enemies_left_from_current_wave: new_enemies_left_count,
-                });
-                if new_enemies_left_count == 0 {
-                    info!("no enemies left, spawning new wave!");
-                    let new_wave = game_state_wave.current_wave + 1;
-                    let enemy_count = get_enemy_count_per_wave(new_wave);
-                    next_game_state_wave.set(GameStateWave {
-                        current_wave: new_wave,
-                        enemies_left_from_current_wave: enemy_count,
-                    });
-                    spawn_enemies_event_writer.write(SpawnEnemiesMessage {
-                        enemy_count,
-                        spawn_strategy: EnemySpawnStrategy::RandomSelection,
-                    });
-                }
-            }
-            GameMode::FreePlay => {}
-        }
     }
 }
