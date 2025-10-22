@@ -8,10 +8,11 @@ use crate::{
     game_flow::{
         AppState,
         game_mode::{GameMode, StartGameModeMessage},
-        states::InGameState,
+        states::{GameLoadingState, InGameState},
     },
     player::{Player, camera::components::FreeCam},
     user_interface::main_menu::MainMenuCamera,
+    world::resources::WorldSceneHandle,
 };
 
 pub fn grab_mouse(
@@ -117,4 +118,20 @@ pub fn handle_exit_in_game(
         Transform::from_xyz(5.0, 10.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         MainMenuCamera,
     ));
+}
+
+pub fn check_world_scene_loaded(
+    mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
+    world_scene: Res<WorldSceneHandle>,
+    mut next_game_loading_state: ResMut<NextState<GameLoadingState>>,
+) {
+    for asset_event in asset_event_message_reader.read() {
+        if let AssetEvent::LoadedWithDependencies { id } = asset_event {
+            if *id == world_scene.0.id() {
+                info!("World Scene loaded with dependencies!");
+                next_game_loading_state
+                    .set(GameLoadingState::WorldLoadedWithDependencies);
+            }
+        }
+    }
 }

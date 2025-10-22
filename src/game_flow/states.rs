@@ -10,6 +10,13 @@ pub enum AppState {
 }
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
+pub enum GameLoadingState {
+    #[default]
+    Initial,
+    WorldLoadedWithDependencies,
+}
+
+#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[states(scoped_entities)]
 pub enum MainMenuState {
     None,
