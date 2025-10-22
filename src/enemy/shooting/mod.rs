@@ -2,8 +2,9 @@ use crate::{
     enemy::shooting::{
         messages::EnemyKilledMessage,
         systems::{
-            detect_player_bullet_collision_with_enemy, enemy_shoot_player,
-            handle_enemy_killed_event, tick_enemy_shoot_player_cooldown_timer,
+            detect_player_bullet_collision_with_enemy,
+            handle_enemy_killed_message,
+            tick_enemy_shoot_player_cooldown_timer,
         },
     },
     game_flow::states::InGameState,
@@ -11,7 +12,7 @@ use crate::{
 use bevy::prelude::*;
 
 pub mod components;
-mod messages;
+pub mod messages;
 mod systems;
 
 pub struct EnemyShootingPlugin;
@@ -24,7 +25,7 @@ impl Plugin for EnemyShootingPlugin {
                 // enemy_shoot_player,
                 tick_enemy_shoot_player_cooldown_timer,
                 detect_player_bullet_collision_with_enemy,
-                handle_enemy_killed_event,
+                handle_enemy_killed_message,
             )
                 .run_if(in_state(InGameState::Playing)),
         );

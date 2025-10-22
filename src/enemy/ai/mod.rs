@@ -53,18 +53,9 @@ pub enum EnemyState {
 }
 
 /// This event will get fired when the enemy can not directly see the player.
-/// A system will handle this event, and will insert an `EnemyPatrolPath` component into the given enemy
 #[derive(Message)]
 pub struct StartChasingPlayerMessage {
-    /// The enemy entity in which the `EnemyPatrolPath` component should be inserted to
     pub enemy_entity: Entity,
-}
-
-// TODO: we should just use Vec2 as path finding is only supported on 2d anyways
-#[derive(Component)]
-pub struct EnemyPatrolPath {
-    current_destination: Vec3,
-    next_destinations: Vec<Vec3>,
 }
 
 /// This system iterates over each enemy, and with a raycast, determines whether the enemy can see
@@ -171,13 +162,11 @@ fn handle_start_chasing_player_message(
 }
 
 fn enemy_patrol(
-    mut commands: Commands,
     mut enemy_query: Query<(Entity, &Enemy, &mut LinearVelocity)>,
     enemy_agents_query: Query<(
         &AgentDesiredVelocity3d,
         &AgentPathfindingEnemyEntityPointer,
     )>,
-    spatial_query: SpatialQuery,
     current_in_game_state: Res<State<InGameState>>,
 ) {
     for (agent_desired_velocity, enemy_entity) in enemy_agents_query {

@@ -135,3 +135,11 @@ pub fn check_world_scene_loaded(
         }
     }
 }
+
+pub fn handle_playing_state_enter(
+    mut commands: Commands,
+    main_menu_camera: Single<Entity, With<MainMenuCamera>>,
+) {
+    info!("got start game mode event, despawning main menu camera");
+    commands.entity(*main_menu_camera).despawn();
+}

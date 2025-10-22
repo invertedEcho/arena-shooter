@@ -4,7 +4,6 @@ use bevy_hanabi::prelude::*;
 use crate::{
     player::Player,
     utils::random::get_random_number_from_range_i32_to_f32_with_fixed_step,
-    world::messages::SpawnDebugPointMessage,
 };
 
 const BULLET_IMPACT_PARTICLE_LIFETIME: f32 = 0.1;

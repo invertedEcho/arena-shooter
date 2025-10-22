@@ -9,7 +9,6 @@ pub mod systems;
 
 pub const BULLET_VELOCITY: f32 = 100.0;
 
-// TODO: this should just be player arm weapon animation state
 #[derive(Debug, Reflect, PartialEq)]
 pub enum MovementState {
     Idle,

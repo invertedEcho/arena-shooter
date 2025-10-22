@@ -10,7 +10,8 @@ use crate::{
         },
         systems::{
             check_world_scene_loaded, free_mouse, grab_mouse, handle_escape,
-            handle_exit_in_game, restart_game, spawn_main_menu_camera,
+            handle_exit_in_game, handle_playing_state_enter, restart_game,
+            spawn_main_menu_camera,
         },
     },
     player::PlayerDeathMessage,
@@ -34,7 +35,10 @@ impl Plugin for GameFlowPlugin {
             .add_message::<PlayerDeathMessage>()
             .add_plugins(GameScorePlugin)
             .add_plugins(GameModePlugin)
-            .add_systems(OnEnter(InGameState::Playing), grab_mouse)
+            .add_systems(
+                OnEnter(InGameState::Playing),
+                (grab_mouse, handle_playing_state_enter),
+            )
             .add_systems(OnEnter(InGameState::Paused), free_mouse)
             .add_systems(OnExit(AppState::InGame), handle_exit_in_game)
             .add_systems(Startup, spawn_main_menu_camera)

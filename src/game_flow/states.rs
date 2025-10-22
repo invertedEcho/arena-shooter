@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 
-// TODO: do we even need this if we have the two states below?
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[states(scoped_entities)]
 pub enum AppState {

@@ -1,16 +1,19 @@
 use bevy::prelude::*;
 
 use crate::{
-    enemy::spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
+    enemy::{
+        shooting::messages::EnemyKilledMessage,
+        spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
+    },
     game_flow::{
         AppState,
+        score::GameScore,
         states::{InGameState, MainMenuState},
     },
     player::{
         camera::messages::SpawnPlayerCamerasMessage,
         spawn::{PlayerSpawnMessage, components::PlayerSpawnLocation},
     },
-    user_interface::main_menu::MainMenuCamera,
 };
 
 pub struct GameModePlugin;
@@ -20,7 +23,11 @@ impl Plugin for GameModePlugin {
         app.add_message::<StartGameModeMessage>()
             .add_systems(
                 Update,
-                (handle_start_game_mode_event, handle_game_state_wave_changed),
+                (
+                    handle_start_game_mode_event,
+                    handle_game_state_wave_changed,
+                    handle_enemy_killed_event,
+                ),
             )
             .init_state::<GameMode>()
             .init_state::<GameStateWave>();
@@ -47,15 +54,12 @@ pub struct GameStateWave {
     pub enemies_left_from_current_wave: usize,
 }
 
-// TODO: this function takes wayyyy to many parameters
 fn handle_start_game_mode_event(
-    mut commands: Commands,
     mut message_reader: MessageReader<StartGameModeMessage>,
     mut next_app_state: ResMut<NextState<AppState>>,
     mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     player_spawn_location: Single<&Transform, With<PlayerSpawnLocation>>,
-    main_menu_camera: Single<Entity, With<MainMenuCamera>>,
     mut spawn_player_message_writer: MessageWriter<PlayerSpawnMessage>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
@@ -64,8 +68,6 @@ fn handle_start_game_mode_event(
     >,
 ) {
     for event in message_reader.read() {
-        info!("got start game mode event, despawning main menu camera");
-        commands.entity(*main_menu_camera).despawn();
         next_main_menu_state.set(MainMenuState::None);
         next_in_game_state.set(InGameState::Playing);
 
@@ -130,6 +132,43 @@ fn handle_game_state_wave_changed(
                 enemy_count: new_enemy_count,
                 spawn_strategy: EnemySpawnStrategy::RandomSelection,
             });
+        }
+    }
+}
+
+fn handle_enemy_killed_event(
+    current_game_mode: Res<State<GameMode>>,
+    game_state_wave: Res<State<GameStateWave>>,
+    mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
+    mut enemy_killed_message_reader: MessageReader<EnemyKilledMessage>,
+    mut game_score: ResMut<GameScore>,
+    mut spawn_enemies_event_writer: MessageWriter<SpawnEnemiesMessage>,
+) {
+    for _ in enemy_killed_message_reader.read() {
+        game_score.player += 1;
+        match *current_game_mode.get() {
+            GameMode::Waves => {
+                let new_enemies_left_count =
+                    game_state_wave.enemies_left_from_current_wave - 1;
+                next_game_state_wave.set(GameStateWave {
+                    current_wave: game_state_wave.current_wave,
+                    enemies_left_from_current_wave: new_enemies_left_count,
+                });
+                if new_enemies_left_count == 0 {
+                    info!("no enemies left, spawning new wave!");
+                    let new_wave = game_state_wave.current_wave + 1;
+                    let enemy_count = get_enemy_count_per_wave(new_wave);
+                    next_game_state_wave.set(GameStateWave {
+                        current_wave: new_wave,
+                        enemies_left_from_current_wave: enemy_count,
+                    });
+                    spawn_enemies_event_writer.write(SpawnEnemiesMessage {
+                        enemy_count,
+                        spawn_strategy: EnemySpawnStrategy::RandomSelection,
+                    });
+                }
+            }
+            GameMode::FreePlay => {}
         }
     }
 }
