@@ -1,9 +1,10 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use bevy_landmass::AgentDesiredVelocity3d;
 
 use crate::{
     GRAVITY,
-    enemy::Enemy,
+    enemy::{Enemy, spawn::AgentPathfindingEnemyEntityPointer},
     game_flow::states::{AppState, InGameState},
     player::{
         Player,
@@ -171,24 +172,25 @@ fn handle_start_chasing_player_message(
 
 fn enemy_patrol(
     mut commands: Commands,
-    enemies_with_patrol_path: Query<(
-        Entity,
-        &mut Enemy,
-        &mut EnemyPatrolPath,
-        &mut LinearVelocity,
-        &mut Transform,
+    mut enemy_query: Query<(Entity, &Enemy, &mut LinearVelocity)>,
+    enemy_agents_query: Query<(
+        &AgentDesiredVelocity3d,
+        &AgentPathfindingEnemyEntityPointer,
     )>,
     spatial_query: SpatialQuery,
     current_in_game_state: Res<State<InGameState>>,
 ) {
-    for (
-        entity,
-        mut enemy,
-        mut enemy_patrol_path,
-        mut velocity,
-        mut enemy_transform,
-    ) in enemies_with_patrol_path
-    {
+    for (agent_desired_velocity, enemy_entity) in enemy_agents_query {
+        let Ok((entity, enemy, mut velocity)) =
+            enemy_query.get_mut(enemy_entity.0)
+        else {
+            warn!(
+                "Failed to find the enemy {} with linearvelocity from \
+                 AgentPathfindingEnemyEntityPointer",
+                enemy_entity.0
+            );
+            continue;
+        };
         let in_game_state_is_playing =
             *current_in_game_state.get() == InGameState::Playing;
         if !in_game_state_is_playing {
@@ -200,79 +202,13 @@ fn enemy_patrol(
             continue;
         }
 
-        info!("enemy patrol for entity {}", entity);
+        info!(
+            "updating velocity of enemy {} in chasingplayer state via \
+             desired_velocity",
+            entity
+        );
 
-        let fixed_enemy_transform = Vec3 {
-            x: enemy_transform.translation.x,
-            y: 0.0,
-            z: enemy_transform.translation.z,
-        };
-
-        let current_distance_from_enemy_to_current_destination =
-            fixed_enemy_transform
-                .distance(enemy_patrol_path.current_destination);
-        let enemy_reached_patrol_path =
-            current_distance_from_enemy_to_current_destination < 0.1;
-
-        if enemy_reached_patrol_path {
-            info!("Enemy reached current patrol point!");
-            **velocity = Vec3::splat(0.0);
-
-            if enemy_patrol_path.next_destinations.len() == 0 {
-                info!("That was the last patrol point, state set to Idle now");
-                enemy.state = EnemyState::Idle;
-                continue;
-            }
-
-            enemy_patrol_path.current_destination =
-                enemy_patrol_path.next_destinations[0];
-
-            enemy_patrol_path.next_destinations =
-                enemy_patrol_path.next_destinations[1..].to_vec();
-
-            let current_destination_fixed = Vec3 {
-                x: enemy_patrol_path.current_destination.x,
-                y: enemy_transform.translation.y,
-                z: enemy_patrol_path.current_destination.z,
-            };
-            enemy_transform.look_at(current_destination_fixed, Vec3::Y);
-            info!(
-                "Enemy reached current patrol point, destinations updated and \
-                 enemy now looking at new current_destination"
-            );
-        } else {
-            let mut local_velocity = Vec3::ZERO;
-            local_velocity.z -= 2.0;
-
-            let world_velocity = enemy_transform.rotation * local_velocity;
-            let Ok(world_direction) = Dir3::new(world_velocity) else {
-                continue;
-            };
-
-            if let Some(first_hit) = spatial_query.cast_shape(
-                &Collider::capsule(
-                    PLAYER_CAPSULE_RADIUS,
-                    PLAYER_CAPSULE_LENGTH,
-                ),
-                enemy_transform.translation - world_direction.as_vec3() * 0.025,
-                enemy_transform.rotation,
-                world_direction,
-                &ShapeCastConfig {
-                    max_distance: 0.1,
-                    ..default()
-                },
-                &SpatialQueryFilter::default().with_excluded_entities([entity]),
-            ) {
-                info!("Zeroeing out enemy velocity, something is in the way");
-                commands.entity(first_hit.entity).log_components();
-
-                **velocity = Vec3::ZERO;
-                return;
-            }
-
-            info!("Enemy should move to patrol point");
-            **velocity = world_velocity;
-        };
+        velocity.0 = agent_desired_velocity.velocity();
     }
 }
 

@@ -3,10 +3,17 @@ use crate::{
         animate::ENEMY_MODEL_PATH,
         shooting::components::EnemyShootPlayerCooldownTimer,
     },
-    player::spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
+    nav_mesh_pathfinding::ArchipelagoRef,
+    player::{
+        Player,
+        spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
+    },
 };
 use avian3d::{math::PI, prelude::*};
-use bevy::prelude::*;
+use bevy::{color::palettes::css::RED, prelude::*};
+use bevy_landmass::{
+    Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
+};
 
 use crate::enemy::Enemy;
 
@@ -31,6 +38,11 @@ pub struct SpawnEnemiesMessage {
     pub spawn_strategy: EnemySpawnStrategy,
 }
 
+#[derive(Component)]
+pub struct AgentPathfindingEnemyEntityPointer(pub Entity);
+
+#[derive()]
+
 pub enum EnemySpawnStrategy {
     /// Enemies will be spawned at randomly picked EnemySpawnLocations
     RandomSelection,
@@ -44,8 +56,20 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
         (Entity, &Transform),
         With<EnemySpawnLocation>,
     >,
+    archipelago_ref: Option<Res<ArchipelagoRef>>,
+    player_entity: Single<&Transform, With<Player>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for event in message_reader.read() {
+        let Some(ref archipelago_ref) = archipelago_ref else {
+            warn!(
+                "Received enemy spawn message but archipelago_ref doesnt \
+                 exist yet, ignoring message"
+            );
+            return;
+        };
+
         let spawn_enemy_count = event.enemy_count;
         let spawn_method = &event.spawn_strategy;
 
@@ -78,7 +102,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
 
                     let spawn_location_translation =
                         chosen_spawn_location.1.translation;
-                    commands
+                    let enemy_entity = commands
                         .spawn((
                             Name::new("Enemy"),
                             Transform::from_xyz(
@@ -118,7 +142,34 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             },
                             SceneRoot(enemy_model),
                             Visibility::Visible,
-                        ));
+                        ))
+                        .id();
+                    commands.entity(enemy_entity).with_child((
+                        Name::new("Enemy Pathfinding Agent"),
+                        Agent3dBundle {
+                            agent: Agent::default(),
+                            archipelago_ref: ArchipelagoRef3d::new(
+                                archipelago_ref.0,
+                            ),
+                            settings: AgentSettings {
+                                desired_speed: 2.0,
+                                max_speed: 2.0,
+                                radius: PLAYER_CAPSULE_RADIUS,
+                            },
+                        },
+                        AgentTarget3d::Point(Vec3::new(
+                            player_entity.translation.x,
+                            0.,
+                            player_entity.translation.z,
+                        )),
+                        Transform::from_xyz(0.0, -0.6, 0.0),
+                        Mesh3d(meshes.add(Sphere::new(0.2))),
+                        MeshMaterial3d(materials.add(StandardMaterial {
+                            base_color: RED.into(),
+                            ..Default::default()
+                        })),
+                        AgentPathfindingEnemyEntityPointer(enemy_entity),
+                    ));
                 }
             }
         }
