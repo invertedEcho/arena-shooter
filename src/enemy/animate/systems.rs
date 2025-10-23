@@ -126,6 +126,7 @@ pub fn reflect_enemy_state_to_current_animation(
             EnemyState::Dead => ENEMY_DEATH_ANIMATION,
             EnemyState::ChasingPlayer => ENEMY_RUN_ANIMATION,
             EnemyState::Idle => ENEMY_IDLE_GUN_ANIMATION,
+            EnemyState::CheckIfPlayerSeeable => ENEMY_IDLE_GUN_ANIMATION,
         };
 
         if new_animation_index == ENEMY_DEATH_ANIMATION {

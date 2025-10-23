@@ -14,6 +14,7 @@ use bevy::{color::palettes::css::BLUE, prelude::*};
 use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
 };
+use bevy_rich_text3d::{Text3d, TextAtlas};
 
 use crate::enemy::Enemy;
 
@@ -157,27 +158,41 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             Visibility::Visible,
                         ))
                         .id();
-                    commands.entity(enemy_entity).with_child((
-                        Name::new("Enemy Pathfinding Agent"),
-                        Agent3dBundle {
-                            agent: Agent::default(),
-                            archipelago_ref: ArchipelagoRef3d::new(
-                                archipelago_ref.0,
-                            ),
-                            settings: AgentSettings {
-                                desired_speed: 2.0,
-                                max_speed: 2.0,
-                                radius: 0.3,
+                    commands
+                        .entity(enemy_entity)
+                        .with_child((
+                            Name::new("Enemy Pathfinding Agent"),
+                            Agent3dBundle {
+                                agent: Agent::default(),
+                                archipelago_ref: ArchipelagoRef3d::new(
+                                    archipelago_ref.0,
+                                ),
+                                settings: AgentSettings {
+                                    desired_speed: 2.0,
+                                    max_speed: 2.0,
+                                    radius: 0.3,
+                                },
                             },
-                        },
-                        AgentTarget3d::Point(Vec3::new(
-                            player_transform.translation.x,
-                            0.,
-                            player_transform.translation.z,
-                        )),
-                        Transform::from_xyz(0.0, -0.6, 0.0),
-                        AgentEnemyEntityPointer(enemy_entity),
-                    ));
+                            AgentTarget3d::Point(Vec3::new(
+                                player_transform.translation.x,
+                                0.,
+                                player_transform.translation.z,
+                            )),
+                            Transform::from_xyz(0.0, -0.6, 0.0),
+                            AgentEnemyEntityPointer(enemy_entity),
+                        ))
+                        .with_child((
+                            Text3d::new(enemy_entity),
+                            Transform::from_xyz(0.0, 1.0, 0.0),
+                            Mesh3d::default(),
+                            MeshMaterial3d(materials.add(StandardMaterial {
+                                base_color_texture: Some(
+                                    TextAtlas::DEFAULT_IMAGE.clone(),
+                                ),
+                                alpha_mode: AlphaMode::Blend,
+                                ..Default::default()
+                            })),
+                        ));
                 }
             }
         }

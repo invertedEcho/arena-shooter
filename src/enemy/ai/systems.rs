@@ -79,7 +79,8 @@ pub fn check_if_enemy_reached_target(
             );
             continue;
         };
-        if *agent_state == AgentState::ReachedTarget {
+        if *agent_state == AgentState::ReachedTarget && enemy.state != EnemyState::Idle {
+            info!("Enemy reached target");
             enemy.state = EnemyState::Idle;
         }
     }

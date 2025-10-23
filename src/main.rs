@@ -5,6 +5,7 @@ use bevy_inspector_egui::{
     bevy_egui::{self, EguiPlugin},
     quick::WorldInspectorPlugin,
 };
+use bevy_rich_text3d::Text3dPlugin;
 use bevy_skein::SkeinPlugin;
 
 use crate::{
@@ -72,6 +73,7 @@ fn main() {
     app.add_plugins(EguiPlugin::default())
         .add_plugins(WorldInspectorPlugin::new());
     app.add_plugins(HanabiPlugin);
+    app.add_plugins(Text3dPlugin::default());
 
     // own plugins
     app.add_plugins(PlayerPlugin)
