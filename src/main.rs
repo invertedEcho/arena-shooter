@@ -16,6 +16,7 @@ use crate::{
 
 mod enemy;
 mod game_flow;
+mod multiplayer;
 mod music;
 mod nav_mesh_pathfinding;
 mod particles;
