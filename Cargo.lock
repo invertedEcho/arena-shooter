@@ -1581,20 +1581,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_rich_text3d"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4d2a20437b6f1c9ef6371b0ff07731d42b565ce4713c4244c84d36c3e65f497"
-dependencies = [
- "bevy",
- "cosmic-text",
- "rustc-hash 2.1.1",
- "sys-locale",
- "thiserror 2.0.16",
- "zeno",
-]
-
-[[package]]
 name = "bevy_scene"
 version = "0.17.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2956,7 +2942,6 @@ dependencies = [
  "bevy_hanabi",
  "bevy_landmass",
  "bevy_rerecast",
- "bevy_rich_text3d",
  "bevy_skein",
  "landmass_rerecast",
  "rand",

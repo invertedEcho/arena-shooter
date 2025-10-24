@@ -27,7 +27,6 @@ pub fn check_if_enemy_can_see_player(
     )>,
     spatial_query: SpatialQuery,
     player_query: Single<(Entity, &Transform), With<Player>>,
-    mut commands: Commands,
     enemy_bullets: Query<Entity, With<EnemyBullet>>,
 ) {
     let (player_entity, player_transform) = *player_query;
@@ -71,7 +70,6 @@ pub fn check_if_enemy_can_see_player(
                 };
             } else {
                 if enemy.state != EnemyState::ChasingPlayer {
-                    commands.entity(first_hit.entity).log_components();
                     info!(
                         "Enemy can NOT see player, setting state to \
                          ChasingPlayer!"
