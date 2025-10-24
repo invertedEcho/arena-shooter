@@ -13,7 +13,7 @@ use bevy::prelude::*;
 
 pub mod components;
 pub mod messages;
-mod systems;
+pub mod systems;
 
 pub struct EnemyShootingPlugin;
 

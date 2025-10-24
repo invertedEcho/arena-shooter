@@ -1,10 +1,13 @@
 use bevy::prelude::*;
 
 use crate::{
-    enemy::ai::systems::{
-        apply_gravity_over_time, check_if_enemy_can_see_player,
-        check_if_enemy_reached_target, handle_chasing_enemies,
-        set_zero_velocity_if_not_chasing, update_enemy_on_ground,
+    enemy::{
+        ai::systems::{
+            apply_gravity_over_time, check_if_enemy_can_see_player,
+            check_if_enemy_reached_target, handle_chasing_enemies,
+            set_zero_velocity_if_not_chasing, update_enemy_on_ground,
+        },
+        shooting::systems::enemy_shoot_player,
     },
     game_flow::states::AppState,
 };
@@ -30,7 +33,7 @@ impl Plugin for EnemyAiPlugin {
             Update,
             (
                 handle_chasing_enemies,
-                check_if_enemy_can_see_player,
+                check_if_enemy_can_see_player.after(enemy_shoot_player),
                 update_enemy_on_ground,
                 apply_gravity_over_time,
                 check_if_enemy_reached_target,
