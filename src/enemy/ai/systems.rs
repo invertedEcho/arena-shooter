@@ -104,7 +104,7 @@ pub fn check_if_enemy_reached_target(
         let Ok(mut enemy) = enemy_query.get_mut(agent_enemy_entity_pointer.0)
         else {
             warn!(
-                "Failed to find the enemy {} with linearvelocity from \
+                "Failed to find the enemy {} for given \
                  AgentPathfindingEnemyEntityPointer",
                 agent_enemy_entity_pointer.0
             );

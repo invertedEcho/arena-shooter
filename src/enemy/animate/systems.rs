@@ -211,7 +211,7 @@ pub fn handle_play_hit_animation_timer(
         play_hit_animation.0.tick(time.delta());
 
         if play_hit_animation.0.just_finished() {
-            // hm we need to set the correct animation to play now depending on the enemystate, but
+            // TODO: hm we need to set the correct animation to play now depending on the enemystate, but
             // lets not do this here but have a MessageWriter
             enemy.state = EnemyState::Idle;
             commands

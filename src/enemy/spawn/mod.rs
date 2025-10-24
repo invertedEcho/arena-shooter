@@ -3,7 +3,7 @@ use crate::{
         animate::ENEMY_MODEL_PATH,
         shooting::components::EnemyShootPlayerCooldownTimer,
     },
-    nav_mesh_pathfinding::ArchipelagoRef,
+    nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS},
     player::spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
 };
 use avian3d::{math::PI, prelude::*};
@@ -148,7 +148,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             settings: AgentSettings {
                                 desired_speed: 2.0,
                                 max_speed: 2.0,
-                                radius: 0.3,
+                                radius: ENEMY_AGENT_RADIUS,
                             },
                         },
                         AgentTarget3d::None,

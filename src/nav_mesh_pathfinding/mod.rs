@@ -8,6 +8,8 @@ use landmass_rerecast::{
 
 use crate::game_flow::states::GameLoadingState;
 
+pub const ENEMY_AGENT_RADIUS: f32 = 0.3;
+
 pub struct NavMeshPathfindingPlugin;
 
 impl Plugin for NavMeshPathfindingPlugin {
@@ -32,13 +34,13 @@ fn generate_navmesh(mut commands: Commands, mut generator: NavmeshGenerator) {
     info!("generate_navmesh system called");
     let archipelago_id = commands
         .spawn(Archipelago3d::new(ArchipelagoOptions::from_agent_radius(
-            0.5,
+            ENEMY_AGENT_RADIUS,
         )))
         .id();
     commands.insert_resource(ArchipelagoRef(archipelago_id));
 
     let navmesh = generator.generate(NavmeshSettings {
-        agent_radius: 0.25,
+        agent_radius: ENEMY_AGENT_RADIUS,
         ..default()
     });
 
