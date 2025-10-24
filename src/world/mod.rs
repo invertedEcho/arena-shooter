@@ -8,6 +8,9 @@ pub mod messages;
 pub mod resources;
 mod systems;
 
+const SMALL_MAP_PATH: &str = "maps/small/main.gltf";
+const MEDIUM_MAP_PATH: &str = "maps/medium/scene.gltf";
+
 pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {

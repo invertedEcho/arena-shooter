@@ -127,7 +127,7 @@ pub fn player_shooting(
         DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
         CollisionEventsEnabled,
         // bullets are spawned at center of player camera
-        // DebugRender::none(),
+        DebugRender::none(),
     ));
 
     player_shot_messsage_writer.write(PlayerWeaponFiredMessage);
@@ -310,7 +310,6 @@ pub fn handle_reload_timer(
     reload_timer.0.tick(time.delta());
     if reload_timer.0.just_finished() {
         player_weapon.reloading = false;
-        info!("Finished reloading!");
 
         let missing_bullets_to_load =
             player_weapon.max_loaded_ammo - player_weapon.loaded_ammo;

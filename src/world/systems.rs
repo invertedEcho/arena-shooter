@@ -1,5 +1,12 @@
 use std::f32::consts::PI;
 
+use avian3d::{
+    collision::collider::ColliderConstructorHierarchyConfig,
+    prelude::{
+        ColliderConstructor, ColliderConstructorHierarchy, TrimeshFlags,
+        VhacdParameters,
+    },
+};
 use bevy::{
     camera::visibility::RenderLayers,
     color::palettes::{self, css::RED},
@@ -7,7 +14,7 @@ use bevy::{
 };
 
 use crate::world::{
-    components::DebugPoint, messages::SpawnDebugPointMessage,
+    MEDIUM_MAP_PATH, components::DebugPoint, messages::SpawnDebugPointMessage,
     resources::WorldSceneHandle,
 };
 
@@ -27,13 +34,13 @@ pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
         RenderLayers::from_layers(&[0, 1]),
     ));
 
-    let world_scene_handle = asset_server
-        .load(GltfAssetLabel::Scene(0).from_asset("maps/main/main.gltf"));
+    let world_scene_handle =
+        asset_server.load(GltfAssetLabel::Scene(0).from_asset(MEDIUM_MAP_PATH));
     commands.insert_resource(WorldSceneHandle(world_scene_handle.clone()));
 
     commands.spawn((
         SceneRoot(world_scene_handle),
-        Name::new("World Root main.gltf"),
+        Name::new("World Scene Root"),
         Visibility::Visible,
     ));
 }
