@@ -26,7 +26,7 @@
   - [x] Blood splatter when hitting enemies
 - [x] Enemy AI
   - [x] Enemies check if they can see the player and shoot them
-  - [ ] Chasing the player via pathfinding (WIP)
+  - [x] Chasing the player via pathfinding
   - [ ] Going to locations the player made noises
 - [ ] Multiplayer
 - and probably more stuff already implemented and coming soon..
