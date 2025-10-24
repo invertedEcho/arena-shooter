@@ -1,6 +1,6 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use bevy_landmass::{AgentState, Velocity3d};
+use bevy_landmass::{AgentState, AgentTarget3d, Velocity3d};
 
 use crate::{
     GRAVITY,
@@ -17,12 +17,17 @@ use crate::{
 /// transform. In addition, if the state hasn't been `AttackPlayer` yet, it will be set to
 /// `AttackPlayer`. If not, the enemy state will be set to `ChasingPlayer`, if not yet set.
 pub fn check_if_enemy_can_see_player(
-    enemy_query: Query<(&mut Enemy, Entity, &Transform), Without<Player>>,
+    enemy_query: Query<(&mut Enemy, Entity, &mut Transform), Without<Player>>,
+    mut enemy_agents_query: Query<(
+        &AgentEnemyEntityPointer,
+        &mut AgentTarget3d,
+    )>,
     spatial_query: SpatialQuery,
     player_query: Single<(Entity, &Transform), With<Player>>,
+    mut commands: Commands,
 ) {
     let (player_entity, player_transform) = *player_query;
-    for (mut enemy, enemy_entity, enemy_transform) in enemy_query {
+    for (mut enemy, enemy_entity, mut enemy_transform) in enemy_query {
         if enemy.state == EnemyState::Dead {
             continue;
         }
@@ -48,17 +53,38 @@ pub fn check_if_enemy_can_see_player(
         ) {
             let enemy_can_see_player = first_hit.entity == player_entity;
             if enemy_can_see_player {
-                // enemy_transform.look_at(player_transform.translation, Vec3::Y);
-                // if enemy.state != EnemyState::AttackPlayer {
-                //     enemy.state = EnemyState::AttackPlayer;
-                // };
+                if enemy.state != EnemyState::AttackPlayer {
+                    info!(
+                        "Enemy can see player, rotating enemy towards player"
+                    );
+                    enemy_transform
+                        .look_at(player_transform.translation, Vec3::Y);
+                    enemy.state = EnemyState::AttackPlayer;
+                };
             } else {
                 if enemy.state != EnemyState::ChasingPlayer {
+                    commands.entity(first_hit.entity).log_components();
                     info!(
                         "Enemy can NOT see player, setting state to \
                          ChasingPlayer!"
                     );
                     enemy.state = EnemyState::ChasingPlayer;
+                    let Some((_, mut agent_target)) = enemy_agents_query
+                        .iter_mut()
+                        .find(|(pointer, _)| pointer.0 == enemy_entity)
+                    else {
+                        warn!(
+                            "Can not update enemy agent, unable to find Enemy \
+                             Agent for current entity {} via \
+                             AgentEnemyEntityPointer",
+                            enemy_entity
+                        );
+                        continue;
+                    };
+                    info!("updating agent target to current playerr location");
+                    *agent_target = AgentTarget3d::Point(
+                        player_transform.translation.with_y(0.),
+                    );
                 }
             }
         }
@@ -79,14 +105,31 @@ pub fn check_if_enemy_reached_target(
             );
             continue;
         };
-        if *agent_state == AgentState::ReachedTarget && enemy.state != EnemyState::Idle {
-            info!("Enemy reached target");
-            enemy.state = EnemyState::Idle;
+        if *agent_state == AgentState::ReachedTarget
+            && enemy.state != EnemyState::Idle
+        {
+            info!("Enemy reached target, setting state to Idle");
+            enemy.state = EnemyState::CheckIfPlayerSeeable;
         }
     }
 }
 
-pub fn move_enemy_with_agent_velocity(
+/// Ensures that if our enemy is not in ChasingPlayer state the velocity will be 0.
+/// Useful so we dont have to set velocity to 0 in all systems where we mutate the enemy state
+pub fn set_zero_velocity_if_not_chasing(
+    enemy_query: Query<(&Enemy, &mut LinearVelocity)>,
+) {
+    for (enemy, mut velocity) in enemy_query {
+        if enemy.state != EnemyState::ChasingPlayer && velocity.0 != Vec3::ZERO
+        {
+            info!("current velocity: {}", velocity.0);
+            info!("Enemy no longer chasing player, zeoring velocity!");
+            velocity.0 = Vec3::ZERO;
+        }
+    }
+}
+
+pub fn handle_chasing_enemies(
     mut enemy_query: Query<(&Enemy, &mut LinearVelocity)>,
     enemy_agents_query: Query<(&Velocity3d, &AgentEnemyEntityPointer)>,
     current_in_game_state: Res<State<InGameState>>,
@@ -159,7 +202,7 @@ pub fn apply_gravity_over_time(
     let enemy = enemy_query.0;
     let enemy_velocity = &mut enemy_query.1;
 
-    if !enemy.on_ground {
+    if !enemy.on_ground && enemy_velocity.y > 0.0 {
         enemy_velocity.y -= GRAVITY * time.delta_secs();
     }
 }

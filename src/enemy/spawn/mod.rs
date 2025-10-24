@@ -58,8 +58,6 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
         With<EnemySpawnLocation>,
     >,
     archipelago_ref: Option<Res<ArchipelagoRef>>,
-    player_transform: Single<&Transform, With<Player>>,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for event in message_reader.read() {
@@ -100,19 +98,6 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                     let enemy_model = asset_server.load(
                         GltfAssetLabel::Scene(0).from_asset(ENEMY_MODEL_PATH),
                     );
-
-                    commands.spawn((
-                        Mesh3d(meshes.add(Sphere::new(0.2))),
-                        MeshMaterial3d(materials.add(StandardMaterial {
-                            base_color: BLUE.into(),
-                            ..Default::default()
-                        })),
-                        Transform::from_xyz(
-                            player_transform.translation.x,
-                            0.,
-                            player_transform.translation.z,
-                        ),
-                    ));
 
                     let spawn_location_translation =
                         chosen_spawn_location.1.translation;
@@ -173,11 +158,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                     radius: 0.3,
                                 },
                             },
-                            AgentTarget3d::Point(Vec3::new(
-                                player_transform.translation.x,
-                                0.,
-                                player_transform.translation.z,
-                            )),
+                            AgentTarget3d::None,
                             Transform::from_xyz(0.0, -0.6, 0.0),
                             AgentEnemyEntityPointer(enemy_entity),
                         ))

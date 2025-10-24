@@ -60,20 +60,15 @@ fn main() {
     // External plugins
     app.add_plugins(PhysicsPlugins::default())
         .add_plugins(PhysicsDebugPlugin::default())
-        .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY))
-        .insert_gizmo_config(
-            PhysicsGizmos {
-                // disable axis gizmos as player camera is exactly at center of collider
-                axis_lengths: Some(Vec3::splat(0.0)),
-                ..default()
-            },
-            GizmoConfig::default(),
-        );
+        .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
     app.add_plugins(SkeinPlugin::default());
     app.add_plugins(EguiPlugin::default())
         .add_plugins(WorldInspectorPlugin::new());
     app.add_plugins(HanabiPlugin);
-    app.add_plugins(Text3dPlugin::default());
+    app.add_plugins(Text3dPlugin {
+        load_system_fonts: true,
+        ..default()
+    });
 
     // own plugins
     app.add_plugins(PlayerPlugin)

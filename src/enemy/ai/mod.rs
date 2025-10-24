@@ -3,8 +3,8 @@ use bevy::prelude::*;
 use crate::{
     enemy::ai::systems::{
         apply_gravity_over_time, check_if_enemy_can_see_player,
-        check_if_enemy_reached_target, move_enemy_with_agent_velocity,
-        update_enemy_on_ground,
+        check_if_enemy_reached_target, handle_chasing_enemies,
+        set_zero_velocity_if_not_chasing, update_enemy_on_ground,
     },
     game_flow::states::AppState,
 };
@@ -15,10 +15,11 @@ mod systems;
 /// 1. Enemy gets spawned (State idle)
 /// 2. Check with raycast whether player can be seen
 /// If yes: (Set state to AttackPlayer)
-///   Shoot the player
+///     Shoot the player
 /// Else: (Set state to ChasingPlayer)
-///   Get the current location of the player
-///   Go to it via agent from landmass
+///     Get the current location of the player
+///     Go to it via agent from landmass
+///     When target reached, set EnemyState::CheckIfPlayerSeeable
 /// Repeat at step 2
 
 pub struct EnemyAiPlugin;
@@ -28,11 +29,12 @@ impl Plugin for EnemyAiPlugin {
         app.add_systems(
             Update,
             (
-                move_enemy_with_agent_velocity,
+                handle_chasing_enemies,
                 check_if_enemy_can_see_player,
                 update_enemy_on_ground,
                 apply_gravity_over_time,
                 check_if_enemy_reached_target,
+                set_zero_velocity_if_not_chasing,
             )
                 .run_if(in_state(AppState::InGame)),
         );
