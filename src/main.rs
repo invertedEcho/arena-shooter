@@ -8,19 +8,19 @@ use bevy_inspector_egui::{
 use bevy_skein::SkeinPlugin;
 
 use crate::{
-    common::CommonPlugin, enemy::EnemyPlugin, game_flow::GameFlowPlugin,
-    music::MusicPlugin, nav_mesh_pathfinding::NavMeshPathfindingPlugin,
-    particles::ParticlesPlugin, player::PlayerPlugin,
+    enemy::EnemyPlugin, game_flow::GameFlowPlugin, music::MusicPlugin,
+    nav_mesh_pathfinding::NavMeshPathfindingPlugin, particles::ParticlesPlugin,
+    player::PlayerPlugin, shared::CommonPlugin,
     user_interface::UserInterfacePlugin, world::WorldPlugin,
 };
 
-mod common;
 mod enemy;
 mod game_flow;
 mod music;
 mod nav_mesh_pathfinding;
 mod particles;
 mod player;
+mod shared;
 mod user_interface;
 mod utils;
 mod world;
@@ -58,16 +58,8 @@ fn main() {
 
     // External plugins
     app.add_plugins(PhysicsPlugins::default())
-        .add_plugins(PhysicsDebugPlugin::default())
-        .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY))
-        .insert_gizmo_config(
-            PhysicsGizmos {
-                // disable axis gizmos as player camera is exactly at center of collider
-                axis_lengths: Some(Vec3::splat(0.0)),
-                ..default()
-            },
-            GizmoConfig::default(),
-        );
+        // .add_plugins(PhysicsDebugPlugin::default())
+        .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
     app.add_plugins(SkeinPlugin::default());
     app.add_plugins(EguiPlugin::default())
         .add_plugins(WorldInspectorPlugin::new());

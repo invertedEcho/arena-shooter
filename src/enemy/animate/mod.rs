@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
 use crate::enemy::animate::systems::{
-    handle_play_hit_animation, link_enemy_animation, load_enemy_animations,
-    play_enemy_hit_animation, reflect_enemy_state_to_current_animation,
-    setup_enemy_animation,
+    handle_play_hit_animation_timer, link_enemy_animation,
+    load_enemy_animations, play_enemy_hit_animation,
+    reflect_enemy_state_to_current_animation, setup_enemy_animation,
 };
 
 mod components;
@@ -15,9 +15,9 @@ const TOTAL_ENEMY_MODEL_ANIMATIONS: usize = 24;
 const ENEMY_DEATH_ANIMATION: usize = 0;
 const _ENEMY_GUN_SHOOT_ANIMATION: usize = 1;
 const ENEMY_HIT_RECEIVE_ANIMATION: usize = 2;
-const _ENEMY_IDLE_ANIMATION: usize = 4;
 const ENEMY_IDLE_GUN_ANIMATION: usize = 5;
 const ENEMY_IDLE_GUN_POINTING_ANIMATION: usize = 6;
+const ENEMY_RUN_ANIMATION: usize = 16;
 
 // TODO: give explicit name, maybe this needs to be done in Blender?
 const ENEMY_MODEL_NAME: &str = "RootNode";
@@ -35,7 +35,7 @@ impl Plugin for AnimateEnemyPlugin {
                 reflect_enemy_state_to_current_animation,
                 link_enemy_animation,
                 play_enemy_hit_animation,
-                handle_play_hit_animation,
+                handle_play_hit_animation_timer,
             ),
         );
     }

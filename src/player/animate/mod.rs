@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use bevy::{animation::RepeatAnimation, prelude::*};
 
-use crate::{common::components::AnimationPlayerEntityPointer, player::Player};
+use crate::{player::Player, shared::components::AnimationPlayerEntityPointer};
 
 pub const PLAYER_ARM_WEAPON_PATH: &str = "models/player/arm_and_weapon.glb";
 

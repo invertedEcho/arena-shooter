@@ -4,7 +4,6 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    common::{BULLET_VELOCITY, components::DespawnTimer},
     enemy::{
         Enemy,
         ai::EnemyState,
@@ -16,6 +15,7 @@ use crate::{
     player::shooting::{
         components::PlayerBullet, messages::PlayerBulletHitEnemyMessage,
     },
+    shared::{BULLET_VELOCITY, components::DespawnTimer},
 };
 
 pub fn detect_player_bullet_collision_with_enemy(

@@ -8,6 +8,8 @@ use landmass_rerecast::{
 
 use crate::game_flow::states::GameLoadingState;
 
+pub const ENEMY_AGENT_RADIUS: f32 = 0.3;
+
 pub struct NavMeshPathfindingPlugin;
 
 impl Plugin for NavMeshPathfindingPlugin {
@@ -16,11 +18,12 @@ impl Plugin for NavMeshPathfindingPlugin {
         app.add_plugins(NavmeshPlugins::default());
         app.add_plugins(Landmass3dPlugin::default());
         app.add_plugins(LandmassRerecastPlugin::default());
+        // app.add_plugins(Landmass3dDebugPlugin::default());
         app.add_systems(
             OnEnter(GameLoadingState::WorldLoadedWithDependencies),
             generate_navmesh,
         );
-        app.add_systems(Update, check_agents);
+        app.add_systems(Update, update_agent_velocity);
     }
 }
 
@@ -31,13 +34,13 @@ fn generate_navmesh(mut commands: Commands, mut generator: NavmeshGenerator) {
     info!("generate_navmesh system called");
     let archipelago_id = commands
         .spawn(Archipelago3d::new(ArchipelagoOptions::from_agent_radius(
-            0.5,
+            ENEMY_AGENT_RADIUS,
         )))
         .id();
     commands.insert_resource(ArchipelagoRef(archipelago_id));
 
     let navmesh = generator.generate(NavmeshSettings {
-        agent_radius: 0.2,
+        agent_radius: ENEMY_AGENT_RADIUS,
         ..default()
     });
 
@@ -54,9 +57,10 @@ fn generate_navmesh(mut commands: Commands, mut generator: NavmeshGenerator) {
     )
 }
 
-fn check_agents(agents: Query<(&AgentState, &AgentDesiredVelocity3d)>) {
-    for agent in agents {
-        info!("agentstate {:?}", agent.0);
-        info!("Desired velocity: {:?}", agent.1);
+fn update_agent_velocity(
+    mut agent_query: Query<(&mut Velocity3d, &AgentDesiredVelocity3d)>,
+) {
+    for (mut velocity, desired_velocity) in agent_query.iter_mut() {
+        velocity.velocity = desired_velocity.velocity();
     }
 }

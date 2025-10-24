@@ -1,10 +1,9 @@
 use bevy::{
-    color::palettes::{tailwind::{BLUE_500, RED_500}},
+    color::palettes::tailwind::{BLUE_500, RED_500},
     prelude::*,
 };
 
 use crate::{
-    common::components::DespawnTimer,
     game_flow::{
         game_mode::{GameMode, GameStateWave},
         score::GameScore,
@@ -13,16 +12,18 @@ use crate::{
     player::{
         Player,
         hud::{
-            CROSSHAIR_BULLET_HIT_PATH, MAIN_CROSSHAIR_PATH, components::{
+            CROSSHAIR_BULLET_HIT_PATH, MAIN_CROSSHAIR_PATH,
+            components::{
                 CurrentWaveText, EnemiesLeftText, EnemyScoreText,
                 PlayerCarriedAmmoText, PlayerHealthText, PlayerHud,
                 PlayerLoadedAmmoText, PlayerScoreText,
-            }
+            },
         },
         shooting::{
             components::PlayerWeapon, messages::PlayerBulletHitEnemyMessage,
         },
     },
+    shared::components::DespawnTimer,
 };
 
 pub fn spawn_player_hud(
@@ -119,9 +120,7 @@ pub fn spawn_bullet_hit_crosshair(
                 ..default()
             })
             .with_child((
-                ImageNode::new(
-                    asset_server.load(CROSSHAIR_BULLET_HIT_PATH),
-                ),
+                ImageNode::new(asset_server.load(CROSSHAIR_BULLET_HIT_PATH)),
                 DespawnTimer(Timer::from_seconds(0.05, TimerMode::Once)),
             ));
     }

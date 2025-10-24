@@ -46,6 +46,7 @@ fn handle_player_spawn_event(
             Visibility::Visible,
             CollisionEventsEnabled,
             CollidingEntities::default(),
+            DebugRender::none(),
         ));
     }
 }
