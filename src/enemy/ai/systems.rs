@@ -60,12 +60,11 @@ pub fn check_if_enemy_can_see_player(
         ) {
             let enemy_can_see_player = first_hit.entity == player_entity;
             if enemy_can_see_player {
+                enemy_transform.look_at(player_transform.translation, Vec3::Y);
                 if enemy.state != EnemyState::AttackPlayer {
                     info!(
-                        "Enemy can see player, rotating enemy towards player"
+                        "Enemy can see player, changing state to AttackPlayer"
                     );
-                    enemy_transform
-                        .look_at(player_transform.translation, Vec3::Y);
                     enemy.state = EnemyState::AttackPlayer;
                 };
             } else {
