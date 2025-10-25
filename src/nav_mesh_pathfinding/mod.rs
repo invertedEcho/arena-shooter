@@ -31,7 +31,7 @@ impl Plugin for NavMeshPathfindingPlugin {
 pub struct ArchipelagoRef(pub Entity);
 
 fn generate_navmesh(mut commands: Commands, mut generator: NavmeshGenerator) {
-    info!("generate_navmesh system called");
+    info!("Generating navmesh");
     let archipelago_id = commands
         .spawn(Archipelago3d::new(ArchipelagoOptions::from_agent_radius(
             ENEMY_AGENT_RADIUS,
@@ -51,10 +51,6 @@ fn generate_navmesh(mut commands: Commands, mut generator: NavmeshGenerator) {
         archipelago_ref: ArchipelagoRef3d::new(archipelago_id),
         nav_mesh: NavMeshHandle3d(navmesh),
     });
-    info!(
-        "generated nav mesh and created landmass island for pathfinding with \
-         generated nav mesh!"
-    )
 }
 
 fn update_agent_velocity(

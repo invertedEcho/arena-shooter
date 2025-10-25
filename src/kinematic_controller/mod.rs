@@ -3,9 +3,8 @@ use bevy::prelude::*;
 
 use crate::GRAVITY;
 
-// so total length is 1.9m = 1.4 + 0.25 * 2
-const CAPSULE_RADIUS: f32 = 0.25;
-const CAPSULE_LENGTH: f32 = 1.4;
+const CAPSULE_RADIUS: f32 = 0.2;
+const CAPSULE_LENGTH: f32 = 1.3;
 
 #[derive(Component)]
 pub struct KinematicController {

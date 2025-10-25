@@ -3,13 +3,14 @@ use crate::world::messages::SpawnDebugPointMessage;
 use crate::world::systems::{handle_spawn_debug_points_message, setup_world};
 use bevy::prelude::*;
 
+mod collider_rules;
 pub mod components;
 pub mod messages;
 pub mod resources;
 mod systems;
 
 const _SMALL_MAP_PATH: &str = "maps/small/main.gltf";
-const MEDIUM_MAP_PATH: &str = "maps/medium/scene.gltf";
+const MEDIUM_MAP_PATH: &str = "maps/medium/scene.gltf#Scene0";
 
 pub struct WorldPlugin;
 

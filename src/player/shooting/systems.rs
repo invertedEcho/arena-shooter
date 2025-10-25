@@ -1,7 +1,7 @@
 use std::ops::Neg;
 
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{color::palettes::css::WHITE, prelude::*};
 
 use crate::{
     enemy::{Enemy, shooting::components::EnemyBullet},
@@ -59,6 +59,8 @@ pub fn player_shooting(
     mut play_arm_with_weapon_animation_message_writer: MessageWriter<
         PlayArmWithWeaponAnimationMessage,
     >,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     if !mouse_input.pressed(MouseButton::Left) {
         return;
@@ -126,6 +128,11 @@ pub fn player_shooting(
         RigidBody::Kinematic,
         DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
         CollisionEventsEnabled,
+        Mesh3d(meshes.add(Cuboid::new(0.1, 0.1, 0.1))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: WHITE.into(),
+            ..default()
+        })),
         // bullets are spawned at center of player camera
         DebugRender::none(),
     ));

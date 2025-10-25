@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::states::{AppState, InGameState},
+    game_flow::states::InGameState,
     player::camera::{
         components::ViewModelCamera,
         messages::SpawnPlayerCamerasMessage,
@@ -27,15 +27,15 @@ impl Plugin for PlayerCameraPlugin {
         app.add_message::<SpawnPlayerCamerasMessage>()
             .add_systems(
                 Update,
+                (update_yaw_pitch_on_mouse_motion, free_cam_orbit)
+                    .run_if(in_state(InGameState::Playing)),
+            )
+            .add_systems(
+                Update,
                 (
-                    update_yaw_pitch_on_mouse_motion.run_if(
-                        in_state(AppState::InGame)
-                            .and(in_state(InGameState::Playing)),
-                    ),
                     setup_player_cameras,
                     toggle_freecam,
                     handle_free_cam_movement,
-                    free_cam_orbit,
                 ),
             )
             .add_systems(
