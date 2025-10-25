@@ -1,5 +1,6 @@
 use std::f32::consts::PI;
 
+use avian3d::prelude::{ColliderConstructor, ColliderConstructorHierarchy};
 use bevy::{
     camera::visibility::RenderLayers,
     color::palettes::{self, css::RED},
@@ -7,7 +8,8 @@ use bevy::{
 };
 
 use crate::world::{
-    MEDIUM_MAP_PATH, components::DebugPoint, messages::SpawnDebugPointMessage,
+    MEDIUM_MAP_PATH, collider_rules::get_collider_rules_for_medium_map,
+    components::DebugPoint, messages::SpawnDebugPointMessage,
     resources::WorldSceneHandle,
 };
 
@@ -31,8 +33,27 @@ pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
         asset_server.load(GltfAssetLabel::Scene(0).from_asset(MEDIUM_MAP_PATH));
     commands.insert_resource(WorldSceneHandle(world_scene_handle.clone()));
 
+    let collider_rules = get_collider_rules_for_medium_map();
+    let mut collider_hierarchy = ColliderConstructorHierarchy::new(
+        ColliderConstructor::ConvexHullFromMesh,
+    );
+
+    for (name, maybe_constructor) in collider_rules {
+        match maybe_constructor {
+            Some(constructor) => {
+                collider_hierarchy = collider_hierarchy
+                    .with_constructor_for_name(name, constructor);
+            }
+            None => {
+                collider_hierarchy =
+                    collider_hierarchy.without_constructor_for_name(name);
+            }
+        }
+    }
+
     commands.spawn((
         SceneRoot(world_scene_handle),
+        collider_hierarchy,
         Name::new("World Scene Root"),
         Visibility::Visible,
     ));

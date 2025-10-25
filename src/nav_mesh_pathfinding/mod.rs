@@ -30,7 +30,15 @@ impl Plugin for NavMeshPathfindingPlugin {
 #[derive(Resource)]
 pub struct ArchipelagoRef(pub Entity);
 
-fn generate_navmesh(mut commands: Commands, mut generator: NavmeshGenerator) {
+fn generate_navmesh(
+    mut commands: Commands,
+    mut generator: NavmeshGenerator,
+    query: Query<(Entity, &Name), With<Mesh3d>>,
+) {
+    for (entity, name) in query.iter() {
+        println!("Entity with {:?} has name: {}", entity, name.as_str());
+    }
+
     info!("generate_navmesh system called");
     let archipelago_id = commands
         .spawn(Archipelago3d::new(ArchipelagoOptions::from_agent_radius(
