@@ -150,13 +150,16 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                         ))
                         .with_child((
                             Transform {
-                                // we should probably just fix origin in blender instead of manual offset here
-                                translation: Vec3::new(0.0, -0.9, 0.0),
-                                // same with rotation here
+                                translation: Vec3::new(
+                                    0.0,
+                                    // center enemy model -> in blender, feet are at bottom, so in
+                                    // bevy model feet are at center of collider, 0.0
+                                    -((PLAYER_CAPSULE_LENGTH
+                                        + PLAYER_CAPSULE_RADIUS * 2.0)
+                                        / 2.),
+                                    0.0,
+                                ),
                                 rotation: Quat::from_rotation_y(PI),
-                                // FIXME: we should not need to scale the model. measuring in
-                                // blender reveals the enemy is ~1.85m high, which seems perfectly
-                                // normal. this means our world scale is wrong
                                 scale: Vec3::splat(1.0),
                             },
                             SceneRoot(enemy_model),
