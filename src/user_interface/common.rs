@@ -3,6 +3,8 @@ use bevy::{
     prelude::*,
 };
 
+use crate::game_flow::states::{AppState, MainMenuState};
+
 pub struct CommonUiPlugin;
 
 impl Plugin for CommonUiPlugin {
@@ -18,12 +20,15 @@ impl Plugin for CommonUiPlugin {
 pub struct CommonUiButton(pub CommonUiButtonType);
 
 pub enum CommonUiButtonType {
+    BackToMainMenu,
     Quit,
 }
 
 fn handle_common_ui_button_interaction(
     query: Query<(&Interaction, &CommonUiButton), Changed<Interaction>>,
     mut app_exit_message_writer: MessageWriter<AppExit>,
+    mut next_app_state: ResMut<NextState<AppState>>,
+    mut main_menu_state: ResMut<NextState<MainMenuState>>,
 ) {
     for (interaction, common_ui_button) in query {
         let Interaction::Pressed = interaction else {
@@ -32,6 +37,10 @@ fn handle_common_ui_button_interaction(
         match common_ui_button.0 {
             CommonUiButtonType::Quit => {
                 app_exit_message_writer.write(AppExit::Success);
+            }
+            CommonUiButtonType::BackToMainMenu => {
+                next_app_state.set(AppState::MainMenu);
+                main_menu_state.set(MainMenuState::Root);
             }
         }
     }

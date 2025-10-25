@@ -3,7 +3,10 @@ use bevy::prelude::*;
 use crate::{
     game_flow::{states::InGameState, systems::free_mouse},
     player::Player,
-    user_interface::common::{CommonUiButton, CommonUiButtonType},
+    user_interface::{
+        DEFAULT_GAME_FONT_PATH,
+        common::{CommonUiButton, CommonUiButtonType},
+    },
 };
 
 pub struct DeathScreenPlugin;
@@ -53,16 +56,44 @@ fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
                     ),
                     ..default()
                 })
-                .with_child(Text::new("You are dead"));
-            parent.spawn(Text::new("Tip:"));
-            parent.spawn(Text::new("Take cover when under heavy shooting!"));
+                .with_child((
+                    Text::new("You are dead"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                ));
+            parent.spawn((
+                Text::new("Tip:"),
+                TextFont {
+                    font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                    font_size: 32.0,
+                    ..default()
+                },
+            ));
+            parent.spawn((
+                Text::new("Take cover when under heavy shooting!"),
+                TextFont {
+                    font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                    font_size: 32.0,
+                    ..default()
+                },
+            ));
             parent
                 .spawn((
                     Node { ..default() },
                     Button,
                     DeathScreenButton(DeathScreenButtonType::Respawn),
                 ))
-                .with_child(Text::new("Respawn"));
+                .with_child((
+                    Text::new("Respawn"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                ));
             parent
                 .spawn((
                     Node {
@@ -73,9 +104,16 @@ fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
                         ..default()
                     },
                     Button,
-                    CommonUiButton(CommonUiButtonType::Quit),
+                    CommonUiButton(CommonUiButtonType::BackToMainMenu),
                 ))
-                .with_child(Text::new("Rage Quit"));
+                .with_child((
+                    Text::new("Exit to Main Menu"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                ));
         });
 }
 

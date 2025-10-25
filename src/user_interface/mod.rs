@@ -15,6 +15,9 @@ pub mod main_menu;
 mod pause_menu;
 mod settings_menu;
 
+const AVA_FONT_PATH: &str = "fonts/AVA.ttf";
+const DEFAULT_GAME_FONT_PATH: &str = "fonts/Ignotum/Ignotum-Regular.ttf";
+
 pub struct UserInterfacePlugin;
 
 impl Plugin for UserInterfacePlugin {

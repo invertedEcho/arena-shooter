@@ -33,6 +33,14 @@ pub fn get_collider_rules_for_medium_map()
             "up2_0.material_11",
             Some(ColliderConstructor::TrimeshFromMesh),
         ),
+        (
+            "Cube.005_0.material.002",
+            Some(ColliderConstructor::TrimeshFromMesh),
+        ),
+        (
+            "Cube.005_1.material_4",
+            Some(ColliderConstructor::TrimeshFromMesh),
+        ),
     ]
 }
 

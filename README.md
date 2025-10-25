@@ -7,9 +7,8 @@
   - Fedora: `sudo dnf install mold clang`
   - Arch: `sudo pacman -S mold clang`
 2. This repository uses Git LFS. Follow the installation instructions [here](https://packagecloud.io/github/git-lfs/install). Afterwards, run `git lfs pull` to get all assets
-3. Please note that shipping the binary requires disabling dynamic linking. This can be achieved by removing the `dynamic_linking` feature from the dependency `bevy` in `Cargo.toml`
-4. Bevy itself also needs a couple of dependency. You can find installation instructions for Linux, Windows and MacOS [here](https://bevy.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
-5. Install alternative codegen backend: `rustup component add rustc-codegen-cranelift-preview --toolchain-nightly`
+3. Bevy itself also needs a couple of dependency. You can find installation instructions for Linux, Windows and MacOS [here](https://bevy.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
+4. Install alternative codegen backend: `rustup component add rustc-codegen-cranelift-preview --toolchain-nightly`
 5. Run the app
   - `cargo run`
 
@@ -63,6 +62,10 @@ uses:
 - fps/tps Map by theking1322 [CC-BY](https://creativecommons.org/licenses/by/3.0/) via Poly Pizza (https://poly.pizza/m/wna54gOjL7)
 - SWAT by Quaternius (https://poly.pizza/m/Btfn3G5Xv4)
 - "LOWPOLY | FPS | TDM | GAME | MAP by ResoForge" (https://skfb.ly/pxM87) by ResoForge (old profile) is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+### Fonts
+- Ignotum Designed by GGBotNet https://www.ggbot.net/fonts/
+- AVA Designed by GGBotNet https://www.ggbot.net/fonts/
 
 ### Music & SFX
 - Main Menu Theme by [juanjo_sound](https://juanjosound.itch.io/)

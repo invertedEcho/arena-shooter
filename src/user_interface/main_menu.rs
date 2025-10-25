@@ -1,6 +1,9 @@
-use bevy::prelude::*;
+﻿use bevy::prelude::*;
 
-use crate::game_flow::states::MainMenuState;
+use crate::{
+    game_flow::states::MainMenuState,
+    user_interface::{AVA_FONT_PATH, DEFAULT_GAME_FONT_PATH},
+};
 
 pub struct MainMenuPlugin;
 
@@ -23,7 +26,7 @@ enum MainMenuButtonType {
     Quit,
 }
 
-fn spawn_main_menu(mut commands: Commands) {
+fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
     info!("Spawning Main Menu");
     commands
         .spawn((
@@ -44,11 +47,18 @@ fn spawn_main_menu(mut commands: Commands) {
                         Val::ZERO,
                         Val::ZERO,
                         Val::ZERO,
-                        Val::Px(16.0),
+                        Val::Px(32.0),
                     ),
                     ..default()
                 })
-                .with_child(Text::new("Main Menu"));
+                .with_child((
+                    Text::new("Fun Shooter"),
+                    TextFont {
+                        font: asset_server.load(AVA_FONT_PATH),
+                        font_size: 64.,
+                        ..default()
+                    },
+                ));
             parent
                 .spawn((
                     Node { ..default() },
@@ -56,14 +66,28 @@ fn spawn_main_menu(mut commands: Commands) {
                     MainMenuButton(MainMenuButtonType::Singleplayer),
                     TextColor::WHITE,
                 ))
-                .with_child(Text::new("Singleplayer"));
+                .with_child((
+                    Text::new("Singleplayer"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                ));
             parent
                 .spawn((
                     Node { ..default() },
                     Button,
                     MainMenuButton(MainMenuButtonType::SettingsMainMenu),
                 ))
-                .with_child(Text::new("Settings"));
+                .with_child((
+                    Text::new("Settings"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                ));
             parent
                 .spawn((
                     Node {
@@ -77,7 +101,14 @@ fn spawn_main_menu(mut commands: Commands) {
                     MainMenuButton(MainMenuButtonType::Quit),
                     TextColor::WHITE,
                 ))
-                .with_child(Text::new("Quit"));
+                .with_child((
+                    Text::new("Quit"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                ));
         });
 }
 
