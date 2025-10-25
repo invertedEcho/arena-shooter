@@ -12,10 +12,12 @@
 5. Run the app
   - `cargo run`
 
-## Features
+## Todo and feature list
 - [x] User interface
-- [x] Realistic kinematic player movement
-  - [ ] Using "collide and slide" algorithm: https://www.peroxide.dk/papers/collision/collision.pdf
+- [ ] Player movement
+  - [x] Basic movement
+  - [ ] Write a proper kinematic character controller from scratch because i dont want to just copy some code
+    - this is harder than i thought... even all the examples out there have some issues
 - [X] Game modes
   - [x] Wave mode (the game gets more difficult each round, e.g. more enemies are spawned)
   - [ ] Capture the flag
