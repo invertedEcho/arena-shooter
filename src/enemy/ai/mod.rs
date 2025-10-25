@@ -3,9 +3,8 @@ use bevy::prelude::*;
 use crate::{
     enemy::{
         ai::systems::{
-            apply_gravity_over_time, check_if_enemy_can_see_player,
-            check_if_enemy_reached_target, handle_chasing_enemies,
-            set_zero_velocity_if_not_chasing, update_enemy_on_ground,
+            check_if_enemy_can_see_player, check_if_enemy_reached_target,
+            handle_chasing_enemies, set_zero_velocity_if_not_chasing,
         },
         shooting::systems::enemy_shoot_player,
     },
@@ -36,8 +35,6 @@ impl Plugin for EnemyAiPlugin {
                 // needs to run after enemy_shoot_player, so we can include all enemy bullets in
                 // the SpatialQueryFilter
                 check_if_enemy_can_see_player.after(enemy_shoot_player),
-                update_enemy_on_ground,
-                apply_gravity_over_time,
                 check_if_enemy_reached_target,
                 set_zero_velocity_if_not_chasing,
             )

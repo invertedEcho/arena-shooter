@@ -7,8 +7,8 @@ use bevy::{
 };
 
 use crate::world::{
-    MEDIUM_MAP_PATH, SMALL_MAP_PATH, components::DebugPoint,
-    messages::SpawnDebugPointMessage, resources::WorldSceneHandle,
+    MEDIUM_MAP_PATH, components::DebugPoint, messages::SpawnDebugPointMessage,
+    resources::WorldSceneHandle,
 };
 
 pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
@@ -28,7 +28,7 @@ pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
     ));
 
     let world_scene_handle =
-        asset_server.load(GltfAssetLabel::Scene(0).from_asset(SMALL_MAP_PATH));
+        asset_server.load(GltfAssetLabel::Scene(0).from_asset(MEDIUM_MAP_PATH));
     commands.insert_resource(WorldSceneHandle(world_scene_handle.clone()));
 
     commands.spawn((

@@ -1,7 +1,10 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
-use crate::player::{Player, spawn::components::PlayerSpawnLocation};
+use crate::{
+    kinematic_controller::KinematicController,
+    player::{Player, spawn::components::PlayerSpawnLocation},
+};
 
 pub mod components;
 
@@ -29,24 +32,14 @@ fn handle_player_spawn_event(
 ) {
     for event in player_spawn_message_reader.read() {
         info!("read player spawn event, spawning player");
-        let player_collider_shape =
-            Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH);
 
         commands.spawn((
             Name::new("Player"),
             Player::default(),
             Transform::from_translation(event.spawn_location),
-            RigidBody::Kinematic,
-            player_collider_shape,
-            LockedAxes::new()
-                .lock_rotation_x()
-                .lock_rotation_y()
-                .lock_rotation_z(),
-            LinearVelocity::ZERO,
             Visibility::Visible,
-            CollisionEventsEnabled,
-            CollidingEntities::default(),
             DebugRender::collider(Color::WHITE),
+            KinematicController::default(),
         ));
     }
 }
