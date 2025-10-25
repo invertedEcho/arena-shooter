@@ -154,7 +154,10 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 translation: Vec3::new(0.0, -0.9, 0.0),
                                 // same with rotation here
                                 rotation: Quat::from_rotation_y(PI),
-                                scale: Vec3::splat(0.9),
+                                // FIXME: we should not need to scale the model. measuring in
+                                // blender reveals the enemy is ~1.85m high, which seems perfectly
+                                // normal. this means our world scale is wrong
+                                scale: Vec3::splat(1.0),
                             },
                             SceneRoot(enemy_model),
                             Visibility::Visible,
