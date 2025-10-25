@@ -3,10 +3,11 @@ use crate::{
         animate::ENEMY_MODEL_PATH,
         shooting::components::EnemyShootPlayerCooldownTimer,
     },
+    kinematic_controller::KinematicController,
     nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS},
     player::spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
 };
-use avian3d::{math::PI, prelude::*};
+use avian3d::math::PI;
 use bevy::prelude::*;
 use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
@@ -130,23 +131,12 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 health: 100.0,
                                 ..default()
                             },
-                            RigidBody::Kinematic,
-                            LockedAxes::new()
-                                .lock_rotation_x()
-                                .lock_rotation_y()
-                                .lock_rotation_z(),
-                            Collider::capsule(
-                                PLAYER_CAPSULE_RADIUS,
-                                PLAYER_CAPSULE_LENGTH,
-                            ),
-                            AngularVelocity::ZERO,
-                            LinearVelocity::ZERO,
+                            KinematicController::default(),
                             EnemyShootPlayerCooldownTimer(Timer::from_seconds(
                                 0.5,
                                 TimerMode::Repeating,
                             )),
                             Visibility::Visible,
-                            CollidingEntities::default(),
                         ))
                         .with_child((
                             Transform {

@@ -3,16 +3,12 @@ use bevy::prelude::*;
 use bevy_landmass::{AgentState, AgentTarget3d, Velocity3d};
 
 use crate::{
-    GRAVITY,
     enemy::{
         Enemy, ai::EnemyState, shooting::components::EnemyBullet,
         spawn::AgentEnemyEntityPointer,
     },
     game_flow::states::InGameState,
-    player::{
-        Player,
-        spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
-    },
+    player::Player,
 };
 
 /// This system iterates over each enemy, and with a raycast, determines whether the enemy can see
@@ -127,11 +123,13 @@ pub fn set_zero_velocity_if_not_chasing(
     enemy_query: Query<(&Enemy, &mut LinearVelocity)>,
 ) {
     for (enemy, mut velocity) in enemy_query {
-        if enemy.state != EnemyState::ChasingPlayer && velocity.0 != Vec3::ZERO
+        if enemy.state != EnemyState::ChasingPlayer
+            && velocity.x != 0.0
+            && velocity.z != 0.0
         {
-            info!("current velocity: {}", velocity.0);
             info!("Enemy no longer chasing player, zeoring velocity!");
-            velocity.0 = Vec3::ZERO;
+            velocity.z = 0.0;
+            velocity.x = 0.0
         }
     }
 }
@@ -165,51 +163,5 @@ pub fn handle_chasing_enemies(
         }
 
         velocity.0 = agent_velocity.velocity;
-    }
-}
-
-pub fn update_enemy_on_ground(
-    enemies: Query<(&mut Enemy, &Transform, Entity, &mut LinearVelocity)>,
-    spatial_query: SpatialQuery,
-) {
-    for (mut enemy, transform, player_entity, mut player_velocity) in enemies {
-        let on_ground = spatial_query
-            .cast_shape(
-                &Collider::capsule(
-                    PLAYER_CAPSULE_RADIUS,
-                    PLAYER_CAPSULE_LENGTH,
-                ),
-                transform.translation,
-                transform.rotation,
-                Dir3::NEG_Y,
-                &ShapeCastConfig {
-                    max_distance: 0.1,
-                    ..default()
-                },
-                &SpatialQueryFilter::default()
-                    .with_excluded_entities([player_entity]),
-            )
-            .is_some();
-        if enemy.on_ground != on_ground {
-            enemy.on_ground = on_ground;
-        }
-
-        if on_ground {
-            if player_velocity.y <= 0.0 {
-                player_velocity.y = 0.0;
-            }
-        }
-    }
-}
-
-pub fn apply_gravity_over_time(
-    mut enemy_query: Single<(&Enemy, &mut LinearVelocity)>,
-    time: Res<Time>,
-) {
-    let enemy = enemy_query.0;
-    let enemy_velocity = &mut enemy_query.1;
-
-    if !enemy.on_ground && enemy_velocity.y > 0.0 {
-        enemy_velocity.y -= GRAVITY * time.delta_secs();
     }
 }

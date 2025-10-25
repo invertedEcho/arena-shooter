@@ -19,7 +19,6 @@ pub mod spawn;
 #[derive(Component, Debug)]
 pub struct Player {
     pub health: f32,
-    pub on_ground: bool,
     // TODO: get rid of me or move me somewhere else
     pub camera_state: PlayerCameraState,
 }
@@ -28,7 +27,6 @@ impl Default for Player {
     fn default() -> Self {
         Player {
             health: 100.0,
-            on_ground: true,
             camera_state: PlayerCameraState::Normal,
         }
     }

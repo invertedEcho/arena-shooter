@@ -8,7 +8,8 @@ use bevy_inspector_egui::{
 use bevy_skein::SkeinPlugin;
 
 use crate::{
-    enemy::EnemyPlugin, game_flow::GameFlowPlugin, music::MusicPlugin,
+    enemy::EnemyPlugin, game_flow::GameFlowPlugin,
+    kinematic_controller::KinematicControllerPlugin, music::MusicPlugin,
     nav_mesh_pathfinding::NavMeshPathfindingPlugin, particles::ParticlesPlugin,
     player::PlayerPlugin, shared::CommonPlugin,
     user_interface::UserInterfacePlugin, world::WorldPlugin,
@@ -16,6 +17,7 @@ use crate::{
 
 mod enemy;
 mod game_flow;
+mod kinematic_controller;
 mod music;
 mod nav_mesh_pathfinding;
 mod particles;
@@ -61,9 +63,14 @@ fn main() {
         .add_plugins(PhysicsDebugPlugin::default())
         .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
     app.add_plugins(SkeinPlugin::default());
+    app.add_plugins(HanabiPlugin);
+
     app.add_plugins(EguiPlugin::default())
         .add_plugins(WorldInspectorPlugin::new());
-    app.add_plugins(HanabiPlugin);
+    app.insert_resource(bevy_egui::EguiGlobalSettings {
+        auto_create_primary_context: false,
+        ..default()
+    });
 
     // own plugins
     app.add_plugins(PlayerPlugin)
@@ -74,12 +81,8 @@ fn main() {
         .add_plugins(UserInterfacePlugin)
         .add_plugins(ParticlesPlugin)
         .add_plugins(MusicPlugin)
-        .add_plugins(NavMeshPathfindingPlugin);
-
-    app.insert_resource(bevy_egui::EguiGlobalSettings {
-        auto_create_primary_context: false,
-        ..default()
-    });
+        .add_plugins(NavMeshPathfindingPlugin)
+        .add_plugins(KinematicControllerPlugin);
 
     app.run();
 }

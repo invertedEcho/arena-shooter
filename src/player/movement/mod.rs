@@ -2,8 +2,8 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    GRAVITY,
     game_flow::states::{AppState, InGameState},
+    kinematic_controller::KinematicController,
     player::{
         Player,
         animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
@@ -22,8 +22,6 @@ impl Plugin for PlayerMovementPlugin {
             Update,
             (
                 player_movement,
-                update_player_on_ground,
-                apply_gravity_over_time,
                 setup_player_movement_state_for_added_players,
             )
                 .run_if(in_state(AppState::InGame)),
@@ -50,11 +48,11 @@ pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     player: Single<(
         Entity,
-        &Player,
         &mut LinearVelocity,
         &Transform,
         &mut PlayerMovementState,
         &PlayerWeapon,
+        &KinematicController,
     )>,
     player_camera_entity: Single<Entity, With<ViewModelCamera>>,
     spatial_query: SpatialQuery,
@@ -65,11 +63,11 @@ pub fn player_movement(
 ) {
     let (
         entity,
-        player,
         mut velocity,
         player_transform,
         mut player_movement_state,
         player_weapon,
+        kinematic_controller,
     ) = player.into_inner();
 
     let currently_playing =
@@ -109,7 +107,9 @@ pub fn player_movement(
     if keyboard_input.pressed(KeyCode::KeyS) {
         local_velocity.z += 1.0 * speed;
     }
-    if keyboard_input.just_pressed(KeyCode::Space) && player.on_ground {
+    if keyboard_input.just_pressed(KeyCode::Space)
+        && kinematic_controller.on_ground
+    {
         velocity.y = JUMP_VELOCITY;
     }
 
@@ -190,52 +190,6 @@ pub fn player_movement(
                     block_until_done: false,
                 },
             );
-        }
-    }
-}
-
-fn apply_gravity_over_time(
-    mut player_query: Single<(&Player, &mut LinearVelocity)>,
-    time: Res<Time>,
-) {
-    let player = player_query.0;
-    let player_velocity = &mut player_query.1;
-
-    if !player.on_ground {
-        player_velocity.y -= GRAVITY * time.delta_secs();
-    }
-}
-
-fn update_player_on_ground(
-    players: Query<(&mut Player, &Transform, Entity, &mut LinearVelocity)>,
-    spatial_query: SpatialQuery,
-) {
-    for (mut player, transform, player_entity, mut player_velocity) in players {
-        let on_ground = spatial_query
-            .cast_shape(
-                &Collider::capsule(
-                    PLAYER_CAPSULE_RADIUS,
-                    PLAYER_CAPSULE_LENGTH,
-                ),
-                transform.translation,
-                transform.rotation,
-                Dir3::NEG_Y,
-                &ShapeCastConfig {
-                    max_distance: 0.1,
-                    ..default()
-                },
-                &SpatialQueryFilter::default()
-                    .with_excluded_entities([player_entity]),
-            )
-            .is_some();
-        if player.on_ground != on_ground {
-            player.on_ground = on_ground;
-        }
-
-        if on_ground {
-            if player_velocity.y <= 0.0 {
-                player_velocity.y = 0.0;
-            }
         }
     }
 }
