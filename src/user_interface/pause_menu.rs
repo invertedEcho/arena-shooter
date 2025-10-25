@@ -2,7 +2,10 @@ use bevy::prelude::*;
 
 use crate::{
     game_flow::states::{AppState, InGameState, MainMenuState},
-    user_interface::common::{CommonUiButton, CommonUiButtonType},
+    user_interface::{
+        DEFAULT_GAME_FONT_PATH,
+        common::{CommonUiButton, CommonUiButtonType},
+    },
 };
 
 pub struct PauseMenuPlugin;
@@ -30,7 +33,7 @@ pub enum PauseMenuButtonType {
     SettingsPauseMenu,
 }
 
-fn spawn_pause_menu(mut commands: Commands) {
+fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands
         .spawn((
             Node {
@@ -55,7 +58,14 @@ fn spawn_pause_menu(mut commands: Commands) {
                     ),
                     ..default()
                 })
-                .with_child(Text::new("Paused"));
+                .with_child((
+                    Text::new("Paused"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                ));
             parent
                 .spawn((
                     Node { ..default() },
@@ -63,21 +73,42 @@ fn spawn_pause_menu(mut commands: Commands) {
                     PauseMenuButton(PauseMenuButtonType::Resume),
                     TextColor::WHITE,
                 ))
-                .with_child(Text::new("Resume"));
+                .with_child((
+                    Text::new("Resume"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                ));
             parent
                 .spawn((
                     Node { ..default() },
                     Button,
                     PauseMenuButton(PauseMenuButtonType::ExitToMainMenu),
                 ))
-                .with_child(Text::new("Exit to Main Menu"));
+                .with_child((
+                    Text::new("Exit to Main Menu"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                ));
             parent
                 .spawn((
                     Node { ..default() },
                     Button,
                     PauseMenuButton(PauseMenuButtonType::SettingsPauseMenu),
                 ))
-                .with_child(Text::new("Settings"));
+                .with_child((
+                    Text::new("Settings"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                ));
             parent
                 .spawn((
                     Node {
@@ -91,7 +122,14 @@ fn spawn_pause_menu(mut commands: Commands) {
                     CommonUiButton(CommonUiButtonType::Quit),
                     TextColor::WHITE,
                 ))
-                .with_child(Text::new("Quit"));
+                .with_child((
+                    Text::new("Quit"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                ));
         });
 }
 
@@ -115,6 +153,7 @@ fn handle_pause_menu_button_pressed(
                 next_main_menu_state.set(MainMenuState::Root);
             }
             PauseMenuButtonType::SettingsPauseMenu => {
+                // FIXME: add
                 warn!("not yet implemented");
             }
         }

@@ -1,8 +1,11 @@
 use bevy::prelude::*;
 
-use crate::game_flow::{
-    game_mode::{GameMode, StartGameModeMessage},
-    states::{AppState, MainMenuState},
+use crate::{
+    game_flow::{
+        game_mode::{GameMode, StartGameModeMessage},
+        states::{AppState, MainMenuState},
+    },
+    user_interface::DEFAULT_GAME_FONT_PATH,
 };
 
 pub struct GameModeSelectionUIPlugin;
@@ -36,7 +39,10 @@ enum GameModeSelectionActionButtonType {
     GoBack,
 }
 
-fn spawn_game_mode_selection_screen(mut commands: Commands) {
+fn spawn_game_mode_selection_screen(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+) {
     info!("Spawning GameModeSelectionScreen");
     commands
         .spawn((
@@ -62,7 +68,14 @@ fn spawn_game_mode_selection_screen(mut commands: Commands) {
                     ),
                     ..default()
                 })
-                .with_child(Text::new("Select a game mode"));
+                .with_child((
+                    Text::new("Select a game mode"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 24.0,
+                        ..default()
+                    },
+                ));
             parent
                 .spawn((
                     Node { ..default() },
@@ -70,7 +83,14 @@ fn spawn_game_mode_selection_screen(mut commands: Commands) {
                     GameModeSelectionButton(GameMode::Waves),
                     TextColor::WHITE,
                 ))
-                .with_child(Text::new("Waves"));
+                .with_child((
+                    Text::new("Waves"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 24.0,
+                        ..default()
+                    },
+                ));
             parent
                 .spawn((
                     Node { ..default() },
@@ -78,7 +98,14 @@ fn spawn_game_mode_selection_screen(mut commands: Commands) {
                     GameModeSelectionButton(GameMode::FreePlay),
                     TextColor::WHITE,
                 ))
-                .with_child(Text::new("Free Play"));
+                .with_child((
+                    Text::new("Free Play"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 24.0,
+                        ..default()
+                    },
+                ));
             parent
                 .spawn((
                     Node {
@@ -94,7 +121,14 @@ fn spawn_game_mode_selection_screen(mut commands: Commands) {
                     ),
                     TextColor::WHITE,
                 ))
-                .with_child(Text::new("Go back"));
+                .with_child((
+                    Text::new("Go back"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 24.0,
+                        ..default()
+                    },
+                ));
         });
 }
 

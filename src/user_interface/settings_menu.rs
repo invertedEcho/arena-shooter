@@ -1,6 +1,8 @@
 use bevy::{prelude::*, window::WindowMode};
 
-use crate::game_flow::states::MainMenuState;
+use crate::{
+    game_flow::states::MainMenuState, user_interface::DEFAULT_GAME_FONT_PATH,
+};
 
 pub struct SettingsMenuPlugin;
 
@@ -22,7 +24,7 @@ enum SettingsButtonType {
 #[derive(Component)]
 struct SettingsMenuRoot;
 
-fn spawn_settings_menu(mut commands: Commands) {
+fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands
         .spawn((
             Node {
@@ -43,7 +45,14 @@ fn spawn_settings_menu(mut commands: Commands) {
                     Button,
                     SettingsMenuButton(SettingsButtonType::ToggleFullscreen),
                 ))
-                .with_child(Text::new("Toggle fullscreen"));
+                .with_child((
+                    Text::new("Toggle fullscreen"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                ));
         })
         .with_children(|parent| {
             parent
@@ -58,7 +67,14 @@ fn spawn_settings_menu(mut commands: Commands) {
                     Button,
                     SettingsMenuButton(SettingsButtonType::Back),
                 ))
-                .with_child(Text::new("Back"));
+                .with_child((
+                    Text::new("Back"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                ));
         });
 }
 
