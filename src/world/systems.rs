@@ -1,12 +1,5 @@
 use std::f32::consts::PI;
 
-use avian3d::{
-    collision::collider::ColliderConstructorHierarchyConfig,
-    prelude::{
-        ColliderConstructor, ColliderConstructorHierarchy, TrimeshFlags,
-        VhacdParameters,
-    },
-};
 use bevy::{
     camera::visibility::RenderLayers,
     color::palettes::{self, css::RED},
@@ -14,14 +7,14 @@ use bevy::{
 };
 
 use crate::world::{
-    MEDIUM_MAP_PATH, components::DebugPoint, messages::SpawnDebugPointMessage,
-    resources::WorldSceneHandle,
+    MEDIUM_MAP_PATH, SMALL_MAP_PATH, components::DebugPoint,
+    messages::SpawnDebugPointMessage, resources::WorldSceneHandle,
 };
 
 pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.spawn((
         DirectionalLight {
-            illuminance: 3000.,
+            illuminance: 4000.,
             shadows_enabled: true,
             color: palettes::css::ANTIQUE_WHITE.into(),
             ..default()
@@ -35,7 +28,7 @@ pub fn setup_world(asset_server: Res<AssetServer>, mut commands: Commands) {
     ));
 
     let world_scene_handle =
-        asset_server.load(GltfAssetLabel::Scene(0).from_asset(MEDIUM_MAP_PATH));
+        asset_server.load(GltfAssetLabel::Scene(0).from_asset(SMALL_MAP_PATH));
     commands.insert_resource(WorldSceneHandle(world_scene_handle.clone()));
 
     commands.spawn((
