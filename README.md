@@ -57,11 +57,12 @@ uses:
 - avian3d for physics
 - skein for bevy <-> blender integration (work with bevy components in blender)
 
-## Attributions
+## Credits
 
 ### 3D Models
 - fps/tps Map by theking1322 [CC-BY](https://creativecommons.org/licenses/by/3.0/) via Poly Pizza (https://poly.pizza/m/wna54gOjL7)
 - SWAT by Quaternius (https://poly.pizza/m/Btfn3G5Xv4)
+- "LOWPOLY | FPS | TDM | GAME | MAP by ResoForge" (https://skfb.ly/pxM87) by ResoForge (old profile) is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 
 ### Music & SFX
 - Main Menu Theme by [juanjo_sound](https://juanjosound.itch.io/)

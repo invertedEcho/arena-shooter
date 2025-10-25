@@ -39,7 +39,9 @@ pub fn check_if_enemy_can_see_player(
         // direction towards player
         let vector_not_normalized =
             player_transform.translation - enemy_transform.translation;
-        let direction_normalized = Dir3::new(vector_not_normalized).unwrap();
+        let Ok(direction_normalized) = Dir3::new(vector_not_normalized) else {
+            continue;
+        };
 
         let max_distance = 100.0;
         let solid = false;

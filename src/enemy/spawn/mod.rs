@@ -64,11 +64,33 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
             return;
         };
 
-        let spawn_enemy_count = event.enemy_count;
+        if enemy_spawn_locations.is_empty() {
+            error!("Requested enemy spawn but no spawn locations exist!");
+            continue;
+        }
+
+        let mut spawn_enemy_count = event.enemy_count;
         let spawn_method = &event.spawn_strategy;
 
         match spawn_method {
             EnemySpawnStrategy::RandomSelection => {
+                if spawn_enemy_count > enemy_spawn_locations.iter().len() {
+                    warn!(
+                        "Requested more enemy spawns than available \
+                         EnemySpawnLocations, decreasing. This will mean \
+                         losing enemy spawns"
+                    );
+                    spawn_enemy_count -= enemy_spawn_locations
+                        .iter()
+                        .len()
+                        .abs_diff(spawn_enemy_count);
+                    warn!(
+                        "Original enemy spawn count: {} | New \
+                         spawn_enemy_count: {}",
+                        event.enemy_count, spawn_enemy_count
+                    );
+                }
+
                 let mut already_used_spawn_locations: Vec<Entity> = Vec::new();
                 while already_used_spawn_locations.len() != spawn_enemy_count {
                     let chosen_spawn_location_index = rand::random_range(
@@ -128,11 +150,17 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                         ))
                         .with_child((
                             Transform {
-                                // we should probably just fix origin in blender instead of manual offset here
-                                translation: Vec3::new(0.0, -0.9, 0.0),
-                                // same with rotation here
+                                translation: Vec3::new(
+                                    0.0,
+                                    // center enemy model -> in blender, feet are at bottom, so in
+                                    // bevy model feet are at center of collider, 0.0
+                                    -((PLAYER_CAPSULE_LENGTH
+                                        + PLAYER_CAPSULE_RADIUS * 2.0)
+                                        / 2.),
+                                    0.0,
+                                ),
                                 rotation: Quat::from_rotation_y(PI),
-                                scale: Vec3::splat(0.9),
+                                scale: Vec3::splat(1.0),
                             },
                             SceneRoot(enemy_model),
                             Visibility::Visible,

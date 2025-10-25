@@ -49,8 +49,6 @@ pub fn setup_player_cameras(
                 Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
                 Projection::from(PerspectiveProjection {
                     fov: 90.0_f32.to_radians(),
-                    near: 0.0000001,
-                    far: 1000.0,
                     ..default()
                 }),
             ));
@@ -62,11 +60,6 @@ pub fn setup_player_cameras(
                     order: 1,
                     ..default()
                 },
-                Projection::from(PerspectiveProjection {
-                    near: 0.0000001,
-                    far: 1000.0,
-                    ..default()
-                }),
                 // needed so our inspector is shown again when we enter game, as we despawn
                 // `WorldUiCamera` and spawn player camera
                 bevy_egui::PrimaryEguiContext,

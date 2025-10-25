@@ -59,7 +59,7 @@ fn handle_start_game_mode_event(
     mut next_app_state: ResMut<NextState<AppState>>,
     mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
-    player_spawn_location: Single<&Transform, With<PlayerSpawnLocation>>,
+    player_spawn_location: Query<&Transform, With<PlayerSpawnLocation>>,
     mut spawn_player_message_writer: MessageWriter<PlayerSpawnMessage>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
@@ -88,6 +88,17 @@ fn handle_start_game_mode_event(
                 next_app_state.set(AppState::InGame);
             }
         }
+
+        let player_spawn_location = match player_spawn_location.single() {
+            Ok(res) => *res,
+            Err(_) => {
+                error!(
+                    "Selected map does not contain a single \
+                     PlayerSpawnLocation, using 0,0,0 instead"
+                );
+                Transform::from_xyz(0.0, 0.0, 0.0)
+            }
+        };
 
         spawn_player_message_writer.write(PlayerSpawnMessage {
             spawn_location: player_spawn_location.translation,

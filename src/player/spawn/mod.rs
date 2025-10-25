@@ -6,7 +6,7 @@ use crate::player::{Player, spawn::components::PlayerSpawnLocation};
 pub mod components;
 
 pub const PLAYER_CAPSULE_RADIUS: f32 = 0.2;
-pub const PLAYER_CAPSULE_LENGTH: f32 = 1.3;
+pub const PLAYER_CAPSULE_LENGTH: f32 = 1.4;
 
 pub struct PlayerSpawnPlugin;
 
@@ -46,7 +46,7 @@ fn handle_player_spawn_event(
             Visibility::Visible,
             CollisionEventsEnabled,
             CollidingEntities::default(),
-            DebugRender::none(),
+            DebugRender::collider(Color::WHITE),
         ));
     }
 }
