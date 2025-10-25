@@ -2,8 +2,8 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
+    character_controller::KCCGrounded,
     game_flow::states::{AppState, InGameState},
-    kinematic_controller::Grounded,
     player::{
         Player,
         animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
@@ -52,7 +52,7 @@ pub fn player_movement(
         &Transform,
         &mut PlayerMovementState,
         &PlayerWeapon,
-        &Grounded,
+        &KCCGrounded,
     )>,
     player_camera_entity: Single<Entity, With<ViewModelCamera>>,
     spatial_query: SpatialQuery,
@@ -107,7 +107,7 @@ pub fn player_movement(
     if keyboard_input.pressed(KeyCode::KeyS) {
         local_velocity.z += 1.0 * speed;
     }
-    if keyboard_input.just_pressed(KeyCode::Space) && grounded.0 {
+    if keyboard_input.just_pressed(KeyCode::Space) && grounded.grounded {
         velocity.y = JUMP_VELOCITY;
     }
 
