@@ -3,7 +3,7 @@ use crate::{
         animate::ENEMY_MODEL_PATH,
         shooting::components::EnemyShootPlayerCooldownTimer,
     },
-    kinematic_controller::KinematicController,
+    kinematic_controller::CharacterControllerBundle,
     nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS},
     player::spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
 };
@@ -131,7 +131,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 health: 100.0,
                                 ..default()
                             },
-                            KinematicController::default(),
+                            CharacterControllerBundle::default(),
                             EnemyShootPlayerCooldownTimer(Timer::from_seconds(
                                 0.5,
                                 TimerMode::Repeating,

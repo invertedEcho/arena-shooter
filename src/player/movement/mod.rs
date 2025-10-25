@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 use crate::{
     game_flow::states::{AppState, InGameState},
-    kinematic_controller::KinematicController,
+    kinematic_controller::Grounded,
     player::{
         Player,
         animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
@@ -52,7 +52,7 @@ pub fn player_movement(
         &Transform,
         &mut PlayerMovementState,
         &PlayerWeapon,
-        &KinematicController,
+        &Grounded,
     )>,
     player_camera_entity: Single<Entity, With<ViewModelCamera>>,
     spatial_query: SpatialQuery,
@@ -67,7 +67,7 @@ pub fn player_movement(
         player_transform,
         mut player_movement_state,
         player_weapon,
-        kinematic_controller,
+        grounded,
     ) = player.into_inner();
 
     let currently_playing =
@@ -107,9 +107,7 @@ pub fn player_movement(
     if keyboard_input.pressed(KeyCode::KeyS) {
         local_velocity.z += 1.0 * speed;
     }
-    if keyboard_input.just_pressed(KeyCode::Space)
-        && kinematic_controller.on_ground
-    {
+    if keyboard_input.just_pressed(KeyCode::Space) && grounded.0 {
         velocity.y = JUMP_VELOCITY;
     }
 
