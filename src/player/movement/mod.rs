@@ -2,7 +2,10 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    character_controller::{Grounded, MAX_SLOPE_ANGLE},
+    character_controller::{
+        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, Grounded,
+        MAX_SLOPE_ANGLE,
+    },
     game_flow::states::{AppState, InGameState},
     player::{
         Player,
@@ -59,6 +62,7 @@ pub fn player_movement(
     mut play_player_arm_weapon_animation_message_writer: MessageWriter<
         PlayArmWithWeaponAnimationMessage,
     >,
+    time: Res<Time>,
 ) {
     let (
         entity,
@@ -131,34 +135,64 @@ pub fn player_movement(
         return;
     };
 
-    // raycast down to detect ground normal
     let ray_origin = player_transform.translation
         - direction_from_world_velocity.as_vec3() * 0.025;
     let max_distance = 0.3;
-    let solid = true;
 
-    if let Some(hit_ahead) = spatial_query.cast_ray(
+    if let Some(hit_ahead) = spatial_query.cast_shape(
+        &Collider::capsule(CHARACTER_CAPSULE_RADIUS, CHARACTER_CAPSULE_LENGTH),
         ray_origin,
+        player_transform.rotation,
         direction_from_world_velocity,
-        max_distance,
-        solid,
+        &ShapeCastConfig {
+            max_distance,
+            ..default()
+        },
         &SpatialQueryFilter::default()
             .with_excluded_entities([entity, *player_camera_entity]),
     ) {
-        info!("Got shape cast hit, checking if we can climb");
-
+        // obstacle in the way, check if we can slimb it
         // a normal is just a direction something is facing
-        let normal = hit_ahead.normal;
+        let normal = hit_ahead.normal1;
         let slope_angle = normal.angle_between(Vec3::Y);
-        info!("slope_angle: {}", slope_angle);
-
         let slope_climable = slope_angle < MAX_SLOPE_ANGLE;
 
         if slope_climable {
-            // this is the most important part to make the slope climbing possible. instead of trying to go straight, we slide along
-            // the ground
+            info!("MOVEMENT: Climable slope!");
+            // this is the most important part to make the slope climbing possible.
+            // instead of trying to go straight, we slide along the ground
             velocity.0 = world_velocity.reject_from_normalized(normal);
+
+            // slope snapping
+            let ray_down_origin = player_transform.translation + Vec3::Y * 0.5;
+            let ray_down_direction = Dir3::NEG_Y;
+            let max_down_distance = 1.0;
+
+            if let Some(hit_down) = spatial_query.cast_ray(
+                ray_down_origin,
+                ray_down_direction,
+                max_down_distance,
+                true,
+                &SpatialQueryFilter::default()
+                    .with_excluded_entities([entity, *player_camera_entity]),
+            ) {
+                let hit_down_point =
+                    ray_down_origin + ray_down_direction * hit_down.distance;
+                let ground_y = hit_down_point.y;
+                let current_y = player_transform.translation.y;
+                let diff_y = ground_y - current_y;
+                if diff_y.abs() < 0.3 {
+                    let res = diff_y / time.delta_secs();
+                    info!(
+                        "MOVEMENT: y velocity needs to be adjusted, setting \
+                         to: {}",
+                        res
+                    );
+                    velocity.y = res;
+                }
+            }
         } else {
+            info!("MOVEMENT: Obstacle in the way, sliding along wall");
             // not climable, e.g. a wall. we want to slide along the wall, similar to the collide
             // and slide algorithm
             // the main difference is that we ignore the Y part, because its too step, so we dont
@@ -168,6 +202,8 @@ pub fn player_movement(
             velocity.z = impulse.z
         }
     } else {
+        info!("MOVEMENT: No obstacle ahead, free movement");
+        // no obstacle ahead, free movement
         velocity.x = world_velocity.x;
         velocity.z = world_velocity.z;
     }

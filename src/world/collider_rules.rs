@@ -1,5 +1,7 @@
 use avian3d::prelude::ColliderConstructor;
 
+// TODO: validate the collider rules, e.g. whether these Names actually exist and have a mesh
+// defined
 // NOTE:
 // To get the correct name to use here when inspecting entities in Blender:
 // Must be the actual Mesh, e.g. the green triangle, followed by a dot, and then the
@@ -42,10 +44,4 @@ pub fn get_collider_rules_for_medium_map()
             Some(ColliderConstructor::TrimeshFromMesh),
         ),
     ]
-}
-
-// TODO: validate the collider rules, e.g. whether these Names actually exist and have a mesh
-// defined
-pub fn validate_collider_rules() {
-    todo!()
 }

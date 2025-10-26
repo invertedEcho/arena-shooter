@@ -8,9 +8,6 @@ use crate::{
 
 pub mod components;
 
-pub const PLAYER_CAPSULE_RADIUS: f32 = 0.2;
-pub const PLAYER_CAPSULE_LENGTH: f32 = 1.4;
-
 pub struct PlayerSpawnPlugin;
 
 impl Plugin for PlayerSpawnPlugin {

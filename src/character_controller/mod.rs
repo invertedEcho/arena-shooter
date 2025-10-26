@@ -3,8 +3,8 @@ use bevy::prelude::*;
 
 use crate::GRAVITY;
 
-const CAPSULE_RADIUS: f32 = 0.2;
-const CAPSULE_LENGTH: f32 = 1.3;
+pub const CHARACTER_CAPSULE_RADIUS: f32 = 0.2;
+pub const CHARACTER_CAPSULE_LENGTH: f32 = 1.3;
 
 pub const MAX_SLOPE_ANGLE: f32 = 45.0_f32.to_radians();
 
@@ -23,7 +23,10 @@ impl Default for CharacterControllerBundle {
         Self {
             velocity: LinearVelocity::ZERO,
             rigid_body: RigidBody::Kinematic,
-            collider: Collider::capsule(CAPSULE_RADIUS, CAPSULE_LENGTH),
+            collider: Collider::capsule(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ),
             grounded: Grounded::default(),
             locked_axes: LockedAxes::new()
                 .lock_rotation_x()
@@ -57,7 +60,10 @@ fn update_on_ground(
     for (transform, entity, mut velocity, mut grounded) in query {
         let on_ground = spatial_query
             .cast_shape(
-                &Collider::capsule(CAPSULE_RADIUS, CAPSULE_LENGTH),
+                &Collider::capsule(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ),
                 transform.translation,
                 transform.rotation,
                 Dir3::NEG_Y,
@@ -87,28 +93,4 @@ fn apply_gravity_over_time(
             velocity.y -= GRAVITY * time.delta_secs();
         }
     }
-}
-
-fn check_shape_hit_ahead(
-    spatial_query: SpatialQuery,
-    shape: &Collider,
-    origin: Vec3,
-    shape_rotation: Quat,
-    direction: Dir3,
-    excluded_entities: Vec<Entity>,
-) -> bool {
-    spatial_query
-        .cast_shape(
-            shape,
-            origin,
-            shape_rotation,
-            direction,
-            &ShapeCastConfig {
-                max_distance: 0.2,
-                ..default()
-            },
-            &SpatialQueryFilter::default()
-                .with_excluded_entities(excluded_entities),
-        )
-        .is_some()
 }

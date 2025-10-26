@@ -1,11 +1,12 @@
 use crate::{
-    character_controller::Grounded,
+    character_controller::{
+        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, Grounded,
+    },
     enemy::{
         animate::ENEMY_MODEL_PATH,
         shooting::components::EnemyShootPlayerCooldownTimer,
     },
     nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS},
-    player::spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
 };
 use avian3d::math::PI;
 use bevy::prelude::*;
@@ -144,8 +145,8 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                     0.0,
                                     // center enemy model -> in blender, feet are at bottom, so in
                                     // bevy model feet are at center of collider, 0.0
-                                    -((PLAYER_CAPSULE_LENGTH
-                                        + PLAYER_CAPSULE_RADIUS * 2.0)
+                                    -((CHARACTER_CAPSULE_LENGTH
+                                        + CHARACTER_CAPSULE_RADIUS * 2.0)
                                         / 2.),
                                     0.0,
                                 ),
