@@ -17,7 +17,8 @@
 - [ ] Player movement
   - [x] Basic movement
   - [ ] Write a proper kinematic character controller from scratch because i dont want to just copy some code
-    - this is harder than i thought... even all the examples out there have some issues
+    - [ ] Climb slopes
+    - [ ] slide along walls when going into walls instead of zeroeing velocity
 - [X] Game modes
   - [x] Wave mode (the game gets more difficult each round, e.g. more enemies are spawned)
   - [ ] Capture the flag
