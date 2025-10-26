@@ -4,7 +4,7 @@ use crate::{
     game_flow::{states::InGameState, systems::free_mouse},
     player::Player,
     user_interface::{
-        DEFAULT_GAME_FONT_PATH,
+        DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
         common::{CommonUiButton, CommonUiButtonType},
     },
 };
@@ -60,7 +60,7 @@ fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("You are dead"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: 32.0,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -68,7 +68,7 @@ fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
                 Text::new("Tip:"),
                 TextFont {
                     font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                    font_size: 32.0,
+                    font_size: DEFAULT_FONT_SIZE,
                     ..default()
                 },
             ));
@@ -76,7 +76,7 @@ fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
                 Text::new("Take cover when under heavy shooting!"),
                 TextFont {
                     font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                    font_size: 32.0,
+                    font_size: DEFAULT_FONT_SIZE,
                     ..default()
                 },
             ));
@@ -90,7 +90,7 @@ fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Respawn"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: 32.0,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -110,7 +110,7 @@ fn spawn_death_screen(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Exit to Main Menu"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: 32.0,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));

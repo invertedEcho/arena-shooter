@@ -1,7 +1,8 @@
 use bevy::{prelude::*, window::WindowMode};
 
 use crate::{
-    game_flow::states::MainMenuState, user_interface::DEFAULT_GAME_FONT_PATH,
+    game_flow::states::MainMenuState,
+    user_interface::{DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH},
 };
 
 pub struct SettingsMenuPlugin;
@@ -49,7 +50,7 @@ fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Toggle fullscreen"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: 32.0,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -71,7 +72,7 @@ fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Back"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: 32.0,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));

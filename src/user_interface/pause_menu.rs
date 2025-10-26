@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     game_flow::states::{AppState, InGameState, MainMenuState},
     user_interface::{
-        DEFAULT_GAME_FONT_PATH,
+        DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
         common::{CommonUiButton, CommonUiButtonType},
     },
 };
@@ -62,7 +62,7 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Paused"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: 32.0,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -77,7 +77,7 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Resume"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: 32.0,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -91,7 +91,7 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Exit to Main Menu"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: 32.0,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -105,7 +105,7 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Settings"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: 32.0,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -126,7 +126,7 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Quit"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: 32.0,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
