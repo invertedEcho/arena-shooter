@@ -6,6 +6,8 @@ use crate::GRAVITY;
 const CAPSULE_RADIUS: f32 = 0.2;
 const CAPSULE_LENGTH: f32 = 1.3;
 
+pub const MAX_SLOPE_ANGLE: f32 = 45.0_f32.to_radians();
+
 /// Contains all needed components for a character that should be controlled by the player
 #[derive(Bundle)]
 pub struct CharacterControllerBundle {

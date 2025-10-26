@@ -2,14 +2,13 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    character_controller::Grounded,
+    character_controller::{Grounded, MAX_SLOPE_ANGLE},
     game_flow::states::{AppState, InGameState},
     player::{
         Player,
         animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
         camera::components::ViewModelCamera,
         shooting::components::PlayerWeapon,
-        spawn::{PLAYER_CAPSULE_LENGTH, PLAYER_CAPSULE_RADIUS},
     },
     shared::{JUMP_VELOCITY, MovementState, RUN_VELOCITY, WALK_VELOCITY},
 };
@@ -128,47 +127,49 @@ pub fn player_movement(
     }
 
     let world_velocity = player_transform.rotation * local_velocity;
-    let Ok(direction) = Dir3::new(world_velocity) else {
+    let Ok(direction_from_world_velocity) = Dir3::new(world_velocity) else {
         return;
     };
 
-    let mut move_dir = world_velocity;
-
-    let max_slope_angle = 45.0_f32.to_radians();
     // raycast down to detect ground normal
-    let ray_origin = player_transform.translation + Vec3::Y * 0.5;
-    let ray_direction = Dir3::NEG_Y;
-    let max_distance = 1.0;
+    let ray_origin = player_transform.translation
+        - direction_from_world_velocity.as_vec3() * 0.025;
+    let max_distance = 0.3;
     let solid = true;
-    if let Some(ground_hit) = spatial_query.cast_ray(
+
+    if let Some(hit_ahead) = spatial_query.cast_ray(
         ray_origin,
-        ray_direction,
+        direction_from_world_velocity,
         max_distance,
         solid,
         &SpatialQueryFilter::default()
             .with_excluded_entities([entity, *player_camera_entity]),
     ) {
-        info!("Got ground hit, checking if we can climb");
+        info!("Got shape cast hit, checking if we can climb");
 
         // a normal is just a direction something is facing
-        let normal = ground_hit.normal;
+        let normal = hit_ahead.normal;
         let slope_angle = normal.angle_between(Vec3::Y);
         info!("slope_angle: {}", slope_angle);
 
-        if slope_angle < max_slope_angle {
+        let slope_climable = slope_angle < MAX_SLOPE_ANGLE;
+
+        if slope_climable {
             // this is the most important part to make the slope climbing possible. instead of trying to go straight, we slide along
             // the ground
-            move_dir = direction.reject_from(normal).normalize_or_zero();
+            velocity.0 = world_velocity.reject_from_normalized(normal);
         } else {
-            move_dir = Vec3::ZERO;
+            // not climable, e.g. a wall. we want to slide along the wall, similar to the collide
+            // and slide algorithm
+            // the main difference is that we ignore the Y part, because its too step, so we dont
+            // want to climb up
+            let impulse = world_velocity.reject_from_normalized(normal);
+            velocity.x = impulse.x;
+            velocity.z = impulse.z
         }
-    }
-
-    velocity.x = move_dir.x;
-    velocity.z = move_dir.z;
-
-    if grounded.0 {
-        velocity.y = move_dir.y;
+    } else {
+        velocity.x = world_velocity.x;
+        velocity.z = world_velocity.z;
     }
 
     if player_weapon.reloading {
