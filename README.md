@@ -14,11 +14,12 @@
 
 ## Todo and feature list
 - [x] User interface
-- [ ] Player movement
+- [x] Player movement
   - [x] Basic movement
-  - [ ] Write a proper kinematic character controller from scratch because i dont want to just copy some code
-    - [ ] Climb slopes
-    - [ ] slide along walls when going into walls instead of zeroeing velocity
+  - [x] Write a proper kinematic character controller from scratch because i dont want to just copy some code
+    - [x] Climb slopes
+    - [x] slide along walls when going into walls instead of zeroeing velocity
+    - there are still some improvements and fixes needed, but it works pretty good so far
 - [X] Game modes
   - [x] Wave mode (the game gets more difficult each round, e.g. more enemies are spawned)
   - [ ] Capture the flag

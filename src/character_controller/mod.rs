@@ -20,7 +20,7 @@ pub const MAX_SLOPE_ANGLE: f32 = 45.0_f32.to_radians();
 // character controller for enemies.
 
 #[derive(Component)]
-pub struct MovementState(MovementStateEnum);
+pub struct MovementState(pub MovementStateEnum);
 
 #[derive(Debug, Reflect, PartialEq)]
 pub enum MovementStateEnum {
@@ -94,8 +94,9 @@ impl Plugin for CharacterControllerPlugin {
 fn handle_keyboard_input_for_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut movement_action_writer: MessageWriter<MovementAction>,
-    player_transform: Single<&Transform, With<Player>>,
+    player_query: Single<(&Transform, &mut MovementState), With<Player>>,
 ) {
+    let (player_transform, mut movement_state) = player_query.into_inner();
     let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
         RUN_VELOCITY
     } else {
@@ -120,6 +121,22 @@ fn handle_keyboard_input_for_player(
     let world_velocity = player_transform.rotation * local_velocity;
 
     movement_action_writer.write(MovementAction::Move(world_velocity));
+    if local_velocity.x == 0.0 && local_velocity.z == 0.0 {
+        if movement_state.0 != MovementStateEnum::Idle {
+            info!("changing to idle");
+            movement_state.0 = MovementStateEnum::Idle;
+        }
+    } else if speed == RUN_VELOCITY {
+        if movement_state.0 != MovementStateEnum::Running {
+            info!("changing to running");
+            movement_state.0 = MovementStateEnum::Running;
+        }
+    } else if speed == WALK_VELOCITY {
+        if movement_state.0 != MovementStateEnum::Walking {
+            info!("changing to walking");
+            movement_state.0 = MovementStateEnum::Walking;
+        }
+    }
 
     if keyboard_input.just_pressed(KeyCode::Space) {
         movement_action_writer.write(MovementAction::Jump);
