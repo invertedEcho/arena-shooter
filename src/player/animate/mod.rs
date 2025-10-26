@@ -179,7 +179,7 @@ fn handle_play_arm_with_weapon_animation_event(
         };
 
         if animation_block_timer.is_some() {
-            info!(
+            debug!(
                 "Got animation request, but the AnimationBlockTimer resource \
                  currently exists, not playing animation {:?}",
                 event.animation_type
@@ -276,7 +276,7 @@ pub fn animate_current_movement_state(
         PlayArmWithWeaponAnimationMessage,
     >,
 ) {
-    info!("Movement state changed, playing corresponding animation!");
+    debug!("Movement state changed, playing corresponding animation!");
     match player.into_inner().0 {
         MovementStateEnum::Idle => {
             play_player_arm_weapon_animation_message_writer.write(

@@ -84,7 +84,7 @@ fn spawn_game_mode_selection_screen(
                     TextColor::WHITE,
                 ))
                 .with_child((
-                    Text::new("Waves"),
+                    Text::new("Waves (Currently disabled!)"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
                         font_size: DEFAULT_FONT_SIZE,
@@ -147,9 +147,9 @@ fn handle_game_mode_selection_button_press(
         if let Interaction::Pressed = interaction {
             match game_mode_selection_button.0 {
                 GameMode::Waves => {
-                    next_app_state.set(AppState::InGame);
-                    next_game_mode_state.set(GameMode::Waves);
-                    message_writer.write(StartGameModeMessage(GameMode::Waves));
+                    // next_app_state.set(AppState::InGame);
+                    // next_game_mode_state.set(GameMode::Waves);
+                    // message_writer.write(StartGameModeMessage(GameMode::Waves));
                 }
                 GameMode::FreePlay => {
                     next_app_state.set(AppState::InGame);

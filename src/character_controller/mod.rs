@@ -31,7 +31,7 @@ pub enum MovementStateEnum {
 
 #[derive(Message)]
 pub enum MovementAction {
-    // TODO: should be possible to just have Vec3
+    // TODO: should be possible to just have Vec2
     Move(Vec3),
     Jump,
 }
@@ -45,6 +45,7 @@ pub struct CharacterControllerBundle {
     grounded: Grounded,
     locked_axes: LockedAxes,
     movement_state: MovementState,
+    colliding_entities: CollidingEntities,
 }
 
 impl Default for CharacterControllerBundle {
@@ -62,6 +63,7 @@ impl Default for CharacterControllerBundle {
                 .lock_rotation_y()
                 .lock_rotation_z(),
             movement_state: MovementState(MovementStateEnum::Idle),
+            colliding_entities: CollidingEntities::default(),
         }
     }
 }
@@ -123,17 +125,14 @@ fn handle_keyboard_input_for_player(
     movement_action_writer.write(MovementAction::Move(world_velocity));
     if local_velocity.x == 0.0 && local_velocity.z == 0.0 {
         if movement_state.0 != MovementStateEnum::Idle {
-            info!("changing to idle");
             movement_state.0 = MovementStateEnum::Idle;
         }
     } else if speed == RUN_VELOCITY {
         if movement_state.0 != MovementStateEnum::Running {
-            info!("changing to running");
             movement_state.0 = MovementStateEnum::Running;
         }
     } else if speed == WALK_VELOCITY {
         if movement_state.0 != MovementStateEnum::Walking {
-            info!("changing to walking");
             movement_state.0 = MovementStateEnum::Walking;
         }
     }
