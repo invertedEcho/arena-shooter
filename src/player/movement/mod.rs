@@ -2,8 +2,8 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
+    character_controller::Grounded,
     game_flow::states::{AppState, InGameState},
-    kinematic_controller::KinematicController,
     player::{
         Player,
         animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
@@ -52,7 +52,7 @@ pub fn player_movement(
         &Transform,
         &mut PlayerMovementState,
         &PlayerWeapon,
-        &KinematicController,
+        &Grounded,
     )>,
     player_camera_entity: Single<Entity, With<ViewModelCamera>>,
     spatial_query: SpatialQuery,
@@ -67,7 +67,7 @@ pub fn player_movement(
         player_transform,
         mut player_movement_state,
         player_weapon,
-        kinematic_controller,
+        grounded,
     ) = player.into_inner();
 
     let currently_playing =
@@ -107,9 +107,7 @@ pub fn player_movement(
     if keyboard_input.pressed(KeyCode::KeyS) {
         local_velocity.z += 1.0 * speed;
     }
-    if keyboard_input.just_pressed(KeyCode::Space)
-        && kinematic_controller.on_ground
-    {
+    if keyboard_input.just_pressed(KeyCode::Space) && grounded.0 {
         velocity.y = JUMP_VELOCITY;
     }
 
@@ -134,25 +132,44 @@ pub fn player_movement(
         return;
     };
 
-    if let Some(_) = spatial_query.cast_shape(
-        &Collider::capsule(PLAYER_CAPSULE_RADIUS, PLAYER_CAPSULE_LENGTH),
-        player_transform.translation - direction.as_vec3() * 0.025,
-        player_transform.rotation,
-        direction,
-        &ShapeCastConfig {
-            max_distance: 0.2,
-            ..default()
-        },
+    let mut move_dir = world_velocity;
+
+    let max_slope_angle = 45.0_f32.to_radians();
+    // raycast down to detect ground normal
+    let ray_origin = player_transform.translation + Vec3::Y * 0.5;
+    let ray_direction = Dir3::NEG_Y;
+    let max_distance = 1.0;
+    let solid = true;
+    if let Some(ground_hit) = spatial_query.cast_ray(
+        ray_origin,
+        ray_direction,
+        max_distance,
+        solid,
         &SpatialQueryFilter::default()
             .with_excluded_entities([entity, *player_camera_entity]),
     ) {
-        velocity.x = 0.0;
-        velocity.z = 0.0;
-        return;
+        info!("Got ground hit, checking if we can climb");
+
+        // a normal is just a direction something is facing
+        let normal = ground_hit.normal;
+        let slope_angle = normal.angle_between(Vec3::Y);
+        info!("slope_angle: {}", slope_angle);
+
+        if slope_angle < max_slope_angle {
+            // this is the most important part to make the slope climbing possible. instead of trying to go straight, we slide along
+            // the ground
+            move_dir = direction.reject_from(normal).normalize_or_zero();
+        } else {
+            move_dir = Vec3::ZERO;
+        }
     }
 
-    velocity.x = world_velocity.x;
-    velocity.z = world_velocity.z;
+    velocity.x = move_dir.x;
+    velocity.z = move_dir.z;
+
+    if grounded.0 {
+        velocity.y = move_dir.y;
+    }
 
     if player_weapon.reloading {
         return;
