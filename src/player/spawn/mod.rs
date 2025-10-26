@@ -2,14 +2,11 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    kinematic_controller::KinematicController,
+    character_controller::CharacterControllerBundle,
     player::{Player, spawn::components::PlayerSpawnLocation},
 };
 
 pub mod components;
-
-pub const PLAYER_CAPSULE_RADIUS: f32 = 0.2;
-pub const PLAYER_CAPSULE_LENGTH: f32 = 1.4;
 
 pub struct PlayerSpawnPlugin;
 
@@ -39,7 +36,7 @@ fn handle_player_spawn_event(
             Transform::from_translation(event.spawn_location),
             Visibility::Visible,
             DebugRender::collider(Color::WHITE),
-            KinematicController::default(),
+            CharacterControllerBundle::default(),
         ));
     }
 }

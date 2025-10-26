@@ -2,7 +2,11 @@ use std::time::Duration;
 
 use bevy::{animation::RepeatAnimation, prelude::*};
 
-use crate::{player::Player, shared::components::AnimationPlayerEntityPointer};
+use crate::{
+    character_controller::{MovementState, MovementStateEnum},
+    player::Player,
+    shared::components::AnimationPlayerEntityPointer,
+};
 
 pub const PLAYER_ARM_WEAPON_PATH: &str = "models/player/arm_and_weapon.glb";
 
@@ -30,6 +34,7 @@ impl Plugin for PlayerAnimatePlugin {
                     link_player_animation,
                     handle_play_arm_with_weapon_animation_event,
                     handle_player_arm_weapon_animation_block_timer,
+                    animate_current_movement_state,
                 ),
             );
     }
@@ -174,7 +179,7 @@ fn handle_play_arm_with_weapon_animation_event(
         };
 
         if animation_block_timer.is_some() {
-            info!(
+            debug!(
                 "Got animation request, but the AnimationBlockTimer resource \
                  currently exists, not playing animation {:?}",
                 event.animation_type
@@ -262,5 +267,43 @@ fn get_animation_duration_for_animation_type(
         ArmWithWeaponAnimation::Shoot => 0.1,
         ArmWithWeaponAnimation::PartialReload => 2.81,
         ArmWithWeaponAnimation::FullReload => 3.65,
+    }
+}
+
+pub fn animate_current_movement_state(
+    player: Single<&MovementState, Changed<MovementState>>,
+    mut play_player_arm_weapon_animation_message_writer: MessageWriter<
+        PlayArmWithWeaponAnimationMessage,
+    >,
+) {
+    debug!("Movement state changed, playing corresponding animation!");
+    match player.into_inner().0 {
+        MovementStateEnum::Idle => {
+            play_player_arm_weapon_animation_message_writer.write(
+                PlayArmWithWeaponAnimationMessage {
+                    animation_type: ArmWithWeaponAnimation::Idle,
+                    repeat: true,
+                    block_until_done: false,
+                },
+            );
+        }
+        MovementStateEnum::Walking => {
+            play_player_arm_weapon_animation_message_writer.write(
+                PlayArmWithWeaponAnimationMessage {
+                    animation_type: ArmWithWeaponAnimation::Walk,
+                    repeat: true,
+                    block_until_done: false,
+                },
+            );
+        }
+        MovementStateEnum::Running => {
+            play_player_arm_weapon_animation_message_writer.write(
+                PlayArmWithWeaponAnimationMessage {
+                    animation_type: ArmWithWeaponAnimation::Run,
+                    repeat: true,
+                    block_until_done: false,
+                },
+            );
+        }
     }
 }

@@ -4,6 +4,7 @@ use avian3d::prelude::*;
 use bevy::{color::palettes::css::WHITE, prelude::*};
 
 use crate::{
+    character_controller::{MovementState, MovementStateEnum},
     enemy::{Enemy, shooting::components::EnemyBullet},
     game_flow::{score::GameScore, states::InGameState},
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
@@ -11,7 +12,6 @@ use crate::{
         Player, PlayerDeathMessage,
         animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
         camera::components::{ViewModelCamera, WorldModelCamera},
-        movement::PlayerMovementState,
         shooting::{
             components::{
                 BloodScreenEffect, MuzzleFlash, PlayerBullet,
@@ -21,7 +21,7 @@ use crate::{
             resources::ReloadTimer,
         },
     },
-    shared::{BULLET_VELOCITY, MovementState, components::DespawnTimer},
+    shared::{BULLET_VELOCITY, components::DespawnTimer},
     utils::random::get_random_number_from_range_i32,
 };
 
@@ -443,9 +443,9 @@ pub fn accurate_check_bullet_collision_for_impact_particle(
 
 pub fn handle_player_death_event(
     mut message_reader: MessageReader<PlayerDeathMessage>,
-    mut player_movement_state: Single<&mut PlayerMovementState>,
+    mut player_movement_state: Single<&mut MovementState, With<Player>>,
 ) {
     for _ in message_reader.read() {
-        player_movement_state.0 = MovementState::Idle;
+        player_movement_state.0 = MovementStateEnum::Idle;
     }
 }

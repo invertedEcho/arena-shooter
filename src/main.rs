@@ -8,16 +8,16 @@ use bevy_inspector_egui::{
 use bevy_skein::SkeinPlugin;
 
 use crate::{
-    enemy::EnemyPlugin, game_flow::GameFlowPlugin,
-    kinematic_controller::KinematicControllerPlugin, music::MusicPlugin,
+    character_controller::CharacterControllerPlugin, enemy::EnemyPlugin,
+    game_flow::GameFlowPlugin, music::MusicPlugin,
     nav_mesh_pathfinding::NavMeshPathfindingPlugin, particles::ParticlesPlugin,
     player::PlayerPlugin, shared::CommonPlugin,
     user_interface::UserInterfacePlugin, world::WorldPlugin,
 };
 
+mod character_controller;
 mod enemy;
 mod game_flow;
-mod kinematic_controller;
 mod music;
 mod nav_mesh_pathfinding;
 mod particles;
@@ -82,7 +82,7 @@ fn main() {
         .add_plugins(ParticlesPlugin)
         .add_plugins(MusicPlugin)
         .add_plugins(NavMeshPathfindingPlugin)
-        .add_plugins(KinematicControllerPlugin);
+        .add_plugins(CharacterControllerPlugin);
 
     app.run();
 }

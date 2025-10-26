@@ -4,7 +4,6 @@ use crate::player::{
     animate::PlayerAnimatePlugin,
     camera::{PlayerCameraPlugin, components::PlayerCameraState},
     hud::PlayerHudPlugin,
-    movement::PlayerMovementPlugin,
     shooting::PlayerShootingPlugin,
     spawn::PlayerSpawnPlugin,
 };
@@ -12,7 +11,6 @@ use crate::player::{
 mod animate;
 pub mod camera;
 mod hud;
-pub mod movement;
 pub mod shooting;
 pub mod spawn;
 
@@ -43,7 +41,6 @@ impl Plugin for PlayerPlugin {
             .add_plugins(PlayerCameraPlugin)
             .add_plugins(PlayerShootingPlugin)
             .add_plugins(PlayerHudPlugin)
-            .add_plugins(PlayerMovementPlugin)
             .add_plugins(PlayerAnimatePlugin);
     }
 }

@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 
 use crate::{
+    character_controller::MovementState,
     game_flow::states::{AppDebugState, AppState, InGameState, MainMenuState},
-    player::{Player, movement::PlayerMovementState},
+    player::Player,
 };
 
 const DEBUG_OVERLAY_TEXT_SIZE: f32 = 15.0;
@@ -191,8 +192,8 @@ fn update_player_info_text(
 
 fn update_player_movement_state_text(
     changed_player_movement_state: Single<
-        &PlayerMovementState,
-        Changed<PlayerMovementState>,
+        &MovementState,
+        Changed<MovementState>,
     >,
     player_movement_state_text: Query<&mut Text, With<PlayerMovementStateText>>,
 ) {
