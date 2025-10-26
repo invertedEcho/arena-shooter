@@ -5,7 +5,7 @@ use bevy::{
 
 use crate::{
     game_flow::{
-        game_mode::{GameMode, GameStateWave},
+        game_mode::{GameModeState, GameStateWave},
         score::GameScore,
         states::{AppState, InGameState},
     },
@@ -177,7 +177,7 @@ pub fn update_score_hud(
 pub fn spawn_wave_info_hud(mut commands: Commands) {
     commands
         .spawn((
-            DespawnOnExit(GameMode::Waves),
+            DespawnOnExit(GameModeState::Waves),
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),

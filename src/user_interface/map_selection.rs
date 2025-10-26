@@ -1,42 +1,29 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::{
-        game_mode::GameModeState,
-        states::{AppState, InGameState, MainMenuState},
-    },
+    game_flow::states::{MainMenuState, SelectedMapState},
     user_interface::{
         DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
         common::{CommonUiButton, CommonUiButtonType},
     },
 };
 
-pub struct PauseMenuPlugin;
+#[derive(Component)]
+struct MapSelectionButton(pub SelectedMapState);
 
-impl Plugin for PauseMenuPlugin {
+pub struct MapSelectionPlugin;
+
+impl Plugin for MapSelectionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(InGameState::Paused), spawn_pause_menu)
-            .add_systems(
-                Update,
-                (handle_pause_menu_button_pressed)
-                    .run_if(in_state(InGameState::Paused)),
-            );
+        app.add_systems(
+            OnEnter(MainMenuState::MapSelection),
+            spawn_map_selection,
+        )
+        .add_systems(Update, handle_map_selection_button_pressed);
     }
 }
 
-#[derive(Component)]
-pub struct PauseMenuRoot;
-
-#[derive(Component)]
-pub struct PauseMenuButton(PauseMenuButtonType);
-
-pub enum PauseMenuButtonType {
-    Resume,
-    ExitToMainMenu,
-    SettingsPauseMenu,
-}
-
-fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
+fn spawn_map_selection(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands
         .spawn((
             Node {
@@ -47,8 +34,7 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 justify_content: JustifyContent::Center,
                 ..default()
             },
-            PauseMenuRoot,
-            DespawnOnExit(InGameState::Paused),
+            DespawnOnExit(MainMenuState::MapSelection),
         ))
         .with_children(|parent| {
             parent
@@ -62,7 +48,7 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     ..default()
                 })
                 .with_child((
-                    Text::new("Paused"),
+                    Text::new("Select a Map"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
                         font_size: DEFAULT_FONT_SIZE,
@@ -73,11 +59,11 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 .spawn((
                     Node { ..default() },
                     Button,
-                    PauseMenuButton(PauseMenuButtonType::Resume),
+                    MapSelectionButton(SelectedMapState::TinyTown),
                     TextColor::WHITE,
                 ))
                 .with_child((
-                    Text::new("Resume"),
+                    Text::new("Tiny Town"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
                         font_size: DEFAULT_FONT_SIZE,
@@ -88,24 +74,11 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 .spawn((
                     Node { ..default() },
                     Button,
-                    PauseMenuButton(PauseMenuButtonType::ExitToMainMenu),
+                    MapSelectionButton(SelectedMapState::MediumPlastic),
+                    TextColor::WHITE,
                 ))
                 .with_child((
-                    Text::new("Exit to Main Menu"),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
-                        ..default()
-                    },
-                ));
-            parent
-                .spawn((
-                    Node { ..default() },
-                    Button,
-                    PauseMenuButton(PauseMenuButtonType::SettingsPauseMenu),
-                ))
-                .with_child((
-                    Text::new("Settings"),
+                    Text::new("Medium Plastic"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
                         font_size: DEFAULT_FONT_SIZE,
@@ -122,11 +95,11 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                         ..default()
                     },
                     Button,
-                    CommonUiButton(CommonUiButtonType::Quit),
+                    CommonUiButton(CommonUiButtonType::BackToMainMenu),
                     TextColor::WHITE,
                 ))
                 .with_child((
-                    Text::new("Quit"),
+                    Text::new("Go back to Main Menu"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
                         font_size: DEFAULT_FONT_SIZE,
@@ -136,30 +109,27 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
         });
 }
 
-fn handle_pause_menu_button_pressed(
+fn handle_map_selection_button_pressed(
+    query: Query<(&Interaction, &MapSelectionButton), Changed<Interaction>>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
-    mut next_in_game_state: ResMut<NextState<InGameState>>,
-    mut next_app_state: ResMut<NextState<AppState>>,
-    mut next_game_mode_state: ResMut<NextState<GameModeState>>,
-    query: Query<(&Interaction, &PauseMenuButton), Changed<Interaction>>,
+    mut next_selected_map_state: ResMut<NextState<SelectedMapState>>,
 ) {
-    for (interaction, pause_menu_button) in query {
-        let Interaction::Pressed = interaction else {
-            continue;
-        };
-        match pause_menu_button.0 {
-            PauseMenuButtonType::Resume => {
-                next_in_game_state.set(InGameState::Playing);
-            }
-            PauseMenuButtonType::ExitToMainMenu => {
-                next_app_state.set(AppState::MainMenu);
-                next_in_game_state.set(InGameState::None);
-                next_main_menu_state.set(MainMenuState::Root);
-                next_game_mode_state.set(GameModeState::None);
-            }
-            PauseMenuButtonType::SettingsPauseMenu => {
-                // FIXME: add
-                warn!("not yet implemented");
+    for (interaction, map_selection_button) in query {
+        if let Interaction::Pressed = interaction {
+            match map_selection_button.0 {
+                SelectedMapState::TinyTown => {
+                    next_main_menu_state.set(MainMenuState::GameModeSelection);
+                    next_selected_map_state.set(SelectedMapState::TinyTown);
+                }
+                SelectedMapState::MediumPlastic => {
+                    next_main_menu_state.set(MainMenuState::GameModeSelection);
+                    next_selected_map_state
+                        .set(SelectedMapState::MediumPlastic);
+                }
+                // TODO: hmm can we really not avoid having these "Nones" in our states?
+                SelectedMapState::None => {
+                    warn!("This shouldnt happen");
+                }
             }
         }
     }

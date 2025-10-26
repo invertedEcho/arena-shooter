@@ -1,11 +1,9 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::{
-        game_mode::{GameMode, StartGameModeMessage},
-        states::{AppState, MainMenuState},
-    },
+    game_flow::{game_mode::GameModeState, states::MainMenuState},
     user_interface::{DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH},
+    world::messages::SpawnMapMessage,
 };
 
 pub struct GameModeSelectionUIPlugin;
@@ -30,7 +28,7 @@ impl Plugin for GameModeSelectionUIPlugin {
 struct GameModeSelectionScreen;
 
 #[derive(Component)]
-struct GameModeSelectionButton(GameMode);
+struct GameModeSelectionButton(GameModeState);
 
 #[derive(Component)]
 struct GameModeSelectionActionButton(GameModeSelectionActionButtonType);
@@ -80,11 +78,11 @@ fn spawn_game_mode_selection_screen(
                 .spawn((
                     Node { ..default() },
                     Button,
-                    GameModeSelectionButton(GameMode::Waves),
+                    GameModeSelectionButton(GameModeState::Waves),
                     TextColor::WHITE,
                 ))
                 .with_child((
-                    Text::new("Waves (Currently disabled!)"),
+                    Text::new("Waves"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
                         font_size: DEFAULT_FONT_SIZE,
@@ -95,7 +93,7 @@ fn spawn_game_mode_selection_screen(
                 .spawn((
                     Node { ..default() },
                     Button,
-                    GameModeSelectionButton(GameMode::FreePlay),
+                    GameModeSelectionButton(GameModeState::FreePlay),
                     TextColor::WHITE,
                 ))
                 .with_child((
@@ -137,27 +135,23 @@ fn handle_game_mode_selection_button_press(
         (&Interaction, &GameModeSelectionButton),
         Changed<Interaction>,
     >,
-    mut next_game_mode_state: ResMut<NextState<GameMode>>,
-    mut message_writer: MessageWriter<StartGameModeMessage>,
-    mut next_app_state: ResMut<NextState<AppState>>,
+    mut next_game_mode_state: ResMut<NextState<GameModeState>>,
+    mut spawn_map_message_writer: MessageWriter<SpawnMapMessage>,
 ) {
     // honestly i really have the feeling all this game mode logic can be simplified,
     // like we should just watch the current game mode state annd update stuff when its changed
     for (interaction, game_mode_selection_button) in query {
         if let Interaction::Pressed = interaction {
             match game_mode_selection_button.0 {
-                GameMode::Waves => {
-                    // next_app_state.set(AppState::InGame);
-                    // next_game_mode_state.set(GameMode::Waves);
-                    // message_writer.write(StartGameModeMessage(GameMode::Waves));
+                GameModeState::Waves => {
+                    next_game_mode_state.set(GameModeState::Waves);
                 }
-                GameMode::FreePlay => {
-                    next_app_state.set(AppState::InGame);
-                    next_game_mode_state.set(GameMode::FreePlay);
-                    message_writer
-                        .write(StartGameModeMessage(GameMode::FreePlay));
+                GameModeState::FreePlay => {
+                    next_game_mode_state.set(GameModeState::FreePlay);
                 }
+                GameModeState::None => {}
             }
+            spawn_map_message_writer.write(SpawnMapMessage);
         }
     }
 }

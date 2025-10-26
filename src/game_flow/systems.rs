@@ -1,14 +1,16 @@
+use avian3d::prelude::ColliderConstructorHierarchyReady;
 use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
+use bevy_rerecast::prelude::NavmeshReady;
 
 use crate::{
     enemy::Enemy,
     game_flow::{
         AppState,
-        game_mode::{GameMode, StartGameModeMessage},
-        states::{GameLoadingState, InGameState},
+        game_mode::StartGameModeMessage,
+        states::{GameLoadingState, InGameState, SelectedMapState},
     },
     player::{Player, camera::components::FreeCam},
     user_interface::main_menu::MainMenuCamera,
@@ -53,41 +55,12 @@ pub fn handle_escape(
     }
 }
 
-// pub fn enable_debug_paused(
-//     mut next_in_game_state: ResMut<NextState<InGameState>>,
-//     keyboard_input: Res<ButtonInput<KeyCode>>,
-// ) {
-//     if keyboard_input.just_pressed(KeyCode::KeyP) {
-//         next_in_game_state.set(InGameState::PausedDebug);
-//     }
-// }
-//
-// pub fn reset_player_position(
-//     mut player_transform: Single<&mut Transform, With<Player>>,
-//     keyboard_input: Res<ButtonInput<KeyCode>>,
-// ) {
-//     if keyboard_input.just_pressed(KeyCode::KeyP) {
-//         player_transform.translation = Vec3::ZERO;
-//     }
-// }
-
-pub fn restart_game(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut start_game_mode_message_writer: MessageWriter<StartGameModeMessage>,
-) {
-    if keyboard_input.just_pressed(KeyCode::KeyP) {
-        info!("Restarting game");
-        start_game_mode_message_writer
-            .write(StartGameModeMessage(GameMode::Waves));
-    }
-}
-
 pub fn spawn_main_menu_camera(mut commands: Commands) {
     info!("Spawning Main Menu Camera");
     commands.spawn((
         Camera::default(),
         Camera3d::default(),
-        Transform::from_xyz(5.0, 10.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(10.0, 20.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
         MainMenuCamera,
     ));
 }
@@ -115,25 +88,56 @@ pub fn handle_exit_in_game(
     commands.spawn((
         Camera::default(),
         Camera3d::default(),
-        Transform::from_xyz(5.0, 10.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(10.0, 20.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
         MainMenuCamera,
     ));
 }
 
 pub fn check_world_scene_loaded(
     mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
-    world_scene: Res<WorldSceneHandle>,
+    maybe_world_scene_handle: Option<Res<WorldSceneHandle>>,
     mut next_game_loading_state: ResMut<NextState<GameLoadingState>>,
+    selected_map_state: Res<State<SelectedMapState>>,
 ) {
     for asset_event in asset_event_message_reader.read() {
         if let AssetEvent::LoadedWithDependencies { id } = asset_event {
-            if *id == world_scene.0.id() {
-                info!("World Scene loaded with dependencies!");
-                next_game_loading_state
-                    .set(GameLoadingState::WorldLoadedWithDependencies);
+            if let Some(ref world_scene_handle) = maybe_world_scene_handle {
+                if *id == world_scene_handle.0.id() {
+                    info!("Map assets loaded!");
+                    next_game_loading_state
+                        .set(GameLoadingState::WorldLoadedWithDependencies);
+                    if *selected_map_state.get() == SelectedMapState::TinyTown {
+                        next_game_loading_state
+                            .set(GameLoadingState::CollidersReady);
+                    }
+                }
             }
         }
     }
+}
+
+// this is only relevant for Map::MediumPlastic, because tiny town map has colliders in skein
+pub fn check_collider_constructor_hierarchy_ready(
+    _: On<ColliderConstructorHierarchyReady>,
+    mut next_game_loading_state: ResMut<NextState<GameLoadingState>>,
+) {
+    info!("Collider collider_constructor_hierarchy_ready is now!");
+    next_game_loading_state.set(GameLoadingState::CollidersReady);
+}
+
+pub fn check_navmesh_ready(
+    _: On<NavmeshReady>,
+    mut next_game_loading_state: ResMut<NextState<GameLoadingState>>,
+) {
+    info!("Navmesh is now ready!");
+    next_game_loading_state.set(GameLoadingState::NavMeshReady);
+}
+
+pub fn on_game_loading_state_nav_mesh_ready(
+    mut start_game_mode_message_writer: MessageWriter<StartGameModeMessage>,
+) {
+    info!("Okay everything is ready now, write SpawnGameMode message!");
+    start_game_mode_message_writer.write(StartGameModeMessage);
 }
 
 pub fn handle_playing_state_enter(
