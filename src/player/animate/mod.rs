@@ -264,3 +264,101 @@ fn get_animation_duration_for_animation_type(
         ArmWithWeaponAnimation::FullReload => 3.65,
     }
 }
+
+// FIXME:
+// pub fn use_me(
+//     player: Single<(
+//         Entity,
+//         &mut LinearVelocity,
+//         &Transform,
+//         &mut PlayerMovementState,
+//         &PlayerWeapon,
+//         &Grounded,
+//     )>,
+//     current_in_game_state: Res<State<InGameState>>,
+//     mut play_player_arm_weapon_animation_message_writer: MessageWriter<
+//         PlayArmWithWeaponAnimationMessage,
+//     >,
+// ) {
+//     let (
+//         entity,
+//         mut velocity,
+//         player_transform,
+//         mut player_movement_state,
+//         player_weapon,
+//         grounded,
+//     ) = player.into_inner();
+//
+//     let currently_playing =
+//         *current_in_game_state.get() == InGameState::Playing;
+//     if !currently_playing {
+//         **velocity = Vec3::ZERO;
+//         if player_movement_state.0 != MovementState::Idle {
+//             player_movement_state.0 = MovementState::Idle;
+//             play_player_arm_weapon_animation_message_writer.write(
+//                 PlayArmWithWeaponAnimationMessage {
+//                     animation_type: ArmWithWeaponAnimation::Idle,
+//                     repeat: true,
+//                     block_until_done: false,
+//                 },
+//             );
+//         }
+//         return;
+//     }
+//
+//     // FIXME: this all below of this function needs to go into player/animate
+//     // if local_velocity == Vec3::ZERO {
+//     //     velocity.x = 0.0;
+//     //     velocity.z = 0.0;
+//     //     if player_movement_state.0 != MovementState::Idle {
+//     //         player_movement_state.0 = MovementState::Idle;
+//     //         play_player_arm_weapon_animation_message_writer.write(
+//     //             PlayArmWithWeaponAnimationMessage {
+//     //                 animation_type: ArmWithWeaponAnimation::Idle,
+//     //                 repeat: true,
+//     //                 block_until_done: false,
+//     //             },
+//     //         );
+//     //     };
+//     //     return;
+//     // }
+//
+//     // if player_weapon.reloading {
+//     //     return;
+//     // }
+//     //
+//     // if speed == RUN_VELOCITY {
+//     //     if player_movement_state.0 != MovementState::Running {
+//     //         player_movement_state.0 = MovementState::Running;
+//     //         play_player_arm_weapon_animation_message_writer.write(
+//     //             PlayArmWithWeaponAnimationMessage {
+//     //                 animation_type: ArmWithWeaponAnimation::Run,
+//     //                 repeat: true,
+//     //                 block_until_done: false,
+//     //             },
+//     //         );
+//     //     }
+//     // } else if local_velocity.x != 0.0 || local_velocity.z != 0.0 {
+//     //     if player_movement_state.0 != MovementState::Walking {
+//     //         player_movement_state.0 = MovementState::Walking;
+//     //         play_player_arm_weapon_animation_message_writer.write(
+//     //             PlayArmWithWeaponAnimationMessage {
+//     //                 animation_type: ArmWithWeaponAnimation::Walk,
+//     //                 repeat: true,
+//     //                 block_until_done: false,
+//     //             },
+//     //         );
+//     //     }
+//     // } else if local_velocity.x == 0.0 && local_velocity.z == 0.0 {
+//     //     if player_movement_state.0 != MovementState::Idle {
+//     //         player_movement_state.0 = MovementState::Idle;
+//     //         play_player_arm_weapon_animation_message_writer.write(
+//     //             PlayArmWithWeaponAnimationMessage {
+//     //                 animation_type: ArmWithWeaponAnimation::Idle,
+//     //                 repeat: true,
+//     //                 block_until_done: false,
+//     //             },
+//     //         );
+//     //     }
+//     // }
+// }

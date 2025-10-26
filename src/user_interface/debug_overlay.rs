@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     game_flow::states::{AppDebugState, AppState, InGameState, MainMenuState},
-    player::{Player, movement::PlayerMovementState},
+    player::Player,
 };
 
 const DEBUG_OVERLAY_TEXT_SIZE: f32 = 15.0;
@@ -23,7 +23,7 @@ impl Plugin for DebugOverlayPlugin {
                 toggle_debug,
                 update_player_info_text,
                 update_current_main_menu_state,
-                update_player_movement_state_text,
+                // update_player_movement_state_text,
             ),
         );
     }
@@ -189,15 +189,16 @@ fn update_player_info_text(
     }
 }
 
-fn update_player_movement_state_text(
-    changed_player_movement_state: Single<
-        &PlayerMovementState,
-        Changed<PlayerMovementState>,
-    >,
-    player_movement_state_text: Query<&mut Text, With<PlayerMovementStateText>>,
-) {
-    for mut player_movement_state_text in player_movement_state_text {
-        **player_movement_state_text =
-            format!("{:?}", changed_player_movement_state.0);
-    }
-}
+// FIXME: maybe add again
+// fn update_player_movement_state_text(
+//     changed_player_movement_state: Single<
+//         &PlayerMovementState,
+//         Changed<PlayerMovementState>,
+//     >,
+//     player_movement_state_text: Query<&mut Text, With<PlayerMovementStateText>>,
+// ) {
+//     for mut player_movement_state_text in player_movement_state_text {
+//         **player_movement_state_text =
+//             format!("{:?}", changed_player_movement_state.0);
+//     }
+// }
