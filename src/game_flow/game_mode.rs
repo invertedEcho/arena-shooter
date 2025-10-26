@@ -70,8 +70,10 @@ fn handle_start_game_mode_event(
     current_game_mode: Res<State<GameModeState>>,
 ) {
     for _ in message_reader.read() {
+        info!("Got start game mode message");
         next_main_menu_state.set(MainMenuState::None);
         next_in_game_state.set(InGameState::Playing);
+        next_app_state.set(AppState::InGame);
 
         match *current_game_mode.get() {
             GameModeState::Waves => {
@@ -80,7 +82,6 @@ fn handle_start_game_mode_event(
                     current_wave: 1,
                     enemies_left_from_current_wave: enemy_count,
                 });
-                next_app_state.set(AppState::InGame);
                 spawn_enemies_message_writer.write(SpawnEnemiesMessage {
                     enemy_count,
                     spawn_strategy: EnemySpawnStrategy::RandomSelection,
