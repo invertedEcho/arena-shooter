@@ -42,6 +42,8 @@ fn spawn_map_selection(
     mut commands: Commands,
     selected_map_state: Res<State<SelectedMapState>>,
 ) {
+    let selected_map_state = selected_map_state.get();
+
     commands
         .spawn((
             Node {
@@ -56,7 +58,7 @@ fn spawn_map_selection(
             DespawnOnExit(MainMenuState::MapSelection),
         ))
         .with_children(|parent| {
-            let selected_map_preview_image = match *selected_map_state.get() {
+            let selected_map_preview_image = match selected_map_state {
                 SelectedMapState::TinyTown => "maps/tiny_town/preview.png",
                 SelectedMapState::MediumPlastic => {
                     "maps/medium_plastic/preview.png"
@@ -124,6 +126,10 @@ fn spawn_map_selection(
                         font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
+                    TextColor(get_text_button_color_for_map_selection_button(
+                        &selected_map_state,
+                        MapSelectionButton(SelectedMapState::TinyTown),
+                    )),
                 ));
             parent
                 .spawn((
@@ -139,6 +145,10 @@ fn spawn_map_selection(
                         font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
+                    TextColor(get_text_button_color_for_map_selection_button(
+                        &selected_map_state,
+                        MapSelectionButton(SelectedMapState::MediumPlastic),
+                    )),
                 ));
             parent
                 .spawn((
@@ -183,6 +193,17 @@ fn spawn_map_selection(
                     },
                 ));
         });
+}
+
+fn get_text_button_color_for_map_selection_button(
+    selected_map_state: &SelectedMapState,
+    button: MapSelectionButton,
+) -> Color {
+    if button.0 == *selected_map_state {
+        ORANGE_400.into()
+    } else {
+        WHITE.into()
+    }
 }
 
 fn update_selected_map_preview_image(
