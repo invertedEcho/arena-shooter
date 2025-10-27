@@ -71,9 +71,9 @@ fn handle_start_game_mode_event(
 ) {
     for _ in message_reader.read() {
         info!("Got start game mode message");
+        next_app_state.set(AppState::InGame);
         next_main_menu_state.set(MainMenuState::None);
         next_in_game_state.set(InGameState::Playing);
-        next_app_state.set(AppState::InGame);
 
         match *current_game_mode.get() {
             GameModeState::Waves => {
@@ -87,9 +87,7 @@ fn handle_start_game_mode_event(
                     spawn_strategy: EnemySpawnStrategy::RandomSelection,
                 });
             }
-            GameModeState::FreePlay => {
-                next_app_state.set(AppState::InGame);
-            }
+            GameModeState::FreePlay => {}
             GameModeState::None => {
                 continue;
             }
