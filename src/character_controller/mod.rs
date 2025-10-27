@@ -3,6 +3,7 @@ use bevy::prelude::*;
 
 use crate::{
     GRAVITY,
+    game_flow::states::InGameState,
     player::{Player, camera::components::ViewModelCamera},
 };
 
@@ -81,16 +82,29 @@ pub struct CharacterControllerPlugin;
 
 impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<MovementAction>().add_systems(
-            Update,
-            (
-                update_on_ground,
-                apply_gravity_over_time,
-                handle_keyboard_input_for_player,
-                handle_movement_actions_for_player,
-            ),
-        );
+        app.add_message::<MovementAction>()
+            .add_systems(
+                Update,
+                (
+                    update_on_ground,
+                    apply_gravity_over_time,
+                    handle_keyboard_input_for_player,
+                    handle_movement_actions_for_player,
+                )
+                    .run_if(in_state(InGameState::Playing)),
+            )
+            .add_systems(
+                OnEnter(InGameState::PlayerDead),
+                handle_player_dead_velocity,
+            );
     }
+}
+
+fn handle_player_dead_velocity(
+    mut player_velocity: Single<&mut LinearVelocity, With<Player>>,
+) {
+    info!("Player entered state Dead, zeroeing velocity");
+    player_velocity.0 = Vec3::ZERO;
 }
 
 fn handle_keyboard_input_for_player(
@@ -289,11 +303,12 @@ fn update_on_ground(
 }
 
 fn apply_gravity_over_time(
-    query: Query<(&Grounded, &mut LinearVelocity)>,
+    query: Query<(&Grounded, &mut LinearVelocity, &Name)>,
     time: Res<Time>,
 ) {
-    for (grounded, mut velocity) in query {
+    for (grounded, mut velocity, name) in query {
         if !grounded.0 {
+            debug!("applying gravity for {}", name);
             velocity.y -= GRAVITY * time.delta_secs();
         }
     }
