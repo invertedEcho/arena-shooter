@@ -3,7 +3,10 @@ use bevy::{
     prelude::*,
 };
 
-use crate::game_flow::states::{AppState, MainMenuState};
+use crate::{
+    game_flow::states::{AppState, InGameState, MainMenuState},
+    user_interface::map_selection::{MapSelectionButton, MapSelectionPlugin},
+};
 
 pub struct CommonUiPlugin;
 
@@ -11,7 +14,7 @@ impl Plugin for CommonUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (handle_common_ui_button_interaction, handle_any_button_hover),
+            (handle_common_ui_button_press, handle_any_button_hover),
         );
     }
 }
@@ -20,15 +23,17 @@ impl Plugin for CommonUiPlugin {
 pub struct CommonUiButton(pub CommonUiButtonType);
 
 pub enum CommonUiButtonType {
+    ToGameModeSelection,
     BackToMainMenu,
     Quit,
 }
 
-fn handle_common_ui_button_interaction(
+fn handle_common_ui_button_press(
     query: Query<(&Interaction, &CommonUiButton), Changed<Interaction>>,
     mut app_exit_message_writer: MessageWriter<AppExit>,
     mut next_app_state: ResMut<NextState<AppState>>,
-    mut main_menu_state: ResMut<NextState<MainMenuState>>,
+    mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
+    mut next_in_game_stte: ResMut<NextState<InGameState>>,
 ) {
     for (interaction, common_ui_button) in query {
         let Interaction::Pressed = interaction else {
@@ -40,7 +45,11 @@ fn handle_common_ui_button_interaction(
             }
             CommonUiButtonType::BackToMainMenu => {
                 next_app_state.set(AppState::MainMenu);
-                main_menu_state.set(MainMenuState::Root);
+                next_main_menu_state.set(MainMenuState::Root);
+                next_in_game_stte.set(InGameState::None);
+            }
+            CommonUiButtonType::ToGameModeSelection => {
+                next_main_menu_state.set(MainMenuState::GameModeSelection);
             }
         }
     }
@@ -49,7 +58,11 @@ fn handle_common_ui_button_interaction(
 fn handle_any_button_hover(
     query: Query<
         (&Interaction, &Children),
-        (Changed<Interaction>, With<Button>),
+        (
+            Changed<Interaction>,
+            With<Button>,
+            Without<MapSelectionButton>,
+        ),
     >,
     mut text_color_query: Query<&mut TextColor>,
 ) {

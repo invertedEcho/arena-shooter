@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{
+    color::palettes::{css::WHITE, tailwind::ORANGE_400},
+    prelude::*,
+};
 
 use crate::{
     game_flow::states::{MainMenuState, SelectedMapState},
@@ -8,13 +11,8 @@ use crate::{
     },
 };
 
-enum MapSelectionButtonType {
-    MapSelected(SelectedMapState),
-    ContinueToGameModeSelection,
-}
-
 #[derive(Component)]
-struct MapSelectionButton(MapSelectionButtonType);
+pub struct MapSelectionButton(SelectedMapState);
 
 #[derive(Component)]
 struct SelectedMapPreviewImage;
@@ -29,7 +27,10 @@ impl Plugin for MapSelectionPlugin {
         )
         .add_systems(
             Update,
-            update_selected_map_preview_image
+            (
+                update_selected_map_preview_image,
+                update_selected_map_button_color,
+            )
                 .run_if(state_changed::<SelectedMapState>),
         )
         .add_systems(Update, handle_map_selection_button_pressed);
@@ -113,9 +114,7 @@ fn spawn_map_selection(
                 .spawn((
                     Node { ..default() },
                     Button,
-                    MapSelectionButton(MapSelectionButtonType::MapSelected(
-                        SelectedMapState::TinyTown,
-                    )),
+                    MapSelectionButton(SelectedMapState::TinyTown),
                     TextColor::WHITE,
                 ))
                 .with_child((
@@ -130,9 +129,7 @@ fn spawn_map_selection(
                 .spawn((
                     Node { ..default() },
                     Button,
-                    MapSelectionButton(MapSelectionButtonType::MapSelected(
-                        SelectedMapState::MediumPlastic,
-                    )),
+                    MapSelectionButton(SelectedMapState::MediumPlastic),
                     TextColor::WHITE,
                 ))
                 .with_child((
@@ -153,9 +150,7 @@ fn spawn_map_selection(
                         ..default()
                     },
                     Button,
-                    MapSelectionButton(
-                        MapSelectionButtonType::ContinueToGameModeSelection,
-                    ),
+                    CommonUiButton(CommonUiButtonType::ToGameModeSelection),
                     TextColor::WHITE,
                 ))
                 .with_child((
@@ -204,20 +199,30 @@ fn update_selected_map_preview_image(
 
 fn handle_map_selection_button_pressed(
     query: Query<(&Interaction, &MapSelectionButton), Changed<Interaction>>,
-    mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     mut next_selected_map_state: ResMut<NextState<SelectedMapState>>,
 ) {
     for (interaction, map_selection_button) in query {
         if let Interaction::Pressed = interaction {
-            match &map_selection_button.0 {
-                MapSelectionButtonType::ContinueToGameModeSelection => {
-                    next_main_menu_state.set(MainMenuState::GameModeSelection);
-                }
-                MapSelectionButtonType::MapSelected(selected_map_state) => {
-                    info!("selected map: {:?}", selected_map_state);
-                    next_selected_map_state.set(selected_map_state.clone());
-                }
-            }
+            next_selected_map_state.set(map_selection_button.0.clone());
+        }
+    }
+}
+
+fn update_selected_map_button_color(
+    query: Query<(&MapSelectionButton, &Children)>,
+    selected_map_state: Res<State<SelectedMapState>>,
+    mut text_color_query: Query<&mut TextColor>,
+) {
+    let selected_map_state = selected_map_state.get();
+
+    for (map_selection_button, children) in query {
+        let Ok(mut text_color) = text_color_query.get_mut(children[0]) else {
+            continue;
+        };
+        if map_selection_button.0 == *selected_map_state {
+            *text_color = ORANGE_400.into();
+        } else {
+            *text_color = WHITE.into();
         }
     }
 }

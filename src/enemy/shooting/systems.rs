@@ -54,10 +54,19 @@ pub fn detect_player_bullet_collision_with_enemy(
 
 pub fn enemy_shoot_player(
     mut commands: Commands,
-    enemy_query: Query<(&Enemy, &Transform, &EnemyShootPlayerCooldownTimer)>,
+    enemy_query: Query<(
+        Entity,
+        &Enemy,
+        &Transform,
+        &EnemyShootPlayerCooldownTimer,
+    )>,
 ) {
-    for (enemy, enemy_transform, enemy_shoot_player_cooldown_timer) in
-        enemy_query
+    for (
+        enemy_entity,
+        enemy,
+        enemy_transform,
+        enemy_shoot_player_cooldown_timer,
+    ) in enemy_query
     {
         if enemy.state != EnemyState::AttackPlayer
             || !enemy_shoot_player_cooldown_timer.0.just_finished()
@@ -87,7 +96,9 @@ pub fn enemy_shoot_player(
             LinearVelocity(world_bullet_velocity),
             RigidBody::Kinematic,
             DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
-            EnemyBullet,
+            EnemyBullet {
+                origin_enemy: enemy_entity,
+            },
             CollidingEntities::default(),
         ));
     }
