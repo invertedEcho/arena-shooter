@@ -156,18 +156,23 @@ pub fn tick_player_weapon_shoot_cooldown_timer(
 pub fn detect_enemy_bullet_collision_with_player(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    enemy_bullet_query: Query<Entity, With<EnemyBullet>>,
+    enemy_bullet_query: Query<(Entity, &EnemyBullet)>,
     player_query: Query<(&mut Player, &CollidingEntities)>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
     mut game_score: ResMut<GameScore>,
+    player_transform: Single<&Transform, With<Player>>,
+    enemy_transforms: Query<&Transform, (With<Enemy>, Without<Player>)>,
 ) {
     for (mut player, colliding_entities) in player_query {
-        let enemy_bullets_colliding_with_player =
-            enemy_bullet_query.iter().filter(|enemy_bullet_entity| {
+        let enemy_bullets_colliding_with_player = enemy_bullet_query
+            .iter()
+            .filter(|(enemy_bullet_entity, _)| {
                 colliding_entities.contains(enemy_bullet_entity)
             });
 
-        for enemy_bullet_entity in enemy_bullets_colliding_with_player {
+        for (enemy_bullet_entity, enemy_bullet) in
+            enemy_bullets_colliding_with_player
+        {
             commands.entity(enemy_bullet_entity).despawn();
 
             // TODO: this should happen in player/hud/systems
@@ -179,7 +184,41 @@ pub fn detect_enemy_bullet_collision_with_player(
                     ..default()
                 },
                 BloodScreenEffect::default(),
+                DespawnOnExit(InGameState::Playing),
             ));
+
+            // let Ok(transform_of_enemy) =
+            //     enemy_transforms.get(enemy_bullet.origin_enemy)
+            // else {
+            //     return;
+            // };
+            // let hit_direction = (transform_of_enemy.translation
+            //     - player_transform.translation)
+            //     .normalize();
+            // let local_direction =
+            //     player_transform.rotation.conjugate() * hit_direction;
+            // let flat_direction =
+            //     Vec2::new(local_direction.x, local_direction.z);
+            // let angle_radians = flat_direction.x.atan2(flat_direction.y);
+            // commands
+            //     .spawn(Node {
+            //         width: Val::Percent(100.0),
+            //         height: Val::Percent(100.0),
+            //         justify_content: JustifyContent::Center,
+            //         align_items: AlignItems::Center,
+            //         ..default()
+            //     })
+            //     .with_child((
+            //         ImageNode {
+            //             image: asset_server.load("hud/damage_indicator.png"),
+            //             ..default()
+            //         },
+            //         UiTransform {
+            //             rotation: Rot2::radians(angle_radians),
+            //             ..default()
+            //         },
+            //         BloodScreenEffect::default(),
+            //     ));
 
             player.health -= 10.0;
             if player.health <= 0.0 {
@@ -188,39 +227,6 @@ pub fn detect_enemy_bullet_collision_with_player(
             }
         }
     }
-
-    // TODO: bullet damage indicator directional to enemy:
-    // Add once bevy 0.17 is released and all dependencies this project uses have migrated to
-    // 0.17
-    // let Ok(transform_of_enemy) =
-    //     enemy_transforms.get(enemy_bullet.origin_enemy)
-    // else {
-    //     continue;
-    // };
-    // let hit_direction = (transform_of_enemy.translation
-    //     - player_transform.translation)
-    //     .normalize();
-    // let local_direction =
-    //     player_transform.rotation.conjugate() * hit_direction;
-    // let flat_direction = Vec2::new(local_direction.x, local_direction.z);
-    // let angle_radians = flat_direction.x.atan2(flat_direction.y);
-    // let angle_degrees = angle_radians.to_degrees();
-    // commands
-    //     .spawn(Node {
-    //         width: Val::Percent(100.0),
-    //         height: Val::Percent(100.0),
-    //         justify_content: JustifyContent::Center,
-    //         align_items: AlignItems::Center,
-    //         ..default()
-    //     })
-    //     .with_child((
-    //         ImageNode {
-    //             image: asset_server.load("hud/damage_indicator.png"),
-    //             ..default()
-    //         },
-    //         UiTransform::new(),
-    //         BloodScreenEffect::default(),
-    //     ));
 }
 
 // TODO: this thing is too much

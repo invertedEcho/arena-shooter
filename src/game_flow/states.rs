@@ -13,6 +13,8 @@ pub enum GameLoadingState {
     #[default]
     Initial,
     WorldLoadedWithDependencies,
+    CollidersReady,
+    NavMeshReady,
 }
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
@@ -22,7 +24,15 @@ pub enum MainMenuState {
     #[default]
     Root,
     Settings,
+    MapSelection,
     GameModeSelection,
+}
+
+#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
+pub enum SelectedMapState {
+    #[default]
+    MediumPlastic,
+    TinyTown,
 }
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]

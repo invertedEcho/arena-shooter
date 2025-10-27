@@ -129,7 +129,7 @@ fn handle_main_menu_button_pressed(
         };
         match main_menu_button.0 {
             MainMenuButtonType::Singleplayer => {
-                next_main_menu_state.set(MainMenuState::GameModeSelection);
+                next_main_menu_state.set(MainMenuState::MapSelection);
             }
             MainMenuButtonType::SettingsMainMenu => {
                 next_main_menu_state.set(MainMenuState::Settings);

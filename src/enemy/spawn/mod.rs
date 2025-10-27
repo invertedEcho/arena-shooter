@@ -8,7 +8,7 @@ use crate::{
     },
     nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS},
 };
-use avian3d::math::PI;
+use avian3d::{math::PI, prelude::LinearVelocity};
 use bevy::prelude::*;
 use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
@@ -138,6 +138,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 TimerMode::Repeating,
                             )),
                             Visibility::Visible,
+                            LinearVelocity::ZERO,
                         ))
                         .with_child((
                             Transform {

@@ -29,20 +29,21 @@ impl Plugin for GameModePlugin {
                     handle_enemy_killed_event,
                 ),
             )
-            .init_state::<GameMode>()
+            .init_state::<GameModeState>()
             .init_state::<GameStateWave>();
     }
 }
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
-pub enum GameMode {
+pub enum GameModeState {
     #[default]
+    None,
     FreePlay,
     Waves,
 }
 
 #[derive(Message)]
-pub struct StartGameModeMessage(pub GameMode);
+pub struct StartGameModeMessage;
 
 // TODO:
 // how do we store data about current game state, but mode depending?
@@ -66,26 +67,29 @@ fn handle_start_game_mode_event(
     mut spawn_player_cameras_message_writer: MessageWriter<
         SpawnPlayerCamerasMessage,
     >,
+    current_game_mode: Res<State<GameModeState>>,
 ) {
-    for event in message_reader.read() {
+    for _ in message_reader.read() {
+        info!("Got start game mode message");
+        next_app_state.set(AppState::InGame);
         next_main_menu_state.set(MainMenuState::None);
         next_in_game_state.set(InGameState::Playing);
 
-        match event.0 {
-            GameMode::Waves => {
+        match *current_game_mode.get() {
+            GameModeState::Waves => {
                 let enemy_count = get_enemy_count_per_wave(1);
                 next_game_state_wave.set(GameStateWave {
                     current_wave: 1,
                     enemies_left_from_current_wave: enemy_count,
                 });
-                next_app_state.set(AppState::InGame);
                 spawn_enemies_message_writer.write(SpawnEnemiesMessage {
                     enemy_count,
                     spawn_strategy: EnemySpawnStrategy::RandomSelection,
                 });
             }
-            GameMode::FreePlay => {
-                next_app_state.set(AppState::InGame);
+            GameModeState::FreePlay => {}
+            GameModeState::None => {
+                continue;
             }
         }
 
@@ -148,7 +152,7 @@ fn handle_game_state_wave_changed(
 }
 
 fn handle_enemy_killed_event(
-    current_game_mode: Res<State<GameMode>>,
+    current_game_mode: Res<State<GameModeState>>,
     game_state_wave: Res<State<GameStateWave>>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     mut enemy_killed_message_reader: MessageReader<EnemyKilledMessage>,
@@ -158,7 +162,7 @@ fn handle_enemy_killed_event(
     for _ in enemy_killed_message_reader.read() {
         game_score.player += 1;
         match *current_game_mode.get() {
-            GameMode::Waves => {
+            GameModeState::Waves => {
                 let new_enemies_left_count =
                     game_state_wave.enemies_left_from_current_wave - 1;
                 next_game_state_wave.set(GameStateWave {
@@ -179,7 +183,7 @@ fn handle_enemy_killed_event(
                     });
                 }
             }
-            GameMode::FreePlay => {}
+            GameModeState::FreePlay | GameModeState::None => {}
         }
     }
 }

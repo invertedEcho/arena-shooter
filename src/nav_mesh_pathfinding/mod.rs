@@ -6,6 +6,8 @@ use landmass_rerecast::{
     Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
 };
 
+use crate::game_flow::states::GameLoadingState;
+
 pub const ENEMY_AGENT_RADIUS: f32 = 0.3;
 
 pub struct NavMeshPathfindingPlugin;
@@ -17,20 +19,34 @@ impl Plugin for NavMeshPathfindingPlugin {
         app.add_plugins(Landmass3dPlugin::default());
         app.add_plugins(LandmassRerecastPlugin::default());
         app.add_plugins(Landmass3dDebugPlugin::default());
-        app.add_systems(Update, generate_navmesh);
+        app.add_systems(
+            OnEnter(GameLoadingState::CollidersReady),
+            generate_navmesh_when_map_colliders_ready,
+        );
         app.add_systems(Update, update_agent_velocity);
     }
 }
 
 #[derive(Resource)]
+pub struct NavMeshHandle(pub Handle<Navmesh>);
+
+#[derive(Resource)]
 pub struct ArchipelagoRef(pub Entity);
 
-fn generate_navmesh(
+fn generate_navmesh_when_map_colliders_ready(
     mut commands: Commands,
     mut generator: NavmeshGenerator,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
+    maybe_existing_nav_mesh: Option<Res<NavMeshHandle>>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::KeyO) {
+    let nav_mesh_settings = NavmeshSettings {
+        agent_radius: ENEMY_AGENT_RADIUS,
+        ..default()
+    };
+
+    if let Some(existing_nav_mesh) = maybe_existing_nav_mesh {
+        info!("Nav mesh already exists, regenerating!");
+        generator.regenerate(&existing_nav_mesh.0, nav_mesh_settings);
+    } else {
         let archipelago_id = commands
             .spawn(Archipelago3d::new(ArchipelagoOptions::from_agent_radius(
                 ENEMY_AGENT_RADIUS,

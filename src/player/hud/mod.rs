@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::{game_mode::GameMode, states::InGameState},
+    game_flow::{game_mode::GameModeState, states::InGameState},
     player::hud::systems::{
         spawn_bullet_hit_crosshair, spawn_player_hud, spawn_score_hud,
         spawn_wave_info_hud, update_player_ammo_text,
@@ -14,9 +14,9 @@ mod systems;
 
 // TODO: assert that only one player/score/wave_info hud can exist
 
-const MAIN_CROSSHAIR_PATH: &str =
-    "hud/crosshairs/PNG/White/crosshair086.png";
-const CROSSHAIR_BULLET_HIT_PATH: &str = "hud/crosshairs/PNG/White/crosshair002.png";
+const MAIN_CROSSHAIR_PATH: &str = "hud/crosshairs/PNG/White/crosshair086.png";
+const CROSSHAIR_BULLET_HIT_PATH: &str =
+    "hud/crosshairs/PNG/White/crosshair002.png";
 
 pub struct PlayerHudPlugin;
 
@@ -34,12 +34,12 @@ impl Plugin for PlayerHudPlugin {
         )
         .add_systems(OnEnter(InGameState::Playing), spawn_player_hud)
         .add_systems(
-            OnEnter(GameMode::Waves),
+            OnEnter(GameModeState::Waves),
             (spawn_wave_info_hud, spawn_score_hud),
         )
         .add_systems(
             Update,
-            (update_wave_info_hud).run_if(in_state(GameMode::Waves)),
+            (update_wave_info_hud).run_if(in_state(GameModeState::Waves)),
         );
     }
 }

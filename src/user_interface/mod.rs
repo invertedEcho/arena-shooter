@@ -4,7 +4,8 @@ use crate::user_interface::{
     common::CommonUiPlugin, death_screen::DeathScreenPlugin,
     debug_overlay::DebugOverlayPlugin,
     game_mode_selection::GameModeSelectionUIPlugin, main_menu::MainMenuPlugin,
-    pause_menu::PauseMenuPlugin, settings_menu::SettingsMenuPlugin,
+    map_selection::MapSelectionPlugin, pause_menu::PauseMenuPlugin,
+    settings_menu::SettingsMenuPlugin,
 };
 
 mod common;
@@ -12,6 +13,7 @@ mod death_screen;
 mod debug_overlay;
 mod game_mode_selection;
 pub mod main_menu;
+mod map_selection;
 mod pause_menu;
 mod settings_menu;
 
@@ -30,6 +32,7 @@ impl Plugin for UserInterfacePlugin {
             .add_plugins(SettingsMenuPlugin)
             .add_plugins(MainMenuPlugin)
             .add_plugins(GameModeSelectionUIPlugin)
-            .add_plugins(DebugOverlayPlugin);
+            .add_plugins(DebugOverlayPlugin)
+            .add_plugins(MapSelectionPlugin);
     }
 }
