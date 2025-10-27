@@ -162,6 +162,7 @@ pub fn handle_chasing_enemies(
             continue;
         }
 
+        debug!("Applying agent velocity to actual velocity of enemy");
         velocity.0 = agent_velocity.velocity;
     }
 }

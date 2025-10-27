@@ -70,9 +70,16 @@ fn generate_navmesh_when_map_colliders_ready(
 }
 
 fn update_agent_velocity(
-    mut agent_query: Query<(&mut Velocity3d, &AgentDesiredVelocity3d)>,
+    mut agent_query: Query<(
+        &mut Velocity3d,
+        &AgentDesiredVelocity3d,
+        &AgentState,
+    )>,
 ) {
-    for (mut velocity, desired_velocity) in agent_query.iter_mut() {
-        velocity.velocity = desired_velocity.velocity();
+    for (mut agent_velocity, desired_velocity, agent_state) in
+        agent_query.iter_mut()
+    {
+        debug!("Agent state: {:?}", agent_state);
+        agent_velocity.velocity = desired_velocity.velocity();
     }
 }

@@ -8,7 +8,7 @@ use crate::{
         },
         shooting::systems::enemy_shoot_player,
     },
-    game_flow::states::AppState,
+    game_flow::states::InGameState,
 };
 
 mod systems;
@@ -38,7 +38,7 @@ impl Plugin for EnemyAiPlugin {
                 check_if_enemy_reached_target,
                 set_zero_velocity_if_not_chasing,
             )
-                .run_if(in_state(AppState::InGame)),
+                .run_if(in_state(InGameState::Playing)),
         );
     }
 }
