@@ -20,6 +20,7 @@
     - [x] Climb slopes
     - [x] slide along walls when going into walls instead of zeroeing velocity
     - there are still some improvements and fixes needed, but it works pretty good so far
+- [x] Different maps to play on
 - [X] Game modes
   - [x] Wave mode (the game gets more difficult each round, e.g. more enemies are spawned)
   - [ ] Capture the flag
