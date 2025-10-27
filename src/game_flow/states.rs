@@ -31,9 +31,8 @@ pub enum MainMenuState {
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 pub enum SelectedMapState {
     #[default]
-    None,
-    TinyTown,
     MediumPlastic,
+    TinyTown,
 }
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]

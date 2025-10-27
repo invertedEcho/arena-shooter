@@ -47,11 +47,6 @@ pub fn spawn_map(
         let map_path = match selected_map_state {
             SelectedMapState::TinyTown => SMALL_MAP_PATH,
             SelectedMapState::MediumPlastic => MEDIUM_MAP_PATH,
-            SelectedMapState::None => {
-                // TODO:
-                warn!("shouldnt exist");
-                continue;
-            }
         };
         let world_scene_handle =
             asset_server.load(GltfAssetLabel::Scene(0).from_asset(map_path));
