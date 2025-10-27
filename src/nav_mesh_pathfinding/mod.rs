@@ -28,31 +28,45 @@ impl Plugin for NavMeshPathfindingPlugin {
 }
 
 #[derive(Resource)]
+pub struct NavMeshHandle(pub Handle<Navmesh>);
+
+#[derive(Resource)]
 pub struct ArchipelagoRef(pub Entity);
 
 fn generate_navmesh_when_map_colliders_ready(
     mut commands: Commands,
     mut generator: NavmeshGenerator,
+    maybe_existing_nav_mesh: Option<Res<NavMeshHandle>>,
 ) {
-    let archipelago_id = commands
-        .spawn(Archipelago3d::new(ArchipelagoOptions::from_agent_radius(
-            ENEMY_AGENT_RADIUS,
-        )))
-        .id();
-    commands.insert_resource(ArchipelagoRef(archipelago_id));
-
-    let navmesh = generator.generate(NavmeshSettings {
+    let nav_mesh_settings = NavmeshSettings {
         agent_radius: ENEMY_AGENT_RADIUS,
         ..default()
-    });
+    };
 
-    commands.spawn(DetailNavmeshGizmo::new(&navmesh));
+    if let Some(existing_nav_mesh) = maybe_existing_nav_mesh {
+        info!("Nav mesh already exists, regenerating!");
+        generator.regenerate(&existing_nav_mesh.0, nav_mesh_settings);
+    } else {
+        let archipelago_id = commands
+            .spawn(Archipelago3d::new(ArchipelagoOptions::from_agent_radius(
+                ENEMY_AGENT_RADIUS,
+            )))
+            .id();
+        commands.insert_resource(ArchipelagoRef(archipelago_id));
 
-    commands.spawn(Island3dBundle {
-        island: Island,
-        archipelago_ref: ArchipelagoRef3d::new(archipelago_id),
-        nav_mesh: NavMeshHandle3d(navmesh),
-    });
+        let navmesh = generator.generate(NavmeshSettings {
+            agent_radius: ENEMY_AGENT_RADIUS,
+            ..default()
+        });
+
+        commands.spawn(DetailNavmeshGizmo::new(&navmesh));
+
+        commands.spawn(Island3dBundle {
+            island: Island,
+            archipelago_ref: ArchipelagoRef3d::new(archipelago_id),
+            nav_mesh: NavMeshHandle3d(navmesh),
+        });
+    }
 }
 
 fn update_agent_velocity(

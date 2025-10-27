@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
-use bevy_rerecast::prelude::NavmeshReady;
+use bevy_rerecast::{Navmesh, prelude::NavmeshReady};
 
 use crate::{
     enemy::Enemy,
@@ -12,6 +12,7 @@ use crate::{
         game_mode::StartGameModeMessage,
         states::{GameLoadingState, InGameState, SelectedMapState},
     },
+    nav_mesh_pathfinding::NavMeshHandle,
     player::{Player, camera::components::FreeCam},
     user_interface::main_menu::MainMenuCamera,
     world::resources::WorldSceneHandle,
@@ -126,11 +127,24 @@ pub fn check_collider_constructor_hierarchy_ready(
 }
 
 pub fn check_navmesh_ready(
-    _: On<NavmeshReady>,
+    trigger: On<NavmeshReady>,
+    mut commands: Commands,
     mut next_game_loading_state: ResMut<NextState<GameLoadingState>>,
+    mut nav_meshes: ResMut<Assets<Navmesh>>,
 ) {
+    let Some(nav_mesh_handle) = nav_meshes.get_strong_handle(trigger.0) else {
+        panic!(
+            "Got navmeshready event but the Handle could not be found using \
+             the asset id from the trigger"
+        );
+    };
+
     info!("Navmesh is now ready!");
     next_game_loading_state.set(GameLoadingState::NavMeshReady);
+
+    // need to store it in our own resource so we can call regenerate when a new map is selected
+    commands.insert_resource(NavMeshHandle(nav_mesh_handle));
+    info!("Stored navmesh handle in our own resource, `NavMeshHandle`");
 }
 
 pub fn on_game_loading_state_nav_mesh_ready(
