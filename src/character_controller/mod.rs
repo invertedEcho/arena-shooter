@@ -10,6 +10,10 @@ use crate::{
 pub const CHARACTER_CAPSULE_RADIUS: f32 = 0.2;
 pub const CHARACTER_CAPSULE_LENGTH: f32 = 1.3;
 
+// Remember to update update_agent_target when this is no longer negative.
+pub const LOCAL_FEET_CHARACTER: f32 =
+    -((CHARACTER_CAPSULE_LENGTH + CHARACTER_CAPSULE_RADIUS * 2.0) / 2.);
+
 pub const WALK_VELOCITY: f32 = 2.0;
 pub const RUN_VELOCITY: f32 = 5.0;
 pub const JUMP_VELOCITY: f32 = 3.0;
@@ -303,12 +307,11 @@ fn update_on_ground(
 }
 
 fn apply_gravity_over_time(
-    query: Query<(&Grounded, &mut LinearVelocity, &Name)>,
+    query: Query<(&Grounded, &mut LinearVelocity)>,
     time: Res<Time>,
 ) {
-    for (grounded, mut velocity, name) in query {
+    for (grounded, mut velocity) in query {
         if !grounded.0 {
-            debug!("applying gravity for {}", name);
             velocity.y -= GRAVITY * time.delta_secs();
         }
     }

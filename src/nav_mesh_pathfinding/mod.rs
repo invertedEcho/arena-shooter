@@ -6,7 +6,9 @@ use landmass_rerecast::{
     Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
 };
 
-use crate::game_flow::states::GameLoadingState;
+use crate::{
+    character_controller::MAX_SLOPE_ANGLE, game_flow::states::GameLoadingState,
+};
 
 pub const ENEMY_AGENT_RADIUS: f32 = 0.3;
 
@@ -56,6 +58,12 @@ fn generate_navmesh_when_map_colliders_ready(
 
         let navmesh = generator.generate(NavmeshSettings {
             agent_radius: ENEMY_AGENT_RADIUS,
+            // this is pretty important, so the agent doesnt try to climb some very high ledge
+            walkable_climb: 0.25,
+            walkable_slope_angle: MAX_SLOPE_ANGLE,
+            cell_size_fraction: 2.0,
+            cell_height_fraction: 4.0,
+            agent_height: 2.0,
             ..default()
         });
 
@@ -79,7 +87,7 @@ fn update_agent_velocity(
     for (mut agent_velocity, desired_velocity, agent_state) in
         agent_query.iter_mut()
     {
-        debug!("Agent state: {:?}", agent_state);
+        info!("Agent state: {:?}", agent_state);
         agent_velocity.velocity = desired_velocity.velocity();
     }
 }

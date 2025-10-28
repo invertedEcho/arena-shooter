@@ -3,12 +3,14 @@ use bevy::prelude::*;
 use bevy_landmass::{AgentState, AgentTarget3d, Velocity3d};
 
 use crate::{
+    character_controller::LOCAL_FEET_CHARACTER,
     enemy::{
         Enemy, ai::EnemyState, shooting::components::EnemyBullet,
         spawn::AgentEnemyEntityPointer,
     },
     game_flow::states::InGameState,
     player::Player,
+    world::messages::SpawnDebugPointMessage,
 };
 
 /// This system iterates over each enemy, and with a raycast, determines whether the enemy can see
@@ -24,6 +26,7 @@ pub fn check_if_enemy_can_see_player(
     spatial_query: SpatialQuery,
     player_query: Single<(Entity, &Transform), With<Player>>,
     enemy_bullets: Query<Entity, With<EnemyBullet>>,
+    mut debug_point_writer: MessageWriter<SpawnDebugPointMessage>,
 ) {
     let (player_entity, player_transform) = *player_query;
     for (mut enemy, enemy_entity, mut enemy_transform) in enemy_query {
@@ -85,9 +88,13 @@ pub fn check_if_enemy_can_see_player(
                         continue;
                     };
                     info!("updating agent target to current playerr location");
-                    *agent_target = AgentTarget3d::Point(
-                        player_transform.translation.with_y(0.),
-                    );
+                    // I think we should rather make a raycast downwards, and use the hitpoint.
+                    // FIXME: This way, it will break if the player is mid-air, such as during a jump.
+                    let mut agent_target_point = player_transform.translation;
+                    agent_target_point.y += LOCAL_FEET_CHARACTER;
+                    debug_point_writer
+                        .write(SpawnDebugPointMessage(agent_target_point));
+                    *agent_target = AgentTarget3d::Point(agent_target_point);
                 }
             }
         }
@@ -163,6 +170,14 @@ pub fn handle_chasing_enemies(
         }
 
         debug!("Applying agent velocity to actual velocity of enemy");
-        velocity.0 = agent_velocity.velocity;
+
+        // we only want to apply horizontal velocity
+        velocity.x = agent_velocity.velocity.x;
+        velocity.z = agent_velocity.velocity.z;
+
+        // we only apply vertical velocity, if its non-zero, to not override gravity
+        if agent_velocity.velocity.y != 0.0 {
+            velocity.y = agent_velocity.velocity.y;
+        }
     }
 }

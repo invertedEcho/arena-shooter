@@ -100,7 +100,7 @@ pub fn handle_spawn_debug_points_message(
 ) {
     for message in message_reader.read() {
         commands.spawn((
-            message.0,
+            Transform::from_translation(message.0),
             Mesh3d(meshes.add(Sphere::new(0.1))),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: RED.into(),

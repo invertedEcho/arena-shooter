@@ -1,6 +1,7 @@
 use crate::{
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, Grounded,
+        LOCAL_FEET_CHARACTER, RUN_VELOCITY, WALK_VELOCITY,
     },
     enemy::{
         animate::ENEMY_MODEL_PATH,
@@ -137,6 +138,10 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 0.5,
                                 TimerMode::Repeating,
                             )),
+                            LockedAxes::new()
+                                .lock_rotation_x()
+                                .lock_rotation_y()
+                                .lock_rotation_z(),
                             RigidBody::Kinematic,
                             Collider::capsule(
                                 CHARACTER_CAPSULE_RADIUS,
@@ -152,9 +157,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                     0.0,
                                     // center enemy model -> in blender, feet are at bottom, so in
                                     // bevy model feet are at center of collider, 0.0
-                                    -((CHARACTER_CAPSULE_LENGTH
-                                        + CHARACTER_CAPSULE_RADIUS * 2.0)
-                                        / 2.),
+                                    LOCAL_FEET_CHARACTER,
                                     0.0,
                                 ),
                                 rotation: Quat::from_rotation_y(PI),
@@ -172,9 +175,9 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 archipelago_ref.0,
                             ),
                             settings: AgentSettings {
-                                desired_speed: 2.0,
-                                max_speed: 2.0,
-                                radius: ENEMY_AGENT_RADIUS,
+                                desired_speed: WALK_VELOCITY,
+                                max_speed: RUN_VELOCITY,
+                                radius: 2.0,
                             },
                         },
                         AgentTarget3d::None,
