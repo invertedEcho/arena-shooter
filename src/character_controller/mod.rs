@@ -1,8 +1,9 @@
-use avian3d::prelude::*;
+use avian3d::{math::Quaternion, prelude::*};
 use bevy::prelude::*;
 
 use crate::{
     GRAVITY,
+    enemy::Enemy,
     game_flow::states::InGameState,
     player::{Player, camera::components::ViewModelCamera},
 };
@@ -37,34 +38,42 @@ pub enum MovementAction {
     Jump,
 }
 
-/// Contains all needed components for a character that should be controlled by the player
 #[derive(Bundle)]
 pub struct CharacterControllerBundle {
-    velocity: LinearVelocity,
     rigid_body: RigidBody,
     collider: Collider,
-    grounded: Grounded,
     locked_axes: LockedAxes,
     movement_state: MovementState,
     colliding_entities: CollidingEntities,
+    grounded: Grounded,
+    ground_caster: ShapeCaster,
 }
 
 impl Default for CharacterControllerBundle {
     fn default() -> Self {
         Self {
-            velocity: LinearVelocity::ZERO,
             rigid_body: RigidBody::Kinematic,
             collider: Collider::capsule(
                 CHARACTER_CAPSULE_RADIUS,
                 CHARACTER_CAPSULE_LENGTH,
             ),
-            grounded: Grounded::default(),
             locked_axes: LockedAxes::new()
                 .lock_rotation_x()
                 .lock_rotation_y()
                 .lock_rotation_z(),
-            movement_state: MovementState(MovementStateEnum::Idle),
             colliding_entities: CollidingEntities::default(),
+            movement_state: MovementState(MovementStateEnum::Idle),
+            grounded: Grounded(true),
+            ground_caster: ShapeCaster::new(
+                Collider::capsule(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ),
+                Vec3::ZERO,
+                Quaternion::default(),
+                Dir3::NEG_Y,
+            )
+            .with_max_distance(0.2),
         }
     }
 }
@@ -90,6 +99,7 @@ impl Plugin for CharacterControllerPlugin {
                     apply_gravity_over_time,
                     handle_keyboard_input_for_player,
                     handle_movement_actions_for_player,
+                    debug_remove_grounded_from_enemies,
                 )
                     .run_if(in_state(InGameState::Playing)),
             )
@@ -242,7 +252,7 @@ fn handle_movement_actions_for_player(
                             let player_y = player_transform.translation.y;
                             let difference_y = hit_down_y - player_y;
                             if difference_y.abs() < 0.3 {
-                                debug!("Snapping player to slope");
+                                info!("Snapping player to slope");
                                 player_velocity.y =
                                     difference_y / time.delta_secs();
                             }
@@ -271,33 +281,28 @@ fn handle_movement_actions_for_player(
     }
 }
 
+/// Updates the [`Grounded`] status for character controllers.
 fn update_on_ground(
-    query: Query<(&Transform, Entity, &mut LinearVelocity, &mut Grounded)>,
-    spatial_query: SpatialQuery,
+    mut query: Query<(
+        &ShapeHits,
+        &Rotation,
+        &mut Grounded,
+        &mut LinearVelocity,
+    )>,
 ) {
-    for (transform, entity, mut velocity, mut grounded) in query {
-        let on_ground = spatial_query
-            .cast_shape(
-                &Collider::capsule(
-                    CHARACTER_CAPSULE_RADIUS,
-                    CHARACTER_CAPSULE_LENGTH,
-                ),
-                transform.translation,
-                transform.rotation,
-                Dir3::NEG_Y,
-                &ShapeCastConfig {
-                    max_distance: 0.1,
-                    ..default()
-                },
-                &SpatialQueryFilter::default().with_excluded_entities([entity]),
-            )
-            .is_some();
+    for (hits, rotation, mut grounded, mut velocity) in &mut query {
+        // The character is grounded if the shape caster has a hit with a normal
+        // that isn't too steep.
+        let on_ground = hits.iter().any(|hit| {
+            (rotation * -hit.normal2).angle_between(Vec3::Y).abs()
+                <= MAX_SLOPE_ANGLE
+        });
         if grounded.0 != on_ground {
             grounded.0 = on_ground;
         }
 
         if on_ground && velocity.y <= 0.0 {
-            velocity.y = 0.0;
+            velocity.y = 0.0
         }
     }
 }
@@ -310,6 +315,18 @@ fn apply_gravity_over_time(
         if !grounded.0 {
             debug!("applying gravity for {}", name);
             velocity.y -= GRAVITY * time.delta_secs();
+        }
+    }
+}
+
+fn debug_remove_grounded_from_enemies(
+    mut commands: Commands,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    enemy_query: Query<Entity, With<Enemy>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyU) {
+        for enemy in enemy_query {
+            commands.entity(enemy).remove::<Grounded>();
         }
     }
 }
