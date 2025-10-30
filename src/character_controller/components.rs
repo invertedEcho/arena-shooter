@@ -15,8 +15,13 @@ pub enum MovementStateEnum {
     Running,
 }
 
+/// A marker component indicating that an entity is using a character controller
+#[derive(Component)]
+pub struct CharacterController;
+
 #[derive(Bundle)]
 pub struct CharacterControllerBundle {
+    character_controller: CharacterController,
     rigid_body: RigidBody,
     collider: Collider,
     locked_axes: LockedAxes,
@@ -29,6 +34,7 @@ pub struct CharacterControllerBundle {
 impl Default for CharacterControllerBundle {
     fn default() -> Self {
         Self {
+            character_controller: CharacterController,
             rigid_body: RigidBody::Kinematic,
             collider: Collider::capsule(
                 CHARACTER_CAPSULE_RADIUS,

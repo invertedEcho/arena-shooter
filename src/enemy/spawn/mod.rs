@@ -1,12 +1,10 @@
 use crate::{
     character_controller::{
-        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, Grounded,
+        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
         LOCAL_FEET_CHARACTER, RUN_VELOCITY, WALK_VELOCITY,
+        components::{CharacterController, Grounded},
     },
-    enemy::{
-        animate::ENEMY_MODEL_PATH,
-        shooting::components::EnemyShootPlayerCooldownTimer,
-    },
+    enemy::animate::ENEMY_MODEL_PATH,
     nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS},
 };
 use avian3d::{
@@ -124,6 +122,9 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
 
                     let spawn_location_translation =
                         chosen_spawn_location.1.translation;
+
+                    // TODO: Adjust character controller so we can use the
+                    // CharacterControllerBundle for enemies too
                     let enemy_entity = commands
                         .spawn((
                             Name::new("Enemy"),
@@ -137,10 +138,6 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 ..default()
                             },
                             Grounded::default(),
-                            EnemyShootPlayerCooldownTimer(Timer::from_seconds(
-                                0.5,
-                                TimerMode::Repeating,
-                            )),
                             LockedAxes::new()
                                 .lock_rotation_x()
                                 .lock_rotation_y()
@@ -163,6 +160,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 Dir3::NEG_Y,
                             )
                             .with_max_distance(0.2),
+                            CharacterController,
                         ))
                         .with_child((
                             Transform {

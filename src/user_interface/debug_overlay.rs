@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    character_controller::MovementState,
+    character_controller::components::MovementState,
     game_flow::states::{AppDebugState, AppState, InGameState, MainMenuState},
     player::Player,
 };

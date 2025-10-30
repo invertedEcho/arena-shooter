@@ -5,7 +5,7 @@ use avian3d::prelude::{
 };
 use bevy::{
     camera::visibility::RenderLayers,
-    color::palettes::{self, css::RED},
+    color::palettes::{self},
     prelude::*,
 };
 
@@ -100,10 +100,10 @@ pub fn handle_spawn_debug_points_message(
 ) {
     for message in message_reader.read() {
         commands.spawn((
-            Transform::from_translation(message.0),
+            Transform::from_translation(message.point),
             Mesh3d(meshes.add(Sphere::new(0.1))),
             MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: RED.into(),
+                base_color: message.color,
                 ..Default::default()
             })),
             DebugPoint,

@@ -3,7 +3,7 @@ use std::time::Duration;
 use bevy::{animation::RepeatAnimation, prelude::*};
 
 use crate::{
-    character_controller::{MovementState, MovementStateEnum},
+    character_controller::components::{MovementState, MovementStateEnum},
     player::{Player, camera::components::PlayerCameraState},
     shared::components::AnimationPlayerEntityPointer,
 };

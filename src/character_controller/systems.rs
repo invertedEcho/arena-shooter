@@ -6,7 +6,9 @@ use crate::{
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
         MAX_SLOPE_ANGLE, RUN_VELOCITY, WALK_VELOCITY,
-        components::{Grounded, MovementState, MovementStateEnum},
+        components::{
+            CharacterController, Grounded, MovementState, MovementStateEnum,
+        },
         messages::{MovementAction, MovementDirection},
     },
     player::{Player, camera::components::ViewModelCamera},
@@ -79,12 +81,10 @@ pub fn handle_keyboard_input_for_player(
 
 pub fn handle_movement_actions_for_character_controllers(
     mut movement_action_reader: MessageReader<MovementAction>,
-    mut character_controller_query: Query<(
-        &mut LinearVelocity,
-        &Grounded,
-        &Transform,
-        Entity,
-    )>,
+    mut character_controller_query: Query<
+        (&mut LinearVelocity, &Grounded, &Transform, Entity),
+        With<CharacterController>,
+    >,
     // TODO: i dont want this here
     player_camera_entity: Single<Entity, With<ViewModelCamera>>,
     spatial_query: SpatialQuery,
@@ -209,7 +209,10 @@ pub fn handle_movement_actions_for_character_controllers(
 
 /// Updates the [`Grounded`] status for character controllers.
 pub fn update_on_ground(
-    mut query: Query<(&ShapeHits, &mut Grounded, &mut LinearVelocity)>,
+    mut query: Query<
+        (&ShapeHits, &mut Grounded, &mut LinearVelocity),
+        With<CharacterController>,
+    >,
 ) {
     for (hits, mut grounded, mut velocity) in &mut query {
         let on_ground = hits.0.len() > 0;
@@ -225,7 +228,7 @@ pub fn update_on_ground(
 }
 
 pub fn apply_gravity_over_time(
-    query: Query<(&Grounded, &mut LinearVelocity)>,
+    query: Query<(&Grounded, &mut LinearVelocity), With<CharacterController>>,
     time: Res<Time>,
 ) {
     for (grounded, mut velocity) in query {
@@ -236,7 +239,9 @@ pub fn apply_gravity_over_time(
 }
 
 // Apply damping in the XZ Plane, basically this is deceleration over time
-pub fn apply_movement_damping(query: Query<&mut LinearVelocity>) {
+pub fn apply_movement_damping(
+    query: Query<&mut LinearVelocity, With<CharacterController>>,
+) {
     for mut velocity in query {
         velocity.x *= 0.9;
         velocity.z *= 0.9;

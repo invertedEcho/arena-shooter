@@ -2,7 +2,6 @@ use bevy::prelude::*;
 
 use crate::{
     character_controller::{
-        components::MovementState,
         messages::MovementAction,
         systems::{
             apply_gravity_over_time, apply_movement_damping,
@@ -14,8 +13,8 @@ use crate::{
     game_flow::states::InGameState,
 };
 
-mod components;
-mod messages;
+pub mod components;
+pub mod messages;
 mod systems;
 
 pub const CHARACTER_CAPSULE_RADIUS: f32 = 0.2;

@@ -1,14 +1,11 @@
 use avian3d::prelude::*;
-use bevy::prelude::*;
-use bevy_landmass::{
-    AgentDesiredVelocity3d, AgentState, AgentTarget3d, Velocity3d,
-};
+use bevy::{color::palettes::tailwind::BLUE_400, prelude::*};
+use bevy_landmass::{AgentDesiredVelocity3d, AgentState, AgentTarget3d};
 
 use crate::{
-    character_controller::LOCAL_FEET_CHARACTER,
-    character_controller::{MovementAction, MovementDirection},
+    character_controller::messages::{MovementAction, MovementDirection},
     enemy::{
-        Enemy, ai::EnemyState, shooting::components::EnemyBullet,
+        Enemy, EnemyState, shooting::components::EnemyBullet,
         spawn::AgentEnemyEntityPointer,
     },
     game_flow::states::InGameState,
@@ -67,7 +64,9 @@ pub fn check_if_enemy_can_see_player(
                 enemy_transform.look_at(player_transform.translation, Vec3::Y);
                 if enemy.state != EnemyState::AttackPlayer {
                     info!(
-                        "Enemy can see player, changing state to AttackPlayer"
+                        "Enemy can see player, changing state to \
+                         AttackPlayer. Previous enemy state: {:?}",
+                        enemy.state
                     );
                     enemy.state = EnemyState::AttackPlayer;
                 };
@@ -77,7 +76,6 @@ pub fn check_if_enemy_can_see_player(
                         "Enemy can NOT see player, setting state to \
                          ChasingPlayer!"
                     );
-                    enemy.state = EnemyState::ChasingPlayer;
                     let Some((_, mut agent_target)) = enemy_agents_query
                         .iter_mut()
                         .find(|(pointer, _)| pointer.0 == enemy_entity)
@@ -91,13 +89,35 @@ pub fn check_if_enemy_can_see_player(
                         continue;
                     };
                     info!("updating agent target to current playerr location");
-                    // I think we should rather make a raycast downwards, and use the hitpoint.
-                    // FIXME: This way, it will break if the player is mid-air, such as during a jump.
-                    let mut agent_target_point = player_transform.translation;
-                    agent_target_point.y += LOCAL_FEET_CHARACTER;
-                    debug_point_writer
-                        .write(SpawnDebugPointMessage(agent_target_point));
-                    *agent_target = AgentTarget3d::Point(agent_target_point);
+
+                    // We use a raycast downwards, and use the hitpoint.
+                    // This way, it wont break if the player is mid-air, such as during a jump.
+                    let ray_cast_origin = player_transform.translation;
+                    let ray_cast_direction = Dir3::NEG_Y;
+
+                    let Some(first_hit) = spatial_query.cast_ray(
+                        ray_cast_origin,
+                        ray_cast_direction,
+                        10.0,
+                        false,
+                        &SpatialQueryFilter::default()
+                            .with_excluded_entities([player_entity]),
+                    ) else {
+                        error!(
+                            "Could not get a valid new agent target point for \
+                             chasing enemy"
+                        );
+                        continue;
+                    };
+
+                    let hit_point = ray_cast_origin
+                        + first_hit.distance * ray_cast_direction;
+
+                    debug_point_writer.write(SpawnDebugPointMessage::new(
+                        hit_point, BLUE_400,
+                    ));
+                    *agent_target = AgentTarget3d::Point(hit_point);
+                    enemy.state = EnemyState::ChasingPlayer;
                 }
             }
         }

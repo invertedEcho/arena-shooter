@@ -1,9 +1,5 @@
 use avian3d::prelude::*;
-use bevy::{
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::*,
-    window::PresentMode,
-};
+use bevy::{prelude::*, window::PresentMode};
 use bevy_hanabi::HanabiPlugin;
 use bevy_inspector_egui::{
     bevy_egui::{self, EguiPlugin},
@@ -64,7 +60,7 @@ fn main() {
 
     // External plugins
     app.add_plugins(PhysicsPlugins::default())
-        // .add_plugins(PhysicsDebugPlugin::default())
+        .add_plugins(PhysicsDebugPlugin::default())
         .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
     app.add_plugins(SkeinPlugin::default());
     app.add_plugins(HanabiPlugin);

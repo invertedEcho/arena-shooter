@@ -9,7 +9,7 @@ use landmass_rerecast::{
 
 use crate::{
     character_controller::MAX_SLOPE_ANGLE,
-    enemy::{Enemy, spawn::AgentEnemyEntityPointer},
+    enemy::{Enemy, EnemyState, spawn::AgentEnemyEntityPointer},
     game_flow::states::GameLoadingState,
 };
 
@@ -84,19 +84,15 @@ fn update_agent_velocity_from_physics_velocity(
     mut agent_query: Query<(
         &mut Velocity3d,
         &AgentState,
-        &AgentDesiredVelocity3d,
         &AgentEnemyEntityPointer,
     )>,
-    enemy_query: Query<&LinearVelocity, With<Enemy>>,
+    mut enemy_query: Query<(&LinearVelocity, &mut Enemy)>,
 ) {
-    for (
-        mut agent_velocity,
-        agent_state,
-        agent_desired_velocity,
-        agent_enemy_entity_pointer,
-    ) in agent_query.iter_mut()
+    for (mut agent_velocity, agent_state, agent_enemy_entity_pointer) in
+        agent_query.iter_mut()
     {
-        let Ok(enemy_velocity) = enemy_query.get(agent_enemy_entity_pointer.0)
+        let Ok((enemy_velocity, mut enemy)) =
+            enemy_query.get_mut(agent_enemy_entity_pointer.0)
         else {
             warn!(
                 "Couldn't find enemy with LinearVelocity by id {}",
@@ -104,11 +100,16 @@ fn update_agent_velocity_from_physics_velocity(
             );
             continue;
         };
-        info!(
-            "Agent state: {:?} | Desired velocity: {:?}",
-            agent_state,
-            agent_desired_velocity.velocity()
-        );
+        if *agent_state == AgentState::TargetNotOnNavMesh {
+            // FIXME: i mean this is kinda shitty, if the player just stands on some point the
+            // enemy cant reach the enemy will never go to the player. we should just try nearby
+            // locations instead
+
+            // if the target is not on the navmesh, we let our systems make a new Target, until it
+            // is on the navmesh again.
+            enemy.state = EnemyState::CheckIfPlayerSeeable;
+        }
+
         agent_velocity.velocity = enemy_velocity.0;
     }
 }
