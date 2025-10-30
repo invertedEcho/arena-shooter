@@ -1,12 +1,17 @@
 use avian_rerecast::AvianBackendPlugin;
+use avian3d::prelude::*;
 use bevy::prelude::*;
-use bevy_landmass::{debug::Landmass3dDebugPlugin, prelude::*};
+use bevy_landmass::{Agent3d, debug::Landmass3dDebugPlugin, prelude::*};
 use bevy_rerecast::{debug::DetailNavmeshGizmo, prelude::*};
 use landmass_rerecast::{
     Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
 };
 
-use crate::game_flow::states::GameLoadingState;
+use crate::{
+    character_controller::MAX_SLOPE_ANGLE,
+    enemy::{Enemy, spawn::AgentEnemyEntityPointer},
+    game_flow::states::GameLoadingState,
+};
 
 pub const ENEMY_AGENT_RADIUS: f32 = 0.3;
 
@@ -23,7 +28,7 @@ impl Plugin for NavMeshPathfindingPlugin {
             OnEnter(GameLoadingState::CollidersReady),
             generate_navmesh_when_map_colliders_ready,
         );
-        app.add_systems(Update, update_agent_velocity);
+        app.add_systems(Update, (update_agent_velocity, snap_agent_to_floor));
     }
 }
 
@@ -79,7 +84,55 @@ fn update_agent_velocity(
     for (mut agent_velocity, desired_velocity, agent_state) in
         agent_query.iter_mut()
     {
-        debug!("Agent state: {:?}", agent_state);
+        info!("Agent state: {:?}", agent_state,);
         agent_velocity.velocity = desired_velocity.velocity();
+    }
+}
+
+// FIXME: dont need this anymore
+fn snap_agent_to_floor(
+    query: Query<
+        (Entity, &Transform, &mut LinearVelocity, &ShapeHits),
+        With<Enemy>,
+    >,
+    time: Res<Time>,
+    spatial_query: SpatialQuery,
+) {
+    for (enemy_entity, enemy_transform, mut enemy_velocity, shape_hits) in query
+    {
+        let Some(first_hit) = shape_hits.0.get(0) else {
+            info!("snap_agent_to_floor: No hits down found");
+            continue;
+        };
+        info!("first_hit: {:?}", first_hit);
+
+        // let hit_down_point =
+        //     ray_down_origin + ray_down_direction * hit_down.distance;
+        // let hit_down_y = hit_down_point.y;
+        // let enemy_y = enemy_transform.translation.y;
+        // let difference_y = hit_down_y - enemy_y;
+        // if difference_y.abs() < 0.3 {
+        //     info!("Snapping enemy to slope");
+        //     enemy_velocity.y = difference_y / time.delta_secs();
+        // } else {
+        //     info!(
+        //         "Not snapping enemy, difference between hit down and player \
+        //          too large"
+        //     );
+        // }
+        // let ray_down_origin = enemy_transform.translation + Vec3::Y * 0.5;
+        // let ray_down_direction = Dir3::NEG_Y;
+        // let max_down_distance = 1.0;
+        //
+        // if let Some(hit_down) = spatial_query.cast_ray(
+        //     ray_down_origin,
+        //     ray_down_direction,
+        //     max_down_distance,
+        //     true,
+        //     &SpatialQueryFilter::default()
+        //         .with_excluded_entities([enemy_entity]),
+        // ) {
+        // } else {
+        // }
     }
 }

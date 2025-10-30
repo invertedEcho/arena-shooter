@@ -10,16 +10,16 @@
 			"nodes":[
 				528,
 				529,
-				530,
-				531,
-				532,
-				533,
-				534
+				530
 			]
 		},
 		{
 			"name":"Small_Map",
 			"nodes":[
+				821,
+				822,
+				823,
+				824,
 				825,
 				826,
 				827,
@@ -35,11 +35,7 @@
 				837,
 				838,
 				839,
-				840,
-				841,
-				842,
-				843,
-				844
+				840
 			]
 		}
 	],
@@ -2939,26 +2935,6 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
-			"name":"Empty",
-			"scale":[
-				1.4299999475479126,
-				1.4299999475479126,
-				1.4299999475479126
-			],
-			"translation":[
-				-7.055305480957031,
-				0.7016563415527344,
-				7.515159606933594
-			]
-		},
-		{
-			"extras":{
-				"skein":[
-					{
 						"fun_shooter::player::spawn::components::PlayerSpawnLocation":{}
 					}
 				]
@@ -2983,26 +2959,6 @@
 					}
 				]
 			},
-			"name":"Empty.002",
-			"scale":[
-				1.4299999475479126,
-				1.4299999475479126,
-				1.4299999475479126
-			],
-			"translation":[
-				4.780683517456055,
-				1.5932782888412476,
-				6.4729461669921875
-			]
-		},
-		{
-			"extras":{
-				"skein":[
-					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"Empty.003",
 			"scale":[
 				1.4299999475479126,
@@ -3013,46 +2969,6 @@
 				-7.055305480957031,
 				1.4236862659454346,
 				-11.650971412658691
-			]
-		},
-		{
-			"extras":{
-				"skein":[
-					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
-			"name":"Empty.004",
-			"scale":[
-				1.4299999475479126,
-				1.4299999475479126,
-				1.4299999475479126
-			],
-			"translation":[
-				3.5724313259124756,
-				1.4190740585327148,
-				-13.245203018188477
-			]
-		},
-		{
-			"extras":{
-				"skein":[
-					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
-			"name":"Empty.005",
-			"scale":[
-				1.4299999475479126,
-				1.4299999475479126,
-				1.4299999475479126
-			],
-			"translation":[
-				-3.921736240386963,
-				0.7016563415527344,
-				7.515159606933594
 			]
 		},
 		{
@@ -4571,7 +4487,7 @@
 		},
 		{
 			"children":[
-				819
+				815
 			],
 			"name":"Map.001"
 		},
@@ -4615,6 +4531,10 @@
 		},
 		{
 			"children":[
+				531,
+				532,
+				533,
+				534,
 				535,
 				536,
 				537,
@@ -4895,15 +4815,11 @@
 				812,
 				813,
 				814,
-				815,
 				816,
 				817,
 				818,
-				820,
-				821,
-				822,
-				823,
-				824
+				819,
+				820
 			],
 			"extras":{
 				"skein":[]
@@ -5159,7 +5075,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":802,
+						"node":798,
 						"path":"rotation"
 					}
 				}
@@ -5178,7 +5094,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":803,
+						"node":799,
 						"path":"rotation"
 					}
 				}
@@ -5197,7 +5113,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":804,
+						"node":800,
 						"path":"rotation"
 					}
 				}
@@ -5216,7 +5132,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":805,
+						"node":801,
 						"path":"rotation"
 					}
 				}
@@ -5235,7 +5151,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":806,
+						"node":802,
 						"path":"rotation"
 					}
 				}
@@ -5254,7 +5170,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":807,
+						"node":803,
 						"path":"rotation"
 					}
 				}
@@ -5273,7 +5189,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":808,
+						"node":804,
 						"path":"rotation"
 					}
 				}
@@ -5292,7 +5208,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":809,
+						"node":805,
 						"path":"rotation"
 					}
 				}
@@ -5311,7 +5227,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":810,
+						"node":806,
 						"path":"rotation"
 					}
 				}
@@ -5330,7 +5246,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":811,
+						"node":807,
 						"path":"rotation"
 					}
 				}
@@ -5349,7 +5265,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":812,
+						"node":808,
 						"path":"rotation"
 					}
 				}
@@ -5368,7 +5284,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":813,
+						"node":809,
 						"path":"rotation"
 					}
 				}
@@ -5387,7 +5303,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":814,
+						"node":810,
 						"path":"rotation"
 					}
 				}
@@ -5406,7 +5322,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":815,
+						"node":811,
 						"path":"rotation"
 					}
 				}

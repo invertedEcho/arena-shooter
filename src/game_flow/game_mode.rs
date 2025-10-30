@@ -70,7 +70,10 @@ fn handle_start_game_mode_event(
     current_game_mode: Res<State<GameModeState>>,
 ) {
     for _ in message_reader.read() {
-        info!("Got start game mode message");
+        info!(
+            "Got start game mode message, updating states to reflect changes \
+             and spawning enemies and players."
+        );
         next_app_state.set(AppState::InGame);
         next_main_menu_state.set(MainMenuState::None);
         next_in_game_state.set(InGameState::Playing);

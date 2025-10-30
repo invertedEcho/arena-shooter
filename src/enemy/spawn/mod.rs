@@ -1,6 +1,7 @@
 use crate::{
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, Grounded,
+        RUN_VELOCITY, WALK_VELOCITY,
     },
     enemy::{
         animate::ENEMY_MODEL_PATH,
@@ -8,7 +9,10 @@ use crate::{
     },
     nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS},
 };
-use avian3d::{math::PI, prelude::*};
+use avian3d::{
+    math::{PI, Quaternion},
+    prelude::*,
+};
 use bevy::prelude::*;
 use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
@@ -145,6 +149,16 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             Visibility::Visible,
                             LinearVelocity::ZERO,
                             CollidingEntities::default(),
+                            ShapeCaster::new(
+                                Collider::capsule(
+                                    CHARACTER_CAPSULE_RADIUS,
+                                    CHARACTER_CAPSULE_LENGTH,
+                                ),
+                                Vec3::ZERO,
+                                Quaternion::default(),
+                                Dir3::NEG_Y,
+                            )
+                            .with_max_distance(0.2),
                         ))
                         .with_child((
                             Transform {
@@ -172,13 +186,13 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 archipelago_ref.0,
                             ),
                             settings: AgentSettings {
-                                desired_speed: 2.0,
-                                max_speed: 2.0,
-                                radius: ENEMY_AGENT_RADIUS,
+                                desired_speed: WALK_VELOCITY,
+                                max_speed: RUN_VELOCITY,
+                                radius: ENEMY_AGENT_RADIUS + 0.1,
                             },
                         },
                         AgentTarget3d::None,
-                        Transform::from_xyz(0.0, -0.6, 0.0),
+                        Transform::from_xyz(0.0, -0.8, 0.0),
                         AgentEnemyEntityPointer(enemy_entity),
                     ));
                 }
