@@ -1,0 +1,65 @@
+use avian3d::{math::Quaternion, prelude::*};
+use bevy::prelude::*;
+
+use crate::character_controller::{
+    CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+};
+
+#[derive(Component)]
+pub struct MovementState(pub MovementStateEnum);
+
+#[derive(Debug, Reflect, PartialEq)]
+pub enum MovementStateEnum {
+    Idle,
+    Walking,
+    Running,
+}
+
+#[derive(Bundle)]
+pub struct CharacterControllerBundle {
+    rigid_body: RigidBody,
+    collider: Collider,
+    locked_axes: LockedAxes,
+    movement_state: MovementState,
+    colliding_entities: CollidingEntities,
+    grounded: Grounded,
+    ground_caster: ShapeCaster,
+}
+
+impl Default for CharacterControllerBundle {
+    fn default() -> Self {
+        Self {
+            rigid_body: RigidBody::Kinematic,
+            collider: Collider::capsule(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ),
+            locked_axes: LockedAxes::new()
+                .lock_rotation_x()
+                .lock_rotation_y()
+                .lock_rotation_z(),
+            colliding_entities: CollidingEntities::default(),
+            movement_state: MovementState(MovementStateEnum::Idle),
+            grounded: Grounded(true),
+            ground_caster: ShapeCaster::new(
+                Collider::capsule(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ),
+                Vec3::ZERO,
+                Quaternion::default(),
+                Dir3::NEG_Y,
+            )
+            .with_max_distance(0.1),
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct Grounded(pub bool);
+
+impl Default for Grounded {
+    fn default() -> Self {
+        Self(true)
+    }
+}
