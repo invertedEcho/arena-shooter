@@ -89,6 +89,7 @@ fn update_agent_velocity(
     }
 }
 
+// FIXME: dont need this anymore
 fn snap_agent_to_floor(
     query: Query<
         (Entity, &Transform, &mut LinearVelocity, &ShapeHits),

@@ -1,6 +1,7 @@
 use crate::{
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, Grounded,
+        RUN_VELOCITY, WALK_VELOCITY,
     },
     enemy::{
         animate::ENEMY_MODEL_PATH,

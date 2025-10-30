@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use bevy_landmass::{AgentState, AgentTarget3d, Velocity3d};
 
 use crate::{
+    character_controller::{MovementAction, MovementDirection},
     enemy::{
         Enemy, ai::EnemyState, shooting::components::EnemyBullet,
         spawn::AgentEnemyEntityPointer,
@@ -135,12 +136,13 @@ pub fn set_zero_velocity_if_not_chasing(
 }
 
 pub fn handle_chasing_enemies(
-    mut enemy_query: Query<(&Enemy, &mut LinearVelocity)>,
+    mut enemy_query: Query<(&Enemy, Entity, &mut LinearVelocity)>,
     enemy_agents_query: Query<(&Velocity3d, &AgentEnemyEntityPointer)>,
     current_in_game_state: Res<State<InGameState>>,
+    mut movement_action_writer: MessageWriter<MovementAction>,
 ) {
     for (agent_velocity, agent_enemy_entity_pointer) in enemy_agents_query {
-        let Ok((enemy, mut velocity)) =
+        let Ok((enemy, entity, mut velocity)) =
             enemy_query.get_mut(agent_enemy_entity_pointer.0)
         else {
             warn!(
@@ -162,7 +164,9 @@ pub fn handle_chasing_enemies(
             continue;
         }
 
-        debug!("Applying agent velocity to actual velocity of enemy");
-        velocity.0 = agent_velocity.velocity;
+        movement_action_writer.write(MovementAction {
+            direction: MovementDirection::Move(agent_velocity.velocity),
+            character_controller_entity: entity,
+        });
     }
 }
