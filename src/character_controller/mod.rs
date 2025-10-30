@@ -205,8 +205,10 @@ fn handle_movement_actions_for_character_controllers(
         let Ok((mut velocity, grounded, transform, entity)) =
             character_controller_query.get_mut(character_controller_entity)
         else {
-            // FIXME
-            warn!("lkjdsflkjdsf");
+            warn!(
+                "Failed to find Character Controller by Entity {}",
+                character_controller_entity
+            );
             continue;
         };
 
@@ -221,6 +223,10 @@ fn handle_movement_actions_for_character_controllers(
                 let Ok(direction_from_world_velocity) =
                     Dir3::new(world_velocity)
                 else {
+                    // can also be happen when velocity is Vec3::ZERO but i kinda dont want that
+                    // because if velocity is zero there should be no message written. could save a
+                    // bit of perf i guess
+                    warn!("Setting zero velocity");
                     velocity.x = 0.0;
                     velocity.z = 0.0;
                     return;
@@ -258,7 +264,7 @@ fn handle_movement_actions_for_character_controllers(
                     let slope_climable = slope_angle < MAX_SLOPE_ANGLE;
 
                     if slope_climable {
-                        debug!("MOVEMENT: Climable slope!");
+                        info!("MOVEMENT: Climable slope!");
                         // this is the most important part to make the slope climbing possible.
                         // instead of trying to go straight, we slide along the ground
                         velocity.0 =
@@ -288,7 +294,7 @@ fn handle_movement_actions_for_character_controllers(
                             }
                         }
                     } else {
-                        debug!(
+                        info!(
                             "MOVEMENT: Obstacle in the way, sliding along wall"
                         );
                         // not climable, e.g. a wall. we want to slide along the wall, similar to the collide
@@ -301,7 +307,7 @@ fn handle_movement_actions_for_character_controllers(
                         velocity.z = impulse.z
                     }
                 } else {
-                    debug!("MOVEMENT: No obstacle ahead, free movement");
+                    info!("MOVEMENT: No obstacle ahead, free movement");
                     // no obstacle ahead, free movement
                     velocity.x = world_velocity.x;
                     velocity.z = world_velocity.z;

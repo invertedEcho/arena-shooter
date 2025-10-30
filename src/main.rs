@@ -59,8 +59,8 @@ fn main() {
                 ..default()
             }),
     );
-    app.add_plugins(FrameTimeDiagnosticsPlugin::default());
-    app.add_plugins(LogDiagnosticsPlugin::default());
+    // app.add_plugins(FrameTimeDiagnosticsPlugin::default());
+    // app.add_plugins(LogDiagnosticsPlugin::default());
 
     // External plugins
     app.add_plugins(PhysicsPlugins::default())

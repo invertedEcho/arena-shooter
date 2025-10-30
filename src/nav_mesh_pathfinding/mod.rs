@@ -1,4 +1,5 @@
 use avian_rerecast::AvianBackendPlugin;
+use avian3d::prelude::*;
 use bevy::prelude::*;
 use bevy_landmass::{debug::Landmass3dDebugPlugin, prelude::*};
 use bevy_rerecast::{debug::DetailNavmeshGizmo, prelude::*};
@@ -7,7 +8,9 @@ use landmass_rerecast::{
 };
 
 use crate::{
-    character_controller::MAX_SLOPE_ANGLE, game_flow::states::GameLoadingState,
+    character_controller::MAX_SLOPE_ANGLE,
+    enemy::{Enemy, spawn::AgentEnemyEntityPointer},
+    game_flow::states::GameLoadingState,
 };
 
 pub const ENEMY_AGENT_RADIUS: f32 = 0.4;
@@ -25,7 +28,7 @@ impl Plugin for NavMeshPathfindingPlugin {
             OnEnter(GameLoadingState::CollidersReady),
             generate_navmesh_when_map_colliders_ready,
         );
-        app.add_systems(Update, update_agent_velocity);
+        app.add_systems(Update, update_agent_velocity_from_physics_velocity);
     }
 }
 
@@ -77,17 +80,35 @@ fn generate_navmesh_when_map_colliders_ready(
     }
 }
 
-fn update_agent_velocity(
+fn update_agent_velocity_from_physics_velocity(
     mut agent_query: Query<(
         &mut Velocity3d,
-        &AgentDesiredVelocity3d,
         &AgentState,
+        &AgentDesiredVelocity3d,
+        &AgentEnemyEntityPointer,
     )>,
+    enemy_query: Query<&LinearVelocity, With<Enemy>>,
 ) {
-    for (mut agent_velocity, desired_velocity, agent_state) in
-        agent_query.iter_mut()
+    for (
+        mut agent_velocity,
+        agent_state,
+        agent_desired_velocity,
+        agent_enemy_entity_pointer,
+    ) in agent_query.iter_mut()
     {
-        info!("Agent state: {:?}", agent_state);
-        agent_velocity.velocity = desired_velocity.velocity();
+        let Ok(enemy_velocity) = enemy_query.get(agent_enemy_entity_pointer.0)
+        else {
+            warn!(
+                "Couldn't find enemy with LinearVelocity by id {}",
+                agent_enemy_entity_pointer.0
+            );
+            continue;
+        };
+        info!(
+            "Agent state: {:?} | Desired velocity: {:?}",
+            agent_state,
+            agent_desired_velocity.velocity()
+        );
+        agent_velocity.velocity = enemy_velocity.0;
     }
 }
