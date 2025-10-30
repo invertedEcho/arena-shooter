@@ -1,15 +1,16 @@
 use avian3d::prelude::*;
-use bevy::prelude::*;
-use bevy_landmass::{AgentState, AgentTarget3d, Velocity3d};
+use bevy::{color::palettes::tailwind::BLUE_400, prelude::*};
+use bevy_landmass::{AgentDesiredVelocity3d, AgentState, AgentTarget3d};
 
 use crate::{
-    character_controller::{MovementAction, MovementDirection},
+    character_controller::messages::{MovementAction, MovementDirection},
     enemy::{
-        Enemy, ai::EnemyState, shooting::components::EnemyBullet,
+        Enemy, EnemyState, shooting::components::EnemyBullet,
         spawn::AgentEnemyEntityPointer,
     },
     game_flow::states::InGameState,
     player::Player,
+    world::messages::SpawnDebugPointMessage,
 };
 
 /// This system iterates over each enemy, and with a raycast, determines whether the enemy can see
@@ -25,6 +26,7 @@ pub fn check_if_enemy_can_see_player(
     spatial_query: SpatialQuery,
     player_query: Single<(Entity, &Transform), With<Player>>,
     enemy_bullets: Query<Entity, With<EnemyBullet>>,
+    mut debug_point_writer: MessageWriter<SpawnDebugPointMessage>,
 ) {
     let (player_entity, player_transform) = *player_query;
     for (mut enemy, enemy_entity, mut enemy_transform) in enemy_query {
@@ -62,7 +64,9 @@ pub fn check_if_enemy_can_see_player(
                 enemy_transform.look_at(player_transform.translation, Vec3::Y);
                 if enemy.state != EnemyState::AttackPlayer {
                     info!(
-                        "Enemy can see player, changing state to AttackPlayer"
+                        "Enemy can see player, changing state to \
+                         AttackPlayer. Previous enemy state: {:?}",
+                        enemy.state
                     );
                     enemy.state = EnemyState::AttackPlayer;
                 };
@@ -72,7 +76,6 @@ pub fn check_if_enemy_can_see_player(
                         "Enemy can NOT see player, setting state to \
                          ChasingPlayer!"
                     );
-                    enemy.state = EnemyState::ChasingPlayer;
                     let Some((_, mut agent_target)) = enemy_agents_query
                         .iter_mut()
                         .find(|(pointer, _)| pointer.0 == enemy_entity)
@@ -86,9 +89,35 @@ pub fn check_if_enemy_can_see_player(
                         continue;
                     };
                     info!("updating agent target to current playerr location");
-                    *agent_target = AgentTarget3d::Point(
-                        player_transform.translation.with_y(0.),
-                    );
+
+                    // We use a raycast downwards, and use the hitpoint.
+                    // This way, it wont break if the player is mid-air, such as during a jump.
+                    let ray_cast_origin = player_transform.translation;
+                    let ray_cast_direction = Dir3::NEG_Y;
+
+                    let Some(first_hit) = spatial_query.cast_ray(
+                        ray_cast_origin,
+                        ray_cast_direction,
+                        10.0,
+                        false,
+                        &SpatialQueryFilter::default()
+                            .with_excluded_entities([player_entity]),
+                    ) else {
+                        error!(
+                            "Could not get a valid new agent target point for \
+                             chasing enemy"
+                        );
+                        continue;
+                    };
+
+                    let hit_point = ray_cast_origin
+                        + first_hit.distance * ray_cast_direction;
+
+                    debug_point_writer.write(SpawnDebugPointMessage::new(
+                        hit_point, BLUE_400,
+                    ));
+                    *agent_target = AgentTarget3d::Point(hit_point);
+                    enemy.state = EnemyState::ChasingPlayer;
                 }
             }
         }
@@ -137,11 +166,20 @@ pub fn set_zero_velocity_if_not_chasing(
 
 pub fn handle_chasing_enemies(
     mut enemy_query: Query<(&Enemy, Entity, &mut LinearVelocity)>,
-    enemy_agents_query: Query<(&Velocity3d, &AgentEnemyEntityPointer)>,
+    enemy_agents_query: Query<(
+        &AgentDesiredVelocity3d,
+        &AgentEnemyEntityPointer,
+    )>,
     current_in_game_state: Res<State<InGameState>>,
     mut movement_action_writer: MessageWriter<MovementAction>,
 ) {
-    for (agent_velocity, agent_enemy_entity_pointer) in enemy_agents_query {
+    for (agent_desired_velocity, agent_enemy_entity_pointer) in
+        enemy_agents_query
+    {
+        if agent_desired_velocity.velocity() == Vec3::ZERO {
+            continue;
+        }
+
         let Ok((enemy, entity, mut velocity)) =
             enemy_query.get_mut(agent_enemy_entity_pointer.0)
         else {
@@ -165,7 +203,9 @@ pub fn handle_chasing_enemies(
         }
 
         movement_action_writer.write(MovementAction {
-            direction: MovementDirection::Move(agent_velocity.velocity),
+            direction: MovementDirection::Move(
+                agent_desired_velocity.velocity(),
+            ),
             character_controller_entity: entity,
         });
     }

@@ -3,8 +3,8 @@ use std::time::Duration;
 use bevy::{animation::RepeatAnimation, prelude::*};
 
 use crate::{
-    character_controller::{MovementState, MovementStateEnum},
-    player::Player,
+    character_controller::components::{MovementState, MovementStateEnum},
+    player::{Player, camera::components::PlayerCameraState},
     shared::components::AnimationPlayerEntityPointer,
 };
 
@@ -155,7 +155,7 @@ fn handle_play_arm_with_weapon_animation_event(
     mut commands: Commands,
     mut message_reader: MessageReader<PlayArmWithWeaponAnimationMessage>,
     animation_player_entity_pointer: Single<
-        &AnimationPlayerEntityPointer,
+        (&AnimationPlayerEntityPointer, &Player),
         With<Player>,
     >,
     mut animation_players_and_animation_transitions: Query<(
@@ -167,9 +167,15 @@ fn handle_play_arm_with_weapon_animation_event(
     animation_block_timer: Option<Res<AnimationBlockTimer>>,
 ) {
     for event in message_reader.read() {
+        if animation_player_entity_pointer.1.camera_state
+            == PlayerCameraState::FreeCam
+        {
+            continue;
+        }
+
         let Ok((_, mut animation_player, mut animation_transitions)) =
             animation_players_and_animation_transitions
-                .get_mut(animation_player_entity_pointer.0)
+                .get_mut(animation_player_entity_pointer.0.0)
         else {
             warn!(
                 "Failed to find animation player for entity pointer in arm \

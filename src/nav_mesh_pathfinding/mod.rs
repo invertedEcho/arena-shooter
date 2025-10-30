@@ -1,7 +1,7 @@
 use avian_rerecast::AvianBackendPlugin;
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use bevy_landmass::{Agent3d, debug::Landmass3dDebugPlugin, prelude::*};
+use bevy_landmass::{debug::Landmass3dDebugPlugin, prelude::*};
 use bevy_rerecast::{debug::DetailNavmeshGizmo, prelude::*};
 use landmass_rerecast::{
     Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
@@ -9,11 +9,11 @@ use landmass_rerecast::{
 
 use crate::{
     character_controller::MAX_SLOPE_ANGLE,
-    enemy::{Enemy, spawn::AgentEnemyEntityPointer},
+    enemy::{Enemy, EnemyState, spawn::AgentEnemyEntityPointer},
     game_flow::states::GameLoadingState,
 };
 
-pub const ENEMY_AGENT_RADIUS: f32 = 0.3;
+pub const ENEMY_AGENT_RADIUS: f32 = 0.4;
 
 pub struct NavMeshPathfindingPlugin;
 
@@ -28,7 +28,7 @@ impl Plugin for NavMeshPathfindingPlugin {
             OnEnter(GameLoadingState::CollidersReady),
             generate_navmesh_when_map_colliders_ready,
         );
-        app.add_systems(Update, (update_agent_velocity, snap_agent_to_floor));
+        app.add_systems(Update, update_agent_velocity_from_physics_velocity);
     }
 }
 
@@ -60,7 +60,13 @@ fn generate_navmesh_when_map_colliders_ready(
         commands.insert_resource(ArchipelagoRef(archipelago_id));
 
         let navmesh = generator.generate(NavmeshSettings {
-            agent_radius: ENEMY_AGENT_RADIUS,
+            agent_radius: 0.3,
+            // this is pretty important, so the agent doesnt try to climb some very high ledge
+            walkable_climb: 0.25,
+            walkable_slope_angle: MAX_SLOPE_ANGLE,
+            cell_size_fraction: 2.0,
+            cell_height_fraction: 4.0,
+            agent_height: 2.0,
             ..default()
         });
 
@@ -74,65 +80,36 @@ fn generate_navmesh_when_map_colliders_ready(
     }
 }
 
-fn update_agent_velocity(
+fn update_agent_velocity_from_physics_velocity(
     mut agent_query: Query<(
         &mut Velocity3d,
-        &AgentDesiredVelocity3d,
         &AgentState,
+        &AgentEnemyEntityPointer,
     )>,
+    mut enemy_query: Query<(&LinearVelocity, &mut Enemy)>,
 ) {
-    for (mut agent_velocity, desired_velocity, agent_state) in
+    for (mut agent_velocity, agent_state, agent_enemy_entity_pointer) in
         agent_query.iter_mut()
     {
-        info!("Agent state: {:?}", agent_state,);
-        agent_velocity.velocity = desired_velocity.velocity();
-    }
-}
-
-// FIXME: dont need this anymore
-fn snap_agent_to_floor(
-    query: Query<
-        (Entity, &Transform, &mut LinearVelocity, &ShapeHits),
-        With<Enemy>,
-    >,
-    time: Res<Time>,
-    spatial_query: SpatialQuery,
-) {
-    for (enemy_entity, enemy_transform, mut enemy_velocity, shape_hits) in query
-    {
-        let Some(first_hit) = shape_hits.0.get(0) else {
-            info!("snap_agent_to_floor: No hits down found");
+        let Ok((enemy_velocity, mut enemy)) =
+            enemy_query.get_mut(agent_enemy_entity_pointer.0)
+        else {
+            warn!(
+                "Couldn't find enemy with LinearVelocity by id {}",
+                agent_enemy_entity_pointer.0
+            );
             continue;
         };
-        info!("first_hit: {:?}", first_hit);
+        if *agent_state == AgentState::TargetNotOnNavMesh {
+            // FIXME: i mean this is kinda shitty, if the player just stands on some point the
+            // enemy cant reach the enemy will never go to the player. we should just try nearby
+            // locations instead
 
-        // let hit_down_point =
-        //     ray_down_origin + ray_down_direction * hit_down.distance;
-        // let hit_down_y = hit_down_point.y;
-        // let enemy_y = enemy_transform.translation.y;
-        // let difference_y = hit_down_y - enemy_y;
-        // if difference_y.abs() < 0.3 {
-        //     info!("Snapping enemy to slope");
-        //     enemy_velocity.y = difference_y / time.delta_secs();
-        // } else {
-        //     info!(
-        //         "Not snapping enemy, difference between hit down and player \
-        //          too large"
-        //     );
-        // }
-        // let ray_down_origin = enemy_transform.translation + Vec3::Y * 0.5;
-        // let ray_down_direction = Dir3::NEG_Y;
-        // let max_down_distance = 1.0;
-        //
-        // if let Some(hit_down) = spatial_query.cast_ray(
-        //     ray_down_origin,
-        //     ray_down_direction,
-        //     max_down_distance,
-        //     true,
-        //     &SpatialQueryFilter::default()
-        //         .with_excluded_entities([enemy_entity]),
-        // ) {
-        // } else {
-        // }
+            // if the target is not on the navmesh, we let our systems make a new Target, until it
+            // is on the navmesh again.
+            enemy.state = EnemyState::CheckIfPlayerSeeable;
+        }
+
+        agent_velocity.velocity = enemy_velocity.0;
     }
 }

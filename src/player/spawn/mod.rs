@@ -2,7 +2,7 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    character_controller::CharacterControllerBundle,
+    character_controller::components::CharacterControllerBundle,
     player::{Player, spawn::components::PlayerSpawnLocation},
 };
 

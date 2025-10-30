@@ -8,7 +8,7 @@ use crate::{
         game_mode::GameModeState,
         states::{AppState, InGameState, MainMenuState},
     },
-    user_interface::map_selection::{MapSelectionButton, MapSelectionPlugin},
+    user_interface::map_selection::MapSelectionButton,
 };
 
 pub struct CommonUiPlugin;

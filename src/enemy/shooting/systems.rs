@@ -5,10 +5,9 @@ use bevy::prelude::*;
 
 use crate::{
     enemy::{
-        Enemy,
-        ai::EnemyState,
+        Enemy, EnemyState,
         shooting::{
-            components::{EnemyBullet, EnemyShootPlayerCooldownTimer},
+            components::{EnemyBullet, EnemyShootCooldownTimer},
             messages::EnemyKilledMessage,
         },
     },
@@ -58,19 +57,19 @@ pub fn enemy_shoot_player(
         Entity,
         &Enemy,
         &Transform,
-        &EnemyShootPlayerCooldownTimer,
+        Option<&EnemyShootCooldownTimer>,
     )>,
 ) {
-    for (
-        enemy_entity,
-        enemy,
-        enemy_transform,
-        enemy_shoot_player_cooldown_timer,
-    ) in enemy_query
+    for (enemy_entity, enemy, enemy_transform, enemy_shoot_cooldown_timer) in
+        enemy_query
     {
-        if enemy.state != EnemyState::AttackPlayer
-            || !enemy_shoot_player_cooldown_timer.0.just_finished()
-        {
+        if enemy.state != EnemyState::AttackPlayer {
+            info!("Enemy is not in AttackPlayer state");
+            continue;
+        }
+
+        if let Some(_) = enemy_shoot_cooldown_timer {
+            info!("Enemy has EnemyShootCooldownTimer, not shooting");
             continue;
         }
 
@@ -101,15 +100,27 @@ pub fn enemy_shoot_player(
             },
             CollidingEntities::default(),
         ));
+
+        commands
+            .entity(enemy_entity)
+            .insert(EnemyShootCooldownTimer(Timer::from_seconds(
+                0.5,
+                TimerMode::Repeating,
+            )));
     }
 }
 
 pub fn tick_enemy_shoot_player_cooldown_timer(
-    timer_query: Query<&mut EnemyShootPlayerCooldownTimer>,
+    mut commands: Commands,
+    timer_query: Query<(Entity, &mut EnemyShootCooldownTimer)>,
     time: Res<Time>,
 ) {
-    for mut timer in timer_query {
+    for (entity, mut timer) in timer_query {
         timer.0.tick(time.delta());
+
+        if timer.0.just_finished() {
+            commands.entity(entity).remove::<EnemyShootCooldownTimer>();
+        }
     }
 }
 

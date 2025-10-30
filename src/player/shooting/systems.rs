@@ -4,7 +4,7 @@ use avian3d::prelude::*;
 use bevy::{color::palettes::css::WHITE, prelude::*};
 
 use crate::{
-    character_controller::{MovementState, MovementStateEnum},
+    character_controller::components::{MovementState, MovementStateEnum},
     enemy::{Enemy, shooting::components::EnemyBullet},
     game_flow::{score::GameScore, states::InGameState},
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
@@ -386,8 +386,7 @@ pub fn spawn_muzzle_flash(
 /// accurate location to know where to spawn the bullet impact effect
 /// just checking for collision events doesnt work, as we would only get the center transform of the
 /// collided entity, which may be very inaccurate, as the object may be large
-// need to check if world or enemy
-pub fn accurate_check_bullet_collision_for_impact_particle(
+pub fn check_bullet_collision_for_impact_particle(
     spatial_query: SpatialQuery,
     player_entity: Single<Entity, With<Player>>,
     mut bullet_effect_spawn_message_writer: MessageWriter<

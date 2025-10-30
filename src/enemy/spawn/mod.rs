@@ -1,12 +1,10 @@
 use crate::{
     character_controller::{
-        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, Grounded,
-        RUN_VELOCITY, WALK_VELOCITY,
+        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+        LOCAL_FEET_CHARACTER, RUN_VELOCITY, WALK_VELOCITY,
+        components::{CharacterController, Grounded},
     },
-    enemy::{
-        animate::ENEMY_MODEL_PATH,
-        shooting::components::EnemyShootPlayerCooldownTimer,
-    },
+    enemy::animate::ENEMY_MODEL_PATH,
     nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS},
 };
 use avian3d::{
@@ -124,6 +122,9 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
 
                     let spawn_location_translation =
                         chosen_spawn_location.1.translation;
+
+                    // TODO: Adjust character controller so we can use the
+                    // CharacterControllerBundle for enemies too
                     let enemy_entity = commands
                         .spawn((
                             Name::new("Enemy"),
@@ -137,10 +138,10 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 ..default()
                             },
                             Grounded::default(),
-                            EnemyShootPlayerCooldownTimer(Timer::from_seconds(
-                                0.5,
-                                TimerMode::Repeating,
-                            )),
+                            LockedAxes::new()
+                                .lock_rotation_x()
+                                .lock_rotation_y()
+                                .lock_rotation_z(),
                             RigidBody::Kinematic,
                             Collider::capsule(
                                 CHARACTER_CAPSULE_RADIUS,
@@ -159,6 +160,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 Dir3::NEG_Y,
                             )
                             .with_max_distance(0.2),
+                            CharacterController,
                         ))
                         .with_child((
                             Transform {
@@ -166,9 +168,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                     0.0,
                                     // center enemy model -> in blender, feet are at bottom, so in
                                     // bevy model feet are at center of collider, 0.0
-                                    -((CHARACTER_CAPSULE_LENGTH
-                                        + CHARACTER_CAPSULE_RADIUS * 2.0)
-                                        / 2.),
+                                    LOCAL_FEET_CHARACTER,
                                     0.0,
                                 ),
                                 rotation: Quat::from_rotation_y(PI),
@@ -188,7 +188,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             settings: AgentSettings {
                                 desired_speed: WALK_VELOCITY,
                                 max_speed: RUN_VELOCITY,
-                                radius: ENEMY_AGENT_RADIUS + 0.1,
+                                radius: ENEMY_AGENT_RADIUS,
                             },
                         },
                         AgentTarget3d::None,

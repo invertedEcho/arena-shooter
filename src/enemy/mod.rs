@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::enemy::{
-    ai::{EnemyAiPlugin, EnemyState},
+    ai::EnemyAiPlugin,
     animate::AnimateEnemyPlugin,
     shooting::EnemyShootingPlugin,
     spawn::{EnemySpawnLocation, EnemySpawnPlugin},
@@ -28,6 +28,21 @@ impl Plugin for EnemyPlugin {
 #[derive(Component, Reflect, Default)]
 #[reflect(Component, Default)]
 pub struct Enemy {
-    state: EnemyState,
+    pub state: EnemyState,
     pub health: f32,
+}
+
+#[derive(Default, Reflect, PartialEq, Debug)]
+pub enum EnemyState {
+    #[default]
+    Idle,
+    /// Check if the enemy can see the player
+    CheckIfPlayerSeeable,
+    /// Going to the location of the player
+    ChasingPlayer,
+    /// Enemy can see the player, will shoot the player now
+    AttackPlayer,
+    /// This state will be set when `enemy.health == 0.0`. A death animation will be played and
+    /// afterwards the enemy will be despawned.
+    Dead,
 }

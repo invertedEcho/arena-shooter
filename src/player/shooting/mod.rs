@@ -6,7 +6,7 @@ use crate::{
         components::PlayerWeapon,
         messages::{PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage},
         systems::{
-            accurate_check_bullet_collision_for_impact_particle,
+            check_bullet_collision_for_impact_particle,
             detect_enemy_bullet_collision_with_player,
             handle_blood_screen_effect, handle_player_death_event,
             handle_reload_timer, player_shooting, reload_player_weapon,
@@ -36,7 +36,7 @@ impl Plugin for PlayerShootingPlugin {
                     handle_blood_screen_effect,
                     reload_player_weapon,
                     spawn_muzzle_flash,
-                    accurate_check_bullet_collision_for_impact_particle,
+                    check_bullet_collision_for_impact_particle,
                     setup_player_weapon,
                     handle_reload_timer,
                     detect_enemy_bullet_collision_with_player,
