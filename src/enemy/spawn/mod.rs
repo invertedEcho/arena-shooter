@@ -1,11 +1,7 @@
 use crate::{
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, Grounded,
-<<<<<<< HEAD
         LOCAL_FEET_CHARACTER, RUN_VELOCITY, WALK_VELOCITY,
-=======
-        RUN_VELOCITY, WALK_VELOCITY,
->>>>>>> master
     },
     enemy::{
         animate::ENEMY_MODEL_PATH,
@@ -194,7 +190,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             settings: AgentSettings {
                                 desired_speed: WALK_VELOCITY,
                                 max_speed: RUN_VELOCITY,
-                                radius: 2.0,
+                                radius: ENEMY_AGENT_RADIUS,
                             },
                         },
                         AgentTarget3d::None,
