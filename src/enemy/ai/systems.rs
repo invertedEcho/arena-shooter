@@ -156,6 +156,10 @@ pub fn handle_chasing_enemies(
     for (agent_desired_velocity, agent_enemy_entity_pointer) in
         enemy_agents_query
     {
+        if agent_desired_velocity.velocity() == Vec3::ZERO {
+            continue;
+        }
+
         let Ok((enemy, entity, mut velocity)) =
             enemy_query.get_mut(agent_enemy_entity_pointer.0)
         else {

@@ -110,6 +110,7 @@ impl Plugin for CharacterControllerPlugin {
                 )
                     .run_if(in_state(InGameState::Playing)),
             )
+            .add_systems(Update, apply_movement_damping)
             .add_systems(
                 OnEnter(InGameState::PlayerDead),
                 handle_player_dead_velocity,
@@ -156,13 +157,6 @@ fn handle_keyboard_input_for_player(
         local_velocity.z += 1.0 * speed;
     }
 
-    let world_velocity = player_transform.rotation * local_velocity;
-
-    movement_action_writer.write(MovementAction {
-        direction: MovementDirection::Move(world_velocity),
-        character_controller_entity: player_entity,
-    });
-
     if local_velocity.x == 0.0 && local_velocity.z == 0.0 {
         if movement_state.0 != MovementStateEnum::Idle {
             movement_state.0 = MovementStateEnum::Idle;
@@ -176,6 +170,17 @@ fn handle_keyboard_input_for_player(
             movement_state.0 = MovementStateEnum::Walking;
         }
     }
+
+    if local_velocity == Vec3::ZERO {
+        return;
+    }
+
+    let world_velocity = player_transform.rotation * local_velocity;
+
+    movement_action_writer.write(MovementAction {
+        direction: MovementDirection::Move(world_velocity),
+        character_controller_entity: player_entity,
+    });
 
     if keyboard_input.just_pressed(KeyCode::Space) {
         movement_action_writer.write(MovementAction {
@@ -223,10 +228,6 @@ fn handle_movement_actions_for_character_controllers(
                 let Ok(direction_from_world_velocity) =
                     Dir3::new(world_velocity)
                 else {
-                    // can also be happen when velocity is Vec3::ZERO but i kinda dont want that
-                    // because if velocity is zero there should be no message written. could save a
-                    // bit of perf i guess
-                    warn!("Setting zero velocity");
                     velocity.x = 0.0;
                     velocity.z = 0.0;
                     return;
@@ -342,5 +343,13 @@ fn apply_gravity_over_time(
         if !grounded.0 {
             velocity.y -= GRAVITY * time.delta_secs();
         }
+    }
+}
+
+// Apply damping in the XZ Plane, basically this is deceleration over time
+fn apply_movement_damping(query: Query<&mut LinearVelocity>) {
+    for mut velocity in query {
+        velocity.x *= 0.9;
+        velocity.z *= 0.9;
     }
 }
