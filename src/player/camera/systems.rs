@@ -200,7 +200,11 @@ pub fn handle_free_cam_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
     let mut direction = Vec3::ZERO;
-    let speed = 0.02;
+    let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
+        0.10
+    } else {
+        0.02
+    };
 
     if keyboard_input.pressed(KeyCode::KeyW) {
         direction += *free_cam_transform.forward();

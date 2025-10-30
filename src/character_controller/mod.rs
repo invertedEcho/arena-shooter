@@ -1,4 +1,4 @@
-use avian3d::prelude::*;
+use avian3d::{math::Quaternion, prelude::*};
 use bevy::prelude::*;
 
 use crate::{
@@ -35,40 +35,53 @@ pub enum MovementStateEnum {
 }
 
 #[derive(Message)]
-pub enum MovementAction {
+pub struct MovementAction {
+    pub direction: MovementDirection,
+    pub character_controller_entity: Entity,
+}
+
+pub enum MovementDirection {
     // TODO: should be possible to just have Vec2
     Move(Vec3),
     Jump,
 }
 
-/// Contains all needed components for a character that should be controlled by the player
 #[derive(Bundle)]
 pub struct CharacterControllerBundle {
-    velocity: LinearVelocity,
     rigid_body: RigidBody,
     collider: Collider,
-    grounded: Grounded,
     locked_axes: LockedAxes,
     movement_state: MovementState,
     colliding_entities: CollidingEntities,
+    grounded: Grounded,
+    ground_caster: ShapeCaster,
 }
 
 impl Default for CharacterControllerBundle {
     fn default() -> Self {
         Self {
-            velocity: LinearVelocity::ZERO,
             rigid_body: RigidBody::Kinematic,
             collider: Collider::capsule(
                 CHARACTER_CAPSULE_RADIUS,
                 CHARACTER_CAPSULE_LENGTH,
             ),
-            grounded: Grounded::default(),
             locked_axes: LockedAxes::new()
                 .lock_rotation_x()
                 .lock_rotation_y()
                 .lock_rotation_z(),
-            movement_state: MovementState(MovementStateEnum::Idle),
             colliding_entities: CollidingEntities::default(),
+            movement_state: MovementState(MovementStateEnum::Idle),
+            grounded: Grounded(true),
+            ground_caster: ShapeCaster::new(
+                Collider::capsule(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ),
+                Vec3::ZERO,
+                Quaternion::default(),
+                Dir3::NEG_Y,
+            )
+            .with_max_distance(0.1),
         }
     }
 }
@@ -93,7 +106,7 @@ impl Plugin for CharacterControllerPlugin {
                     update_on_ground,
                     apply_gravity_over_time,
                     handle_keyboard_input_for_player,
-                    handle_movement_actions_for_player,
+                    handle_movement_actions_for_character_controllers,
                 )
                     .run_if(in_state(InGameState::Playing)),
             )
@@ -114,9 +127,14 @@ fn handle_player_dead_velocity(
 fn handle_keyboard_input_for_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut movement_action_writer: MessageWriter<MovementAction>,
-    player_query: Single<(&Transform, &mut MovementState), With<Player>>,
+    player_query: Single<
+        (&Transform, &mut MovementState, Entity),
+        With<Player>,
+    >,
 ) {
-    let (player_transform, mut movement_state) = player_query.into_inner();
+    let (player_transform, mut movement_state, player_entity) =
+        player_query.into_inner();
+
     let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
         RUN_VELOCITY
     } else {
@@ -140,7 +158,11 @@ fn handle_keyboard_input_for_player(
 
     let world_velocity = player_transform.rotation * local_velocity;
 
-    movement_action_writer.write(MovementAction::Move(world_velocity));
+    movement_action_writer.write(MovementAction {
+        direction: MovementDirection::Move(world_velocity),
+        character_controller_entity: player_entity,
+    });
+
     if local_velocity.x == 0.0 && local_velocity.z == 0.0 {
         if movement_state.0 != MovementStateEnum::Idle {
             movement_state.0 = MovementStateEnum::Idle;
@@ -156,42 +178,64 @@ fn handle_keyboard_input_for_player(
     }
 
     if keyboard_input.just_pressed(KeyCode::Space) {
-        movement_action_writer.write(MovementAction::Jump);
+        movement_action_writer.write(MovementAction {
+            direction: MovementDirection::Jump,
+            character_controller_entity: player_entity,
+        });
     }
 }
 
-fn handle_movement_actions_for_player(
+fn handle_movement_actions_for_character_controllers(
     mut movement_action_reader: MessageReader<MovementAction>,
-    player_query: Single<
-        (&mut LinearVelocity, &Grounded, &Transform, Entity),
-        With<Player>,
-    >,
+    mut character_controller_query: Query<(
+        &mut LinearVelocity,
+        &Grounded,
+        &Transform,
+        Entity,
+    )>,
+    // TODO: i dont want this here
     player_camera_entity: Single<Entity, With<ViewModelCamera>>,
     spatial_query: SpatialQuery,
     time: Res<Time>,
 ) {
-    let (mut player_velocity, player_grounded, player_transform, player_entity) =
-        player_query.into_inner();
     for movement_action in movement_action_reader.read() {
-        match movement_action {
-            MovementAction::Jump => {
-                if player_grounded.0 {
-                    player_velocity.y = JUMP_VELOCITY;
+        let direction = &movement_action.direction;
+        let character_controller_entity =
+            movement_action.character_controller_entity;
+        let Ok((mut velocity, grounded, transform, entity)) =
+            character_controller_query.get_mut(character_controller_entity)
+        else {
+            // FIXME
+            warn!("lkjdsflkjdsf");
+            continue;
+        };
+
+        match *direction {
+            MovementDirection::Jump => {
+                if grounded.0 {
+                    velocity.y = JUMP_VELOCITY;
                 }
             }
             // TODO: should probably move the content of this block elsewhere
-            MovementAction::Move(world_velocity) => {
+            MovementDirection::Move(world_velocity) => {
                 let Ok(direction_from_world_velocity) =
-                    Dir3::new(*world_velocity)
+                    Dir3::new(world_velocity)
                 else {
-                    player_velocity.x = 0.0;
-                    player_velocity.z = 0.0;
+                    velocity.x = 0.0;
+                    velocity.z = 0.0;
                     return;
                 };
 
-                let ray_origin = player_transform.translation
+                let ray_origin = transform.translation
                     - direction_from_world_velocity.as_vec3() * 0.025;
                 let max_distance = 0.3;
+
+                let spatial_query_filter = &SpatialQueryFilter::default()
+                    .with_excluded_entities([
+                        entity,
+                        // TODO: should only be excluded when we have player
+                        *player_camera_entity,
+                    ]);
 
                 if let Some(hit_ahead) = spatial_query.cast_shape(
                     &Collider::capsule(
@@ -199,16 +243,13 @@ fn handle_movement_actions_for_player(
                         CHARACTER_CAPSULE_LENGTH,
                     ),
                     ray_origin,
-                    player_transform.rotation,
+                    transform.rotation,
                     direction_from_world_velocity,
                     &ShapeCastConfig {
                         max_distance,
                         ..default()
                     },
-                    &SpatialQueryFilter::default().with_excluded_entities([
-                        player_entity,
-                        *player_camera_entity,
-                    ]),
+                    spatial_query_filter,
                 ) {
                     // obstacle in the way, check if we can slimb it
                     // a normal is just a direction something is facing
@@ -220,12 +261,12 @@ fn handle_movement_actions_for_player(
                         debug!("MOVEMENT: Climable slope!");
                         // this is the most important part to make the slope climbing possible.
                         // instead of trying to go straight, we slide along the ground
-                        player_velocity.0 =
+                        velocity.0 =
                             world_velocity.reject_from_normalized(normal);
 
                         // slope snapping
                         let ray_down_origin =
-                            player_transform.translation + Vec3::Y * 0.5;
+                            transform.translation + Vec3::Y * 0.5;
                         let ray_down_direction = Dir3::NEG_Y;
                         let max_down_distance = 1.0;
 
@@ -234,21 +275,16 @@ fn handle_movement_actions_for_player(
                             ray_down_direction,
                             max_down_distance,
                             true,
-                            &SpatialQueryFilter::default()
-                                .with_excluded_entities([
-                                    player_entity,
-                                    *player_camera_entity,
-                                ]),
+                            spatial_query_filter,
                         ) {
                             let hit_down_point = ray_down_origin
                                 + ray_down_direction * hit_down.distance;
                             let hit_down_y = hit_down_point.y;
-                            let player_y = player_transform.translation.y;
+                            let player_y = transform.translation.y;
                             let difference_y = hit_down_y - player_y;
                             if difference_y.abs() < 0.3 {
-                                debug!("Snapping player to slope");
-                                player_velocity.y =
-                                    difference_y / time.delta_secs();
+                                info!("Snapping character controller to slope");
+                                velocity.y = difference_y / time.delta_secs();
                             }
                         }
                     } else {
@@ -261,47 +297,33 @@ fn handle_movement_actions_for_player(
                         // want to climb up
                         let impulse =
                             world_velocity.reject_from_normalized(normal);
-                        player_velocity.x = impulse.x;
-                        player_velocity.z = impulse.z
+                        velocity.x = impulse.x;
+                        velocity.z = impulse.z
                     }
                 } else {
                     debug!("MOVEMENT: No obstacle ahead, free movement");
                     // no obstacle ahead, free movement
-                    player_velocity.x = world_velocity.x;
-                    player_velocity.z = world_velocity.z;
+                    velocity.x = world_velocity.x;
+                    velocity.z = world_velocity.z;
                 }
             }
         }
     }
 }
 
+/// Updates the [`Grounded`] status for character controllers.
 fn update_on_ground(
-    query: Query<(&Transform, Entity, &mut LinearVelocity, &mut Grounded)>,
-    spatial_query: SpatialQuery,
+    mut query: Query<(&ShapeHits, &mut Grounded, &mut LinearVelocity)>,
 ) {
-    for (transform, entity, mut velocity, mut grounded) in query {
-        let on_ground = spatial_query
-            .cast_shape(
-                &Collider::capsule(
-                    CHARACTER_CAPSULE_RADIUS,
-                    CHARACTER_CAPSULE_LENGTH,
-                ),
-                transform.translation,
-                transform.rotation,
-                Dir3::NEG_Y,
-                &ShapeCastConfig {
-                    max_distance: 0.1,
-                    ..default()
-                },
-                &SpatialQueryFilter::default().with_excluded_entities([entity]),
-            )
-            .is_some();
+    for (hits, mut grounded, mut velocity) in &mut query {
+        let on_ground = hits.0.len() > 0;
+
         if grounded.0 != on_ground {
             grounded.0 = on_ground;
         }
 
         if on_ground && velocity.y <= 0.0 {
-            velocity.y = 0.0;
+            velocity.y = 0.0
         }
     }
 }

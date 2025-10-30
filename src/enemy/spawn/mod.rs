@@ -1,7 +1,11 @@
 use crate::{
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, Grounded,
+<<<<<<< HEAD
         LOCAL_FEET_CHARACTER, RUN_VELOCITY, WALK_VELOCITY,
+=======
+        RUN_VELOCITY, WALK_VELOCITY,
+>>>>>>> master
     },
     enemy::{
         animate::ENEMY_MODEL_PATH,
@@ -9,7 +13,10 @@ use crate::{
     },
     nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS},
 };
-use avian3d::{math::PI, prelude::*};
+use avian3d::{
+    math::{PI, Quaternion},
+    prelude::*,
+};
 use bevy::prelude::*;
 use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
@@ -150,6 +157,16 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             Visibility::Visible,
                             LinearVelocity::ZERO,
                             CollidingEntities::default(),
+                            ShapeCaster::new(
+                                Collider::capsule(
+                                    CHARACTER_CAPSULE_RADIUS,
+                                    CHARACTER_CAPSULE_LENGTH,
+                                ),
+                                Vec3::ZERO,
+                                Quaternion::default(),
+                                Dir3::NEG_Y,
+                            )
+                            .with_max_distance(0.2),
                         ))
                         .with_child((
                             Transform {
@@ -181,7 +198,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             },
                         },
                         AgentTarget3d::None,
-                        Transform::from_xyz(0.0, -0.6, 0.0),
+                        Transform::from_xyz(0.0, -0.8, 0.0),
                         AgentEnemyEntityPointer(enemy_entity),
                     ));
                 }

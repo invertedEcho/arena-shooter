@@ -150,7 +150,10 @@ pub fn check_navmesh_ready(
 pub fn on_game_loading_state_nav_mesh_ready(
     mut start_game_mode_message_writer: MessageWriter<StartGameModeMessage>,
 ) {
-    info!("Okay everything is ready now, write SpawnGameMode message!");
+    info!(
+        "Entered nav_mesh_ready loading state, everything is ready now. \
+         Writing StartGameModeMessage"
+    );
     start_game_mode_message_writer.write(StartGameModeMessage);
 }
 
@@ -158,6 +161,6 @@ pub fn handle_playing_state_enter(
     mut commands: Commands,
     main_menu_camera: Single<Entity, With<MainMenuCamera>>,
 ) {
-    info!("got start game mode event, despawning main menu camera");
+    info!("Entered playing state, despawning main menu camera");
     commands.entity(*main_menu_camera).despawn();
 }
