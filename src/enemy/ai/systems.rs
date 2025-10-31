@@ -1,5 +1,5 @@
 use avian3d::prelude::*;
-use bevy::{color::palettes::tailwind::BLUE_400, prelude::*};
+use bevy::prelude::*;
 use bevy_landmass::{AgentDesiredVelocity3d, AgentState, AgentTarget3d};
 
 use crate::{
@@ -10,7 +10,6 @@ use crate::{
     },
     game_flow::states::InGameState,
     player::Player,
-    world::messages::SpawnDebugPointMessage,
 };
 
 /// This system iterates over each enemy, and with a raycast, determines whether the enemy can see
@@ -26,7 +25,6 @@ pub fn check_if_enemy_can_see_player(
     spatial_query: SpatialQuery,
     player_query: Single<(Entity, &Transform), With<Player>>,
     enemy_bullets: Query<Entity, With<EnemyBullet>>,
-    mut debug_point_writer: MessageWriter<SpawnDebugPointMessage>,
 ) {
     let (player_entity, player_transform) = *player_query;
     for (mut enemy, enemy_entity, mut enemy_transform) in enemy_query {
@@ -63,7 +61,7 @@ pub fn check_if_enemy_can_see_player(
             if enemy_can_see_player {
                 enemy_transform.look_at(player_transform.translation, Vec3::Y);
                 if enemy.state != EnemyState::AttackPlayer {
-                    info!(
+                    debug!(
                         "Enemy can see player, changing state to \
                          AttackPlayer. Previous enemy state: {:?}",
                         enemy.state
@@ -72,7 +70,7 @@ pub fn check_if_enemy_can_see_player(
                 };
             } else {
                 if enemy.state != EnemyState::ChasingPlayer {
-                    info!(
+                    debug!(
                         "Enemy can NOT see player, setting state to \
                          ChasingPlayer!"
                     );
@@ -88,7 +86,7 @@ pub fn check_if_enemy_can_see_player(
                         );
                         continue;
                     };
-                    info!("updating agent target to current playerr location");
+                    debug!("updating agent target to current player location");
 
                     // We use a raycast downwards, and use the hitpoint.
                     // This way, it wont break if the player is mid-air, such as during a jump.
@@ -113,9 +111,6 @@ pub fn check_if_enemy_can_see_player(
                     let hit_point = ray_cast_origin
                         + first_hit.distance * ray_cast_direction;
 
-                    debug_point_writer.write(SpawnDebugPointMessage::new(
-                        hit_point, BLUE_400,
-                    ));
                     *agent_target = AgentTarget3d::Point(hit_point);
                     enemy.state = EnemyState::ChasingPlayer;
                 }
@@ -141,25 +136,7 @@ pub fn check_if_enemy_reached_target(
         if *agent_state == AgentState::ReachedTarget
             && enemy.state != EnemyState::Idle
         {
-            info!("Enemy reached target, setting state to Idle");
             enemy.state = EnemyState::CheckIfPlayerSeeable;
-        }
-    }
-}
-
-/// Ensures that if our enemy is not in ChasingPlayer state the velocity will be 0.
-/// Useful so we dont have to set velocity to 0 in all systems where we mutate the enemy state
-pub fn set_zero_velocity_if_not_chasing(
-    enemy_query: Query<(&Enemy, &mut LinearVelocity)>,
-) {
-    for (enemy, mut velocity) in enemy_query {
-        if enemy.state != EnemyState::ChasingPlayer
-            && velocity.x != 0.0
-            && velocity.z != 0.0
-        {
-            info!("Enemy no longer chasing player, zeoring velocity!");
-            velocity.z = 0.0;
-            velocity.x = 0.0
         }
     }
 }

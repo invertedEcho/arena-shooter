@@ -64,12 +64,10 @@ pub fn enemy_shoot_player(
         enemy_query
     {
         if enemy.state != EnemyState::AttackPlayer {
-            info!("Enemy is not in AttackPlayer state");
             continue;
         }
 
         if let Some(_) = enemy_shoot_cooldown_timer {
-            info!("Enemy has EnemyShootCooldownTimer, not shooting");
             continue;
         }
 

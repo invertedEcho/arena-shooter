@@ -4,7 +4,7 @@ use crate::{
     enemy::{
         ai::systems::{
             check_if_enemy_can_see_player, check_if_enemy_reached_target,
-            handle_chasing_enemies, set_zero_velocity_if_not_chasing,
+            handle_chasing_enemies,
         },
         shooting::systems::enemy_shoot_player,
     },
@@ -36,7 +36,6 @@ impl Plugin for EnemyAiPlugin {
                 // the SpatialQueryFilter
                 check_if_enemy_can_see_player.after(enemy_shoot_player),
                 check_if_enemy_reached_target,
-                set_zero_velocity_if_not_chasing,
             )
                 .run_if(in_state(InGameState::Playing)),
         );
