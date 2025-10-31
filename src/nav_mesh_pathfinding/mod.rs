@@ -8,7 +8,7 @@ use landmass_rerecast::{
 };
 
 use crate::{
-    character_controller::MAX_SLOPE_ANGLE,
+    character_controller::{CHARACTER_HEIGHT, MAX_SLOPE_ANGLE},
     enemy::{Enemy, EnemyState, spawn::AgentEnemyEntityPointer},
     game_flow::states::GameLoadingState,
 };
@@ -44,7 +44,13 @@ fn generate_navmesh_when_map_colliders_ready(
     maybe_existing_nav_mesh: Option<Res<NavMeshHandle>>,
 ) {
     let nav_mesh_settings = NavmeshSettings {
-        agent_radius: ENEMY_AGENT_RADIUS,
+        agent_radius: 0.3,
+        // this is pretty important, so the agent doesnt try to climb some very high ledge
+        walkable_climb: 0.25,
+        walkable_slope_angle: MAX_SLOPE_ANGLE,
+        cell_size_fraction: 2.0,
+        cell_height_fraction: 4.0,
+        agent_height: CHARACTER_HEIGHT,
         ..default()
     };
 
@@ -59,16 +65,7 @@ fn generate_navmesh_when_map_colliders_ready(
             .id();
         commands.insert_resource(ArchipelagoRef(archipelago_id));
 
-        let navmesh = generator.generate(NavmeshSettings {
-            agent_radius: 0.3,
-            // this is pretty important, so the agent doesnt try to climb some very high ledge
-            walkable_climb: 0.25,
-            walkable_slope_angle: MAX_SLOPE_ANGLE,
-            cell_size_fraction: 2.0,
-            cell_height_fraction: 4.0,
-            agent_height: 2.0,
-            ..default()
-        });
+        let navmesh = generator.generate(nav_mesh_settings);
 
         commands.spawn(DetailNavmeshGizmo::new(&navmesh));
 
