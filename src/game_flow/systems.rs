@@ -9,7 +9,7 @@ use crate::{
     enemy::Enemy,
     game_flow::{
         AppState,
-        game_mode::StartGameModeMessage,
+        game_mode::{GameModeState, StartGameModeMessage},
         states::{GameLoadingState, InGameState, SelectedMapState},
     },
     nav_mesh_pathfinding::NavMeshHandle,
@@ -101,17 +101,15 @@ pub fn check_world_scene_loaded(
     selected_map_state: Res<State<SelectedMapState>>,
 ) {
     for asset_event in asset_event_message_reader.read() {
-        if let AssetEvent::LoadedWithDependencies { id } = asset_event {
-            if let Some(ref world_scene_handle) = maybe_world_scene_handle {
-                if *id == world_scene_handle.0.id() {
-                    info!("Map assets loaded!");
-                    next_game_loading_state
-                        .set(GameLoadingState::WorldLoadedWithDependencies);
-                    if *selected_map_state.get() == SelectedMapState::TinyTown {
-                        next_game_loading_state
-                            .set(GameLoadingState::CollidersReady);
-                    }
-                }
+        if let AssetEvent::LoadedWithDependencies { id } = asset_event
+            && let Some(ref world_scene_handle) = maybe_world_scene_handle
+            && *id == world_scene_handle.0.id()
+        {
+            info!("Map assets loaded!");
+            next_game_loading_state
+                .set(GameLoadingState::WorldLoadedWithDependencies);
+            if *selected_map_state.get() == SelectedMapState::TinyTown {
+                next_game_loading_state.set(GameLoadingState::CollidersReady);
             }
         }
     }
@@ -149,12 +147,14 @@ pub fn check_navmesh_ready(
 
 pub fn on_game_loading_state_nav_mesh_ready(
     mut start_game_mode_message_writer: MessageWriter<StartGameModeMessage>,
+    game_mode_state: Res<State<GameModeState>>,
 ) {
     info!(
         "Entered nav_mesh_ready loading state, everything is ready now. \
          Writing StartGameModeMessage"
     );
-    start_game_mode_message_writer.write(StartGameModeMessage);
+    start_game_mode_message_writer
+        .write(StartGameModeMessage(game_mode_state.get().clone()));
 }
 
 pub fn handle_playing_state_enter(

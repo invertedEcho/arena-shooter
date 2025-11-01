@@ -2,7 +2,7 @@ use avian_rerecast::AvianBackendPlugin;
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use bevy_landmass::prelude::*;
-use bevy_rerecast::{debug::DetailNavmeshGizmo, prelude::*};
+use bevy_rerecast::prelude::*;
 use landmass_rerecast::{
     Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
 };

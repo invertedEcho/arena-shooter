@@ -60,15 +60,19 @@ fn handle_common_ui_button_press(
     }
 }
 
+type AnyButtonHoveredQuery<'w, 's> = Query<
+    'w,
+    's,
+    (&'static Interaction, &'static Children),
+    (
+        Changed<Interaction>,
+        With<Button>,
+        Without<MapSelectionButton>,
+    ),
+>;
+
 fn handle_any_button_hover(
-    query: Query<
-        (&Interaction, &Children),
-        (
-            Changed<Interaction>,
-            With<Button>,
-            Without<MapSelectionButton>,
-        ),
-    >,
+    query: AnyButtonHoveredQuery,
     mut text_color_query: Query<&mut TextColor>,
 ) {
     for (interaction, children) in query {

@@ -13,16 +13,16 @@ use crate::{
 
 mod systems;
 
-/// Enemy AI:
-/// 1. Enemy gets spawned (State idle)
-/// 2. Check with raycast whether player can be seen
-/// If yes: (Set state to AttackPlayer)
-///     Shoot the player
-/// Else: (Set state to ChasingPlayer)
-///     Get the current location of the player
-///     Go to it via agent from landmass
-///     When target reached, set EnemyState::CheckIfPlayerSeeable
-/// Repeat at step 2
+// Enemy AI:
+// 1. Enemy gets spawned (State idle)
+// 2. Check with raycast whether player can be seen
+// If yes: (Set state to AttackPlayer)
+//     Shoot the player
+// Else: (Set state to ChasingPlayer)
+//     Get the current location of the player
+//     Go to it via agent from landmass
+//     When target reached, set EnemyState::CheckIfPlayerSeeable
+// Repeat at step 2
 
 pub struct EnemyAiPlugin;
 

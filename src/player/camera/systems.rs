@@ -141,18 +141,24 @@ pub fn update_yaw_pitch_on_mouse_motion(
     }
 }
 
+// 'w -> the world borrow lifetime, e.g. how long this query can read/write world data
+// 'a -> the system lifetime, e.g. how long this query is valid inside a system function
+type AnyCamEntityQuery<'w, 's> = Query<
+    'w,
+    's,
+    Entity,
+    Or<(
+        With<ViewModelCamera>,
+        With<WorldModelCamera>,
+        With<PlayerWeaponModel>,
+    )>,
+>;
+
 pub fn toggle_freecam(
     mut player_query: Single<(Entity, &Transform, &mut Player)>,
     mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    player_camera_entities_query: Query<
-        Entity,
-        Or<(
-            With<ViewModelCamera>,
-            With<WorldModelCamera>,
-            With<PlayerWeaponModel>,
-        )>,
-    >,
+    player_camera_entities_query: AnyCamEntityQuery,
     free_cam_entity_query: Query<Entity, With<FreeCam>>,
     mut spawn_player_cameras_message_writer: MessageWriter<
         SpawnPlayerCamerasMessage,

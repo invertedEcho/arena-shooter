@@ -8,17 +8,8 @@ impl Plugin for GameScorePlugin {
     }
 }
 
-#[derive(Resource)]
+#[derive(Default, Resource)]
 pub struct GameScore {
     pub player: u64,
     pub enemy: u64,
-}
-
-impl Default for GameScore {
-    fn default() -> Self {
-        GameScore {
-            player: 0,
-            enemy: 0,
-        }
-    }
 }

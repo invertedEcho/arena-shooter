@@ -126,12 +126,16 @@ fn setup_arm_animation(
     }
 }
 
+type AddedAnimationPlayeryQuery<'w, 's> = Query<
+    'w,
+    's,
+    (Entity, &'static Name),
+    (Added<AnimationPlayer>, With<Name>),
+>;
+
 pub fn link_player_animation(
     mut commands: Commands,
-    animation_player_entities: Query<
-        (Entity, &Name),
-        (Added<AnimationPlayer>, With<Name>),
-    >,
+    animation_player_entities: AddedAnimationPlayeryQuery,
     player: Single<Entity, With<Player>>,
     child_of: Query<&ChildOf>,
 ) {

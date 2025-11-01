@@ -11,8 +11,7 @@ use crate::{
         states::{InGameState, MainMenuState},
     },
     player::{
-        camera::messages::SpawnPlayerCamerasMessage,
-        spawn::{PlayerSpawnMessage, components::PlayerSpawnLocation},
+        camera::messages::SpawnPlayerCamerasMessage, spawn::SpawnPlayerMessage,
     },
 };
 
@@ -43,7 +42,7 @@ pub enum GameModeState {
 }
 
 #[derive(Message)]
-pub struct StartGameModeMessage;
+pub struct StartGameModeMessage(pub GameModeState);
 
 // TODO:
 // how do we store data about current game state, but mode depending?
@@ -61,16 +60,14 @@ fn handle_start_game_mode_event(
     mut next_app_state: ResMut<NextState<AppState>>,
     mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
-    player_spawn_location: Query<&Transform, With<PlayerSpawnLocation>>,
-    mut spawn_player_message_writer: MessageWriter<PlayerSpawnMessage>,
+    mut spawn_player_message_writer: MessageWriter<SpawnPlayerMessage>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
     mut spawn_player_cameras_message_writer: MessageWriter<
         SpawnPlayerCamerasMessage,
     >,
-    current_game_mode: Res<State<GameModeState>>,
 ) {
-    for _ in message_reader.read() {
+    for start_game_mode_message in message_reader.read() {
         info!(
             "Got start game mode message, updating states to reflect changes \
              and spawning enemies and players."
@@ -79,7 +76,7 @@ fn handle_start_game_mode_event(
         next_main_menu_state.set(MainMenuState::None);
         next_in_game_state.set(InGameState::Playing);
 
-        match *current_game_mode.get() {
+        match start_game_mode_message.0 {
             GameModeState::Waves => {
                 let enemy_count = get_enemy_count_per_wave(1);
                 next_game_state_wave.set(GameStateWave {
@@ -98,26 +95,15 @@ fn handle_start_game_mode_event(
             }
         }
 
-        let player_spawn_location = match player_spawn_location.single() {
-            Ok(res) => *res,
-            Err(_) => {
-                error!(
-                    "Selected map does not contain a single \
-                     PlayerSpawnLocation, using 0,0,0 instead"
-                );
-                Transform::from_xyz(0.0, 0.0, 0.0)
-            }
-        };
-
-        spawn_player_message_writer.write(PlayerSpawnMessage {
-            spawn_location: player_spawn_location.translation,
-        });
+        spawn_player_message_writer.write(SpawnPlayerMessage);
         spawn_player_cameras_message_writer.write(SpawnPlayerCamerasMessage);
     }
 }
 
+// TODO: spawn enemies that make the player take more damage
+// or have smarter ai
 pub fn get_enemy_count_per_wave(wave: usize) -> usize {
-    return match wave {
+    match wave {
         1 => 3,
         2 => 4,
         3 => 6,
@@ -125,9 +111,7 @@ pub fn get_enemy_count_per_wave(wave: usize) -> usize {
         5 => 10,
         6 => 12,
         _ => 14,
-    };
-    // TODO: spawn enemies that make the player take more damage
-    // or have smarter ai
+    }
 }
 
 fn handle_game_state_wave_changed(
@@ -135,25 +119,25 @@ fn handle_game_state_wave_changed(
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
 ) {
-    if game_state_wave.is_changed() && !game_state_wave.is_changed() {
-        if game_state_wave.enemies_left_from_current_wave == 0 {
-            info!(
-                "no enemies left from current, spawning new enemies and \
-                 increasing current_wave"
-            );
-            let new_wave = game_state_wave.current_wave + 1;
-            let new_enemy_count = get_enemy_count_per_wave(new_wave);
+    let game_state_wave_changed = game_state_wave.is_changed();
+    let no_enemies_left = game_state_wave.enemies_left_from_current_wave == 0;
+    if game_state_wave_changed && no_enemies_left {
+        info!(
+            "no enemies left from current, spawning new enemies and \
+             increasing current_wave"
+        );
+        let new_wave = game_state_wave.current_wave + 1;
+        let new_enemy_count = get_enemy_count_per_wave(new_wave);
 
-            next_game_state_wave.set(GameStateWave {
-                current_wave: new_wave,
-                enemies_left_from_current_wave: new_enemy_count,
-                enemies_killed: game_state_wave.enemies_killed,
-            });
-            spawn_enemies_message_writer.write(SpawnEnemiesMessage {
-                enemy_count: new_enemy_count,
-                spawn_strategy: EnemySpawnStrategy::RandomSelection,
-            });
-        }
+        next_game_state_wave.set(GameStateWave {
+            current_wave: new_wave,
+            enemies_left_from_current_wave: new_enemy_count,
+            enemies_killed: game_state_wave.enemies_killed,
+        });
+        spawn_enemies_message_writer.write(SpawnEnemiesMessage {
+            enemy_count: new_enemy_count,
+            spawn_strategy: EnemySpawnStrategy::RandomSelection,
+        });
     }
 }
 

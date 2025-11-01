@@ -45,22 +45,15 @@ pub fn setup_player_weapon(
     }
 }
 
-pub fn player_shooting(
-    asset_server: Res<AssetServer>,
+pub fn handle_mouse_left_click_shooting(
     mut commands: Commands,
     mouse_input: Res<ButtonInput<MouseButton>>,
-    world_model_camera_global_transform: Single<
-        &GlobalTransform,
-        With<WorldModelCamera>,
-    >,
     player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
     mut player_weapon: Single<&mut PlayerWeapon>,
     mut player_shot_messsage_writer: MessageWriter<PlayerWeaponFiredMessage>,
     mut play_arm_with_weapon_animation_message_writer: MessageWriter<
         PlayArmWithWeaponAnimationMessage,
     >,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     if !mouse_input.pressed(MouseButton::Left) {
         return;
@@ -94,49 +87,6 @@ pub fn player_shooting(
         },
     );
 
-    let shoot_sound = asset_server.load(
-        "sfx/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 \
-         Single MP3.mp3",
-    );
-
-    commands.spawn((AudioPlayer::new(shoot_sound), PlaybackSettings::ONCE));
-
-    let local_bullet_velocity = Vec3 {
-        z: BULLET_VELOCITY.neg(),
-        x: 0.0,
-        y: 0.0,
-    };
-    let world_bullet_velocity =
-        world_model_camera_global_transform.rotation() * local_bullet_velocity;
-
-    let player_camera_global_transform_translation =
-        world_model_camera_global_transform.translation();
-
-    commands.spawn((
-        PlayerBullet { damage: 15.0 },
-        Transform {
-            translation: Vec3 {
-                x: player_camera_global_transform_translation.x,
-                y: player_camera_global_transform_translation.y,
-                z: player_camera_global_transform_translation.z,
-            },
-            ..default()
-        },
-        Collider::cuboid(0.1, 0.1, 0.1),
-        Sensor,
-        LinearVelocity(world_bullet_velocity),
-        RigidBody::Kinematic,
-        DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
-        CollisionEventsEnabled,
-        Mesh3d(meshes.add(Cuboid::new(0.1, 0.1, 0.1))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: WHITE.into(),
-            ..default()
-        })),
-        // bullets are spawned at center of player camera
-        DebugRender::none(),
-    ));
-
     player_shot_messsage_writer.write(PlayerWeaponFiredMessage);
 }
 
@@ -156,23 +106,18 @@ pub fn tick_player_weapon_shoot_cooldown_timer(
 pub fn detect_enemy_bullet_collision_with_player(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    enemy_bullet_query: Query<(Entity, &EnemyBullet)>,
+    enemy_bullet_query: Query<Entity, With<EnemyBullet>>,
     player_query: Query<(&mut Player, &CollidingEntities)>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
     mut game_score: ResMut<GameScore>,
-    player_transform: Single<&Transform, With<Player>>,
-    enemy_transforms: Query<&Transform, (With<Enemy>, Without<Player>)>,
 ) {
     for (mut player, colliding_entities) in player_query {
-        let enemy_bullets_colliding_with_player = enemy_bullet_query
-            .iter()
-            .filter(|(enemy_bullet_entity, _)| {
+        let enemy_bullets_colliding_with_player =
+            enemy_bullet_query.iter().filter(|enemy_bullet_entity| {
                 colliding_entities.contains(enemy_bullet_entity)
             });
 
-        for (enemy_bullet_entity, enemy_bullet) in
-            enemy_bullets_colliding_with_player
-        {
+        for enemy_bullet_entity in enemy_bullets_colliding_with_player {
             commands.entity(enemy_bullet_entity).despawn();
 
             // TODO: this should happen in player/hud/systems
@@ -186,39 +131,6 @@ pub fn detect_enemy_bullet_collision_with_player(
                 BloodScreenEffect::default(),
                 DespawnOnExit(InGameState::Playing),
             ));
-
-            // let Ok(transform_of_enemy) =
-            //     enemy_transforms.get(enemy_bullet.origin_enemy)
-            // else {
-            //     return;
-            // };
-            // let hit_direction = (transform_of_enemy.translation
-            //     - player_transform.translation)
-            //     .normalize();
-            // let local_direction =
-            //     player_transform.rotation.conjugate() * hit_direction;
-            // let flat_direction =
-            //     Vec2::new(local_direction.x, local_direction.z);
-            // let angle_radians = flat_direction.x.atan2(flat_direction.y);
-            // commands
-            //     .spawn(Node {
-            //         width: Val::Percent(100.0),
-            //         height: Val::Percent(100.0),
-            //         justify_content: JustifyContent::Center,
-            //         align_items: AlignItems::Center,
-            //         ..default()
-            //     })
-            //     .with_child((
-            //         ImageNode {
-            //             image: asset_server.load("hud/damage_indicator.png"),
-            //             ..default()
-            //         },
-            //         UiTransform {
-            //             rotation: Rot2::radians(angle_radians),
-            //             ..default()
-            //         },
-            //         BloodScreenEffect::default(),
-            //     ));
 
             player.health -= 10.0;
             if player.health <= 0.0 {
@@ -337,6 +249,72 @@ pub fn handle_reload_timer(
     }
 }
 
+pub fn spawn_player_bullet(
+    mut commands: Commands,
+    mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
+    world_model_camera_global_transform: Single<
+        &GlobalTransform,
+        With<WorldModelCamera>,
+    >,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for _ in message_reader.read() {
+        let local_bullet_velocity = Vec3 {
+            z: BULLET_VELOCITY.neg(),
+            x: 0.0,
+            y: 0.0,
+        };
+        let world_bullet_velocity = world_model_camera_global_transform
+            .rotation()
+            * local_bullet_velocity;
+
+        let player_camera_global_transform_translation =
+            world_model_camera_global_transform.translation();
+
+        let origin = Vec3 {
+            x: player_camera_global_transform_translation.x,
+            y: player_camera_global_transform_translation.y,
+            z: player_camera_global_transform_translation.z,
+        };
+        commands.spawn((
+            PlayerBullet { damage: 15.0 },
+            Transform {
+                translation: origin,
+                ..default()
+            },
+            Collider::cuboid(0.1, 0.1, 0.1),
+            Sensor,
+            LinearVelocity(world_bullet_velocity),
+            RigidBody::Kinematic,
+            DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
+            CollisionEventsEnabled,
+            Mesh3d(meshes.add(Cuboid::new(0.1, 0.1, 0.1))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: WHITE.into(),
+                ..default()
+            })),
+            // bullets are spawned at center of player camera
+            DebugRender::none(),
+        ));
+    }
+}
+
+pub fn play_shooting_sound_on_player_weapon_fired(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
+) {
+    for _ in message_reader.read() {
+        let shoot_sound = asset_server.load(
+            "sfx/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 \
+             Single MP3.mp3",
+        );
+
+        commands.spawn((AudioPlayer::new(shoot_sound), PlaybackSettings::ONCE));
+    }
+}
+
 pub fn spawn_muzzle_flash(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
@@ -365,7 +343,6 @@ pub fn spawn_muzzle_flash(
             Mesh3d(meshes.add(Plane3d {
                 half_size: Vec2::splat(0.1),
                 normal: Dir3::Z,
-                ..default()
             })),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color_texture: Some(
@@ -382,6 +359,16 @@ pub fn spawn_muzzle_flash(
     }
 }
 
+type WorldModelCameraQuery<'w, 's> = Single<
+    'w,
+    's,
+    (Entity, &'static GlobalTransform),
+    (With<WorldModelCamera>, Without<Player>),
+>;
+
+type AnyBulletQuery<'w, 's> =
+    Query<'w, 's, Entity, Or<(With<PlayerBullet>, With<EnemyBullet>)>>;
+
 /// cast a ray in direction player is shooting, to check if there is a wall or ground, and get
 /// accurate location to know where to spawn the bullet impact effect
 /// just checking for collision events doesnt work, as we would only get the center transform of the
@@ -393,14 +380,11 @@ pub fn check_bullet_collision_for_impact_particle(
         SpawnBulletImpactEffectMessage,
     >,
     enemy_entities: Query<Entity, With<Enemy>>,
-    player_camera_query: Single<
-        (Entity, &GlobalTransform),
-        (With<WorldModelCamera>, Without<Player>),
-    >,
+    player_camera_query: WorldModelCameraQuery,
     mut player_shot_event_reader: MessageReader<PlayerWeaponFiredMessage>,
     // maybe only include player bullets. would be cool to be able to shoot enemy bullets and have
     // a special effect or something
-    bullet_entities: Query<Entity, Or<(With<PlayerBullet>, With<EnemyBullet>)>>,
+    bullet_entities: AnyBulletQuery,
 ) {
     for _ in player_shot_event_reader.read() {
         let (player_camera_entity, player_camera_global_transform) =

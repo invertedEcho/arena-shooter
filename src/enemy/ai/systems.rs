@@ -68,52 +68,49 @@ pub fn check_if_enemy_can_see_player(
                     );
                     enemy.state = EnemyState::AttackPlayer;
                 };
-            } else {
-                if enemy.state != EnemyState::ChasingPlayer {
-                    debug!(
-                        "Enemy can NOT see player, setting state to \
-                         ChasingPlayer!"
+            } else if enemy.state != EnemyState::ChasingPlayer {
+                debug!(
+                    "Enemy can NOT see player, setting state to ChasingPlayer!"
+                );
+                let Some((_, mut agent_target)) = enemy_agents_query
+                    .iter_mut()
+                    .find(|(pointer, _)| pointer.0 == enemy_entity)
+                else {
+                    warn!(
+                        "Can not update enemy agent, unable to find Enemy \
+                         Agent for current entity {} via \
+                         AgentEnemyEntityPointer",
+                        enemy_entity
                     );
-                    let Some((_, mut agent_target)) = enemy_agents_query
-                        .iter_mut()
-                        .find(|(pointer, _)| pointer.0 == enemy_entity)
-                    else {
-                        warn!(
-                            "Can not update enemy agent, unable to find Enemy \
-                             Agent for current entity {} via \
-                             AgentEnemyEntityPointer",
-                            enemy_entity
-                        );
-                        continue;
-                    };
-                    debug!("updating agent target to current player location");
+                    continue;
+                };
+                debug!("updating agent target to current player location");
 
-                    // We use a raycast downwards, and use the hitpoint.
-                    // This way, it wont break if the player is mid-air, such as during a jump.
-                    let ray_cast_origin = player_transform.translation;
-                    let ray_cast_direction = Dir3::NEG_Y;
+                // We use a raycast downwards, and use the hitpoint.
+                // This way, it wont break if the player is mid-air, such as during a jump.
+                let ray_cast_origin = player_transform.translation;
+                let ray_cast_direction = Dir3::NEG_Y;
 
-                    let Some(first_hit) = spatial_query.cast_ray(
-                        ray_cast_origin,
-                        ray_cast_direction,
-                        10.0,
-                        false,
-                        &SpatialQueryFilter::default()
-                            .with_excluded_entities([player_entity]),
-                    ) else {
-                        error!(
-                            "Could not get a valid new agent target point for \
-                             chasing enemy"
-                        );
-                        continue;
-                    };
+                let Some(first_hit) = spatial_query.cast_ray(
+                    ray_cast_origin,
+                    ray_cast_direction,
+                    10.0,
+                    false,
+                    &SpatialQueryFilter::default()
+                        .with_excluded_entities([player_entity]),
+                ) else {
+                    error!(
+                        "Could not get a valid new agent target point for \
+                         chasing enemy"
+                    );
+                    continue;
+                };
 
-                    let hit_point = ray_cast_origin
-                        + first_hit.distance * ray_cast_direction;
+                let hit_point =
+                    ray_cast_origin + first_hit.distance * ray_cast_direction;
 
-                    *agent_target = AgentTarget3d::Point(hit_point);
-                    enemy.state = EnemyState::ChasingPlayer;
-                }
+                *agent_target = AgentTarget3d::Point(hit_point);
+                enemy.state = EnemyState::ChasingPlayer;
             }
         }
     }

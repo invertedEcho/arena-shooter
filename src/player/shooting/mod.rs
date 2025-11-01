@@ -8,9 +8,10 @@ use crate::{
         systems::{
             check_bullet_collision_for_impact_particle,
             detect_enemy_bullet_collision_with_player,
-            handle_blood_screen_effect, handle_player_death_event,
-            handle_reload_timer, player_shooting, reload_player_weapon,
-            setup_player_weapon, spawn_muzzle_flash,
+            handle_blood_screen_effect, handle_mouse_left_click_shooting,
+            handle_player_death_event, handle_reload_timer,
+            play_shooting_sound_on_player_weapon_fired, reload_player_weapon,
+            setup_player_weapon, spawn_muzzle_flash, spawn_player_bullet,
             tick_player_weapon_shoot_cooldown_timer,
         },
     },
@@ -31,7 +32,7 @@ impl Plugin for PlayerShootingPlugin {
             .add_systems(
                 Update,
                 (
-                    player_shooting,
+                    handle_mouse_left_click_shooting,
                     tick_player_weapon_shoot_cooldown_timer,
                     handle_blood_screen_effect,
                     reload_player_weapon,
@@ -41,6 +42,8 @@ impl Plugin for PlayerShootingPlugin {
                     handle_reload_timer,
                     detect_enemy_bullet_collision_with_player,
                     handle_player_death_event,
+                    spawn_player_bullet,
+                    play_shooting_sound_on_player_weapon_fired,
                 )
                     .run_if(in_state(InGameState::Playing)),
             );

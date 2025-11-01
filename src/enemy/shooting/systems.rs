@@ -67,7 +67,7 @@ pub fn enemy_shoot_player(
             continue;
         }
 
-        if let Some(_) = enemy_shoot_cooldown_timer {
+        if enemy_shoot_cooldown_timer.is_some() {
             continue;
         }
 
@@ -93,9 +93,7 @@ pub fn enemy_shoot_player(
             LinearVelocity(world_bullet_velocity),
             RigidBody::Kinematic,
             DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
-            EnemyBullet {
-                origin_enemy: enemy_entity,
-            },
+            EnemyBullet,
             CollidingEntities::default(),
         ));
 

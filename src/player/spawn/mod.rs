@@ -12,28 +12,27 @@ pub struct PlayerSpawnPlugin;
 
 impl Plugin for PlayerSpawnPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<PlayerSpawnMessage>()
+        app.add_message::<SpawnPlayerMessage>()
             .register_type::<PlayerSpawnLocation>()
             .add_systems(Update, handle_player_spawn_event);
     }
 }
 
 #[derive(Message)]
-pub struct PlayerSpawnMessage {
-    pub spawn_location: Vec3,
-}
+pub struct SpawnPlayerMessage;
 
 fn handle_player_spawn_event(
     mut commands: Commands,
-    mut player_spawn_message_reader: MessageReader<PlayerSpawnMessage>,
+    mut player_spawn_message_reader: MessageReader<SpawnPlayerMessage>,
+    player_spawn_location: Single<&Transform, With<PlayerSpawnLocation>>,
 ) {
-    for event in player_spawn_message_reader.read() {
+    for _ in player_spawn_message_reader.read() {
         info!("read player spawn event, spawning player");
 
         commands.spawn((
             Name::new("Player"),
             Player::default(),
-            Transform::from_translation(event.spawn_location),
+            Transform::from_translation(player_spawn_location.translation),
             Visibility::Visible,
             DebugRender::collider(Color::WHITE),
             CharacterControllerBundle::default(),

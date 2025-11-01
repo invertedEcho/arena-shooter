@@ -127,7 +127,7 @@ fn spawn_map_selection(
                         ..default()
                     },
                     TextColor(get_text_button_color_for_map_selection_button(
-                        &selected_map_state,
+                        selected_map_state,
                         MapSelectionButton(SelectedMapState::TinyTown),
                     )),
                 ));
@@ -146,7 +146,7 @@ fn spawn_map_selection(
                         ..default()
                     },
                     TextColor(get_text_button_color_for_map_selection_button(
-                        &selected_map_state,
+                        selected_map_state,
                         MapSelectionButton(SelectedMapState::MediumPlastic),
                     )),
                 ));

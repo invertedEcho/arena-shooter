@@ -215,7 +215,7 @@ pub fn update_on_ground(
     >,
 ) {
     for (hits, mut grounded, mut velocity) in &mut query {
-        let on_ground = hits.0.len() > 0;
+        let on_ground = !hits.0.is_empty();
 
         if grounded.0 != on_ground {
             grounded.0 = on_ground;

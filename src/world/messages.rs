@@ -7,7 +7,7 @@ pub struct SpawnDebugPointMessage {
 }
 
 impl SpawnDebugPointMessage {
-    pub fn new<T: Into<Vec3>, U: Into<Color>>(point: T, color: U) -> Self {
+    pub fn _new<T: Into<Vec3>, U: Into<Color>>(point: T, color: U) -> Self {
         Self {
             point: point.into(),
             color: color.into(),
