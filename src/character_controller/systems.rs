@@ -54,10 +54,10 @@ pub fn handle_keyboard_input_for_player(
         if movement_state.0 != MovementStateEnum::Running {
             movement_state.0 = MovementStateEnum::Running;
         }
-    } else if speed == WALK_VELOCITY {
-        if movement_state.0 != MovementStateEnum::Walking {
-            movement_state.0 = MovementStateEnum::Walking;
-        }
+    } else if speed == WALK_VELOCITY
+        && movement_state.0 != MovementStateEnum::Walking
+    {
+        movement_state.0 = MovementStateEnum::Walking;
     }
 
     if local_velocity == Vec3::ZERO {

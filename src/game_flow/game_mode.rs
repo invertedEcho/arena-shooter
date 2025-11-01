@@ -52,6 +52,7 @@ pub struct StartGameModeMessage;
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 pub struct GameStateWave {
     pub current_wave: usize,
+    pub enemies_killed: usize,
     pub enemies_left_from_current_wave: usize,
 }
 
@@ -84,6 +85,7 @@ fn handle_start_game_mode_event(
                 next_game_state_wave.set(GameStateWave {
                     current_wave: 1,
                     enemies_left_from_current_wave: enemy_count,
+                    enemies_killed: 0,
                 });
                 spawn_enemies_message_writer.write(SpawnEnemiesMessage {
                     enemy_count,
@@ -145,6 +147,7 @@ fn handle_game_state_wave_changed(
             next_game_state_wave.set(GameStateWave {
                 current_wave: new_wave,
                 enemies_left_from_current_wave: new_enemy_count,
+                enemies_killed: game_state_wave.enemies_killed,
             });
             spawn_enemies_message_writer.write(SpawnEnemiesMessage {
                 enemy_count: new_enemy_count,
@@ -171,6 +174,7 @@ fn handle_enemy_killed_event(
                 next_game_state_wave.set(GameStateWave {
                     current_wave: game_state_wave.current_wave,
                     enemies_left_from_current_wave: new_enemies_left_count,
+                    enemies_killed: game_state_wave.enemies_killed + 1,
                 });
                 if new_enemies_left_count == 0 {
                     info!("no enemies left, spawning new wave!");
@@ -179,6 +183,7 @@ fn handle_enemy_killed_event(
                     next_game_state_wave.set(GameStateWave {
                         current_wave: new_wave,
                         enemies_left_from_current_wave: enemy_count,
+                        enemies_killed: game_state_wave.enemies_killed + 1,
                     });
                     spawn_enemies_event_writer.write(SpawnEnemiesMessage {
                         enemy_count,
