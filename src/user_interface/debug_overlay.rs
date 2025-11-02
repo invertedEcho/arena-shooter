@@ -143,11 +143,16 @@ fn update_current_main_menu_state(
         &mut Text,
         With<CurrentMainMenuStateText>,
     >,
-    main_menu_state: Res<State<MainMenuState>>,
+    main_menu_state: Option<Res<State<MainMenuState>>>,
 ) {
-    if main_menu_state.is_changed() {
+    if let Some(main_menu_state) = main_menu_state {
+        if main_menu_state.is_changed() {
+            **current_main_menu_state_text =
+                Text::new(format!("{:?}", *main_menu_state.get()));
+        }
+    } else {
         **current_main_menu_state_text =
-            Text::new(format!("{:?}", *main_menu_state.get()));
+            Text::new("MainMenuState doesn't exist");
     }
 }
 
@@ -156,11 +161,15 @@ fn update_current_in_game_state_text(
         &mut Text,
         With<CurrentInGameStateText>,
     >,
-    in_game_state: Res<State<InGameState>>,
+    in_game_state: Option<Res<State<InGameState>>>,
 ) {
-    if in_game_state.is_changed() {
-        **current_in_game_state_text =
-            Text::new(format!("{:?}", *in_game_state.get()));
+    if let Some(in_game_state) = in_game_state {
+        if in_game_state.is_changed() {
+            **current_in_game_state_text =
+                Text::new(format!("{:?}", *in_game_state.get()));
+        }
+    } else {
+        **current_in_game_state_text = Text::new("InGameState doesn't exist");
     }
 }
 

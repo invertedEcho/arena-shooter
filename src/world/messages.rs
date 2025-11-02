@@ -14,6 +14,3 @@ impl SpawnDebugPointMessage {
         }
     }
 }
-
-#[derive(Message)]
-pub struct SpawnMapMessage;

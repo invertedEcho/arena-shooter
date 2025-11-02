@@ -4,10 +4,7 @@ use bevy::{
 };
 
 use crate::{
-    game_flow::{
-        game_mode::GameModeState,
-        states::{AppState, InGameState, MainMenuState},
-    },
+    game_flow::states::{AppState, MainMenuState},
     user_interface::map_selection::MapSelectionButton,
 };
 
@@ -36,8 +33,6 @@ fn handle_common_ui_button_press(
     mut app_exit_message_writer: MessageWriter<AppExit>,
     mut next_app_state: ResMut<NextState<AppState>>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
-    mut next_in_game_stte: ResMut<NextState<InGameState>>,
-    mut next_game_mode_state: ResMut<NextState<GameModeState>>,
 ) {
     for (interaction, common_ui_button) in query {
         let Interaction::Pressed = interaction else {
@@ -50,8 +45,6 @@ fn handle_common_ui_button_press(
             CommonUiButtonType::BackToMainMenu => {
                 next_app_state.set(AppState::MainMenu);
                 next_main_menu_state.set(MainMenuState::Root);
-                next_in_game_stte.set(InGameState::None);
-                next_game_mode_state.set(GameModeState::None);
             }
             CommonUiButtonType::ToGameModeSelection => {
                 next_main_menu_state.set(MainMenuState::GameModeSelection);

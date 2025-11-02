@@ -6,105 +6,73 @@ use crate::{
         shooting::messages::EnemyKilledMessage,
         spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
     },
-    game_flow::{
-        AppState,
-        score::GameScore,
-        states::{InGameState, MainMenuState},
-    },
-    player::{
-        Player, camera::messages::SpawnPlayerCamerasMessage,
-        spawn::SpawnPlayerMessage,
-    },
+    game_flow::score::GameScore,
+    player::{Player, spawn::SpawnPlayerMessage},
 };
 
 pub struct GameModePlugin;
 
 impl Plugin for GameModePlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<StartGameModeMessage>()
+        app.add_message::<StartWaveGameModeMessage>()
             .add_systems(
                 Update,
                 (
-                    handle_start_game_mode_event,
+                    handle_game_mode_wave_start_message,
                     handle_game_state_wave_changed,
                     handle_enemy_killed_event,
                 ),
             )
             .init_state::<GameModeState>()
-            .init_state::<GameStateWave>();
+            .add_sub_state::<GameStateWave>();
     }
 }
+
+#[derive(Message)]
+pub struct StartWaveGameModeMessage;
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 pub enum GameModeState {
     #[default]
-    None,
     FreePlay,
     Waves,
 }
 
-#[derive(Message)]
-pub struct StartGameModeMessage(pub GameModeState);
-
-// TODO:
-// how do we store data about current game state, but mode depending?
-// have a state for each possible game mode? feels bad
-// generalize it? how?
-#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
+#[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
+#[source(GameModeState = GameModeState::Waves)]
 pub struct GameStateWave {
     pub current_wave: usize,
     pub enemies_killed: usize,
     pub enemies_left_from_current_wave: usize,
 }
 
-fn handle_start_game_mode_event(
+fn handle_game_mode_wave_start_message(
     mut commands: Commands,
-    mut message_reader: MessageReader<StartGameModeMessage>,
-    mut next_app_state: ResMut<NextState<AppState>>,
+    mut message_reader: MessageReader<StartWaveGameModeMessage>,
     mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
-    mut spawn_player_message_writer: MessageWriter<SpawnPlayerMessage>,
-    mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
-    mut next_in_game_state: ResMut<NextState<InGameState>>,
-    mut spawn_player_cameras_message_writer: MessageWriter<
-        SpawnPlayerCamerasMessage,
-    >,
     entities_to_despawn: Query<Entity, Or<(With<Player>, With<Enemy>)>>,
 ) {
-    for start_game_mode_message in message_reader.read() {
+    for _ in message_reader.read() {
         info!(
-            "Got start game mode message, updating states to reflect changes \
-             and spawning enemies and players."
+            "Got game mode wave start message, updating states to reflect \
+             changes and spawning enemies and players."
         );
         for entity in entities_to_despawn {
             info!("Despawning entity {} in case this is a restart", entity);
             commands.entity(entity).despawn();
         }
-        next_app_state.set(AppState::InGame);
-        next_main_menu_state.set(MainMenuState::None);
-        next_in_game_state.set(InGameState::Playing);
 
-        match start_game_mode_message.0 {
-            GameModeState::Waves => {
-                let enemy_count = get_enemy_count_per_wave(1);
-                next_game_state_wave.set(GameStateWave {
-                    current_wave: 1,
-                    enemies_left_from_current_wave: enemy_count,
-                    enemies_killed: 0,
-                });
-                spawn_enemies_message_writer.write(SpawnEnemiesMessage {
-                    enemy_count,
-                    spawn_strategy: EnemySpawnStrategy::RandomSelection,
-                });
-            }
-            GameModeState::FreePlay => {}
-            GameModeState::None => {
-                continue;
-            }
-        }
-
-        spawn_player_message_writer.write(SpawnPlayerMessage);
-        spawn_player_cameras_message_writer.write(SpawnPlayerCamerasMessage);
+        let enemy_count = get_enemy_count_per_wave(1);
+        next_game_state_wave.set(GameStateWave {
+            current_wave: 1,
+            enemies_left_from_current_wave: enemy_count,
+            enemies_killed: 0,
+        });
+        spawn_enemies_message_writer.write(SpawnEnemiesMessage {
+            enemy_count,
+            spawn_strategy: EnemySpawnStrategy::RandomSelection,
+        });
     }
 }
 
@@ -123,7 +91,7 @@ pub fn get_enemy_count_per_wave(wave: usize) -> usize {
 }
 
 fn handle_game_state_wave_changed(
-    game_state_wave: Res<State<GameStateWave>>,
+    game_state_wave: If<Res<State<GameStateWave>>>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
 ) {
@@ -131,8 +99,8 @@ fn handle_game_state_wave_changed(
     let no_enemies_left = game_state_wave.enemies_left_from_current_wave == 0;
     if game_state_wave_changed && no_enemies_left {
         info!(
-            "no enemies left from current, spawning new enemies and \
-             increasing current_wave"
+            "Game State wave changed and no enemies left from current, \
+             spawning new enemies and increasing current_wave"
         );
         let new_wave = game_state_wave.current_wave + 1;
         let new_enemy_count = get_enemy_count_per_wave(new_wave);
@@ -151,7 +119,7 @@ fn handle_game_state_wave_changed(
 
 fn handle_enemy_killed_event(
     current_game_mode: Res<State<GameModeState>>,
-    game_state_wave: Res<State<GameStateWave>>,
+    maybe_game_state_wave: Option<Res<State<GameStateWave>>>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     mut enemy_killed_message_reader: MessageReader<EnemyKilledMessage>,
     mut game_score: ResMut<GameScore>,
@@ -161,6 +129,14 @@ fn handle_enemy_killed_event(
         game_score.player += 1;
         match *current_game_mode.get() {
             GameModeState::Waves => {
+                let Some(ref game_state_wave) = maybe_game_state_wave else {
+                    warn!(
+                        "Enemy killed, current game mode is Waves, but \
+                         GameStateWave doesn't exist"
+                    );
+                    continue;
+                };
+
                 let new_enemies_left_count =
                     game_state_wave.enemies_left_from_current_wave - 1;
                 next_game_state_wave.set(GameStateWave {
@@ -183,7 +159,7 @@ fn handle_enemy_killed_event(
                     });
                 }
             }
-            GameModeState::FreePlay | GameModeState::None => {}
+            GameModeState::FreePlay => {}
         }
     }
 }

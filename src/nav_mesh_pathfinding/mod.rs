@@ -10,7 +10,7 @@ use landmass_rerecast::{
 use crate::{
     character_controller::{CHARACTER_HEIGHT, MAX_SLOPE_ANGLE},
     enemy::{Enemy, EnemyState, spawn::AgentEnemyEntityPointer},
-    game_flow::states::GameLoadingState,
+    game_flow::states::LoadingGameSubState,
 };
 
 pub const ENEMY_AGENT_RADIUS: f32 = 0.4;
@@ -25,7 +25,7 @@ impl Plugin for NavMeshPathfindingPlugin {
         app.add_plugins(LandmassRerecastPlugin::default());
         // app.add_plugins(Landmass3dDebugPlugin::default());
         app.add_systems(
-            OnEnter(GameLoadingState::CollidersReady),
+            OnEnter(LoadingGameSubState::CollidersReady),
             generate_navmesh_when_map_colliders_ready,
         );
         app.add_systems(Update, update_agent_velocity_from_physics_velocity);
