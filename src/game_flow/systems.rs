@@ -14,7 +14,7 @@ use crate::{
         },
     },
     nav_mesh_pathfinding::NavMeshHandle,
-    player::{Player, camera::components::FreeCam},
+    player::{Player, camera::components::FreeCam, spawn::SpawnPlayerMessage},
     user_interface::main_menu::MainMenuCamera,
     world::resources::WorldSceneHandle,
 };
@@ -160,10 +160,16 @@ pub fn on_game_loading_state_nav_mesh_ready(
     }
 }
 
-pub fn handle_playing_state_enter(
+pub fn on_exit_main_menu(
     mut commands: Commands,
     main_menu_camera: Single<Entity, With<MainMenuCamera>>,
 ) {
     info!("Entered playing state, despawning main menu camera");
     commands.entity(*main_menu_camera).despawn();
+}
+
+pub fn on_enter_app_state_in_game(
+    mut spawn_player_message_writer: MessageWriter<SpawnPlayerMessage>,
+) {
+    spawn_player_message_writer.write(SpawnPlayerMessage);
 }

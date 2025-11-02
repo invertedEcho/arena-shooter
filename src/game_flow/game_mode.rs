@@ -51,7 +51,6 @@ fn handle_game_mode_wave_start_message(
     mut message_reader: MessageReader<StartWaveGameModeMessage>,
     mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
-    mut spawn_player_message_writer: MessageWriter<SpawnPlayerMessage>,
     entities_to_despawn: Query<Entity, Or<(With<Player>, With<Enemy>)>>,
 ) {
     for _ in message_reader.read() {
@@ -74,7 +73,6 @@ fn handle_game_mode_wave_start_message(
             enemy_count,
             spawn_strategy: EnemySpawnStrategy::RandomSelection,
         });
-        spawn_player_message_writer.write(SpawnPlayerMessage);
     }
 }
 
