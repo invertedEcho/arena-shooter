@@ -1,9 +1,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::{game_mode::GameModeState, states::MainMenuState},
+    game_flow::{
+        game_mode::GameModeState,
+        states::{AppState, MainMenuState},
+    },
     user_interface::{DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH},
-    world::messages::SpawnMapMessage,
 };
 
 pub struct GameModeSelectionUIPlugin;
@@ -136,10 +138,8 @@ fn handle_game_mode_selection_button_press(
         Changed<Interaction>,
     >,
     mut next_game_mode_state: ResMut<NextState<GameModeState>>,
-    mut spawn_map_message_writer: MessageWriter<SpawnMapMessage>,
+    mut next_app_state: ResMut<NextState<AppState>>,
 ) {
-    // honestly i really have the feeling all this game mode logic can be simplified,
-    // like we should just watch the current game mode state annd update stuff when its changed
     for (interaction, game_mode_selection_button) in query {
         if let Interaction::Pressed = interaction {
             match game_mode_selection_button.0 {
@@ -149,9 +149,8 @@ fn handle_game_mode_selection_button_press(
                 GameModeState::FreePlay => {
                     next_game_mode_state.set(GameModeState::FreePlay);
                 }
-                GameModeState::None => {}
             }
-            spawn_map_message_writer.write(SpawnMapMessage);
+            next_app_state.set(AppState::LoadingGame);
         }
     }
 }

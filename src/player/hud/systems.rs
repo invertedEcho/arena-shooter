@@ -177,7 +177,7 @@ pub fn update_score_hud(
 pub fn spawn_wave_info_hud(mut commands: Commands) {
     commands
         .spawn((
-            DespawnOnExit(GameModeState::Waves),
+            DespawnOnExit(InGameState::Playing),
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),

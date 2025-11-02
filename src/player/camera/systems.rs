@@ -24,12 +24,9 @@ const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 pub fn setup_player_cameras(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    player_entity: Single<Entity, With<Player>>,
-    mut spawn_player_cameras_message_reader: MessageReader<
-        SpawnPlayerCamerasMessage,
-    >,
+    mut message_reader: MessageReader<SpawnPlayerCamerasMessage>,
 ) {
-    for _ in spawn_player_cameras_message_reader.read() {
+    for message in message_reader.read() {
         info!(
             "Received SpawnPlayerCamerasMessage, spawning weapon model and \
              player cameras"
@@ -38,8 +35,8 @@ pub fn setup_player_cameras(
         let weapon_model = asset_server
             .load(GltfAssetLabel::Scene(0).from_asset(PLAYER_ARM_WEAPON_PATH));
 
-        info!("inserting player cameras into entity {}", *player_entity);
-        commands.entity(*player_entity).with_children(|parent| {
+        info!("Inserting player cameras into player entity {}", message.0);
+        commands.entity(message.0).with_children(|parent| {
             parent.spawn((
                 WorldModelCamera,
                 Camera {
@@ -159,20 +156,22 @@ pub fn toggle_freecam(
     mut player_query: Single<(Entity, &Transform, &mut Player)>,
     mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    player_camera_entities_query: AnyCamEntityQuery,
+    camera_entities: AnyCamEntityQuery,
     free_cam_entity_query: Query<Entity, With<FreeCam>>,
     mut spawn_player_cameras_message_writer: MessageWriter<
         SpawnPlayerCamerasMessage,
     >,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyC) {
-        match player_query.2.camera_state {
+        let player_entity = player_query.0;
+        let player_transform = player_query.1;
+        let player = &mut player_query.2;
+        match player.camera_state {
             PlayerCameraState::Normal => {
-                player_query.2.camera_state = PlayerCameraState::FreeCam;
-                for player_camera_entity in player_camera_entities_query {
+                player.camera_state = PlayerCameraState::FreeCam;
+                for player_camera_entity in camera_entities {
                     commands.entity(player_camera_entity).despawn();
                 }
-                let player_transform = player_query.1;
                 commands.spawn((
                     Camera3d::default(),
                     Projection::from(PerspectiveProjection {
@@ -196,7 +195,7 @@ pub fn toggle_freecam(
                     commands.entity(free_cam_entity).despawn();
                 }
                 spawn_player_cameras_message_writer
-                    .write(SpawnPlayerCamerasMessage);
+                    .write(SpawnPlayerCamerasMessage(player_entity));
             }
         }
     }

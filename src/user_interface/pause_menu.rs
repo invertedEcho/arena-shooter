@@ -1,10 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::{
-        game_mode::GameModeState,
-        states::{AppState, InGameState, MainMenuState},
-    },
+    game_flow::states::{AppState, InGameState, MainMenuState},
     user_interface::{
         DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
         common::{CommonUiButton, CommonUiButtonType},
@@ -33,7 +30,6 @@ pub struct PauseMenuButton(PauseMenuButtonType);
 pub enum PauseMenuButtonType {
     Resume,
     ExitToMainMenu,
-    SettingsPauseMenu,
 }
 
 fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
@@ -100,20 +96,6 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 ));
             parent
                 .spawn((
-                    Node { ..default() },
-                    Button,
-                    PauseMenuButton(PauseMenuButtonType::SettingsPauseMenu),
-                ))
-                .with_child((
-                    Text::new("Settings"),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
-                        ..default()
-                    },
-                ));
-            parent
-                .spawn((
                     Node {
                         padding: UiRect {
                             top: Val::Px(16.0),
@@ -140,7 +122,6 @@ fn handle_pause_menu_button_pressed(
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
     mut next_app_state: ResMut<NextState<AppState>>,
-    mut next_game_mode_state: ResMut<NextState<GameModeState>>,
     query: Query<(&Interaction, &PauseMenuButton), Changed<Interaction>>,
 ) {
     for (interaction, pause_menu_button) in query {
@@ -153,13 +134,7 @@ fn handle_pause_menu_button_pressed(
             }
             PauseMenuButtonType::ExitToMainMenu => {
                 next_app_state.set(AppState::MainMenu);
-                next_in_game_state.set(InGameState::None);
                 next_main_menu_state.set(MainMenuState::Root);
-                next_game_mode_state.set(GameModeState::None);
-            }
-            PauseMenuButtonType::SettingsPauseMenu => {
-                // FIXME: add
-                warn!("not yet implemented");
             }
         }
     }

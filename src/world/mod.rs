@@ -1,5 +1,6 @@
+use crate::game_flow::states::LoadingGameSubState;
 use crate::world::components::{Ground, Wall};
-use crate::world::messages::{SpawnDebugPointMessage, SpawnMapMessage};
+use crate::world::messages::SpawnDebugPointMessage;
 use crate::world::systems::{handle_spawn_debug_points_message, spawn_map};
 use bevy::prelude::*;
 
@@ -16,9 +17,9 @@ pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (handle_spawn_debug_points_message, spawn_map))
+        app.add_systems(Update, handle_spawn_debug_points_message)
+            .add_systems(OnEnter(LoadingGameSubState::SpawningMap), spawn_map)
             .add_message::<SpawnDebugPointMessage>()
-            .add_message::<SpawnMapMessage>()
             .register_type::<Ground>()
             .register_type::<Wall>();
     }

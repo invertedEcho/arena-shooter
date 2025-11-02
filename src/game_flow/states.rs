@@ -5,22 +5,27 @@ use bevy::prelude::*;
 pub enum AppState {
     #[default]
     MainMenu,
+    LoadingGame,
     InGame,
 }
 
-#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
-pub enum GameLoadingState {
+/// The current loading state of a new game.
+/// Note that upon entering each of these states, the corresponding
+/// systems will be run, e.g. SpawningMap state will spawn the map
+#[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
+#[source(AppState = AppState::LoadingGame)]
+pub enum LoadingGameSubState {
     #[default]
-    Initial,
-    WorldLoadedWithDependencies,
+    SpawningMap,
+    MapLoadedWithDependencies,
     CollidersReady,
     NavMeshReady,
 }
 
-#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
+#[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[states(scoped_entities)]
+#[source(AppState = AppState::MainMenu)]
 pub enum MainMenuState {
-    None,
     #[default]
     Root,
     Settings,
@@ -28,6 +33,7 @@ pub enum MainMenuState {
     GameModeSelection,
 }
 
+// This is not a substate, as it needs to exist globally
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 pub enum SelectedMapState {
     #[default]
@@ -35,11 +41,11 @@ pub enum SelectedMapState {
     TinyTown,
 }
 
-#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
+#[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[states(scoped_entities)]
+#[source(AppState = AppState::InGame)]
 pub enum InGameState {
     #[default]
-    None,
     Playing,
     Paused,
     PlayerDead,
