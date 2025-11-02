@@ -1,7 +1,9 @@
 use crate::game_flow::states::LoadingGameSubState;
-use crate::world::components::{Ground, Wall};
+use crate::world::components::{Ground, MedkitSpawnLocation, Wall};
 use crate::world::messages::SpawnDebugPointMessage;
-use crate::world::systems::{handle_spawn_debug_points_message, spawn_map};
+use crate::world::systems::{
+    handle_spawn_debug_points_message, spawn_map, spawn_medkits,
+};
 use bevy::prelude::*;
 
 mod collider_rules;
@@ -19,7 +21,12 @@ impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, handle_spawn_debug_points_message)
             .add_systems(OnEnter(LoadingGameSubState::SpawningMap), spawn_map)
+            .add_systems(
+                OnEnter(LoadingGameSubState::MapLoadedWithDependencies),
+                spawn_medkits,
+            )
             .add_message::<SpawnDebugPointMessage>()
+            .register_type::<MedkitSpawnLocation>()
             .register_type::<Ground>()
             .register_type::<Wall>();
     }

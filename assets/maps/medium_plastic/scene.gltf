@@ -18,15 +18,15 @@
 				535,
 				536,
 				537,
-				538
+				538,
+				539,
+				540,
+				541
 			]
 		},
 		{
 			"name":"Small_Map",
 			"nodes":[
-				829,
-				830,
-				831,
 				832,
 				833,
 				834,
@@ -43,7 +43,10 @@
 				845,
 				846,
 				847,
-				848
+				848,
+				849,
+				850,
+				851
 			]
 		}
 	],
@@ -2947,7 +2950,7 @@
 					}
 				]
 			},
-			"name":"Empty.001",
+			"name":"PlayerSpawnLocation.001",
 			"scale":[
 				1.4299999475479126,
 				1.4299999475479126,
@@ -2967,7 +2970,7 @@
 					}
 				]
 			},
-			"name":"Empty.003",
+			"name":"EnemySpawnLocation.015",
 			"scale":[
 				1.4299999475479126,
 				1.4299999475479126,
@@ -2987,7 +2990,7 @@
 					}
 				]
 			},
-			"name":"Empty.002",
+			"name":"EnemySpawnLocation",
 			"scale":[
 				1.4299999475479126,
 				1.4299999475479126,
@@ -3007,7 +3010,7 @@
 					}
 				]
 			},
-			"name":"Empty.004",
+			"name":"EnemySpawnLocation.016",
 			"scale":[
 				1.4299999475479126,
 				1.4299999475479126,
@@ -3027,7 +3030,7 @@
 					}
 				]
 			},
-			"name":"Empty.005",
+			"name":"EnemySpawnLocation.017",
 			"scale":[
 				1.4299999475479126,
 				1.4299999475479126,
@@ -3047,7 +3050,7 @@
 					}
 				]
 			},
-			"name":"Empty.006",
+			"name":"EnemySpawnLocation.018",
 			"scale":[
 				1.4299999475479126,
 				1.4299999475479126,
@@ -3067,7 +3070,7 @@
 					}
 				]
 			},
-			"name":"Empty.007",
+			"name":"EnemySpawnLocation.019",
 			"scale":[
 				1.4299999475479126,
 				1.4299999475479126,
@@ -3087,7 +3090,7 @@
 					}
 				]
 			},
-			"name":"Empty.008",
+			"name":"EnemySpawnLocation.020",
 			"scale":[
 				1.4299999475479126,
 				1.4299999475479126,
@@ -3107,7 +3110,7 @@
 					}
 				]
 			},
-			"name":"Empty.009",
+			"name":"EnemySpawnLocation.021",
 			"scale":[
 				1.4299999475479126,
 				1.4299999475479126,
@@ -3127,7 +3130,7 @@
 					}
 				]
 			},
-			"name":"Empty.010",
+			"name":"EnemySpawnLocation.022",
 			"scale":[
 				1.4299999475479126,
 				1.4299999475479126,
@@ -3137,6 +3140,51 @@
 				-2.886953830718994,
 				5.1773223876953125,
 				20.27400016784668
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::world::components::MedkitSpawnLocation":{}
+					}
+				]
+			},
+			"name":"MedkitSpawnLocation",
+			"translation":[
+				2.376551389694214,
+				4.394068241119385,
+				0
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::world::components::MedkitSpawnLocation":{}
+					}
+				]
+			},
+			"name":"MedkitSpawnLocation.001",
+			"translation":[
+				2.376551389694214,
+				2.4754302501678467,
+				-14.62841796875
+			]
+		},
+		{
+			"extras":{
+				"skein":[
+					{
+						"fun_shooter::world::components::MedkitSpawnLocation":{}
+					}
+				]
+			},
+			"name":"MedkitSpawnLocation.002",
+			"translation":[
+				-9.354646682739258,
+				3.2449240684509277,
+				-20.159820556640625
 			]
 		},
 		{
@@ -4655,7 +4703,7 @@
 		},
 		{
 			"children":[
-				823
+				826
 			],
 			"name":"Map.001"
 		},
@@ -4699,9 +4747,6 @@
 		},
 		{
 			"children":[
-				539,
-				540,
-				541,
 				542,
 				543,
 				544,
@@ -4983,11 +5028,14 @@
 				820,
 				821,
 				822,
+				823,
 				824,
 				825,
-				826,
 				827,
-				828
+				828,
+				829,
+				830,
+				831
 			],
 			"extras":{
 				"skein":[]
@@ -5243,7 +5291,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":806,
+						"node":809,
 						"path":"rotation"
 					}
 				}
@@ -5262,7 +5310,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":807,
+						"node":810,
 						"path":"rotation"
 					}
 				}
@@ -5281,7 +5329,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":808,
+						"node":811,
 						"path":"rotation"
 					}
 				}
@@ -5300,7 +5348,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":809,
+						"node":812,
 						"path":"rotation"
 					}
 				}
@@ -5319,7 +5367,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":810,
+						"node":813,
 						"path":"rotation"
 					}
 				}
@@ -5338,7 +5386,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":811,
+						"node":814,
 						"path":"rotation"
 					}
 				}
@@ -5357,7 +5405,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":812,
+						"node":815,
 						"path":"rotation"
 					}
 				}
@@ -5376,7 +5424,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":813,
+						"node":816,
 						"path":"rotation"
 					}
 				}
@@ -5395,7 +5443,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":814,
+						"node":817,
 						"path":"rotation"
 					}
 				}
@@ -5414,7 +5462,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":815,
+						"node":818,
 						"path":"rotation"
 					}
 				}
@@ -5433,7 +5481,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":816,
+						"node":819,
 						"path":"rotation"
 					}
 				}
@@ -5452,7 +5500,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":817,
+						"node":820,
 						"path":"rotation"
 					}
 				}
@@ -5471,7 +5519,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":818,
+						"node":821,
 						"path":"rotation"
 					}
 				}
@@ -5490,7 +5538,7 @@
 				{
 					"sampler":0,
 					"target":{
-						"node":819,
+						"node":822,
 						"path":"rotation"
 					}
 				}

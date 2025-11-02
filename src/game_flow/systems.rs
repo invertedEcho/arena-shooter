@@ -104,6 +104,9 @@ pub fn check_world_scene_loaded(
             info!("Map assets loaded!");
             next_game_loading_state
                 .set(LoadingGameSubState::MapLoadedWithDependencies);
+            // if the map is tiny town and MapLoadedWithDependencies, the colliders are already
+            // spawned, because they are part of the map itself, so we can just set CollidersReady
+            // immediately
             if *selected_map_state.get() == SelectedMapState::TinyTown {
                 next_game_loading_state
                     .set(LoadingGameSubState::CollidersReady);
