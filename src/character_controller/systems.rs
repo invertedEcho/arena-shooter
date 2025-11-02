@@ -11,7 +11,7 @@ use crate::{
         },
         messages::{MovementAction, MovementDirection},
     },
-    player::{Player, camera::components::ViewModelCamera},
+    player::Player,
 };
 
 pub fn handle_keyboard_input_for_player(
@@ -82,11 +82,9 @@ pub fn handle_keyboard_input_for_player(
 pub fn handle_movement_actions_for_character_controllers(
     mut movement_action_reader: MessageReader<MovementAction>,
     mut character_controller_query: Query<
-        (&mut LinearVelocity, &Grounded, &Transform, Entity),
+        (&mut LinearVelocity, &Grounded, &Transform),
         With<CharacterController>,
     >,
-    // TODO: i dont want this here
-    player_camera_entity: Single<Entity, With<ViewModelCamera>>,
     spatial_query: SpatialQuery,
     time: Res<Time>,
 ) {
@@ -94,7 +92,7 @@ pub fn handle_movement_actions_for_character_controllers(
         let direction = &movement_action.direction;
         let character_controller_entity =
             movement_action.character_controller_entity;
-        let Ok((mut velocity, grounded, transform, entity)) =
+        let Ok((mut velocity, grounded, transform)) =
             character_controller_query.get_mut(character_controller_entity)
         else {
             warn!(
@@ -125,11 +123,7 @@ pub fn handle_movement_actions_for_character_controllers(
                 let max_distance = 0.3;
 
                 let spatial_query_filter = &SpatialQueryFilter::default()
-                    .with_excluded_entities([
-                        entity,
-                        // TODO: should only be excluded when we have player
-                        *player_camera_entity,
-                    ]);
+                    .with_excluded_entities([character_controller_entity]);
 
                 if let Some(hit_ahead) = spatial_query.cast_shape(
                     &Collider::capsule(

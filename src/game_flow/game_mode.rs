@@ -7,7 +7,7 @@ use crate::{
         spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
     },
     game_flow::score::GameScore,
-    player::{Player, spawn::SpawnPlayerMessage},
+    player::Player,
 };
 
 pub struct GameModePlugin;

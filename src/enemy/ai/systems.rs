@@ -8,7 +8,6 @@ use crate::{
         Enemy, EnemyState, shooting::components::EnemyBullet,
         spawn::AgentEnemyEntityPointer,
     },
-    game_flow::states::InGameState,
     player::Player,
 };
 
@@ -139,12 +138,11 @@ pub fn check_if_enemy_reached_target(
 }
 
 pub fn handle_chasing_enemies(
-    mut enemy_query: Query<(&Enemy, Entity, &mut LinearVelocity)>,
+    mut enemy_query: Query<(&Enemy, Entity)>,
     enemy_agents_query: Query<(
         &AgentDesiredVelocity3d,
         &AgentEnemyEntityPointer,
     )>,
-    current_in_game_state: Res<State<InGameState>>,
     mut movement_action_writer: MessageWriter<MovementAction>,
 ) {
     for (agent_desired_velocity, agent_enemy_entity_pointer) in
@@ -154,7 +152,7 @@ pub fn handle_chasing_enemies(
             continue;
         }
 
-        let Ok((enemy, entity, mut velocity)) =
+        let Ok((enemy, entity)) =
             enemy_query.get_mut(agent_enemy_entity_pointer.0)
         else {
             warn!(
@@ -164,13 +162,6 @@ pub fn handle_chasing_enemies(
             );
             continue;
         };
-
-        let in_game_state_is_playing =
-            *current_in_game_state.get() == InGameState::Playing;
-        if !in_game_state_is_playing {
-            **velocity = Vec3::ZERO;
-            continue;
-        }
 
         if enemy.state != EnemyState::ChasingPlayer {
             continue;

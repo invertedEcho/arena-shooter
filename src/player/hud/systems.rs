@@ -5,7 +5,7 @@ use bevy::{
 
 use crate::{
     game_flow::{
-        game_mode::{GameModeState, GameStateWave},
+        game_mode::GameStateWave,
         score::GameScore,
         states::{AppState, InGameState},
     },
