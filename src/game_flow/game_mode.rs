@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     enemy::{
+        Enemy,
         shooting::messages::EnemyKilledMessage,
         spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
     },
@@ -11,7 +12,8 @@ use crate::{
         states::{InGameState, MainMenuState},
     },
     player::{
-        camera::messages::SpawnPlayerCamerasMessage, spawn::SpawnPlayerMessage,
+        Player, camera::messages::SpawnPlayerCamerasMessage,
+        spawn::SpawnPlayerMessage,
     },
 };
 
@@ -56,6 +58,7 @@ pub struct GameStateWave {
 }
 
 fn handle_start_game_mode_event(
+    mut commands: Commands,
     mut message_reader: MessageReader<StartGameModeMessage>,
     mut next_app_state: ResMut<NextState<AppState>>,
     mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
@@ -66,12 +69,17 @@ fn handle_start_game_mode_event(
     mut spawn_player_cameras_message_writer: MessageWriter<
         SpawnPlayerCamerasMessage,
     >,
+    entities_to_despawn: Query<Entity, Or<(With<Player>, With<Enemy>)>>,
 ) {
     for start_game_mode_message in message_reader.read() {
         info!(
             "Got start game mode message, updating states to reflect changes \
              and spawning enemies and players."
         );
+        for entity in entities_to_despawn {
+            info!("Despawning entity {} in case this is a restart", entity);
+            commands.entity(entity).despawn();
+        }
         next_app_state.set(AppState::InGame);
         next_main_menu_state.set(MainMenuState::None);
         next_in_game_state.set(InGameState::Playing);

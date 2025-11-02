@@ -38,6 +38,7 @@ pub fn setup_player_cameras(
         let weapon_model = asset_server
             .load(GltfAssetLabel::Scene(0).from_asset(PLAYER_ARM_WEAPON_PATH));
 
+        info!("inserting player cameras into entity {}", *player_entity);
         commands.entity(*player_entity).with_children(|parent| {
             parent.spawn((
                 WorldModelCamera,

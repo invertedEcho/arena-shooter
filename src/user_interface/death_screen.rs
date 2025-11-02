@@ -2,7 +2,9 @@ use bevy::prelude::*;
 
 use crate::{
     game_flow::{
-        game_mode::GameStateWave, states::InGameState, systems::free_mouse,
+        game_mode::{GameModeState, GameStateWave, StartGameModeMessage},
+        states::InGameState,
+        systems::free_mouse,
     },
     player::Player,
     user_interface::{
@@ -152,15 +154,13 @@ fn spawn_wave_game_mode_death_screen(
 
 fn handle_button_click(
     query: Query<(&Interaction, &DeathScreenButton), Changed<Interaction>>,
-    mut player: Single<&mut Player>,
-    mut next_in_game_state: ResMut<NextState<InGameState>>,
+    mut start_game_mode: MessageWriter<StartGameModeMessage>,
 ) {
     for (interaction, button) in query {
         if interaction == &Interaction::Pressed
             && button.0 == WaveGameModeDeathScreen::Restart
         {
-            player.health = 100.0;
-            next_in_game_state.set(InGameState::Playing);
+            start_game_mode.write(StartGameModeMessage(GameModeState::Waves));
         }
     }
 }
