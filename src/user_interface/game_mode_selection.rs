@@ -95,11 +95,11 @@ fn spawn_game_mode_selection_screen(
                 .spawn((
                     Node { ..default() },
                     Button,
-                    GameModeSelectionButton(GameModeState::FreePlay),
+                    GameModeSelectionButton(GameModeState::FreeRoam),
                     TextColor::WHITE,
                 ))
                 .with_child((
-                    Text::new("Free Play"),
+                    Text::new("Free Roam"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
                         font_size: DEFAULT_FONT_SIZE,
@@ -146,8 +146,8 @@ fn handle_game_mode_selection_button_press(
                 GameModeState::Waves => {
                     next_game_mode_state.set(GameModeState::Waves);
                 }
-                GameModeState::FreePlay => {
-                    next_game_mode_state.set(GameModeState::FreePlay);
+                GameModeState::FreeRoam => {
+                    next_game_mode_state.set(GameModeState::FreeRoam);
                 }
             }
             next_app_state.set(AppState::LoadingGame);

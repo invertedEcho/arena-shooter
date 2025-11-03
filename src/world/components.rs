@@ -10,7 +10,3 @@ pub struct Wall;
 
 #[derive(Component)]
 pub struct DebugPoint;
-
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-pub struct MedkitSpawnLocation;

@@ -2,6 +2,7 @@ use bevy::{
     color::palettes::tailwind::{BLUE_500, RED_500},
     prelude::*,
 };
+use bevy_inspector_egui::egui::TextStyle;
 
 use crate::{
     game_flow::{
@@ -24,12 +25,21 @@ use crate::{
         },
     },
     shared::components::DespawnTimer,
+    user_interface::ITALIC_GAME_FONT_PATH,
 };
 
 pub fn spawn_player_hud(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
+    player_info: Query<&Player>,
 ) {
+    // if no player exists, we can assume the hud was spawned before the player was
+    // spawned, and thus can use the default corresponding values
+    let player_health = match player_info.single() {
+        Ok(player) => player.health,
+        Err(_) => Player::default().health,
+    };
+
     info!("Spawning player hud");
     commands
         .spawn((
@@ -52,8 +62,21 @@ pub fn spawn_player_hud(
                     ..default()
                 })
                 .with_children(|parent| {
-                    parent.spawn(Text::new("HP"));
-                    parent.spawn((Text::new(""), PlayerHealthText));
+                    parent.spawn((
+                        Text::new("HP"),
+                        TextFont {
+                            font: asset_server.load(ITALIC_GAME_FONT_PATH),
+                            ..default()
+                        },
+                    ));
+                    parent.spawn((
+                        Text::new(player_health.to_string()),
+                        PlayerHealthText,
+                        TextFont {
+                            font: asset_server.load(ITALIC_GAME_FONT_PATH),
+                            ..default()
+                        },
+                    ));
                 });
             parent
                 .spawn(Node {

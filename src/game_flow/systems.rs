@@ -159,7 +159,7 @@ pub fn on_game_loading_state_nav_mesh_ready(
         GameModeState::Waves => {
             start_game_mode_message_writer.write(StartWaveGameModeMessage);
         }
-        GameModeState::FreePlay => {}
+        GameModeState::FreeRoam => {}
     }
 }
 

@@ -34,7 +34,7 @@ pub struct StartWaveGameModeMessage;
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 pub enum GameModeState {
     #[default]
-    FreePlay,
+    FreeRoam,
     Waves,
 }
 
@@ -159,7 +159,7 @@ fn handle_enemy_killed_event(
                     });
                 }
             }
-            GameModeState::FreePlay => {}
+            GameModeState::FreeRoam => {}
         }
     }
 }
