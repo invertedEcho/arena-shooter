@@ -58,6 +58,13 @@ pub fn handle_keyboard_input_for_player(
         *movement_state = MovementState::Walking;
     }
 
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        movement_action_writer.write(MovementAction {
+            direction: MovementDirection::Jump,
+            character_controller_entity: player_entity,
+        });
+    }
+
     if local_velocity == Vec3::ZERO {
         return;
     }
@@ -68,13 +75,6 @@ pub fn handle_keyboard_input_for_player(
         direction: MovementDirection::Move(world_velocity),
         character_controller_entity: player_entity,
     });
-
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        movement_action_writer.write(MovementAction {
-            direction: MovementDirection::Jump,
-            character_controller_entity: player_entity,
-        });
-    }
 }
 
 pub fn handle_movement_actions_for_character_controllers(

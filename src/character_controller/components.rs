@@ -5,9 +5,6 @@ use crate::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
 
-// #[derive(Component)]
-// pub struct MovementState(pub MovementState);
-
 #[derive(Component, Debug, Reflect, PartialEq)]
 pub enum MovementState {
     Idle,
