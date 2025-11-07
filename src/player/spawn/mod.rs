@@ -3,6 +3,7 @@ use bevy::prelude::*;
 
 use crate::{
     character_controller::components::CharacterControllerBundle,
+    game_flow::states::AppState,
     player::{
         Player, camera::messages::SpawnPlayerCamerasMessage,
         spawn::components::PlayerSpawnLocation,
@@ -43,6 +44,7 @@ fn handle_player_spawn_event(
                 Visibility::Visible,
                 DebugRender::collider(Color::WHITE),
                 CharacterControllerBundle::default(),
+                DespawnOnExit(AppState::InGame),
             ))
             .id();
 

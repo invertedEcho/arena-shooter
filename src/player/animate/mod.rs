@@ -3,7 +3,7 @@ use std::time::Duration;
 use bevy::{animation::RepeatAnimation, prelude::*};
 
 use crate::{
-    character_controller::components::{MovementState, MovementStateEnum},
+    character_controller::components::MovementState,
     player::{Player, camera::components::PlayerCameraState},
     shared::components::AnimationPlayerEntityPointer,
 };
@@ -287,8 +287,8 @@ pub fn animate_current_movement_state(
     >,
 ) {
     debug!("Movement state changed, playing corresponding animation!");
-    match player.into_inner().0 {
-        MovementStateEnum::Idle => {
+    match *player {
+        MovementState::Idle => {
             play_player_arm_weapon_animation_message_writer.write(
                 PlayArmWithWeaponAnimationMessage {
                     animation_type: ArmWithWeaponAnimation::Idle,
@@ -297,7 +297,7 @@ pub fn animate_current_movement_state(
                 },
             );
         }
-        MovementStateEnum::Walking => {
+        MovementState::Walking => {
             play_player_arm_weapon_animation_message_writer.write(
                 PlayArmWithWeaponAnimationMessage {
                     animation_type: ArmWithWeaponAnimation::Walk,
@@ -306,7 +306,7 @@ pub fn animate_current_movement_state(
                 },
             );
         }
-        MovementStateEnum::Running => {
+        MovementState::Running => {
             play_player_arm_weapon_animation_message_writer.write(
                 PlayArmWithWeaponAnimationMessage {
                     animation_type: ArmWithWeaponAnimation::Run,

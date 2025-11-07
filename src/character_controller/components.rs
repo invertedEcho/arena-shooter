@@ -5,11 +5,8 @@ use crate::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
 
-#[derive(Component)]
-pub struct MovementState(pub MovementStateEnum);
-
-#[derive(Debug, Reflect, PartialEq)]
-pub enum MovementStateEnum {
+#[derive(Component, Debug, Reflect, PartialEq)]
+pub enum MovementState {
     Idle,
     Walking,
     Running,
@@ -45,7 +42,7 @@ impl Default for CharacterControllerBundle {
                 .lock_rotation_y()
                 .lock_rotation_z(),
             colliding_entities: CollidingEntities::default(),
-            movement_state: MovementState(MovementStateEnum::Idle),
+            movement_state: MovementState::Idle,
             grounded: Grounded(true),
             ground_caster: ShapeCaster::new(
                 Collider::capsule(
