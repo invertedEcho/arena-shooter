@@ -49,7 +49,6 @@ pub fn spawn_medkits(
             DespawnOnExit(AppState::InGame),
             SceneRoot(medkit_model),
             Collider::cuboid(0.1, 0.1, 0.1),
-            RigidBody::Static,
             Medkit {
                 float_direction: FloatDirection::Down,
                 health_to_give: DEFAULT_HEALTH_TO_GIVE_MEDKIT,
@@ -110,10 +109,6 @@ pub fn detect_collision_medkit_with_player(
         if !medkit.active {
             continue;
         }
-        if !colliding_entities.is_empty() {
-            info!("colliding entities: {:?}", colliding_entities);
-            info!("player entity: {}", player_query.0);
-        }
 
         let colliding_entity_is_player =
             colliding_entities.contains(&player_query.0);
@@ -140,6 +135,10 @@ pub fn activate_medkits_over_time(
 ) {
     for (entity, mut medkit, mut visibility) in medkit_query {
         if !medkit.active && medkit.respawn_timer.is_finished() {
+            info!(
+                "Medkit was not active and respawn timer is finished, \
+                 removing ColliderDisabled and making visible"
+            );
             medkit.active = true;
             commands.entity(entity).remove::<ColliderDisabled>();
             *visibility = Visibility::Visible;

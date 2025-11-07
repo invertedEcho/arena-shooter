@@ -2,7 +2,6 @@ use bevy::{
     color::palettes::tailwind::{BLUE_500, RED_500},
     prelude::*,
 };
-use bevy_inspector_egui::egui::TextStyle;
 
 use crate::{
     game_flow::{
@@ -40,7 +39,6 @@ pub fn spawn_player_hud(
         Err(_) => Player::default().health,
     };
 
-    info!("Spawning player hud");
     commands
         .spawn((
             Node {

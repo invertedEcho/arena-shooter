@@ -6,7 +6,7 @@ pub struct ViewModelCamera;
 #[derive(Component)]
 pub struct WorldModelCamera;
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Reflect)]
 pub enum PlayerCameraState {
     #[default]
     Normal,
