@@ -2,12 +2,10 @@ use bevy::prelude::*;
 
 use crate::{
     enemy::{
-        Enemy,
         shooting::messages::EnemyKilledMessage,
         spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
     },
     game_flow::score::GameScore,
-    player::Player,
 };
 
 pub struct GameModePlugin;
@@ -47,21 +45,15 @@ pub struct GameStateWave {
 }
 
 fn handle_game_mode_wave_start_message(
-    mut commands: Commands,
     mut message_reader: MessageReader<StartWaveGameModeMessage>,
     mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
-    entities_to_despawn: Query<Entity, Or<(With<Player>, With<Enemy>)>>,
 ) {
     for _ in message_reader.read() {
         info!(
             "Got game mode wave start message, updating states to reflect \
              changes and spawning enemies and players."
         );
-        for entity in entities_to_despawn {
-            info!("Despawning entity {} in case this is a restart", entity);
-            commands.entity(entity).despawn();
-        }
 
         let enemy_count = get_enemy_count_per_wave(1);
         next_game_state_wave.set(GameStateWave {

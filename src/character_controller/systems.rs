@@ -6,9 +6,7 @@ use crate::{
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
         MAX_SLOPE_ANGLE, RUN_VELOCITY, WALK_VELOCITY,
-        components::{
-            CharacterController, Grounded, MovementState, MovementStateEnum,
-        },
+        components::{CharacterController, Grounded, MovementState},
         messages::{MovementAction, MovementDirection},
     },
     player::Player,
@@ -47,17 +45,17 @@ pub fn handle_keyboard_input_for_player(
     }
 
     if local_velocity.x == 0.0 && local_velocity.z == 0.0 {
-        if movement_state.0 != MovementStateEnum::Idle {
-            movement_state.0 = MovementStateEnum::Idle;
+        if *movement_state != MovementState::Idle {
+            *movement_state = MovementState::Idle;
         }
     } else if speed == RUN_VELOCITY {
-        if movement_state.0 != MovementStateEnum::Running {
-            movement_state.0 = MovementStateEnum::Running;
+        if *movement_state != MovementState::Running {
+            *movement_state = MovementState::Running;
         }
     } else if speed == WALK_VELOCITY
-        && movement_state.0 != MovementStateEnum::Walking
+        && *movement_state != MovementState::Walking
     {
-        movement_state.0 = MovementStateEnum::Walking;
+        *movement_state = MovementState::Walking;
     }
 
     if local_velocity == Vec3::ZERO {

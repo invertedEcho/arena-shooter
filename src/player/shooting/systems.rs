@@ -4,7 +4,7 @@ use avian3d::prelude::*;
 use bevy::{color::palettes::css::WHITE, prelude::*};
 
 use crate::{
-    character_controller::components::{MovementState, MovementStateEnum},
+    character_controller::components::MovementState,
     enemy::{Enemy, shooting::components::EnemyBullet},
     game_flow::{score::GameScore, states::InGameState},
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
@@ -435,6 +435,6 @@ pub fn handle_player_death_event(
     mut player_movement_state: Single<&mut MovementState, With<Player>>,
 ) {
     for _ in message_reader.read() {
-        player_movement_state.0 = MovementStateEnum::Idle;
+        **player_movement_state = MovementState::Idle;
     }
 }
