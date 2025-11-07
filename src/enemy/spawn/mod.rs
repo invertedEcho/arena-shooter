@@ -5,6 +5,7 @@ use crate::{
         components::{CharacterController, Grounded},
     },
     enemy::animate::ENEMY_MODEL_PATH,
+    game_flow::states::AppState,
     nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS},
 };
 use avian3d::{
@@ -41,8 +42,6 @@ pub struct SpawnEnemiesMessage {
 
 #[derive(Component)]
 pub struct AgentEnemyEntityPointer(pub Entity);
-
-#[derive()]
 
 pub enum EnemySpawnStrategy {
     /// Enemies will be spawned at randomly picked EnemySpawnLocations
@@ -161,6 +160,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             )
                             .with_max_distance(0.2),
                             CharacterController,
+                            DespawnOnExit(AppState::InGame),
                         ))
                         .with_child((
                             Transform {

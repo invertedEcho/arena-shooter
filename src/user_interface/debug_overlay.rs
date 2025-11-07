@@ -208,6 +208,6 @@ fn update_player_movement_state_text(
 ) {
     for mut player_movement_state_text in player_movement_state_text {
         **player_movement_state_text =
-            format!("{:?}", changed_player_movement_state.0);
+            format!("{:?}", *changed_player_movement_state);
     }
 }
