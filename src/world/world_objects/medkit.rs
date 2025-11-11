@@ -94,53 +94,35 @@ pub fn rotate_and_float_medkits(
 }
 
 pub fn detect_collision_medkit_with_player(
-    mut commands: Commands,
-    medkit_query: Query<(
-        Entity,
-        &mut Medkit,
-        &CollidingEntities,
-        &mut Visibility,
-    )>,
+    medkit_query: Query<(&mut Medkit, &CollidingEntities, &mut Visibility)>,
     mut player_query: Single<(Entity, &mut Player)>,
 ) {
-    for (medkit_entity, mut medkit, colliding_entities, mut visibility) in
-        medkit_query
-    {
+    let player_full_hp = player_query.1.health == DEFAULT_PLAYER_HEALTH;
+
+    for (mut medkit, colliding_entities, mut visibility) in medkit_query {
         if !medkit.active {
             continue;
         }
 
-        let colliding_entity_is_player =
+        let player_collied_with_medkit =
             colliding_entities.contains(&player_query.0);
-        let player_full_hp = player_query.1.health == DEFAULT_PLAYER_HEALTH;
 
-        if colliding_entity_is_player && !player_full_hp {
+        if player_collied_with_medkit && !player_full_hp {
             player_query.1.health += medkit.health_to_give;
             player_query.1.health =
                 player_query.1.health.clamp(0.0, DEFAULT_PLAYER_HEALTH);
             medkit.active = false;
             *visibility = Visibility::Hidden;
-            commands.entity(medkit_entity).insert(ColliderDisabled);
-            info!(
-                "Player collided with medkit, hiding medkit and inserting \
-                 colliderdisabled"
-            );
         }
     }
 }
 
 pub fn activate_medkits_over_time(
-    mut commands: Commands,
-    medkit_query: Query<(Entity, &mut Medkit, &mut Visibility)>,
+    medkit_query: Query<(&mut Medkit, &mut Visibility)>,
 ) {
-    for (entity, mut medkit, mut visibility) in medkit_query {
+    for (mut medkit, mut visibility) in medkit_query {
         if !medkit.active && medkit.respawn_timer.is_finished() {
-            info!(
-                "Medkit was not active and respawn timer is finished, \
-                 removing ColliderDisabled and making visible"
-            );
             medkit.active = true;
-            commands.entity(entity).remove::<ColliderDisabled>();
             *visibility = Visibility::Visible;
         }
     }

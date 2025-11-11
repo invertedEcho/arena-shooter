@@ -10,7 +10,7 @@ pub mod components;
 pub mod messages;
 pub mod resources;
 mod systems;
-mod world_objects;
+pub mod world_objects;
 
 const SMALL_MAP_PATH: &str = "maps/tiny_town/main.gltf";
 const MEDIUM_MAP_PATH: &str = "maps/medium_plastic/scene.gltf#Scene0";

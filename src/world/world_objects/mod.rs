@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-mod medkit;
+pub mod medkit;
 
 pub struct WorldObjectsPlugin;
 

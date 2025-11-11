@@ -10,6 +10,7 @@ use crate::{
         messages::{MovementAction, MovementDirection},
     },
     player::Player,
+    world::world_objects::medkit::Medkit,
 };
 
 pub fn handle_keyboard_input_for_player(
@@ -85,6 +86,7 @@ pub fn handle_movement_actions_for_character_controllers(
     >,
     spatial_query: SpatialQuery,
     time: Res<Time>,
+    medkit_query: Query<Entity, With<Medkit>>,
 ) {
     for movement_action in movement_action_reader.read() {
         let direction = &movement_action.direction;
@@ -120,8 +122,18 @@ pub fn handle_movement_actions_for_character_controllers(
                     - direction_from_world_velocity.as_vec3() * 0.025;
                 let max_distance = 0.3;
 
+                let all_medkit_entities: Vec<Entity> =
+                    medkit_query.iter().collect();
+
+                // also exclude medkits
                 let spatial_query_filter = &SpatialQueryFilter::default()
-                    .with_excluded_entities([character_controller_entity]);
+                    .with_excluded_entities(
+                        [
+                            all_medkit_entities,
+                            [character_controller_entity].to_vec(),
+                        ]
+                        .concat(),
+                    );
 
                 if let Some(hit_ahead) = spatial_query.cast_shape(
                     &Collider::capsule(

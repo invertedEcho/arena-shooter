@@ -38,13 +38,18 @@ impl Plugin for CharacterControllerPlugin {
             .add_systems(
                 Update,
                 (
+                    apply_movement_damping,
                     update_on_ground,
                     apply_gravity_over_time,
+                ),
+            )
+            .add_systems(
+                Update,
+                (
                     handle_keyboard_input_for_player,
                     handle_movement_actions_for_character_controllers,
                 )
                     .run_if(in_state(InGameState::Playing)),
-            )
-            .add_systems(Update, apply_movement_damping);
+            );
     }
 }
