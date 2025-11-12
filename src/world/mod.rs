@@ -13,7 +13,7 @@ mod systems;
 pub mod world_objects;
 
 const SMALL_MAP_PATH: &str = "maps/tiny_town/main.gltf";
-const MEDIUM_MAP_PATH: &str = "maps/medium_plastic/scene.gltf#Scene0";
+const MEDIUM_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
 
 pub struct WorldPlugin;
 

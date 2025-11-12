@@ -140,9 +140,8 @@ pub fn check_navmesh_ready(
     info!("Navmesh is now ready!");
     next_game_loading_state.set(LoadingGameSubState::NavMeshReady);
 
-    // need to store it in our own resource so we can call regenerate when a new map is selected
     commands.insert_resource(NavMeshHandle(nav_mesh_handle));
-    info!("Stored navmesh handle in our own resource, `NavMeshHandle`");
+    info!("NavMesh Handle stored");
 }
 
 pub fn on_game_loading_state_nav_mesh_ready(

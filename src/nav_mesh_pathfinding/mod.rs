@@ -33,6 +33,7 @@ impl Plugin for NavMeshPathfindingPlugin {
     }
 }
 
+// We store the NavMesh handle in a resource so we can regenerate the navmesh when needed
 #[derive(Resource)]
 pub struct NavMeshHandle(pub Handle<Navmesh>);
 
