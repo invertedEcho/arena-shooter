@@ -1,8 +1,14 @@
-use bevy::{prelude::*, window::WindowMode};
-
 use crate::{
     game_flow::states::MainMenuState,
-    user_interface::{DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH},
+    user_interface::{
+        DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
+        widgets::slider::{DemoWidgetStates, build_slider},
+    },
+};
+use bevy::{
+    prelude::*,
+    ui_widgets::{ValueChange, observe},
+    window::WindowMode,
 };
 
 pub struct SettingsMenuPlugin;
@@ -38,23 +44,31 @@ fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
             },
             SettingsMenuRoot,
             DespawnOnExit(MainMenuState::Settings),
-        ))
-        .with_children(|parent| {
-            parent
-                .spawn((
+            children![
+                (
+                    build_slider(0.0, 100.0, 50.0),
+                    observe(
+                        |value_change: On<ValueChange<f32>>,
+                         mut widget_states: ResMut<DemoWidgetStates>| {
+                            widget_states.slider_value = value_change.value;
+                        },
+                    )
+                ),
+                (
                     Node { ..default() },
                     Button,
                     SettingsMenuButton(SettingsButtonType::ToggleFullscreen),
-                ))
-                .with_child((
-                    Text::new("Toggle fullscreen"),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
-                        ..default()
-                    },
-                ));
-        })
+                    children![
+                        Text::new("Toggle fullscreen"),
+                        TextFont {
+                            font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                            font_size: DEFAULT_FONT_SIZE,
+                            ..default()
+                        },
+                    ]
+                )
+            ],
+        ))
         .with_children(|parent| {
             parent
                 .spawn((

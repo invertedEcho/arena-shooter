@@ -16,6 +16,7 @@ pub mod main_menu;
 mod map_selection;
 mod pause_menu;
 mod settings_menu;
+mod widgets;
 
 const AVA_FONT_PATH: &str = "fonts/AVA.ttf";
 const DEFAULT_GAME_FONT_PATH: &str = "fonts/Ignotum/Ignotum-Regular.ttf";
