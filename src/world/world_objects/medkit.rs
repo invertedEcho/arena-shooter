@@ -8,6 +8,8 @@ use crate::{
     player::{DEFAULT_PLAYER_HEALTH, Player},
 };
 
+const MEDKIT_MODEL_PATH: &str = "models/world_objects/medkit.gltf";
+
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 pub struct MedkitSpawnLocation;
@@ -19,7 +21,6 @@ pub struct Medkit {
     active: bool,
     health_to_give: f32,
     float_direction: FloatDirection,
-    medkit_spawn_location_parent: Entity,
     respawn_timer: Timer,
 }
 
@@ -31,29 +32,27 @@ enum FloatDirection {
 pub fn spawn_medkits(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    medkit_spawn_locations: Query<
-        (Entity, &Transform),
-        With<MedkitSpawnLocation>,
-    >,
+    medkit_spawn_locations: Query<Entity, With<MedkitSpawnLocation>>,
 ) {
     if medkit_spawn_locations.is_empty() {
-        error!("no medkit spawn locations");
+        warn!("no medkit spawn locations");
     }
 
-    for (entity, transform) in medkit_spawn_locations {
-        info!("Spawning medkit at: {}", transform.translation);
+    for entity in medkit_spawn_locations {
         let medkit_model = asset_server
-            .load(GltfAssetLabel::Scene(0).from_asset("medkit.gltf#Scene0"));
+            .load(GltfAssetLabel::Scene(0).from_asset(MEDKIT_MODEL_PATH));
 
+        // we insert the medkit itself as a child of the spawn location because it makes sense
+        // sementically, but also because then we dont need to save the origin transform for
+        // floating up and down, and just use 0.0 as origin_y
         commands.entity(entity).with_child((
             DespawnOnExit(AppState::InGame),
             SceneRoot(medkit_model),
-            Collider::cuboid(0.1, 0.1, 0.1),
+            Collider::cuboid(0.2, 0.2, 0.2),
             Medkit {
                 float_direction: FloatDirection::Down,
                 health_to_give: DEFAULT_HEALTH_TO_GIVE_MEDKIT,
                 active: true,
-                medkit_spawn_location_parent: entity,
                 respawn_timer: Timer::new(
                     Duration::from_secs(5),
                     TimerMode::Repeating,
