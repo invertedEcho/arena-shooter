@@ -122,18 +122,14 @@ pub fn handle_movement_actions_for_character_controllers(
                     - direction_from_world_velocity.as_vec3() * 0.025;
                 let max_distance = 0.3;
 
-                let all_medkit_entities: Vec<Entity> =
-                    medkit_query.iter().collect();
+                let excluded_entities: Vec<Entity> = medkit_query
+                    .iter()
+                    .chain(std::iter::once(character_controller_entity))
+                    .collect();
 
                 // also exclude medkits
                 let spatial_query_filter = &SpatialQueryFilter::default()
-                    .with_excluded_entities(
-                        [
-                            all_medkit_entities,
-                            [character_controller_entity].to_vec(),
-                        ]
-                        .concat(),
-                    );
+                    .with_excluded_entities(excluded_entities);
 
                 if let Some(hit_ahead) = spatial_query.cast_shape(
                     &Collider::capsule(

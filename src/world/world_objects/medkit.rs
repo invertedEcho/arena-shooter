@@ -69,22 +69,22 @@ pub fn rotate_and_float_medkits(
     medkits_query: Query<(&mut Medkit, &mut Transform), With<Medkit>>,
     time: Res<Time>,
 ) {
+    const ORIGIN_Y: f32 = 0.0;
     for (mut medkit, mut medkit_transform) in medkits_query {
         medkit_transform.rotate_y(1. * time.delta_secs());
 
         let current_y = medkit_transform.translation.y;
-        let origin_y = 0.0;
 
         match medkit.float_direction {
             FloatDirection::Down => {
                 medkit_transform.translation.y -= 0.2 * time.delta_secs();
-                if origin_y - current_y > 0.1 {
+                if ORIGIN_Y - current_y > 0.1 {
                     medkit.float_direction = FloatDirection::Up;
                 }
             }
             FloatDirection::Up => {
                 medkit_transform.translation.y += 0.2 * time.delta_secs();
-                if current_y - origin_y > 0.1 {
+                if current_y - ORIGIN_Y > 0.1 {
                     medkit.float_direction = FloatDirection::Down;
                 }
             }

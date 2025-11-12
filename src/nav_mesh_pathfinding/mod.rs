@@ -104,9 +104,9 @@ fn update_agent_velocity_from_physics_velocity(
             continue;
         };
         if *agent_state == AgentState::TargetNotOnNavMesh {
-            // FIXME: if the player is somewhere the enemy cant reach the,
-            // enemy will never be able to get to the player. we should just try nearby
-            // locations instead
+            // FIXME: if the player is somewhere the enemy cant reach,
+            // the enemy will never be able to get to the player.
+            // we should just try nearby locations instead
 
             // if the target is not on the navmesh, we let our systems make a new Target, until it
             // is on the navmesh again.
