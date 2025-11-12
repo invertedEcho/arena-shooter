@@ -1,6 +1,6 @@
 use avian_rerecast::AvianBackendPlugin;
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{platform::collections::HashSet, prelude::*};
 use bevy_landmass::prelude::*;
 use bevy_rerecast::prelude::*;
 use landmass_rerecast::{
@@ -11,6 +11,7 @@ use crate::{
     character_controller::{CHARACTER_HEIGHT, MAX_SLOPE_ANGLE},
     enemy::{Enemy, EnemyState, spawn::AgentEnemyEntityPointer},
     game_flow::states::LoadingGameSubState,
+    world::world_objects::medkit::Medkit,
 };
 
 pub const ENEMY_AGENT_RADIUS: f32 = 0.4;
@@ -26,24 +27,28 @@ impl Plugin for NavMeshPathfindingPlugin {
         // app.add_plugins(Landmass3dDebugPlugin::default());
         app.add_systems(
             OnEnter(LoadingGameSubState::CollidersReady),
-            generate_navmesh_when_map_colliders_ready,
+            generate_navmesh_on_map_colliders_ready,
         );
         app.add_systems(Update, update_agent_velocity_from_physics_velocity);
     }
 }
 
+// We store the NavMesh handle in a resource so we can regenerate the navmesh when needed
 #[derive(Resource)]
 pub struct NavMeshHandle(pub Handle<Navmesh>);
 
 #[derive(Resource)]
 pub struct ArchipelagoRef(pub Entity);
 
-fn generate_navmesh_when_map_colliders_ready(
+// TODO: dont generate navmesh if game mode is FreeRoam
+fn generate_navmesh_on_map_colliders_ready(
     mut commands: Commands,
     mut generator: NavmeshGenerator,
     maybe_existing_nav_mesh: Option<Res<NavMeshHandle>>,
+    all_entities_except_medkits: Query<Entity, Without<Medkit>>,
 ) {
     let nav_mesh_settings = NavmeshSettings {
+        // TODO: document why this radius is smaller than ENEMY_AGENT_RADIUS
         agent_radius: 0.3,
         // this is pretty important, so the agent doesnt try to climb some very high ledge
         walkable_climb: 0.25,
@@ -51,6 +56,7 @@ fn generate_navmesh_when_map_colliders_ready(
         cell_size_fraction: 2.0,
         cell_height_fraction: 4.0,
         agent_height: CHARACTER_HEIGHT,
+        filter: Some(HashSet::from_iter(all_entities_except_medkits)),
         ..default()
     };
 
@@ -98,9 +104,9 @@ fn update_agent_velocity_from_physics_velocity(
             continue;
         };
         if *agent_state == AgentState::TargetNotOnNavMesh {
-            // FIXME: i mean this is kinda shitty, if the player just stands on some point the
-            // enemy cant reach the enemy will never go to the player. we should just try nearby
-            // locations instead
+            // FIXME: if the player is somewhere the enemy cant reach,
+            // the enemy will never be able to get to the player.
+            // we should just try nearby locations instead
 
             // if the target is not on the navmesh, we let our systems make a new Target, until it
             // is on the navmesh again.

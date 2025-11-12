@@ -1,8 +1,6 @@
 use std::f32::consts::PI;
 
-use avian3d::prelude::{
-    ColliderConstructor, ColliderConstructorHierarchy, RigidBody,
-};
+use avian3d::prelude::*;
 use bevy::{
     camera::visibility::RenderLayers,
     color::palettes::{self},
@@ -13,9 +11,8 @@ use crate::{
     game_flow::states::{AppState, SelectedMapState},
     world::{
         MEDIUM_MAP_PATH, SMALL_MAP_PATH,
-        collider_rules::get_collider_rules_for_medium_map,
-        components::DebugPoint, messages::SpawnDebugPointMessage,
-        resources::WorldSceneHandle,
+        collider_rules::get_collider_rules_by_map, components::DebugPoint,
+        messages::SpawnDebugPointMessage, resources::WorldSceneHandle,
     },
 };
 
@@ -24,8 +21,17 @@ pub fn spawn_map(
     mut commands: Commands,
     selected_map_state: Res<State<SelectedMapState>>,
 ) {
-    info!("Entered LoadingGameSubState::SpawningMap, spawning map");
-    let selected_map_state = selected_map_state.get();
+    let selected_map = selected_map_state.get();
+    let map_path = match selected_map {
+        SelectedMapState::TinyTown => SMALL_MAP_PATH,
+        SelectedMapState::MediumPlastic => MEDIUM_MAP_PATH,
+    };
+
+    info!(
+        "Entered LoadingGameSubState::SpawningMap, spawning map {:?} with \
+         path {:?}",
+        selected_map, map_path
+    );
 
     commands.spawn((
         DespawnOnExit(AppState::InGame),
@@ -40,20 +46,25 @@ pub fn spawn_map(
             rotation: Quat::from_rotation_x(-PI / 4.),
             ..default()
         },
+        // TODO: should be constants
         RenderLayers::from_layers(&[0, 1]),
     ));
 
-    let map_path = match selected_map_state {
-        SelectedMapState::TinyTown => SMALL_MAP_PATH,
-        SelectedMapState::MediumPlastic => MEDIUM_MAP_PATH,
-    };
     let world_scene_handle =
         asset_server.load(GltfAssetLabel::Scene(0).from_asset(map_path));
 
     commands.insert_resource(WorldSceneHandle(world_scene_handle.clone()));
 
-    if *selected_map_state == SelectedMapState::MediumPlastic {
-        let collider_rules = get_collider_rules_for_medium_map();
+    let collider_rules = get_collider_rules_by_map(selected_map);
+
+    if collider_rules.is_empty() {
+        commands.spawn((
+            DespawnOnExit(AppState::InGame),
+            SceneRoot(world_scene_handle),
+            Name::new("World Scene Root"),
+            Visibility::Visible,
+        ));
+    } else {
         let mut collider_hierarchy = ColliderConstructorHierarchy::new(
             ColliderConstructor::ConvexHullFromMesh,
         );
@@ -78,14 +89,6 @@ pub fn spawn_map(
             Name::new("World Scene Root"),
             Visibility::Visible,
             RigidBody::Static,
-        ));
-    } else if *selected_map_state == SelectedMapState::TinyTown {
-        // Tiny town map has colliders and rigidbody set up in blender as explicit components via skein
-        commands.spawn((
-            SceneRoot(world_scene_handle),
-            Name::new("World Scene Root"),
-            Visibility::Visible,
-            DespawnOnExit(AppState::InGame),
         ));
     }
 }
