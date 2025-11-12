@@ -94,24 +94,31 @@ pub fn check_world_scene_loaded(
     mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
     maybe_world_scene_handle: Option<Res<WorldSceneHandle>>,
     mut next_game_loading_state: ResMut<NextState<LoadingGameSubState>>,
-    selected_map_state: If<Res<State<SelectedMapState>>>,
 ) {
     for asset_event in asset_event_message_reader.read() {
         if let AssetEvent::LoadedWithDependencies { id } = asset_event
             && let Some(ref world_scene_handle) = maybe_world_scene_handle
             && *id == world_scene_handle.0.id()
         {
-            info!("Map assets loaded!");
+            info!(
+                "Map assets loaded!, setting LoadingGameSubState to \
+                 MapLoadedWithDependencies"
+            );
             next_game_loading_state
                 .set(LoadingGameSubState::MapLoadedWithDependencies);
-            // if the map is tiny town and MapLoadedWithDependencies, the colliders are already
-            // spawned, because they are part of the map itself, so we can just set CollidersReady
-            // immediately
-            if *selected_map_state.get() == SelectedMapState::TinyTown {
-                next_game_loading_state
-                    .set(LoadingGameSubState::CollidersReady);
-            }
         }
+    }
+}
+
+pub fn handle_map_loaded_with_dependencies(
+    selected_map_state: Res<State<SelectedMapState>>,
+    mut next_game_loading_state: ResMut<NextState<LoadingGameSubState>>,
+) {
+    // if the map is tiny town and MapLoadedWithDependencies, the colliders are already
+    // spawned, because they are part of the map itself, so we can just set CollidersReady
+    // immediately
+    if *selected_map_state.get() == SelectedMapState::TinyTown {
+        next_game_loading_state.set(LoadingGameSubState::CollidersReady);
     }
 }
 
