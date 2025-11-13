@@ -8,7 +8,7 @@ use crate::{
     user_interface::{
         map_selection::MapSelectionButton,
         widgets::slider::{
-            GameSettings, update_slider_style, update_slider_values,
+            update_slider_style, update_volume_control_slider_value,
         },
     },
 };
@@ -17,16 +17,15 @@ pub struct CommonUiPlugin;
 
 impl Plugin for CommonUiPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(GameSettings { volume: 50.0 })
-            .add_systems(
-                Update,
-                (
-                    handle_common_ui_button_press,
-                    handle_any_button_hover,
-                    update_slider_style,
-                    update_slider_values,
-                ),
-            );
+        app.add_systems(
+            Update,
+            (
+                handle_common_ui_button_press,
+                handle_any_button_hover,
+                update_slider_style,
+                update_volume_control_slider_value,
+            ),
+        );
     }
 }
 

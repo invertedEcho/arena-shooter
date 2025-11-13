@@ -18,9 +18,8 @@ mod pause_menu;
 mod settings_menu;
 mod widgets;
 
-const AVA_FONT_PATH: &str = "fonts/AVA.ttf";
-const DEFAULT_GAME_FONT_PATH: &str = "fonts/Ignotum/Ignotum-Regular.ttf";
-pub const ITALIC_GAME_FONT_PATH: &str = "fonts/Ignotum/Ignotum-Italic.ttf";
+const DEFAULT_GAME_FONT_PATH: &str = "fonts/Exo_2/static/Exo2-Regular.ttf";
+pub const ITALIC_GAME_FONT_PATH: &str = "fonts/Exo_2/static/Exo2-Italic.ttf";
 const TITLE_FONT_SIZE: f32 = 64.0;
 const DEFAULT_FONT_SIZE: f32 = 32.0;
 

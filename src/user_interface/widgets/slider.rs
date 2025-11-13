@@ -8,25 +8,20 @@ use bevy::{
     },
 };
 
+use crate::game_settings::GameSettings;
+
 const DEFAULT_SLIDER_TRACK: Color = Color::srgb(0.05, 0.05, 0.05);
 const DEFAULT_SLIDER_THUMB: Color = Color::srgb(0.35, 0.75, 0.35);
 
-// TODO: move elsewhere
-#[derive(Resource)]
-pub struct GameSettings {
-    pub volume: f32,
-}
+#[derive(Component)]
+pub struct VolumeControlSlider;
 
 #[derive(Component)]
-pub struct DemoSlider;
+pub struct VolumeControlSliderThumb;
 
-#[derive(Component)]
-pub struct DemoSliderThumb;
-
-/// Update the widget states based on the changing resource.
-pub fn update_slider_values(
+pub fn update_volume_control_slider_value(
     res: Res<GameSettings>,
-    mut sliders: Query<Entity, With<DemoSlider>>,
+    mut sliders: Query<Entity, With<VolumeControlSlider>>,
     mut commands: Commands,
 ) {
     if res.is_changed() {
@@ -35,12 +30,17 @@ pub fn update_slider_values(
             // as SliderValue is internally marked as immutable
             commands
                 .entity(slider_entity)
-                .insert(SliderValue(res.volume));
+                .insert(SliderValue(res.audio_volume));
         }
     }
 }
 
-pub fn build_slider(min: f32, max: f32, value: f32) -> impl Bundle {
+pub fn build_slider<T: Component>(
+    min: f32,
+    max: f32,
+    value: f32,
+    marker_component: T,
+) -> impl Bundle {
     (
         Node {
             display: Display::Flex,
@@ -55,7 +55,7 @@ pub fn build_slider(min: f32, max: f32, value: f32) -> impl Bundle {
         },
         Name::new("Slider"),
         Hovered::default(),
-        DemoSlider,
+        marker_component,
         Slider {
             track_click: TrackClick::Snap,
         },
@@ -87,7 +87,7 @@ pub fn build_slider(min: f32, max: f32, value: f32) -> impl Bundle {
                     ..default()
                 },
                 children![(
-                    DemoSliderThumb,
+                    VolumeControlSliderThumb,
                     SliderThumb,
                     Node {
                         display: Display::Flex,
@@ -122,13 +122,17 @@ pub fn update_slider_style(
                 Changed<Hovered>,
                 Changed<CoreSliderDragState>,
             )>,
-            With<DemoSlider>,
+            With<VolumeControlSlider>,
         ),
     >,
     children: Query<&Children>,
     mut thumbs: Query<
-        (&mut Node, &mut BackgroundColor, Has<DemoSliderThumb>),
-        Without<DemoSlider>,
+        (
+            &mut Node,
+            &mut BackgroundColor,
+            Has<VolumeControlSliderThumb>,
+        ),
+        Without<VolumeControlSlider>,
     >,
 ) {
     for (slider_ent, value, range, hovered, drag_state) in sliders.iter() {
