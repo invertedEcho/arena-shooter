@@ -1,7 +1,7 @@
 use avian3d::prelude::*;
 use bevy::{
-    input_focus::InputDispatchPlugin, prelude::*, ui_widgets::UiWidgetsPlugins,
-    window::PresentMode,
+    prelude::*,
+    window::{PresentMode, WindowMode},
 };
 use bevy_hanabi::HanabiPlugin;
 use bevy_inspector_egui::{
@@ -12,15 +12,16 @@ use bevy_skein::SkeinPlugin;
 
 use crate::{
     character_controller::CharacterControllerPlugin, enemy::EnemyPlugin,
-    game_flow::GameFlowPlugin, music::MusicPlugin,
-    nav_mesh_pathfinding::NavMeshPathfindingPlugin, particles::ParticlesPlugin,
-    player::PlayerPlugin, shared::CommonPlugin,
+    game_flow::GameFlowPlugin, game_settings::get_or_create_game_settings,
+    music::MusicPlugin, nav_mesh_pathfinding::NavMeshPathfindingPlugin,
+    particles::ParticlesPlugin, player::PlayerPlugin, shared::CommonPlugin,
     user_interface::UserInterfacePlugin, world::WorldPlugin,
 };
 
 mod character_controller;
 mod enemy;
 mod game_flow;
+mod game_settings;
 mod music;
 mod nav_mesh_pathfinding;
 mod particles;
@@ -36,7 +37,16 @@ mod world;
 const GRAVITY: f32 = 9.81;
 
 fn main() {
+    let game_settings = get_or_create_game_settings();
+
     let mut app = App::new();
+    app.insert_resource(game_settings.clone());
+
+    let window_mode = if game_settings.fullscreen {
+        WindowMode::BorderlessFullscreen(MonitorSelection::Current)
+    } else {
+        WindowMode::Windowed
+    };
 
     // bevy-builtin plugins
     app.add_plugins(
@@ -53,6 +63,7 @@ fn main() {
                     title: "Fun Shooter".into(),
                     name: Some("fun-shooter".into()),
                     present_mode: PresentMode::AutoNoVsync,
+                    mode: window_mode,
                     ..default()
                 }),
                 ..default()

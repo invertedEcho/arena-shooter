@@ -1,14 +1,7 @@
 use crate::{
     game_flow::states::MainMenuState,
-    user_interface::{
-        DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
-        widgets::slider::{GameSettings, build_slider},
-    },
-};
-use bevy::{
-    prelude::*,
-    ui_widgets::{ValueChange, observe},
-    window::WindowMode,
+    game_settings::{GameSettings, update_game_settings},
+    user_interface::{DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH},
 };
 
 pub struct SettingsMenuPlugin;
@@ -95,6 +88,7 @@ fn handle_settings_menu_button_pressed(
     mut window: Single<&mut Window>,
     query: Query<(&Interaction, &SettingsMenuButton), Changed<Interaction>>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
+    current_game_settings: Res<GameSettings>,
 ) {
     for (interaction, settings_menu_button) in query {
         let Interaction::Pressed = interaction else {
@@ -102,14 +96,20 @@ fn handle_settings_menu_button_pressed(
         };
         match settings_menu_button.0 {
             SettingsButtonType::ToggleFullscreen => {
+                let mut fullscreen = false;
                 let current_window_mode = window.mode;
                 if current_window_mode == WindowMode::Windowed {
                     window.mode = WindowMode::BorderlessFullscreen(
                         MonitorSelection::Current,
                     );
+                    fullscreen = true;
                 } else {
                     window.mode = WindowMode::Windowed;
                 }
+                update_game_settings(&GameSettings {
+                    audio_volume: current_game_settings.audio_volume,
+                    fullscreen,
+                });
             }
             SettingsButtonType::Back => {
                 next_main_menu_state.set(MainMenuState::Root);
