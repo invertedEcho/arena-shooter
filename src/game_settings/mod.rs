@@ -3,7 +3,7 @@ use std::{
     io::{Read, Write},
 };
 
-use bevy::{ecs::resource::Resource, log::info};
+use bevy::{ecs::resource::Resource, log::info, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use crate::game_settings::utils::{
@@ -11,6 +11,24 @@ use crate::game_settings::utils::{
 };
 
 mod utils;
+
+pub struct GameSettingsPlugin;
+
+impl Plugin for GameSettingsPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            Update,
+            update_game_settings_file_on_res_changed.run_if(
+                resource_changed::<GameSettings>
+                    .and(not(resource_added::<GameSettings>)),
+            ),
+        );
+    }
+}
+
+fn update_game_settings_file_on_res_changed(game_settings: Res<GameSettings>) {
+    update_game_settings_file(&game_settings);
+}
 
 #[derive(Serialize, Deserialize, Resource, Clone)]
 pub struct GameSettings {
@@ -87,7 +105,7 @@ pub fn get_or_create_game_settings() -> GameSettings {
     }
 }
 
-pub fn update_game_settings(new_game_settings: &GameSettings) {
+pub fn update_game_settings_file(new_game_settings: &GameSettings) {
     let game_settings_directory = ensure_game_settings_directory_exists();
     let game_settings_file = get_game_settings_file(game_settings_directory);
 
