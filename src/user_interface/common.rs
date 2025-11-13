@@ -1,7 +1,6 @@
 use bevy::{
     color::palettes::{css::WHITE, tailwind::ORANGE_400},
     prelude::*,
-    ui_widgets::TrackClick,
 };
 
 use crate::{
@@ -9,8 +8,7 @@ use crate::{
     user_interface::{
         map_selection::MapSelectionButton,
         widgets::slider::{
-            DemoWidgetStates, update_slider_style, update_slider_style2,
-            update_slider_values,
+            GameSettings, update_slider_style, update_slider_values,
         },
     },
 };
@@ -19,20 +17,16 @@ pub struct CommonUiPlugin;
 
 impl Plugin for CommonUiPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(DemoWidgetStates {
-            slider_value: 50.0,
-            slider_click: TrackClick::Snap,
-        })
-        .add_systems(
-            Update,
-            (
-                handle_common_ui_button_press,
-                handle_any_button_hover,
-                update_slider_style,
-                update_slider_style2,
-                update_slider_values,
-            ),
-        );
+        app.insert_resource(GameSettings { volume: 50.0 })
+            .add_systems(
+                Update,
+                (
+                    handle_common_ui_button_press,
+                    handle_any_button_hover,
+                    update_slider_style,
+                    update_slider_values,
+                ),
+            );
     }
 }
 

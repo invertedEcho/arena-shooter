@@ -2,7 +2,6 @@ use bevy::{
     input_focus::tab_navigation::TabIndex,
     picking::hover::Hovered,
     prelude::*,
-    ui::InteractionDisabled,
     ui_widgets::{
         CoreSliderDragState, Slider, SliderRange, SliderThumb, SliderValue,
         TrackClick,
@@ -11,14 +10,11 @@ use bevy::{
 
 const DEFAULT_SLIDER_TRACK: Color = Color::srgb(0.05, 0.05, 0.05);
 const DEFAULT_SLIDER_THUMB: Color = Color::srgb(0.35, 0.75, 0.35);
-const ELEMENT_FILL_DISABLED: Color =
-    Color::srgb(0.5019608, 0.5019608, 0.5019608);
 
-// TODO: move elsewhere, rename, etc
+// TODO: move elsewhere
 #[derive(Resource)]
-pub struct DemoWidgetStates {
-    pub slider_value: f32,
-    pub slider_click: TrackClick,
+pub struct GameSettings {
+    pub volume: f32,
 }
 
 #[derive(Component)]
@@ -29,26 +25,21 @@ pub struct DemoSliderThumb;
 
 /// Update the widget states based on the changing resource.
 pub fn update_slider_values(
-    res: Res<DemoWidgetStates>,
-    mut sliders: Query<(Entity, &mut Slider), With<DemoSlider>>,
+    res: Res<GameSettings>,
+    mut sliders: Query<Entity, With<DemoSlider>>,
     mut commands: Commands,
 ) {
     if res.is_changed() {
-        info!("DemoWidgetStates changed, iterating over sliders");
-        if sliders.is_empty() {
-            warn!("no sliders with demoslider");
-        }
-        for (slider_ent, mut slider) in sliders.iter_mut() {
-            info!("updating slider {}", slider_ent);
+        for slider_entity in sliders.iter_mut() {
+            // we insert as component instead of changing the SliderValue component directly,
+            // as SliderValue is internally marked as immutable
             commands
-                .entity(slider_ent)
-                .insert(SliderValue(res.slider_value));
-            slider.track_click = res.slider_click;
+                .entity(slider_entity)
+                .insert(SliderValue(res.volume));
         }
     }
 }
 
-/// Create a demo slider
 pub fn build_slider(min: f32, max: f32, value: f32) -> impl Bundle {
     (
         Node {
@@ -123,7 +114,6 @@ pub fn update_slider_style(
             &SliderRange,
             &Hovered,
             &CoreSliderDragState,
-            Has<InteractionDisabled>,
         ),
         (
             Or<(
@@ -131,7 +121,6 @@ pub fn update_slider_style(
                 Changed<SliderRange>,
                 Changed<Hovered>,
                 Changed<CoreSliderDragState>,
-                Added<InteractionDisabled>,
             )>,
             With<DemoSlider>,
         ),
@@ -142,9 +131,7 @@ pub fn update_slider_style(
         Without<DemoSlider>,
     >,
 ) {
-    for (slider_ent, value, range, hovered, drag_state, disabled) in
-        sliders.iter()
-    {
+    for (slider_ent, value, range, hovered, drag_state) in sliders.iter() {
         for child in children.iter_descendants(slider_ent) {
             if let Ok((mut thumb_node, mut thumb_bg, is_thumb)) =
                 thumbs.get_mut(child)
@@ -152,52 +139,16 @@ pub fn update_slider_style(
             {
                 thumb_node.left =
                     percent(range.thumb_position(value.0) * 100.0);
-                thumb_bg.0 =
-                    thumb_color(disabled, hovered.0 | drag_state.dragging);
+                thumb_bg.0 = thumb_color(hovered.0 | drag_state.dragging);
             }
         }
     }
 }
 
-pub fn update_slider_style2(
-    sliders: Query<
-        (
-            Entity,
-            &Hovered,
-            &CoreSliderDragState,
-            Has<InteractionDisabled>,
-        ),
-        With<DemoSlider>,
-    >,
-    children: Query<&Children>,
-    mut thumbs: Query<
-        (&mut BackgroundColor, Has<DemoSliderThumb>),
-        Without<DemoSlider>,
-    >,
-    mut removed_disabled: RemovedComponents<InteractionDisabled>,
-) {
-    removed_disabled.read().for_each(|entity| {
-        if let Ok((slider_ent, hovered, drag_state, disabled)) =
-            sliders.get(entity)
-        {
-            for child in children.iter_descendants(slider_ent) {
-                if let Ok((mut thumb_bg, is_thumb)) = thumbs.get_mut(child)
-                    && is_thumb
-                {
-                    thumb_bg.0 =
-                        thumb_color(disabled, hovered.0 | drag_state.dragging);
-                }
-            }
-        }
-    });
-}
-
-fn thumb_color(disabled: bool, hovered: bool) -> Color {
-    match (disabled, hovered) {
-        (true, _) => ELEMENT_FILL_DISABLED,
-
-        (false, true) => DEFAULT_SLIDER_THUMB.lighter(0.3),
-
-        _ => DEFAULT_SLIDER_THUMB,
+fn thumb_color(hovered: bool) -> Color {
+    if hovered {
+        DEFAULT_SLIDER_THUMB.lighter(0.3)
+    } else {
+        DEFAULT_SLIDER_THUMB
     }
 }

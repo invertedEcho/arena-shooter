@@ -2,7 +2,7 @@ use crate::{
     game_flow::states::MainMenuState,
     user_interface::{
         DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
-        widgets::slider::{DemoWidgetStates, build_slider},
+        widgets::slider::{GameSettings, build_slider},
     },
 };
 use bevy::{
@@ -44,32 +44,30 @@ fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
             },
             SettingsMenuRoot,
             DespawnOnExit(MainMenuState::Settings),
-            children![
-                (
-                    build_slider(0.0, 100.0, 50.0),
-                    observe(
-                        |value_change: On<ValueChange<f32>>,
-                         mut widget_states: ResMut<DemoWidgetStates>| {
-                            widget_states.slider_value = value_change.value;
-                        },
-                    )
-                ),
-                (
-                    Node { ..default() },
-                    Button,
-                    SettingsMenuButton(SettingsButtonType::ToggleFullscreen),
-                    children![
-                        Text::new("Toggle fullscreen"),
-                        TextFont {
-                            font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                            font_size: DEFAULT_FONT_SIZE,
-                            ..default()
-                        },
-                    ]
-                )
-            ],
         ))
         .with_children(|parent| {
+            parent.spawn((
+                build_slider(0.0, 100.0, 50.0),
+                observe(
+                    |value_change: On<ValueChange<f32>>,
+                     mut widget_states: ResMut<GameSettings>| {
+                        widget_states.volume = value_change.value;
+                    },
+                )
+            ));
+            parent.spawn((
+                Node { ..default() },
+                Button,
+                SettingsMenuButton(SettingsButtonType::ToggleFullscreen),
+                children![
+                    Text::new("Toggle fullscreen"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: DEFAULT_FONT_SIZE,
+                        ..default()
+                    },
+                ],
+            ));
             parent
                 .spawn((
                     Node {

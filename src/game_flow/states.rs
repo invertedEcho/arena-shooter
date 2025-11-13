@@ -26,8 +26,8 @@ pub enum LoadingGameSubState {
 #[states(scoped_entities)]
 #[source(AppState = AppState::MainMenu)]
 pub enum MainMenuState {
-    #[default]
     Root,
+    #[default]
     Settings,
     MapSelection,
     GameModeSelection,

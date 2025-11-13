@@ -1,5 +1,8 @@
 use avian3d::prelude::*;
-use bevy::{prelude::*, window::PresentMode};
+use bevy::{
+    input_focus::InputDispatchPlugin, prelude::*, ui_widgets::UiWidgetsPlugins,
+    window::PresentMode,
+};
 use bevy_hanabi::HanabiPlugin;
 use bevy_inspector_egui::{
     bevy_egui::{self, EguiPlugin},
@@ -55,6 +58,7 @@ fn main() {
                 ..default()
             }),
     );
+    app.add_plugins((UiWidgetsPlugins, InputDispatchPlugin));
     // app.add_plugins(FrameTimeDiagnosticsPlugin::default());
     // app.add_plugins(LogDiagnosticsPlugin::default());
 
