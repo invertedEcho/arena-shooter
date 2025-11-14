@@ -68,9 +68,5 @@ uses:
 - SWAT by Quaternius (https://poly.pizza/m/Btfn3G5Xv4)
 - "LOWPOLY | FPS | TDM | GAME | MAP by ResoForge" (https://skfb.ly/pxM87) by ResoForge (old profile) is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 
-### Fonts
-- Ignotum Designed by GGBotNet https://www.ggbot.net/fonts/
-- AVA Designed by GGBotNet https://www.ggbot.net/fonts/
-
 ### Music & SFX
 - Main Menu Theme by [juanjo_sound](https://juanjosound.itch.io/)

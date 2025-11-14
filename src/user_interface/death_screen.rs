@@ -7,7 +7,7 @@ use crate::{
         systems::free_mouse,
     },
     user_interface::{
-        DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
+        DEFAULT_GAME_FONT_PATH, SUB_HEADER_FONT_SIZE,
         common::{CommonUiButton, CommonUiButtonType},
     },
 };
@@ -67,7 +67,7 @@ fn spawn_wave_game_mode_death_screen(
                     Text::new("You are dead"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -88,7 +88,7 @@ fn spawn_wave_game_mode_death_screen(
                     )),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -109,7 +109,7 @@ fn spawn_wave_game_mode_death_screen(
                     )),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -130,7 +130,7 @@ fn spawn_wave_game_mode_death_screen(
                             Text::new("Retry"),
                             TextFont {
                                 font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                                font_size: DEFAULT_FONT_SIZE,
+                                font_size: SUB_HEADER_FONT_SIZE,
                                 ..default()
                             },
                         ));
@@ -143,7 +143,7 @@ fn spawn_wave_game_mode_death_screen(
                             Text::new("Exit to Main Menu"),
                             TextFont {
                                 font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                                font_size: DEFAULT_FONT_SIZE,
+                                font_size: SUB_HEADER_FONT_SIZE,
                                 ..default()
                             },
                         ));

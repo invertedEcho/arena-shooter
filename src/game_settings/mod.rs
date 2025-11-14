@@ -12,34 +12,20 @@ use crate::game_settings::utils::{
 
 mod utils;
 
-pub struct GameSettingsPlugin;
-
-impl Plugin for GameSettingsPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            update_game_settings_file_on_res_changed.run_if(
-                resource_changed::<GameSettings>
-                    .and(not(resource_added::<GameSettings>)),
-            ),
-        );
-    }
-}
-
-fn update_game_settings_file_on_res_changed(game_settings: Res<GameSettings>) {
-    update_game_settings_file(&game_settings);
-}
-
 #[derive(Serialize, Deserialize, Resource, Clone)]
 pub struct GameSettings {
-    pub audio_volume: f32,
+    pub master_volume: f32,
+    pub sounds_volume: f32,
+    pub music_volume: f32,
     pub fullscreen: bool,
 }
 
 impl Default for GameSettings {
     fn default() -> Self {
         Self {
-            audio_volume: 50.0,
+            master_volume: 50.0,
+            sounds_volume: 50.0,
+            music_volume: 50.0,
             fullscreen: true,
         }
     }

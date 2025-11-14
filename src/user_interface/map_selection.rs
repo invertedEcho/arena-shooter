@@ -6,7 +6,7 @@ use bevy::{
 use crate::{
     game_flow::states::{MainMenuState, SelectedMapState},
     user_interface::{
-        DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
+        DEFAULT_GAME_FONT_PATH, SUB_HEADER_FONT_SIZE,
         common::{CommonUiButton, CommonUiButtonType},
     },
 };
@@ -108,7 +108,7 @@ fn spawn_map_selection(
                     Text::new("Select a Map"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -123,7 +123,7 @@ fn spawn_map_selection(
                     Text::new("Tiny Town"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                     TextColor(get_text_button_color_for_map_selection_button(
@@ -142,7 +142,7 @@ fn spawn_map_selection(
                     Text::new("Medium Plastic"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                     TextColor(get_text_button_color_for_map_selection_button(
@@ -167,7 +167,7 @@ fn spawn_map_selection(
                     Text::new("Continue to Game Mode Selection"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -188,7 +188,7 @@ fn spawn_map_selection(
                     Text::new("Go back to Main Menu"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                 ));

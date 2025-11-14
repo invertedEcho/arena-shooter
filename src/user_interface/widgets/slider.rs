@@ -8,32 +8,8 @@ use bevy::{
     },
 };
 
-use crate::game_settings::GameSettings;
-
 const DEFAULT_SLIDER_TRACK: Color = Color::srgb(0.05, 0.05, 0.05);
 const DEFAULT_SLIDER_THUMB: Color = Color::srgb(0.35, 0.75, 0.35);
-
-#[derive(Component)]
-pub struct VolumeControlSlider;
-
-#[derive(Component)]
-pub struct VolumeControlSliderThumb;
-
-pub fn update_volume_control_slider_value(
-    res: Res<GameSettings>,
-    mut sliders: Query<Entity, With<VolumeControlSlider>>,
-    mut commands: Commands,
-) {
-    if res.is_changed() {
-        for slider_entity in sliders.iter_mut() {
-            // we insert as component instead of changing the SliderValue component directly,
-            // as SliderValue is internally marked as immutable
-            commands
-                .entity(slider_entity)
-                .insert(SliderValue(res.audio_volume));
-        }
-    }
-}
 
 pub fn build_slider<T: Component>(
     min: f32,
@@ -87,7 +63,6 @@ pub fn build_slider<T: Component>(
                     ..default()
                 },
                 children![(
-                    VolumeControlSliderThumb,
                     SliderThumb,
                     Node {
                         display: Display::Flex,
@@ -122,21 +97,13 @@ pub fn update_slider_style(
                 Changed<Hovered>,
                 Changed<CoreSliderDragState>,
             )>,
-            With<VolumeControlSlider>,
         ),
     >,
     children: Query<&Children>,
-    mut thumbs: Query<
-        (
-            &mut Node,
-            &mut BackgroundColor,
-            Has<VolumeControlSliderThumb>,
-        ),
-        Without<VolumeControlSlider>,
-    >,
+    mut thumbs: Query<(&mut Node, &mut BackgroundColor, Has<SliderThumb>)>,
 ) {
-    for (slider_ent, value, range, hovered, drag_state) in sliders.iter() {
-        for child in children.iter_descendants(slider_ent) {
+    for (entity, value, range, hovered, drag_state) in sliders.iter() {
+        for child in children.iter_descendants(entity) {
             if let Ok((mut thumb_node, mut thumb_bg, is_thumb)) =
                 thumbs.get_mut(child)
                 && is_thumb

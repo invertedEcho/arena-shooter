@@ -21,7 +21,8 @@ mod widgets;
 const DEFAULT_GAME_FONT_PATH: &str = "fonts/Exo_2/static/Exo2-Regular.ttf";
 pub const ITALIC_GAME_FONT_PATH: &str = "fonts/Exo_2/static/Exo2-Italic.ttf";
 const TITLE_FONT_SIZE: f32 = 64.0;
-const DEFAULT_FONT_SIZE: f32 = 32.0;
+// TODO: give different name
+const SUB_HEADER_FONT_SIZE: f32 = 32.0;
 
 pub struct UserInterfacePlugin;
 

@@ -7,8 +7,9 @@ use crate::{
     game_flow::states::{AppState, MainMenuState},
     user_interface::{
         map_selection::MapSelectionButton,
-        widgets::slider::{
-            update_slider_style, update_volume_control_slider_value,
+        widgets::{
+            checkbox::{update_checkbox_style, update_checkbox_style2},
+            slider::update_slider_style,
         },
     },
 };
@@ -23,7 +24,8 @@ impl Plugin for CommonUiPlugin {
                 handle_common_ui_button_press,
                 handle_any_button_hover,
                 update_slider_style,
-                update_volume_control_slider_value,
+                update_checkbox_style,
+                update_checkbox_style2,
             ),
         );
     }
