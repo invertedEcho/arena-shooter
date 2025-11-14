@@ -84,7 +84,11 @@ struct SettingsMenuRoot;
 #[derive(Component)]
 struct SettingsRightSideContentRoot;
 
-fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
+fn spawn_settings_menu(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    game_settings: Res<GameSettings>,
+) {
     commands
         .spawn((
             Node {
@@ -133,7 +137,8 @@ fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                                     ..default()
                                 },
                                 BorderColor::all(PRIMARY_COLOR),
-                                BackgroundColor(PRIMARY_BUTTON_COLOR.into()),
+                                // per default, audio tab is selected
+                                BackgroundColor(PRIMARY_COLOR.into()),
                                 Button,
                                 SettingsChangeTabButton(
                                     SettingsSelectedTab::Audio,
@@ -267,6 +272,10 @@ fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     },
                     Name::new("RightSideContentRoot"),
                     SettingsRightSideContentRoot,
+                    children![build_audio_settings_tab_content(
+                        asset_server,
+                        game_settings,
+                    )],
                 ));
         });
 }
