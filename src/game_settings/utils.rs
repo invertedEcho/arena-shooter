@@ -17,7 +17,12 @@ pub fn ensure_game_settings_directory_exists() -> String {
     let game_settings_dir_exists = fs::exists(&game_settings_directory)
         .expect("Can check if GAME_SETTINGS_DIR_PATH exists");
     if !game_settings_dir_exists {
-        create_dir(&game_settings_directory);
+        match create_dir(&game_settings_directory) {
+            Ok(_) => {}
+            Err(error) => {
+                panic!("Failed to create game settings directory: {}", error);
+            }
+        };
     }
     game_settings_directory
 }

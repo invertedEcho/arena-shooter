@@ -3,7 +3,7 @@ use std::{
     io::{Read, Write},
 };
 
-use bevy::{ecs::resource::Resource, log::info};
+use bevy::{ecs::resource::Resource, log::info, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use crate::game_settings::utils::{
@@ -14,14 +14,18 @@ mod utils;
 
 #[derive(Serialize, Deserialize, Resource, Clone)]
 pub struct GameSettings {
-    pub audio_volume: f32,
+    pub master_volume: f32,
+    pub sounds_volume: f32,
+    pub music_volume: f32,
     pub fullscreen: bool,
 }
 
 impl Default for GameSettings {
     fn default() -> Self {
         Self {
-            audio_volume: 50.0,
+            master_volume: 50.0,
+            sounds_volume: 50.0,
+            music_volume: 50.0,
             fullscreen: true,
         }
     }
@@ -87,7 +91,7 @@ pub fn get_or_create_game_settings() -> GameSettings {
     }
 }
 
-pub fn update_game_settings(new_game_settings: &GameSettings) {
+pub fn update_game_settings_file(new_game_settings: &GameSettings) {
     let game_settings_directory = ensure_game_settings_directory_exists();
     let game_settings_file = get_game_settings_file(game_settings_directory);
 

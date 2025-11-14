@@ -3,8 +3,7 @@
 use crate::{
     game_flow::states::MainMenuState,
     user_interface::{
-        AVA_FONT_PATH, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
-        TITLE_FONT_SIZE,
+        DEFAULT_GAME_FONT_PATH, SUB_HEADER_FONT_SIZE, TITLE_FONT_SIZE,
     },
 };
 
@@ -57,7 +56,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 .with_child((
                     Text::new("Fun Shooter"),
                     TextFont {
-                        font: asset_server.load(AVA_FONT_PATH),
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
                         font_size: TITLE_FONT_SIZE,
                         ..default()
                     },
@@ -73,7 +72,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Singleplayer"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -87,7 +86,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Settings"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -108,7 +107,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Quit"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                 ));

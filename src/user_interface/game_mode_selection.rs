@@ -5,7 +5,7 @@ use crate::{
         game_mode::GameModeState,
         states::{AppState, MainMenuState},
     },
-    user_interface::{DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH},
+    user_interface::{DEFAULT_GAME_FONT_PATH, SUB_HEADER_FONT_SIZE},
 };
 
 pub struct GameModeSelectionUIPlugin;
@@ -72,7 +72,7 @@ fn spawn_game_mode_selection_screen(
                     Text::new("Select a game mode"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -87,7 +87,7 @@ fn spawn_game_mode_selection_screen(
                     Text::new("Waves"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -102,7 +102,7 @@ fn spawn_game_mode_selection_screen(
                     Text::new("Free Roam"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -125,7 +125,7 @@ fn spawn_game_mode_selection_screen(
                     Text::new("Go back"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
+                        font_size: SUB_HEADER_FONT_SIZE,
                         ..default()
                     },
                 ));

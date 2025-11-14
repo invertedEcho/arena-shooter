@@ -1,6 +1,8 @@
 use avian3d::prelude::*;
 use bevy::{
+    input_focus::InputDispatchPlugin,
     prelude::*,
+    ui_widgets::UiWidgetsPlugins,
     window::{PresentMode, WindowMode},
 };
 use bevy_hanabi::HanabiPlugin;
@@ -30,9 +32,6 @@ mod shared;
 mod user_interface;
 mod utils;
 mod world;
-
-// TODO: convert all static things into one mesh for a single mesh instead of single ones ->
-// probably trimesh_from_mesh
 
 const GRAVITY: f32 = 9.81;
 
@@ -69,6 +68,7 @@ fn main() {
                 ..default()
             }),
     );
+    app.add_plugins((UiWidgetsPlugins, InputDispatchPlugin));
     // app.add_plugins(FrameTimeDiagnosticsPlugin::default());
     // app.add_plugins(LogDiagnosticsPlugin::default());
 

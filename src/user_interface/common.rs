@@ -1,11 +1,16 @@
-use bevy::{
-    color::palettes::{css::WHITE, tailwind::ORANGE_400},
-    prelude::*,
-};
+use bevy::{color::palettes::css::WHITE, prelude::*};
 
 use crate::{
     game_flow::states::{AppState, MainMenuState},
-    user_interface::map_selection::MapSelectionButton,
+    user_interface::{
+        map_selection::MapSelectionButton,
+        settings_menu::SettingsChangeTabButton,
+        shared::PRIMARY_COLOR,
+        widgets::{
+            checkbox::{update_checkbox_style, update_checkbox_style2},
+            slider::update_slider_style,
+        },
+    },
 };
 
 pub struct CommonUiPlugin;
@@ -14,7 +19,13 @@ impl Plugin for CommonUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (handle_common_ui_button_press, handle_any_button_hover),
+            (
+                handle_common_ui_button_press,
+                handle_any_button_hover,
+                update_slider_style,
+                update_checkbox_style,
+                update_checkbox_style2,
+            ),
         );
     }
 }
@@ -61,6 +72,7 @@ type AnyButtonHoveredQuery<'w, 's> = Query<
         Changed<Interaction>,
         With<Button>,
         Without<MapSelectionButton>,
+        Without<SettingsChangeTabButton>,
     ),
 >;
 
@@ -73,7 +85,7 @@ fn handle_any_button_hover(
             continue;
         };
         match interaction {
-            Interaction::Hovered => *text_color = ORANGE_400.into(),
+            Interaction::Hovered => *text_color = PRIMARY_COLOR.into(),
             Interaction::None => *text_color = WHITE.into(),
             _ => {}
         }

@@ -14,7 +14,7 @@ opt-level = 3
 [dependencies]
 avian3d = "0.4"
 avian_rerecast = "0.3.0"
-bevy = { version = "0.17.2", features = ["mp3", "file_watcher", "wayland", "dynamic_linking"] }
+bevy = { version = "0.17.2", features = ["mp3", "file_watcher", "wayland", "dynamic_linking", "experimental_bevy_ui_widgets"] }
 bevy-inspector-egui = "0.34"
 bevy_hanabi = "0.17"
 bevy_landmass = "0.10.0"
@@ -25,6 +25,3 @@ landmass_rerecast = "0.1.0"
 rand = "0.9.2"
 serde = "1.0.228"
 serde_json = "1.0.145"
-
-# [patch.crates-io]
-# bevy_rerecast = { path = "../rerecast/crates/bevy_rerecast/" }
