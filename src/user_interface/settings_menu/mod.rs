@@ -1,6 +1,6 @@
 use crate::{
     game_flow::states::MainMenuState,
-    game_settings::{GameSettings, update_game_settings_file},
+    game_settings::{self, GameSettings, update_game_settings_file},
     user_interface::{
         DEFAULT_GAME_FONT_PATH,
         settings_menu::{
@@ -34,7 +34,7 @@ pub struct SettingsMenuPlugin;
 
 impl Plugin for SettingsMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<SettingsSelectedTab>()
+        app.init_state::<SelectedTabSettings>()
             .add_message::<ApplyGameSettingsMessage>()
             .add_systems(OnEnter(MainMenuState::Settings), spawn_settings_menu)
             .add_systems(
@@ -43,7 +43,7 @@ impl Plugin for SettingsMenuPlugin {
                     handle_settings_tab_changed,
                     update_settings_tab_button_color,
                 )
-                    .run_if(state_changed::<SettingsSelectedTab>),
+                    .run_if(state_changed::<SelectedTabSettings>),
             )
             .add_systems(
                 Update,
@@ -59,7 +59,7 @@ impl Plugin for SettingsMenuPlugin {
 
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[source(MainMenuState = MainMenuState::Settings)]
-pub enum SettingsSelectedTab {
+pub enum SelectedTabSettings {
     #[default]
     Audio,
     Graphics,
@@ -70,7 +70,7 @@ pub enum SettingsSelectedTab {
 struct SettingsMenuButton(pub SettingsButtonType);
 
 #[derive(Component)]
-pub struct SettingsChangeTabButton(pub SettingsSelectedTab);
+pub struct SettingsChangeTabButton(pub SelectedTabSettings);
 
 enum SettingsButtonType {
     ToggleFullscreen,
@@ -141,7 +141,7 @@ fn spawn_settings_menu(
                                 BackgroundColor(PRIMARY_COLOR.into()),
                                 Button,
                                 SettingsChangeTabButton(
-                                    SettingsSelectedTab::Audio,
+                                    SelectedTabSettings::Audio,
                                 ),
                                 children![(
                                     Text::new("Audio"),
@@ -164,7 +164,7 @@ fn spawn_settings_menu(
                                 Button,
                                 BackgroundColor(PRIMARY_BUTTON_COLOR.into()),
                                 SettingsChangeTabButton(
-                                    SettingsSelectedTab::Graphics,
+                                    SelectedTabSettings::Graphics,
                                 ),
                                 children![(
                                     Text::new("Graphics"),
@@ -187,7 +187,7 @@ fn spawn_settings_menu(
                                 Button,
                                 BackgroundColor(PRIMARY_BUTTON_COLOR.into()),
                                 SettingsChangeTabButton(
-                                    SettingsSelectedTab::Controls,
+                                    SelectedTabSettings::Controls,
                                 ),
                                 children![(
                                     Text::new("Controls"),
@@ -286,56 +286,61 @@ fn handle_settings_tab_changed(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     settings_right_side: Single<Entity, With<SettingsRightSideContentRoot>>,
-    settings_tab_state: Res<State<SettingsSelectedTab>>,
+    settings_tab_state: Res<State<SelectedTabSettings>>,
     game_settings: Res<GameSettings>,
 ) {
     commands.entity(*settings_right_side).despawn_children();
     let settings_tab_state = settings_tab_state.get();
+    info!("SelectedTabSettings changed, now: {:?}", settings_tab_state);
     match settings_tab_state {
-        SettingsSelectedTab::Audio => {
+        SelectedTabSettings::Audio => {
             commands.entity(*settings_right_side).with_child(
                 build_audio_settings_tab_content(asset_server, game_settings),
             );
         }
-        SettingsSelectedTab::Graphics => {
+        SelectedTabSettings::Graphics => {
             commands
                 .entity(*settings_right_side)
                 .with_children(|parent| {
                     parent
-                        .spawn((
-                            Node {
-                                flex_direction: FlexDirection::Row,
-                                justify_content: JustifyContent::SpaceBetween,
-                                ..default()
-                            },
-                            Button,
-                            SettingsMenuButton(
-                                SettingsButtonType::ToggleFullscreen,
-                            ),
-                        ))
+                        .spawn((Node {
+                            flex_direction: FlexDirection::Row,
+                            justify_content: JustifyContent::SpaceBetween,
+                            ..default()
+                        },))
                         .with_children(|parent| {
                             parent.spawn((
-                                Text::new("Borderless Fullscreen"),
-                                TextFont {
-                                    font: asset_server
-                                        .load(DEFAULT_GAME_FONT_PATH),
-                                    ..default()
-                                },
-                            ));
-                            parent.spawn((
-                                build_checkbox(
-                                    &asset_server,
-                                    "",
-                                    GraphicsCheckbox(
-                                        GraphicsCheckboxType::Fullscreen,
-                                    ),
+                                Button,
+                                SettingsMenuButton(
+                                    SettingsButtonType::ToggleFullscreen,
                                 ),
-                                observe(observe_graphics_tab_checkboxes),
+                                children![
+                                    Text::new("Borderless Fullscreen"),
+                                    TextFont {
+                                        font: asset_server
+                                            .load(DEFAULT_GAME_FONT_PATH),
+                                        ..default()
+                                    },
+                                ],
                             ));
+                            parent
+                                .spawn((
+                                    build_checkbox(
+                                        &asset_server,
+                                        "",
+                                        GraphicsCheckbox(
+                                            GraphicsCheckboxType::Fullscreen,
+                                        ),
+                                    ),
+                                    observe(observe_graphics_tab_checkboxes),
+                                ))
+                                .insert_if(Checked, || {
+                                    game_settings.fullscreen
+                                });
                         });
                 });
         }
-        SettingsSelectedTab::Controls => {}
+        SelectedTabSettings::Controls => {}
     }
 }
 
@@ -409,7 +414,7 @@ fn handle_change_tab_button_pressed(
         (&Interaction, &SettingsChangeTabButton),
         Changed<Interaction>,
     >,
-    mut next_selected_tab: ResMut<NextState<SettingsSelectedTab>>,
+    mut next_selected_tab: ResMut<NextState<SelectedTabSettings>>,
 ) {
     for (interaction, pressed_settings_change_tab_button) in query {
         let Interaction::Pressed = *interaction else {
@@ -421,7 +426,7 @@ fn handle_change_tab_button_pressed(
 
 fn update_settings_tab_button_color(
     query: Query<(&SettingsChangeTabButton, &mut BackgroundColor)>,
-    settings_tab_state: Res<State<SettingsSelectedTab>>,
+    settings_tab_state: Res<State<SelectedTabSettings>>,
 ) {
     for (button, mut background_color) in query {
         background_color.0 = if button.0 == *settings_tab_state.get() {

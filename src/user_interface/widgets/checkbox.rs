@@ -31,7 +31,6 @@ pub fn build_checkbox<T: Component>(
         Hovered::default(),
         marker_component,
         Checkbox,
-        Checked,
         TabIndex(0),
         Children::spawn((
             Spawn((
