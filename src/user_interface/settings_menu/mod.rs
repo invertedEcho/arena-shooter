@@ -348,6 +348,7 @@ pub fn observe_graphics_tab_checkboxes(
     value_change: On<ValueChange<bool>>,
     graphics_checkboxes: Query<&GraphicsCheckbox>,
     mut commands: Commands,
+    mut game_settings: ResMut<GameSettings>,
 ) {
     let source = value_change.source;
 
@@ -355,9 +356,12 @@ pub fn observe_graphics_tab_checkboxes(
         return;
     };
 
+    let checked = value_change.value;
+
     match graphics_checkbox.0 {
         GraphicsCheckboxType::Fullscreen => {
-            if value_change.value {
+            game_settings.fullscreen = checked;
+            if checked {
                 commands.entity(source).insert(Checked);
             } else {
                 commands.entity(source).remove::<Checked>();
