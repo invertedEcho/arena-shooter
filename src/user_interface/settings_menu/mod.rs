@@ -9,14 +9,12 @@ use crate::{
             },
             graphics::{GraphicsCheckbox, GraphicsCheckboxType},
         },
+        shared::{PRIMARY_BUTTON_COLOR, PRIMARY_COLOR},
         widgets::checkbox::build_checkbox,
     },
 };
 use bevy::{
-    color::palettes::{
-        css::RED,
-        tailwind::{SLATE_500, SLATE_600},
-    },
+    color::palettes::tailwind::SLATE_600,
     prelude::*,
     ui::Checked,
     ui_widgets::{ValueChange, observe},
@@ -41,7 +39,10 @@ impl Plugin for SettingsMenuPlugin {
             .add_systems(OnEnter(MainMenuState::Settings), spawn_settings_menu)
             .add_systems(
                 Update,
-                handle_settings_tab_changed
+                (
+                    handle_settings_tab_changed,
+                    update_settings_tab_button_color,
+                )
                     .run_if(state_changed::<SettingsSelectedTab>),
             )
             .add_systems(
@@ -50,6 +51,7 @@ impl Plugin for SettingsMenuPlugin {
                     handle_settings_menu_button_pressed,
                     update_volume_slider_value,
                     apply_game_settings,
+                    handle_change_tab_button_pressed,
                 ),
             );
     }
@@ -57,7 +59,7 @@ impl Plugin for SettingsMenuPlugin {
 
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[source(MainMenuState = MainMenuState::Settings)]
-enum SettingsSelectedTab {
+pub enum SettingsSelectedTab {
     #[default]
     Audio,
     Graphics,
@@ -67,8 +69,10 @@ enum SettingsSelectedTab {
 #[derive(Component)]
 struct SettingsMenuButton(pub SettingsButtonType);
 
+#[derive(Component)]
+pub struct SettingsChangeTabButton(pub SettingsSelectedTab);
+
 enum SettingsButtonType {
-    ChangeTab(SettingsSelectedTab),
     ToggleFullscreen,
     Back,
     Apply,
@@ -125,14 +129,14 @@ fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                                     padding: UiRect::all(px(8)),
                                     width: percent(50),
                                     justify_content: JustifyContent::Center,
+                                    border: UiRect::left(px(4)),
                                     ..default()
                                 },
-                                BackgroundColor(SLATE_500.into()),
+                                BorderColor::all(PRIMARY_COLOR),
+                                BackgroundColor(PRIMARY_BUTTON_COLOR.into()),
                                 Button,
-                                SettingsMenuButton(
-                                    SettingsButtonType::ChangeTab(
-                                        SettingsSelectedTab::Audio,
-                                    ),
+                                SettingsChangeTabButton(
+                                    SettingsSelectedTab::Audio,
                                 ),
                                 children![(
                                     Text::new("Audio"),
@@ -148,14 +152,14 @@ fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                                     padding: UiRect::all(px(8)),
                                     width: percent(50),
                                     justify_content: JustifyContent::Center,
+                                    border: UiRect::left(px(4)),
                                     ..default()
                                 },
+                                BorderColor::all(PRIMARY_COLOR),
                                 Button,
-                                BackgroundColor(SLATE_500.into()),
-                                SettingsMenuButton(
-                                    SettingsButtonType::ChangeTab(
-                                        SettingsSelectedTab::Graphics,
-                                    ),
+                                BackgroundColor(PRIMARY_BUTTON_COLOR.into()),
+                                SettingsChangeTabButton(
+                                    SettingsSelectedTab::Graphics,
                                 ),
                                 children![(
                                     Text::new("Graphics"),
@@ -171,14 +175,14 @@ fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                                     padding: UiRect::all(px(8)),
                                     width: percent(50),
                                     justify_content: JustifyContent::Center,
+                                    border: UiRect::left(px(4)),
                                     ..default()
                                 },
+                                BorderColor::all(PRIMARY_COLOR),
                                 Button,
-                                BackgroundColor(SLATE_500.into()),
-                                SettingsMenuButton(
-                                    SettingsButtonType::ChangeTab(
-                                        SettingsSelectedTab::Controls,
-                                    ),
+                                BackgroundColor(PRIMARY_BUTTON_COLOR.into()),
+                                SettingsChangeTabButton(
+                                    SettingsSelectedTab::Controls,
                                 ),
                                 children![(
                                     Text::new("Controls"),
@@ -203,10 +207,12 @@ fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                                     padding: UiRect::all(px(8)),
                                     width: percent(50),
                                     justify_content: JustifyContent::Center,
+                                    border: UiRect::left(px(4.0)),
                                     ..default()
                                 },
                                 Button,
-                                BackgroundColor(SLATE_500.into()),
+                                BackgroundColor(PRIMARY_BUTTON_COLOR.into()),
+                                BorderColor::all(PRIMARY_COLOR),
                                 SettingsMenuButton(SettingsButtonType::Apply),
                                 children![(
                                     Text::new("Apply"),
@@ -222,10 +228,12 @@ fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                                     padding: UiRect::all(px(8)),
                                     width: percent(50),
                                     justify_content: JustifyContent::Center,
+                                    border: UiRect::left(px(4.0)),
                                     ..default()
                                 },
                                 Button,
-                                BackgroundColor(SLATE_500.into()),
+                                BackgroundColor(PRIMARY_BUTTON_COLOR.into()),
+                                BorderColor::all(PRIMARY_COLOR),
                                 SettingsMenuButton(SettingsButtonType::Back),
                                 children![(
                                     Text::new("Back"),
@@ -242,7 +250,6 @@ fn spawn_settings_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 .spawn((
                     Name::new("RightSideRoot"),
                     Node {
-                        border: UiRect::all(px(2.0)),
                         width: percent(75.0),
                         height: percent(100.0),
                         ..default()
@@ -350,7 +357,6 @@ fn handle_settings_menu_button_pressed(
     query: Query<(&Interaction, &SettingsMenuButton), Changed<Interaction>>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     mut game_settings: ResMut<GameSettings>,
-    mut next_selected_tab: ResMut<NextState<SettingsSelectedTab>>,
     mut apply_game_settings_message_writer: MessageWriter<
         ApplyGameSettingsMessage,
     >,
@@ -380,15 +386,40 @@ fn handle_settings_menu_button_pressed(
             SettingsButtonType::Back => {
                 next_main_menu_state.set(MainMenuState::Root);
             }
-            SettingsButtonType::ChangeTab(selected_tab) => {
-                next_selected_tab.set(selected_tab.clone());
-            }
             SettingsButtonType::Apply => {
                 update_game_settings_file(&game_settings);
                 apply_game_settings_message_writer
                     .write(ApplyGameSettingsMessage);
             }
         }
+    }
+}
+
+fn handle_change_tab_button_pressed(
+    query: Query<
+        (&Interaction, &SettingsChangeTabButton),
+        Changed<Interaction>,
+    >,
+    mut next_selected_tab: ResMut<NextState<SettingsSelectedTab>>,
+) {
+    for (interaction, pressed_settings_change_tab_button) in query {
+        let Interaction::Pressed = *interaction else {
+            continue;
+        };
+        next_selected_tab.set(pressed_settings_change_tab_button.0.clone());
+    }
+}
+
+fn update_settings_tab_button_color(
+    query: Query<(&SettingsChangeTabButton, &mut BackgroundColor)>,
+    settings_tab_state: Res<State<SettingsSelectedTab>>,
+) {
+    for (button, mut background_color) in query {
+        background_color.0 = if button.0 == *settings_tab_state.get() {
+            PRIMARY_COLOR.into()
+        } else {
+            PRIMARY_BUTTON_COLOR.into()
+        };
     }
 }
 
