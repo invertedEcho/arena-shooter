@@ -1,6 +1,6 @@
 use crate::{
     game_flow::states::MainMenuState,
-    game_settings::{self, GameSettings, update_game_settings_file},
+    game_settings::{GameSettings, update_game_settings_file},
     user_interface::{
         DEFAULT_GAME_FONT_PATH,
         settings_menu::{
@@ -23,12 +23,6 @@ use bevy::{
 
 mod audio;
 mod graphics;
-
-// TODO:
-// The Fullscreen setting is kinda scuffed, a button is around the text and checkbox, but you can
-// click on the text and the checkbox, which is good but we have seperate logic for clicking the
-// button and the checkbox. there must be some way to bubble the event on button click so it also
-// triggers checkbox change.
 
 pub struct SettingsMenuPlugin;
 
@@ -291,7 +285,6 @@ fn handle_settings_tab_changed(
 ) {
     commands.entity(*settings_right_side).despawn_children();
     let settings_tab_state = settings_tab_state.get();
-    info!("SelectedTabSettings changed, now: {:?}", settings_tab_state);
     match settings_tab_state {
         SelectedTabSettings::Audio => {
             commands.entity(*settings_right_side).with_child(
