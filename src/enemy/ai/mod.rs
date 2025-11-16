@@ -1,12 +1,9 @@
 use bevy::prelude::*;
 
 use crate::{
-    enemy::{
-        ai::systems::{
-            check_if_enemy_can_see_player, check_if_enemy_reached_target,
-            handle_chasing_enemies,
-        },
-        shooting::systems::enemy_shoot_player,
+    enemy::ai::systems::{
+        check_if_enemy_can_see_player, check_if_enemy_reached_target,
+        handle_chasing_enemies,
     },
     game_flow::states::InGameState,
 };
@@ -23,6 +20,17 @@ mod systems;
 //     Go to it via agent from landmass
 //     When target reached, set EnemyState::CheckIfPlayerSeeable
 // Repeat at step 2
+
+// Roadmap to realistic enemy AI:
+// 1. Add shooting inaccuracy -> pick random x from 0 to 1 something like that
+// 2. Add reaction time before firing, e.g. delay shooting after 0.2 - 0.6 after seeing the player
+// 3. Randomize firing intervals, every 0.4 - 0.9 seconds
+// 4. Simple movement (strafing to left or right) while shooting
+// 5. Aim correction -> aim starts inaccurate, then gets more accurate over time
+// 6. Enemies get alerted when player shoots -> maybe just make it that enemies patrol the map, but
+//    if the player shoots, directly go to player location
+// 7. investigation state -> when enemy cant see player anymore, go to last known location, and
+//    just rotate the enemy for 4-6 seconds
 
 pub struct EnemyAiPlugin;
 
