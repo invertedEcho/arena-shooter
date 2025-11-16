@@ -23,7 +23,6 @@ pub struct CharacterControllerBundle {
     collider: Collider,
     locked_axes: LockedAxes,
     movement_state: MovementState,
-    colliding_entities: CollidingEntities,
     grounded: Grounded,
     ground_caster: ShapeCaster,
 }
@@ -41,7 +40,6 @@ impl Default for CharacterControllerBundle {
                 .lock_rotation_x()
                 .lock_rotation_y()
                 .lock_rotation_z(),
-            colliding_entities: CollidingEntities::default(),
             movement_state: MovementState::Idle,
             grounded: Grounded(true),
             ground_caster: ShapeCaster::new(

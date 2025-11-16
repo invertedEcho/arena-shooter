@@ -32,9 +32,7 @@ impl Plugin for EnemyAiPlugin {
             Update,
             (
                 handle_chasing_enemies,
-                // needs to run after enemy_shoot_player, so we can include all enemy bullets in
-                // the SpatialQueryFilter
-                check_if_enemy_can_see_player.after(enemy_shoot_player),
+                check_if_enemy_can_see_player,
                 check_if_enemy_reached_target,
             )
                 .run_if(in_state(InGameState::Playing)),

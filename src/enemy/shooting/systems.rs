@@ -1,5 +1,3 @@
-use std::ops::Neg;
-
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
@@ -7,58 +5,57 @@ use crate::{
     enemy::{
         Enemy, EnemyState,
         shooting::{
-            components::{EnemyBullet, EnemyShootCooldownTimer},
-            messages::EnemyKilledMessage,
+            components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
         },
     },
-    player::shooting::{
-        components::PlayerBullet, messages::PlayerBulletHitEnemyMessage,
+    game_flow::states::InGameState,
+    player::{
+        Player, PlayerDeathMessage,
+        shooting::{
+            components::BloodScreenEffect,
+            messages::PlayerBulletHitEnemyMessage,
+        },
     },
-    shared::{BULLET_VELOCITY, components::DespawnTimer},
+    shared::components::DespawnTimer,
 };
 
-pub fn detect_player_bullet_collision_with_enemy(
-    mut commands: Commands,
-    player_bullet_query: Query<(Entity, &PlayerBullet)>,
-    enemy_query: Query<(Entity, &mut Enemy, &CollidingEntities)>,
-    mut player_bullet_hit_enemy_event_writer: MessageWriter<
+pub fn handle_player_bullet_hit_enemy_message(
+    mut enemy_query: Query<(Entity, &mut Enemy)>,
+    mut player_bullet_hit_enemy_message_reader: MessageReader<
         PlayerBulletHitEnemyMessage,
     >,
     mut enemy_killed_event_writer: MessageWriter<EnemyKilledMessage>,
 ) {
-    for (enemy_entity, mut enemy, colliding_entities) in enemy_query {
-        let player_bullets_colliding_with_enemy: Vec<(Entity, &PlayerBullet)> =
-            player_bullet_query
-                .iter()
-                .filter(|(player_bullet_entity, _)| {
-                    colliding_entities.contains(player_bullet_entity)
-                })
-                .collect();
-        for player_bullet in player_bullets_colliding_with_enemy {
-            enemy.health -= player_bullet.1.damage;
-            if enemy.health <= 0.0 {
-                enemy_killed_event_writer
-                    .write(EnemyKilledMessage(enemy_entity));
-            }
-            commands.entity(player_bullet.0).despawn();
-
-            player_bullet_hit_enemy_event_writer.write(
-                PlayerBulletHitEnemyMessage {
-                    enemy_hit: enemy_entity,
-                },
+    for message in player_bullet_hit_enemy_message_reader.read() {
+        let Ok((enemy_entity, mut enemy)) =
+            enemy_query.get_mut(message.enemy_hit)
+        else {
+            warn!(
+                "Player bullet hit enemy {}, but the enemy entity could not \
+                 be found",
+                message.enemy_hit
             );
+            continue;
+        };
+        enemy.health -= message.damage;
+        if enemy.health <= 0.0 {
+            enemy_killed_event_writer.write(EnemyKilledMessage(enemy_entity));
         }
     }
 }
 
 pub fn enemy_shoot_player(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     enemy_query: Query<(
         Entity,
         &Enemy,
         &Transform,
         Option<&EnemyShootCooldownTimer>,
     )>,
+    spatial_query: SpatialQuery,
+    mut player_query: Single<(Entity, &Transform, &mut Player), With<Player>>,
+    mut player_death_message_writer: MessageWriter<PlayerDeathMessage>,
 ) {
     for (enemy_entity, enemy, enemy_transform, enemy_shoot_cooldown_timer) in
         enemy_query
@@ -71,38 +68,54 @@ pub fn enemy_shoot_player(
             continue;
         }
 
-        let local_bullet_velocity = Vec3 {
-            z: BULLET_VELOCITY.neg(),
-            x: 0.0,
-            y: 0.0,
-        };
-        let world_bullet_velocity =
-            enemy_transform.rotation * local_bullet_velocity;
-
-        commands.spawn((
-            Transform {
-                translation: Vec3 {
-                    x: enemy_transform.translation.x,
-                    y: enemy_transform.translation.y,
-                    z: enemy_transform.translation.z,
-                },
-                ..default()
-            },
-            Collider::cuboid(0.1, 0.1, 0.1),
-            Sensor,
-            LinearVelocity(world_bullet_velocity),
-            RigidBody::Kinematic,
-            DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
-            EnemyBullet,
-            CollidingEntities::default(),
-        ));
-
         commands
             .entity(enemy_entity)
             .insert(EnemyShootCooldownTimer(Timer::from_seconds(
                 0.5,
                 TimerMode::Repeating,
             )));
+
+        // do raycast from enemy to player direction
+        let player_transform = player_query.1;
+        let origin = enemy_transform.translation;
+        let Ok(direction) = Dir3::new(
+            player_transform.translation - enemy_transform.translation,
+        ) else {
+            continue;
+        };
+
+        let Some(first_hit) = spatial_query.cast_ray(
+            origin,
+            direction,
+            500.0,
+            false,
+            &SpatialQueryFilter::default()
+                .with_excluded_entities([enemy_entity]),
+        ) else {
+            continue;
+        };
+
+        if first_hit.entity == player_query.0 {
+            commands.spawn((
+                ImageNode {
+                    image: asset_server
+                        .load("hud/blood_screen_effects/Effect_5.png"),
+                    color: Color::srgba(1.0, 1.0, 1.0, 1.0),
+                    ..default()
+                },
+                BloodScreenEffect::default(),
+                DespawnOnExit(InGameState::Playing),
+            ));
+
+            player_query.2.health -= 25.0;
+            if player_query.2.health <= 0.0 {
+                info!(
+                    "player health is {}, writing death message",
+                    player_query.2.health
+                );
+                player_death_message_writer.write(PlayerDeathMessage);
+            }
+        }
     }
 }
 

@@ -16,11 +16,6 @@ pub struct PlayerWeapon {
 }
 
 #[derive(Component)]
-pub struct PlayerBullet {
-    pub damage: f32,
-}
-
-#[derive(Component)]
 pub struct BloodScreenEffect {
     pub timer: Timer,
     pub total_timer_iteration_count: f32,
@@ -39,7 +34,6 @@ impl Default for BloodScreenEffect {
             ),
             total_timer_iteration_count: 1.0
                 / DEFAULT_BLOOD_SCREEN_TIMER_DURATION,
-            // lol no zero index in what world do you live in?
             currrent_timer_iteration: 1,
         }
     }
