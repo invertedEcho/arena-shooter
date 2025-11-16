@@ -16,11 +16,6 @@ pub struct PlayerWeapon {
 }
 
 #[derive(Component)]
-pub struct PlayerBullet {
-    pub damage: f32,
-}
-
-#[derive(Component)]
 pub struct BloodScreenEffect {
     pub timer: Timer,
     pub total_timer_iteration_count: f32,

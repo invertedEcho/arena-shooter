@@ -1,12 +1,10 @@
-use std::ops::Neg;
-
 use avian3d::prelude::*;
-use bevy::{color::palettes::css::WHITE, prelude::*};
+use bevy::prelude::*;
 
 use crate::{
     character_controller::components::MovementState,
-    enemy::{Enemy, shooting::components::EnemyBullet},
-    game_flow::{score::GameScore, states::InGameState},
+    enemy::Enemy,
+    game_flow::states::InGameState,
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
     player::{
         Player, PlayerDeathMessage,
@@ -14,14 +12,17 @@ use crate::{
         camera::components::{ViewModelCamera, WorldModelCamera},
         shooting::{
             components::{
-                BloodScreenEffect, MuzzleFlash, PlayerBullet,
-                PlayerShootCooldownTimer, PlayerWeapon,
+                BloodScreenEffect, MuzzleFlash, PlayerShootCooldownTimer,
+                PlayerWeapon,
             },
-            messages::PlayerWeaponFiredMessage,
-            resources::ReloadTimer,
+            messages::{
+                PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage,
+                ReloadPlayerWeaponMessage,
+            },
+            resources::PlayerWeaponReloadTimer,
         },
     },
-    shared::{BULLET_VELOCITY, components::DespawnTimer},
+    shared::{DEFAULT_BULLET_DAMAGE, components::DespawnTimer},
     utils::random::get_random_number_from_range_i32,
 };
 
@@ -30,6 +31,13 @@ use crate::{
 const PARTIAL_RELOAD_TIME: f32 = 2.81;
 /// How long it takes to reload for a full reload (and playing the corresponding animation), e.g. player's weapon is empty
 const FULL_RELOAD_TIME: f32 = 3.65;
+
+type WorldModelCameraQuery<'w, 's> = Single<
+    'w,
+    's,
+    (Entity, &'static GlobalTransform),
+    (With<WorldModelCamera>, Without<Player>),
+>;
 
 pub fn setup_player_weapon(
     added_players: Query<Entity, Added<Player>>,
@@ -45,49 +53,115 @@ pub fn setup_player_weapon(
     }
 }
 
-pub fn handle_mouse_left_click_shooting(
-    mut commands: Commands,
+pub fn handle_input(
     mouse_input: Res<ButtonInput<MouseButton>>,
-    player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
-    mut player_weapon: Single<&mut PlayerWeapon>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_shot_messsage_writer: MessageWriter<PlayerWeaponFiredMessage>,
     mut play_arm_with_weapon_animation_message_writer: MessageWriter<
         PlayArmWithWeaponAnimationMessage,
     >,
+    mut reload_player_weapon_message_writer: MessageWriter<
+        ReloadPlayerWeaponMessage,
+    >,
+    player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
+    mut player_weapon: Single<&mut PlayerWeapon>,
 ) {
-    if !mouse_input.pressed(MouseButton::Left) {
-        return;
+    let mouse_button_left_pressed = mouse_input.pressed(MouseButton::Left);
+    let reload_button_pressed = keyboard_input.just_pressed(KeyCode::KeyR);
+
+    if mouse_button_left_pressed {
+        if player_weapon_shoot_cooldown_timer_query.iter().len() != 0 {
+            return;
+        }
+
+        // TODO: play a sound which indicates empty magazine
+        if player_weapon.loaded_ammo == 0 {
+            return;
+        }
+
+        if player_weapon.reloading {
+            return;
+        }
+
+        player_weapon.loaded_ammo -= 1;
+
+        play_arm_with_weapon_animation_message_writer.write(
+            PlayArmWithWeaponAnimationMessage {
+                animation_type: ArmWithWeaponAnimation::Shoot,
+                repeat: false,
+                block_until_done: true,
+            },
+        );
+
+        player_shot_messsage_writer.write(PlayerWeaponFiredMessage);
     }
 
-    if player_weapon_shoot_cooldown_timer_query.iter().len() != 0 {
-        return;
+    if reload_button_pressed {
+        reload_player_weapon_message_writer.write(ReloadPlayerWeaponMessage);
     }
+}
 
-    // TODO: play a sound which indicates empty magazine
-    if player_weapon.loaded_ammo == 0 {
-        return;
+pub fn handle_player_weapon_fired_message(
+    mut commands: Commands,
+    spatial_query: SpatialQuery,
+    mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
+    enemy_entities: Query<Entity, With<Enemy>>,
+    mut player_bullet_hit_enemy_message_writer: MessageWriter<
+        PlayerBulletHitEnemyMessage,
+    >,
+    mut spawn_bullet_impact_effect_message_writer: MessageWriter<
+        SpawnBulletImpactEffectMessage,
+    >,
+    world_model_camera_query: WorldModelCameraQuery,
+    player_entity: Single<Entity, With<Player>>,
+) {
+    for _ in message_reader.read() {
+        commands.spawn(PlayerShootCooldownTimer(Timer::from_seconds(
+            0.1,
+            TimerMode::Once,
+        )));
+
+        let origin = world_model_camera_query.1.translation();
+        let direction = world_model_camera_query.1.forward();
+
+        if let Some(first_hit) = spatial_query.cast_ray(
+            origin,
+            direction,
+            500.0,
+            false,
+            &SpatialQueryFilter::default()
+                .with_excluded_entities([*player_entity]),
+        ) {
+            let entity_hit = first_hit.entity;
+
+            let did_hit_enemy =
+                enemy_entities.iter().any(|e| e == first_hit.entity);
+
+            if did_hit_enemy {
+                player_bullet_hit_enemy_message_writer.write(
+                    PlayerBulletHitEnemyMessage {
+                        enemy_hit: entity_hit,
+                        damage: DEFAULT_BULLET_DAMAGE,
+                    },
+                );
+            }
+
+            let hit_point = origin + direction * first_hit.distance;
+
+            let variant = if did_hit_enemy {
+                BulletImpactEffectVariant::Enemy
+            } else {
+                BulletImpactEffectVariant::World
+            };
+
+            spawn_bullet_impact_effect_message_writer.write(
+                SpawnBulletImpactEffectMessage {
+                    spawn_location: hit_point,
+                    variant,
+                },
+            );
+        }
     }
-
-    if player_weapon.reloading {
-        return;
-    }
-
-    player_weapon.loaded_ammo -= 1;
-
-    commands.spawn(PlayerShootCooldownTimer(Timer::from_seconds(
-        0.1,
-        TimerMode::Once,
-    )));
-
-    play_arm_with_weapon_animation_message_writer.write(
-        PlayArmWithWeaponAnimationMessage {
-            animation_type: ArmWithWeaponAnimation::Shoot,
-            repeat: false,
-            block_until_done: true,
-        },
-    );
-
-    player_shot_messsage_writer.write(PlayerWeaponFiredMessage);
 }
 
 pub fn tick_player_weapon_shoot_cooldown_timer(
@@ -103,45 +177,7 @@ pub fn tick_player_weapon_shoot_cooldown_timer(
     }
 }
 
-pub fn detect_enemy_bullet_collision_with_player(
-    asset_server: Res<AssetServer>,
-    mut commands: Commands,
-    enemy_bullet_query: Query<Entity, With<EnemyBullet>>,
-    player_query: Query<(&mut Player, &CollidingEntities)>,
-    mut next_in_game_state: ResMut<NextState<InGameState>>,
-    mut game_score: ResMut<GameScore>,
-) {
-    for (mut player, colliding_entities) in player_query {
-        let enemy_bullets_colliding_with_player =
-            enemy_bullet_query.iter().filter(|enemy_bullet_entity| {
-                colliding_entities.contains(enemy_bullet_entity)
-            });
-
-        for enemy_bullet_entity in enemy_bullets_colliding_with_player {
-            commands.entity(enemy_bullet_entity).despawn();
-
-            // TODO: this should happen in player/hud/systems
-            commands.spawn((
-                ImageNode {
-                    image: asset_server
-                        .load("hud/blood_screen_effects/Effect_5.png"),
-                    color: Color::srgba(1.0, 1.0, 1.0, 1.0),
-                    ..default()
-                },
-                BloodScreenEffect::default(),
-                DespawnOnExit(InGameState::Playing),
-            ));
-
-            player.health -= 10.0;
-            if player.health <= 0.0 {
-                next_in_game_state.set(InGameState::PlayerDead);
-                game_score.enemy += 1;
-            }
-        }
-    }
-}
-
-// TODO: this thing is too much
+// TODO: this thing is too much (visually)
 pub fn handle_blood_screen_effect(
     mut blood_screen_effect_query: Query<(
         Entity,
@@ -174,55 +210,53 @@ pub fn handle_blood_screen_effect(
     }
 }
 
-pub fn reload_player_weapon(
+pub fn handle_reload_player_weapon_message(
     mut commands: Commands,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_weapon: Single<&mut PlayerWeapon>,
     mut animation_message_writer: MessageWriter<
         PlayArmWithWeaponAnimationMessage,
     >,
+    mut message_reader: MessageReader<ReloadPlayerWeaponMessage>,
 ) {
-    if !keyboard_input.just_pressed(KeyCode::KeyR) {
-        return;
+    for _ in message_reader.read() {
+        // dont allow reloading when already reloading
+        if player_weapon.reloading {
+            return;
+        }
+
+        if player_weapon.loaded_ammo == player_weapon.max_loaded_ammo {
+            return;
+        }
+
+        let reload_timer_duration = if player_weapon.loaded_ammo == 0 {
+            FULL_RELOAD_TIME
+        } else {
+            PARTIAL_RELOAD_TIME
+        };
+
+        commands.insert_resource(PlayerWeaponReloadTimer(Timer::from_seconds(
+            reload_timer_duration,
+            TimerMode::Once,
+        )));
+
+        let animation_type = if player_weapon.loaded_ammo == 0 {
+            ArmWithWeaponAnimation::FullReload
+        } else {
+            ArmWithWeaponAnimation::PartialReload
+        };
+
+        player_weapon.reloading = true;
+        animation_message_writer.write(PlayArmWithWeaponAnimationMessage {
+            animation_type,
+            repeat: false,
+            block_until_done: true,
+        });
     }
-
-    // dont allow reloading when already reloading
-    if player_weapon.reloading {
-        return;
-    }
-
-    if player_weapon.loaded_ammo == player_weapon.max_loaded_ammo {
-        return;
-    }
-
-    let reload_timer_duration = if player_weapon.loaded_ammo == 0 {
-        FULL_RELOAD_TIME
-    } else {
-        PARTIAL_RELOAD_TIME
-    };
-
-    commands.insert_resource(ReloadTimer(Timer::from_seconds(
-        reload_timer_duration,
-        TimerMode::Once,
-    )));
-
-    let animation_type = if player_weapon.loaded_ammo == 0 {
-        ArmWithWeaponAnimation::FullReload
-    } else {
-        ArmWithWeaponAnimation::PartialReload
-    };
-
-    player_weapon.reloading = true;
-    animation_message_writer.write(PlayArmWithWeaponAnimationMessage {
-        animation_type,
-        repeat: false,
-        block_until_done: true,
-    });
 }
 
-pub fn handle_reload_timer(
+pub fn tick_player_weapon_reload_timer(
     mut player_weapon: Single<&mut PlayerWeapon>,
-    reload_timer: Option<ResMut<ReloadTimer>>,
+    reload_timer: Option<ResMut<PlayerWeaponReloadTimer>>,
     time: Res<Time>,
 ) {
     let Some(mut reload_timer) = reload_timer else {
@@ -249,69 +283,23 @@ pub fn handle_reload_timer(
     }
 }
 
-pub fn spawn_player_bullet(
-    mut commands: Commands,
-    mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
-    world_model_camera_global_transform: Single<
-        &GlobalTransform,
-        With<WorldModelCamera>,
-    >,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    for _ in message_reader.read() {
-        let local_bullet_velocity = Vec3 {
-            z: BULLET_VELOCITY.neg(),
-            x: 0.0,
-            y: 0.0,
-        };
-        let world_bullet_velocity = world_model_camera_global_transform
-            .rotation()
-            * local_bullet_velocity;
-
-        let player_camera_global_transform_translation =
-            world_model_camera_global_transform.translation();
-
-        let origin = Vec3 {
-            x: player_camera_global_transform_translation.x,
-            y: player_camera_global_transform_translation.y,
-            z: player_camera_global_transform_translation.z,
-        };
-        commands.spawn((
-            PlayerBullet { damage: 15.0 },
-            Transform {
-                translation: origin,
-                ..default()
-            },
-            Collider::cuboid(0.1, 0.1, 0.1),
-            Sensor,
-            LinearVelocity(world_bullet_velocity),
-            RigidBody::Kinematic,
-            DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)),
-            CollisionEventsEnabled,
-            Mesh3d(meshes.add(Cuboid::new(0.1, 0.1, 0.1))),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: WHITE.into(),
-                ..default()
-            })),
-            // bullets are spawned at center of player camera
-            DebugRender::none(),
-        ));
-    }
-}
-
 pub fn play_shooting_sound_on_player_weapon_fired(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
 ) {
     for _ in message_reader.read() {
+        info!("playing sound");
         let shoot_sound = asset_server.load(
             "sfx/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 \
              Single MP3.mp3",
         );
 
-        commands.spawn((AudioPlayer::new(shoot_sound), PlaybackSettings::ONCE));
+        commands.spawn((
+            AudioPlayer::new(shoot_sound),
+            PlaybackSettings::ONCE,
+            Name::new("shoot sound player"),
+        ));
     }
 }
 
@@ -359,82 +347,13 @@ pub fn spawn_muzzle_flash(
     }
 }
 
-type WorldModelCameraQuery<'w, 's> = Single<
-    'w,
-    's,
-    (Entity, &'static GlobalTransform),
-    (With<WorldModelCamera>, Without<Player>),
->;
-
-type AnyBulletQuery<'w, 's> =
-    Query<'w, 's, Entity, Or<(With<PlayerBullet>, With<EnemyBullet>)>>;
-
-/// cast a ray in direction player is shooting, to check if there is a wall or ground, and get
-/// accurate location to know where to spawn the bullet impact effect
-/// just checking for collision events doesnt work, as we would only get the center transform of the
-/// collided entity, which may be very inaccurate, as the object may be large
-pub fn check_bullet_collision_for_impact_particle(
-    spatial_query: SpatialQuery,
-    player_entity: Single<Entity, With<Player>>,
-    mut bullet_effect_spawn_message_writer: MessageWriter<
-        SpawnBulletImpactEffectMessage,
-    >,
-    enemy_entities: Query<Entity, With<Enemy>>,
-    player_camera_query: WorldModelCameraQuery,
-    mut player_shot_event_reader: MessageReader<PlayerWeaponFiredMessage>,
-    // maybe only include player bullets. would be cool to be able to shoot enemy bullets and have
-    // a special effect or something
-    bullet_entities: AnyBulletQuery,
-) {
-    for _ in player_shot_event_reader.read() {
-        let (player_camera_entity, player_camera_global_transform) =
-            *player_camera_query;
-
-        // ray-cast settings
-        let origin = player_camera_global_transform.translation();
-        let direction = player_camera_global_transform.forward();
-        let max_distance = 100.0;
-        let solid = true;
-
-        let bullet_entities: Vec<Entity> = bullet_entities.iter().collect();
-        let filter = SpatialQueryFilter::default().with_excluded_entities(
-            [vec![*player_entity, player_camera_entity], bullet_entities]
-                .concat(),
-        );
-
-        if let Some(first_hit) = spatial_query.cast_ray(
-            origin,
-            direction,
-            max_distance,
-            solid,
-            &filter,
-        ) {
-            let did_hit_enemy =
-                enemy_entities.iter().any(|e| e == first_hit.entity);
-
-            let hit_point = origin + direction * first_hit.distance;
-
-            let variant = if did_hit_enemy {
-                BulletImpactEffectVariant::Enemy
-            } else {
-                BulletImpactEffectVariant::World
-            };
-
-            bullet_effect_spawn_message_writer.write(
-                SpawnBulletImpactEffectMessage {
-                    spawn_location: hit_point,
-                    variant,
-                },
-            );
-        }
-    }
-}
-
 pub fn handle_player_death_event(
     mut message_reader: MessageReader<PlayerDeathMessage>,
     mut player_movement_state: Single<&mut MovementState, With<Player>>,
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
     for _ in message_reader.read() {
         **player_movement_state = MovementState::Idle;
+        next_in_game_state.set(InGameState::PlayerDead);
     }
 }

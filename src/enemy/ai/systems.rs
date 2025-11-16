@@ -4,10 +4,7 @@ use bevy_landmass::{AgentDesiredVelocity3d, AgentState, AgentTarget3d};
 
 use crate::{
     character_controller::messages::{MovementAction, MovementDirection},
-    enemy::{
-        Enemy, EnemyState, shooting::components::EnemyBullet,
-        spawn::AgentEnemyEntityPointer,
-    },
+    enemy::{Enemy, EnemyState, spawn::AgentEnemyEntityPointer},
     player::Player,
 };
 
@@ -23,7 +20,6 @@ pub fn check_if_enemy_can_see_player(
     )>,
     spatial_query: SpatialQuery,
     player_query: Single<(Entity, &Transform), With<Player>>,
-    enemy_bullets: Query<Entity, With<EnemyBullet>>,
 ) {
     let (player_entity, player_transform) = *player_query;
     for (mut enemy, enemy_entity, mut enemy_transform) in enemy_query {
@@ -42,12 +38,9 @@ pub fn check_if_enemy_can_see_player(
         let max_distance = 100.0;
         let solid = false;
 
-        let enemy_bullet_entities: Vec<Entity> = enemy_bullets.iter().collect();
-
-        // raycast shouldnt hit enemy itself and enemy bullets
-        let filter = SpatialQueryFilter::default().with_excluded_entities(
-            [[enemy_entity].to_vec(), enemy_bullet_entities].concat(),
-        );
+        // // raycast shouldnt hit enemy itself and enemy bullets
+        let filter = SpatialQueryFilter::default()
+            .with_excluded_entities([enemy_entity]);
 
         if let Some(first_hit) = spatial_query.cast_ray(
             enemy_transform.translation,

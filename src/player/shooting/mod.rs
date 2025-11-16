@@ -4,14 +4,16 @@ use crate::{
     game_flow::states::InGameState,
     player::shooting::{
         components::PlayerWeapon,
-        messages::{PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage},
+        messages::{
+            PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage,
+            ReloadPlayerWeaponMessage,
+        },
         systems::{
-            check_bullet_collision_for_impact_particle,
-            detect_enemy_bullet_collision_with_player,
-            handle_blood_screen_effect, handle_mouse_left_click_shooting,
-            handle_player_death_event, handle_reload_timer,
-            play_shooting_sound_on_player_weapon_fired, reload_player_weapon,
-            setup_player_weapon, spawn_muzzle_flash, spawn_player_bullet,
+            handle_blood_screen_effect, handle_input,
+            handle_player_death_event, handle_player_weapon_fired_message,
+            handle_reload_player_weapon_message,
+            play_shooting_sound_on_player_weapon_fired, setup_player_weapon,
+            spawn_muzzle_flash, tick_player_weapon_reload_timer,
             tick_player_weapon_shoot_cooldown_timer,
         },
     },
@@ -28,21 +30,20 @@ impl Plugin for PlayerShootingPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<PlayerWeaponFiredMessage>()
             .add_message::<PlayerBulletHitEnemyMessage>()
+            .add_message::<ReloadPlayerWeaponMessage>()
             .register_type::<PlayerWeapon>()
             .add_systems(
                 Update,
                 (
-                    handle_mouse_left_click_shooting,
+                    handle_input,
                     tick_player_weapon_shoot_cooldown_timer,
                     handle_blood_screen_effect,
-                    reload_player_weapon,
+                    handle_reload_player_weapon_message,
                     spawn_muzzle_flash,
-                    check_bullet_collision_for_impact_particle,
+                    handle_player_weapon_fired_message,
                     setup_player_weapon,
-                    handle_reload_timer,
-                    detect_enemy_bullet_collision_with_player,
+                    tick_player_weapon_reload_timer,
                     handle_player_death_event,
-                    spawn_player_bullet,
                     play_shooting_sound_on_player_weapon_fired,
                 )
                     .run_if(in_state(InGameState::Playing)),

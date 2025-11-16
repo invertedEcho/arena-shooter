@@ -40,3 +40,7 @@ impl Plugin for AnimateEnemyPlugin {
         );
     }
 }
+
+// fn set_idle_on_pause(enemy_query: Query<) {
+//
+// }
