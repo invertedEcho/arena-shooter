@@ -108,7 +108,11 @@ pub fn enemy_shoot_player(
             ));
 
             player_query.2.health -= 25.0;
-            if player_query.2.health <= 100.0 {
+            if player_query.2.health <= 0.0 {
+                info!(
+                    "player health is {}, writing death message",
+                    player_query.2.health
+                );
                 player_death_message_writer.write(PlayerDeathMessage);
             }
         }

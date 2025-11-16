@@ -164,6 +164,7 @@ pub fn handle_player_weapon_fired_message(
     }
 }
 
+// TODO: thereotically we could use our DespawnTimer to despawn some "blocking" entity
 pub fn tick_player_weapon_shoot_cooldown_timer(
     mut commands: Commands,
     query: Query<(Entity, &mut PlayerShootCooldownTimer)>,
@@ -177,7 +178,7 @@ pub fn tick_player_weapon_shoot_cooldown_timer(
     }
 }
 
-// TODO: this thing is too much (visually)
+// TODO: this thing is too much (visually) -> only show it when player dead
 pub fn handle_blood_screen_effect(
     mut blood_screen_effect_query: Query<(
         Entity,
