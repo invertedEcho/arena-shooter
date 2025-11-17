@@ -7,7 +7,7 @@ use crate::shared::systems::{
 pub mod components;
 pub mod systems;
 
-pub const DEFAULT_BULLET_DAMAGE: f32 = 15.0;
+pub const DEFAULT_BULLET_DAMAGE: f32 = 7.5;
 
 pub struct CommonPlugin;
 

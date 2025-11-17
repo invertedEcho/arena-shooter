@@ -1,5 +1,6 @@
 use avian3d::prelude::ColliderConstructorHierarchyReady;
 use bevy::{
+    color::palettes::css::RED,
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
@@ -182,4 +183,16 @@ pub fn on_enter_app_state_in_game(
     mut spawn_player_message_writer: MessageWriter<SpawnPlayerMessage>,
 ) {
     spawn_player_message_writer.write(SpawnPlayerMessage);
+}
+
+#[derive(Resource)]
+pub struct DebugGizmos(pub Vec<(Vec3, Vec3)>);
+
+pub fn draw_gizmos(mut gizmos: Gizmos, debug_gizmos: Res<DebugGizmos>) {
+    for gizmo in &debug_gizmos.0 {
+        let start = gizmo.0;
+        let end = gizmo.1;
+        let color = RED;
+        gizmos.line(start, end, color);
+    }
 }

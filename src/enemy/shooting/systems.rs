@@ -1,5 +1,5 @@
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
     enemy::{
@@ -8,7 +8,7 @@ use crate::{
             components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
         },
     },
-    game_flow::states::InGameState,
+    game_flow::{states::InGameState, systems::DebugGizmos},
     player::{
         Player, PlayerDeathMessage,
         shooting::{
@@ -17,6 +17,7 @@ use crate::{
         },
     },
     shared::components::DespawnTimer,
+    utils::random::get_random_number_from_range_i32_to_f32_with_fixed_step,
 };
 
 pub fn handle_player_bullet_hit_enemy_message(
@@ -56,6 +57,7 @@ pub fn enemy_shoot_player(
     spatial_query: SpatialQuery,
     mut player_query: Single<(Entity, &Transform, &mut Player), With<Player>>,
     mut player_death_message_writer: MessageWriter<PlayerDeathMessage>,
+    mut debug_gizmos: ResMut<DebugGizmos>,
 ) {
     for (enemy_entity, enemy, enemy_transform, enemy_shoot_cooldown_timer) in
         enemy_query
@@ -78,11 +80,23 @@ pub fn enemy_shoot_player(
         // do raycast from enemy to player direction
         let player_transform = player_query.1;
         let origin = enemy_transform.translation;
-        let Ok(direction) = Dir3::new(
-            player_transform.translation - enemy_transform.translation,
-        ) else {
+
+        let random_number =
+            get_random_number_from_range_i32_to_f32_with_fixed_step(-2, 2);
+        info!("random number: {}", random_number);
+        let randomized_player_location = player_transform
+            .translation
+            .with_x(player_transform.translation.x + random_number);
+
+        let Ok(direction) =
+            Dir3::new(randomized_player_location - enemy_transform.translation)
+        else {
             continue;
         };
+
+        debug_gizmos
+            .0
+            .push((enemy_transform.translation, randomized_player_location));
 
         let Some(first_hit) = spatial_query.cast_ray(
             origin,
