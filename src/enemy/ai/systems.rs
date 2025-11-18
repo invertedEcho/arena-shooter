@@ -4,7 +4,10 @@ use bevy_landmass::{AgentDesiredVelocity3d, AgentState, AgentTarget3d};
 
 use crate::{
     character_controller::messages::{MovementAction, MovementDirection},
-    enemy::{Enemy, EnemyState, spawn::AgentEnemyEntityPointer},
+    enemy::{
+        Enemy, EnemyState, ai::ENEMY_VISION_RANGE,
+        spawn::AgentEnemyEntityPointer,
+    },
     player::Player,
 };
 
@@ -22,16 +25,36 @@ pub fn check_if_enemy_can_see_player(
     player_query: Single<(Entity, &Transform), With<Player>>,
 ) {
     let (player_entity, player_transform) = *player_query;
+    let player_position = player_transform.translation;
+
     for (mut enemy, enemy_entity, mut enemy_transform) in enemy_query {
         if enemy.state == EnemyState::Dead {
             continue;
         }
 
-        // check if we can see the player
-        // direction towards player
-        let vector_not_normalized =
-            player_transform.translation - enemy_transform.translation;
-        let Ok(direction_normalized) = Dir3::new(vector_not_normalized) else {
+        // first do cheap math based check if the player is even in the fov radius of the enemy
+        let enemy_position = enemy_transform.translation;
+
+        let to_player = player_position - enemy_position;
+        let distance = to_player.length();
+
+        if distance > ENEMY_VISION_RANGE {
+            enemy.state = EnemyState::GoToLastKnownLocation;
+            continue;
+        }
+
+        let enemy_forward = enemy_transform.forward();
+        let direction = to_player.normalize();
+        let angle = enemy_forward.dot(direction);
+
+        if angle < 0.5 {
+            enemy.state = EnemyState::GoToLastKnownLocation;
+            continue;
+        }
+
+        // if player is in the fov radius, we do a raycast from the enemy towards the players
+        // current position
+        let Ok(direction_normalized) = Dir3::new(to_player) else {
             continue;
         };
 
@@ -60,10 +83,7 @@ pub fn check_if_enemy_can_see_player(
                     );
                     enemy.state = EnemyState::AttackPlayer;
                 };
-            } else if enemy.state != EnemyState::ChasingPlayer {
-                debug!(
-                    "Enemy can NOT see player, setting state to ChasingPlayer!"
-                );
+            } else if enemy.state != EnemyState::GoToLastKnownLocation {
                 let Some((_, mut agent_target)) = enemy_agents_query
                     .iter_mut()
                     .find(|(pointer, _)| pointer.0 == enemy_entity)
@@ -76,7 +96,6 @@ pub fn check_if_enemy_can_see_player(
                     );
                     continue;
                 };
-                debug!("updating agent target to current player location");
 
                 // We use a raycast downwards, and use the hitpoint.
                 // This way, it wont break if the player is mid-air, such as during a jump.
@@ -102,7 +121,7 @@ pub fn check_if_enemy_can_see_player(
                     ray_cast_origin + first_hit.distance * ray_cast_direction;
 
                 *agent_target = AgentTarget3d::Point(hit_point);
-                enemy.state = EnemyState::ChasingPlayer;
+                enemy.state = EnemyState::GoToLastKnownLocation;
             }
         }
     }
@@ -122,9 +141,7 @@ pub fn check_if_enemy_reached_target(
             );
             continue;
         };
-        if *agent_state == AgentState::ReachedTarget
-            && enemy.state != EnemyState::Idle
-        {
+        if *agent_state == AgentState::ReachedTarget {
             enemy.state = EnemyState::CheckIfPlayerSeeable;
         }
     }
@@ -156,7 +173,7 @@ pub fn handle_chasing_enemies(
             continue;
         };
 
-        if enemy.state != EnemyState::ChasingPlayer {
+        if enemy.state != EnemyState::GoToLastKnownLocation {
             continue;
         }
 

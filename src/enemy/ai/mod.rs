@@ -10,6 +10,9 @@ use crate::{
 
 mod systems;
 
+pub const ENEMY_VISION_RANGE: f32 = 30.0;
+pub const ENEMY_FOV: f32 = 70.0;
+
 // Enemy AI:
 // 1. Enemy gets spawned (State idle)
 // 2. Check with raycast whether player can be seen

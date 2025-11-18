@@ -7,7 +7,7 @@ use crate::enemy::{
     spawn::{EnemySpawnLocation, EnemySpawnPlugin},
 };
 
-mod ai;
+pub mod ai;
 mod animate;
 pub mod shooting;
 pub mod spawn;
@@ -34,12 +34,14 @@ pub struct Enemy {
 
 #[derive(Default, Reflect, PartialEq, Debug)]
 pub enum EnemyState {
+    /// Go to hotspot markers on the map, used when Enemy has no information about the player and
+    /// also not in the FOV
+    PatrolHotspots,
+    /// Check if the enemy can see the player, respecting a FOV with a cone
     #[default]
-    Idle,
-    /// Check if the enemy can see the player
     CheckIfPlayerSeeable,
-    /// Going to the location of the player
-    ChasingPlayer,
+    /// Going to the last known location of the player
+    GoToLastKnownLocation,
     /// Enemy can see the player, will shoot the player now
     AttackPlayer,
     /// This state will be set when `enemy.health == 0.0`. A death animation will be played and

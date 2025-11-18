@@ -1,13 +1,19 @@
 use avian3d::prelude::ColliderConstructorHierarchyReady;
 use bevy::{
-    color::palettes::css::RED,
+    color::palettes::{
+        css::{ORANGE, RED},
+        tailwind::BLUE_700,
+    },
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use bevy_rerecast::{Navmesh, prelude::NavmeshReady};
 
 use crate::{
-    enemy::Enemy,
+    enemy::{
+        Enemy,
+        ai::{ENEMY_FOV, ENEMY_VISION_RANGE},
+    },
     game_flow::{
         game_mode::{GameModeState, StartWaveGameModeMessage},
         states::{
@@ -194,5 +200,26 @@ pub fn draw_gizmos(mut gizmos: Gizmos, debug_gizmos: Res<DebugGizmos>) {
         let end = gizmo.1;
         let color = RED;
         gizmos.line(start, end, color);
+    }
+}
+
+pub fn draw_enemy_fov(
+    enemy_transforms: Query<&Transform, With<Enemy>>,
+    mut gizmos: Gizmos,
+) {
+    for transform in enemy_transforms {
+        let pos = transform.translation;
+        let forward = transform.forward();
+        let range = ENEMY_VISION_RANGE;
+
+        // Cone edges
+        let half_angle = ENEMY_FOV.to_radians() / 2.0;
+        let left_dir: Vec3 =
+            (Quat::from_rotation_y(half_angle) * forward).normalize();
+        let right_dir: Vec3 =
+            (Quat::from_rotation_y(-half_angle) * forward).normalize();
+
+        gizmos.ray(pos, left_dir * range, BLUE_700);
+        gizmos.ray(pos, right_dir * range, BLUE_700);
     }
 }

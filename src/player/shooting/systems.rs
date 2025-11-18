@@ -23,7 +23,7 @@ use crate::{
         },
     },
     shared::{DEFAULT_BULLET_DAMAGE, components::DespawnTimer},
-    utils::random::get_random_number_from_range_i32,
+    utils::random::get_random_number_from_range,
 };
 
 /// How long it takes to reload for a partial reload (and playing the corresponding animation), e.g. some bullets are left in
@@ -313,7 +313,8 @@ pub fn spawn_muzzle_flash(
     player_camera_entity: Single<Entity, With<ViewModelCamera>>,
 ) {
     for _ in player_shot_message_reader.read() {
-        let random_rotation_angle = get_random_number_from_range_i32(0, 5);
+        let random_rotation_angle = get_random_number_from_range(0..5);
+
         commands.entity(*player_camera_entity).with_child((
             Transform {
                 // TODO: this must change depending on the cameras FOV

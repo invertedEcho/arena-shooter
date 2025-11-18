@@ -1,5 +1,5 @@
 use avian3d::prelude::*;
-use bevy::{color::palettes::css::RED, prelude::*};
+use bevy::prelude::*;
 
 use crate::{
     enemy::{
@@ -17,7 +17,7 @@ use crate::{
         },
     },
     shared::components::DespawnTimer,
-    utils::random::get_random_number_from_range_i32_to_f32_with_fixed_step,
+    utils::random::get_random_number_from_range,
 };
 
 pub fn handle_player_bullet_hit_enemy_message(
@@ -70,10 +70,12 @@ pub fn enemy_shoot_player(
             continue;
         }
 
+        let random_cooldown = get_random_number_from_range(0.5..1.5);
+
         commands
             .entity(enemy_entity)
             .insert(EnemyShootCooldownTimer(Timer::from_seconds(
-                0.5,
+                random_cooldown,
                 TimerMode::Repeating,
             )));
 
@@ -81,12 +83,11 @@ pub fn enemy_shoot_player(
         let player_transform = player_query.1;
         let origin = enemy_transform.translation;
 
-        let random_number =
-            get_random_number_from_range_i32_to_f32_with_fixed_step(-2, 2);
-        info!("random number: {}", random_number);
+        let random_number = get_random_number_from_range(-2..2);
+
         let randomized_player_location = player_transform
             .translation
-            .with_x(player_transform.translation.x + random_number);
+            .with_x(player_transform.translation.x + random_number as f32);
 
         let Ok(direction) =
             Dir3::new(randomized_player_location - enemy_transform.translation)

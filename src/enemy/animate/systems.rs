@@ -124,8 +124,9 @@ pub fn reflect_enemy_state_to_current_animation(
         let new_animation_index = match enemy.state {
             EnemyState::AttackPlayer => ENEMY_IDLE_GUN_POINTING_ANIMATION,
             EnemyState::Dead => ENEMY_DEATH_ANIMATION,
-            EnemyState::ChasingPlayer => ENEMY_RUN_ANIMATION,
-            EnemyState::Idle => ENEMY_IDLE_GUN_ANIMATION,
+            EnemyState::GoToLastKnownLocation | EnemyState::PatrolHotspots => {
+                ENEMY_RUN_ANIMATION
+            }
             EnemyState::CheckIfPlayerSeeable => ENEMY_IDLE_GUN_ANIMATION,
         };
 
@@ -213,7 +214,7 @@ pub fn handle_play_hit_animation_timer(
         if play_hit_animation.0.just_finished() {
             // TODO: hm we need to set the correct animation to play now depending on the enemystate, but
             // lets not do this here but have a MessageWriter
-            enemy.state = EnemyState::Idle;
+            // enemy.state = EnemyState::Idle;
             commands
                 .entity(enemy_entity)
                 .remove::<PlayHitAnimationTimer>();
