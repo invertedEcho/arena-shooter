@@ -5,7 +5,9 @@ use bevy_landmass::{AgentDesiredVelocity3d, AgentState, AgentTarget3d};
 use crate::{
     character_controller::messages::{MovementAction, MovementDirection},
     enemy::{
-        Enemy, EnemyState, ai::ENEMY_VISION_RANGE,
+        Enemy, EnemyState,
+        ai::ENEMY_VISION_RANGE,
+        animate::{EnemyAnimationType, messages::PlayEnemyAnimationMessage},
         spawn::AgentEnemyEntityPointer,
     },
     player::Player,
@@ -23,6 +25,7 @@ pub fn check_if_enemy_can_see_player(
     )>,
     spatial_query: SpatialQuery,
     player_query: Single<(Entity, &Transform), With<Player>>,
+    mut animation_message_writer: MessageWriter<PlayEnemyAnimationMessage>,
 ) {
     let (player_entity, player_transform) = *player_query;
     let player_position = player_transform.translation;
@@ -38,7 +41,19 @@ pub fn check_if_enemy_can_see_player(
         let to_player = player_position - enemy_position;
         let distance = to_player.length();
 
-        if distance > ENEMY_VISION_RANGE {
+        if distance > ENEMY_VISION_RANGE
+            && enemy.state != EnemyState::GoToLastKnownLocation
+        {
+            info!(
+                "Writing run message, current state {:?}, setting to \
+                 GoToLastKnownLocation",
+                enemy.state
+            );
+            animation_message_writer.write(PlayEnemyAnimationMessage {
+                enemy: enemy_entity,
+                animaton_type: EnemyAnimationType::Run,
+                repeat: true,
+            });
             enemy.state = EnemyState::GoToLastKnownLocation;
             continue;
         }
@@ -47,7 +62,17 @@ pub fn check_if_enemy_can_see_player(
         let direction = to_player.normalize();
         let angle = enemy_forward.dot(direction);
 
-        if angle < 0.5 {
+        if angle < 0.5 && enemy.state != EnemyState::GoToLastKnownLocation {
+            info!(
+                "Writing run message, current state {:?}, setting to \
+                 GoToLastKnownLocation",
+                enemy.state
+            );
+            animation_message_writer.write(PlayEnemyAnimationMessage {
+                enemy: enemy_entity,
+                animaton_type: EnemyAnimationType::Run,
+                repeat: true,
+            });
             enemy.state = EnemyState::GoToLastKnownLocation;
             continue;
         }
@@ -81,6 +106,11 @@ pub fn check_if_enemy_can_see_player(
                          AttackPlayer. Previous enemy state: {:?}",
                         enemy.state
                     );
+                    animation_message_writer.write(PlayEnemyAnimationMessage {
+                        enemy: enemy_entity,
+                        animaton_type: EnemyAnimationType::IdleGunPointing,
+                        repeat: true,
+                    });
                     enemy.state = EnemyState::AttackPlayer;
                 };
             } else if enemy.state != EnemyState::GoToLastKnownLocation {
@@ -121,6 +151,12 @@ pub fn check_if_enemy_can_see_player(
                     ray_cast_origin + first_hit.distance * ray_cast_direction;
 
                 *agent_target = AgentTarget3d::Point(hit_point);
+
+                animation_message_writer.write(PlayEnemyAnimationMessage {
+                    enemy: enemy_entity,
+                    animaton_type: EnemyAnimationType::Run,
+                    repeat: true,
+                });
                 enemy.state = EnemyState::GoToLastKnownLocation;
             }
         }
@@ -130,6 +166,7 @@ pub fn check_if_enemy_can_see_player(
 pub fn check_if_enemy_reached_target(
     mut enemy_query: Query<&mut Enemy>,
     enemy_agents_query: Query<(&AgentEnemyEntityPointer, &AgentState)>,
+    mut animation_message_writer: MessageWriter<PlayEnemyAnimationMessage>,
 ) {
     for (agent_enemy_entity_pointer, agent_state) in enemy_agents_query {
         if *agent_state != AgentState::ReachedTarget {
@@ -145,6 +182,16 @@ pub fn check_if_enemy_reached_target(
             );
             continue;
         };
+        info!(
+            "Writing run message, current state {:?}, setting to \
+             CheckIfPlayerSeeable",
+            enemy.state
+        );
+        animation_message_writer.write(PlayEnemyAnimationMessage {
+            enemy: agent_enemy_entity_pointer.0,
+            animaton_type: EnemyAnimationType::Run,
+            repeat: true,
+        });
         enemy.state = EnemyState::CheckIfPlayerSeeable;
     }
 }
@@ -188,24 +235,24 @@ pub fn handle_chasing_enemies(
     }
 }
 
-fn get_closest_transform_from_point(
-    source: Vec3,
-    targets: Vec<Vec3>,
-) -> Option<Vec3> {
-    if targets.is_empty() {
-        return None;
-    }
-
-    let mut closest_point = targets[0];
-
-    for point in targets {
-        let distance_of_closest_point = closest_point.length();
-
-        let distance = (source - point).length();
-        if distance_of_closest_point < distance {
-            closest_point = point;
-        }
-    }
-
-    Some(closest_point)
-}
+// fn get_closest_transform_from_point(
+//     source: Vec3,
+//     targets: Vec<Vec3>,
+// ) -> Option<Vec3> {
+//     if targets.is_empty() {
+//         return None;
+//     }
+//
+//     let mut closest_point = targets[0];
+//
+//     for point in targets {
+//         let distance_of_closest_point = closest_point.length();
+//
+//         let distance = (source - point).length();
+//         if distance_of_closest_point < distance {
+//             closest_point = point;
+//         }
+//     }
+//
+//     Some(closest_point)
+// }

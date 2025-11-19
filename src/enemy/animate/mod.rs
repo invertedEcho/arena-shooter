@@ -1,23 +1,19 @@
 use bevy::prelude::*;
 
-use crate::{enemy::animate::systems::{
-    handle_play_hit_animation_timer, link_enemy_animation,
-    load_enemy_animations, play_enemy_hit_animation,
-    reflect_enemy_state_to_current_animation, setup_enemy_animation,
-}, shared::components::AnimationPlayerEntityPointer};
+use crate::enemy::animate::{
+    messages::PlayEnemyAnimationMessage,
+    systems::{
+        link_enemy_animation, load_enemy_animations, play_enemy_animation,
+        play_enemy_death_animation, setup_enemy_animation,
+    },
+};
 
 mod components;
+pub mod messages;
 mod resources;
 pub mod systems;
 
 const TOTAL_ENEMY_MODEL_ANIMATIONS: usize = 24;
-// https://poly.pizza/m/Btfn3G5Xv4 index is equal to list option select thing on preview
-const ENEMY_DEATH_ANIMATION: usize = 0;
-const _ENEMY_GUN_SHOOT_ANIMATION: usize = 1;
-const ENEMY_HIT_RECEIVE_ANIMATION: usize = 2;
-const ENEMY_IDLE_GUN_ANIMATION: usize = 5;
-const ENEMY_IDLE_GUN_POINTING_ANIMATION: usize = 6;
-const ENEMY_RUN_ANIMATION: usize = 16;
 
 // TODO: give explicit name, maybe this needs to be done in Blender?
 const ENEMY_MODEL_NAME: &str = "RootNode";
@@ -28,39 +24,38 @@ pub struct AnimateEnemyPlugin;
 
 impl Plugin for AnimateEnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, load_enemy_animations).add_systems(
-            Update,
-            (
-                setup_enemy_animation,
-                reflect_enemy_state_to_current_animation,
-                link_enemy_animation,
-                play_enemy_hit_animation,
-                handle_play_hit_animation_timer,
-            ),
-        );
+        app.add_systems(Startup, load_enemy_animations)
+            .add_systems(
+                Update,
+                (
+                    setup_enemy_animation,
+                    link_enemy_animation,
+                    play_enemy_animation,
+                    play_enemy_death_animation,
+                ),
+            )
+            .add_message::<PlayEnemyAnimationMessage>();
     }
 }
 
-fn pause_animations_on_in_game_paused(
-    enemy_query: Query<&AnimationPlayerEntityPointer>, 
-    mut animation_players_and_transitions: Query<(
-        Entity,
-        &mut AnimationPlayer,
-        &mut AnimationTransitions,
-    )>,
-) {
-    for enemy in enemy_query {
-        let Some((_, mut animation_player, mut animation_transitions)) =
-            animation_players_and_transitions
-                .iter_mut()
-                .find(|(e, _, _)| *e == enemy.0)
-        else {
-            warn!(
-                "Could not find animation player and transitions for enemy \
-                 entity from PlayerBulletHitEnemyMessage"
-            );
-            continue;
-        };
-        animation_player.pause_all();
+#[derive(Debug)]
+pub enum EnemyAnimationType {
+    Death,
+    HitReceive,
+    IdleGun,
+    IdleGunPointing,
+    Run,
+}
+
+fn get_animation_index_for_enemy_animation_type(
+    enemy_animation_type: &EnemyAnimationType,
+) -> usize {
+    // https://poly.pizza/m/Btfn3G5Xv4 index is equal to list option select thing on preview
+    match enemy_animation_type {
+        EnemyAnimationType::Death => 0,
+        EnemyAnimationType::HitReceive => 2,
+        EnemyAnimationType::IdleGun => 5,
+        EnemyAnimationType::IdleGunPointing => 6,
+        EnemyAnimationType::Run => 16,
     }
 }

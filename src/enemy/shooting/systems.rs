@@ -3,15 +3,22 @@ use bevy::prelude::*;
 
 use crate::{
     enemy::{
+        Enemy, EnemyState,
         shooting::{
             components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
-        }, Enemy, EnemyState
-    }, game_flow::states::InGameState, gameplay_debug::{DebugGizmoLine, DebugGizmos}, player::{
+        },
+    },
+    game_flow::states::InGameState,
+    gameplay_debug::{DebugGizmoLine, DebugGizmos},
+    player::{
+        Player, PlayerDeathMessage,
         shooting::{
             components::BloodScreenEffect,
             messages::PlayerBulletHitEnemyMessage,
-        }, Player, PlayerDeathMessage
-    }, shared::components::DespawnTimer, utils::random::get_random_number_from_range
+        },
+    },
+    shared::components::DespawnTimer,
+    utils::random::get_random_number_from_range,
 };
 
 pub fn handle_player_bullet_hit_enemy_message(
@@ -83,19 +90,17 @@ pub fn enemy_shoot_player(
             .translation
             .with_x(player_transform.translation.x + random_x_offset as f32);
 
-        let Ok(direction) =
-            Dir3::new(player_location_random_x_offset - enemy_transform.translation)
-        else {
+        let Ok(direction) = Dir3::new(
+            player_location_random_x_offset - enemy_transform.translation,
+        ) else {
             continue;
         };
 
-        debug_gizmos
-            .0
-            .push(DebugGizmoLine {
-                start: origin,
-                end: player_location_random_x_offset,
-                despawn_timer: Timer::from_seconds(0.5, TimerMode::Once)
-            });
+        debug_gizmos.0.push(DebugGizmoLine {
+            start: origin,
+            end: player_location_random_x_offset,
+            despawn_timer: Timer::from_seconds(0.5, TimerMode::Once),
+        });
 
         let Some(first_hit) = spatial_query.cast_ray(
             origin,
