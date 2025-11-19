@@ -1,7 +1,6 @@
 use avian3d::prelude::ColliderConstructorHierarchyReady;
 use bevy::{
-    prelude::*,
-    window::{CursorGrabMode, CursorOptions, PrimaryWindow},
+    animation, prelude::*, window::{CursorGrabMode, CursorOptions, PrimaryWindow}
 };
 use bevy_rerecast::{Navmesh, prelude::NavmeshReady};
 
@@ -184,4 +183,16 @@ pub fn on_enter_app_state_in_game(
     mut spawn_player_message_writer: MessageWriter<SpawnPlayerMessage>,
 ) {
     spawn_player_message_writer.write(SpawnPlayerMessage);
+}
+
+pub fn pause_all_animations(animation_players: Query<&mut AnimationPlayer>) {
+    for mut animation_player in animation_players {
+        animation_player.pause_all();
+    }
+}
+
+pub fn resume_all_animations(animation_players: Query<&mut AnimationPlayer>) {
+    for mut animation_player in animation_players {
+        animation_player.resume_all();
+    }
 }

@@ -9,12 +9,7 @@ use crate::{
             MainMenuState, SelectedMapState,
         },
         systems::{
-            check_collider_constructor_hierarchy_ready,
-            check_navmesh_ready, check_world_scene_loaded, 
-            free_mouse, grab_mouse, handle_escape_in_game,
-            handle_exit_in_game, handle_map_loaded_with_dependencies,
-            on_enter_app_state_in_game, on_exit_main_menu,
-            on_game_loading_state_nav_mesh_ready, spawn_main_menu_camera,
+            check_collider_constructor_hierarchy_ready, check_navmesh_ready, check_world_scene_loaded, free_mouse, grab_mouse, handle_escape_in_game, handle_exit_in_game, handle_map_loaded_with_dependencies, on_enter_app_state_in_game, on_exit_main_menu, on_game_loading_state_nav_mesh_ready, pause_all_animations, resume_all_animations, spawn_main_menu_camera
         },
     },
     player::PlayerDeathMessage,
@@ -50,9 +45,9 @@ impl Plugin for GameFlowPlugin {
                 handle_map_loaded_with_dependencies,
             )
             .add_systems(OnExit(AppState::MainMenu), on_exit_main_menu)
-            .add_systems(OnEnter(InGameState::Playing), grab_mouse)
+            .add_systems(OnEnter(InGameState::Playing), (grab_mouse, resume_all_animations))
             .add_systems(OnEnter(AppState::InGame), on_enter_app_state_in_game)
-            .add_systems(OnEnter(InGameState::Paused), free_mouse)
+            .add_systems(OnEnter(InGameState::Paused), (free_mouse, pause_all_animations))
             .add_systems(OnExit(AppState::InGame), handle_exit_in_game)
             .add_systems(Startup, spawn_main_menu_camera)
             .add_systems(
