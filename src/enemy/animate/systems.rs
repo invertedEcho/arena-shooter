@@ -205,7 +205,7 @@ pub fn handle_play_hit_animation_timer(
     time: Res<Time>,
     query: Query<(Entity, &mut Enemy, &mut PlayHitAnimationTimer)>,
 ) {
-    for (enemy_entity, mut enemy, mut play_hit_animation) in query {
+    for (enemy_entity, enemy, mut play_hit_animation) in query {
         if enemy.state == EnemyState::Dead {
             continue;
         }

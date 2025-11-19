@@ -3,7 +3,7 @@ use std::num::NonZero;
 use bevy::{color::palettes::{css::RED, tailwind::BLUE_700}, prelude::*};
 use bevy_rich_text3d::{LoadFonts, Text3d, Text3dPlugin, Text3dStyling, TextAtlas};
 
-use crate::enemy::{ai::{ENEMY_FOV, ENEMY_VISION_RANGE}, Enemy};
+use crate::{enemy::{ai::{ENEMY_FOV, ENEMY_VISION_RANGE}, Enemy}};
 
 pub struct GameplayDebugPlugin;
 
@@ -25,21 +25,35 @@ impl Plugin for GameplayDebugPlugin {
 
         // https://github.com/mintlu8/bevy_rich_text3d/issues/19
         app.add_systems(PreUpdate, update_enemy_debug_text);
+        app.add_systems(Update, tick_despawn_timer_debug_gizmo_lines);
 
         app.insert_resource(DebugGizmos(Vec::new()));
     }
 }
 
+pub struct DebugGizmoLine {
+    pub start: Vec3,
+    pub end: Vec3,
+    pub despawn_timer: Timer
+}
+
 #[derive(Resource)]
-pub struct DebugGizmos(pub Vec<(Vec3, Vec3)>);
+pub struct DebugGizmos(pub Vec<DebugGizmoLine>);
 
 pub fn draw_gizmos(mut gizmos: Gizmos, debug_gizmos: Res<DebugGizmos>) {
-    for gizmo in &debug_gizmos.0 {
-        let start = gizmo.0;
-        let end = gizmo.1;
+    for gizmo in debug_gizmos.0.iter() {
+        let start = gizmo.start;
+        let end = gizmo.end;
         let color = RED.with_alpha(0.5);
         gizmos.line(start, end, color);
     }
+}
+
+fn tick_despawn_timer_debug_gizmo_lines(mut debug_gizmos: ResMut<DebugGizmos>, time: Res<Time>) {
+    debug_gizmos.0.retain_mut(|gizmo| {
+        gizmo.despawn_timer.tick(time.delta());
+        !gizmo.despawn_timer.is_finished()
+    });
 }
 
 pub fn draw_enemy_fov(
@@ -58,8 +72,8 @@ pub fn draw_enemy_fov(
         let right_dir: Vec3 =
             (Quat::from_rotation_y(-half_angle) * forward).normalize();
 
-        gizmos.ray(pos, left_dir * range, BLUE_700);
-        gizmos.ray(pos, right_dir * range, BLUE_700);
+        gizmos.ray(pos, left_dir * range, BLUE_700.with_alpha(0.5));
+        gizmos.ray(pos, right_dir * range, BLUE_700.with_alpha(0.5));
     }
 }
 

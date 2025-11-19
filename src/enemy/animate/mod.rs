@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 
-use crate::enemy::animate::systems::{
+use crate::{enemy::animate::systems::{
     handle_play_hit_animation_timer, link_enemy_animation,
     load_enemy_animations, play_enemy_hit_animation,
     reflect_enemy_state_to_current_animation, setup_enemy_animation,
-};
+}, shared::components::AnimationPlayerEntityPointer};
 
 mod components;
 mod resources;
@@ -41,6 +41,26 @@ impl Plugin for AnimateEnemyPlugin {
     }
 }
 
-// fn set_idle_on_pause(enemy_query: Query<) {
-//
-// }
+fn pause_animations_on_in_game_paused(
+    enemy_query: Query<&AnimationPlayerEntityPointer>, 
+    mut animation_players_and_transitions: Query<(
+        Entity,
+        &mut AnimationPlayer,
+        &mut AnimationTransitions,
+    )>,
+) {
+    for enemy in enemy_query {
+        let Some((_, mut animation_player, mut animation_transitions)) =
+            animation_players_and_transitions
+                .iter_mut()
+                .find(|(e, _, _)| *e == enemy.0)
+        else {
+            warn!(
+                "Could not find animation player and transitions for enemy \
+                 entity from PlayerBulletHitEnemyMessage"
+            );
+            continue;
+        };
+        animation_player.pause_all();
+    }
+}

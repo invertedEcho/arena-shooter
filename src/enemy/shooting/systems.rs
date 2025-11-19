@@ -6,7 +6,7 @@ use crate::{
         shooting::{
             components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
         }, Enemy, EnemyState
-    }, game_flow::states::InGameState, gameplay_debug::DebugGizmos, player::{
+    }, game_flow::states::InGameState, gameplay_debug::{DebugGizmoLine, DebugGizmos}, player::{
         shooting::{
             components::BloodScreenEffect,
             messages::PlayerBulletHitEnemyMessage,
@@ -77,21 +77,25 @@ pub fn enemy_shoot_player(
         let player_transform = player_query.1;
         let origin = enemy_transform.translation;
 
-        let random_number = get_random_number_from_range(-2..2);
+        let random_x_offset = get_random_number_from_range(-1.0..1.0);
 
-        let randomized_player_location = player_transform
+        let player_location_random_x_offset = player_transform
             .translation
-            .with_x(player_transform.translation.x + random_number as f32);
+            .with_x(player_transform.translation.x + random_x_offset as f32);
 
         let Ok(direction) =
-            Dir3::new(randomized_player_location - enemy_transform.translation)
+            Dir3::new(player_location_random_x_offset - enemy_transform.translation)
         else {
             continue;
         };
 
         debug_gizmos
             .0
-            .push((enemy_transform.translation, randomized_player_location));
+            .push(DebugGizmoLine {
+                start: origin,
+                end: player_location_random_x_offset,
+                despawn_timer: Timer::from_seconds(0.5, TimerMode::Once)
+            });
 
         let Some(first_hit) = spatial_query.cast_ray(
             origin,
