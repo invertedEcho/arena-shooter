@@ -1,9 +1,5 @@
 use avian3d::prelude::ColliderConstructorHierarchyReady;
 use bevy::{
-    color::palettes::{
-        css::{ORANGE, RED},
-        tailwind::BLUE_700,
-    },
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
@@ -12,7 +8,6 @@ use bevy_rerecast::{Navmesh, prelude::NavmeshReady};
 use crate::{
     enemy::{
         Enemy,
-        ai::{ENEMY_FOV, ENEMY_VISION_RANGE},
     },
     game_flow::{
         game_mode::{GameModeState, StartWaveGameModeMessage},
@@ -189,37 +184,4 @@ pub fn on_enter_app_state_in_game(
     mut spawn_player_message_writer: MessageWriter<SpawnPlayerMessage>,
 ) {
     spawn_player_message_writer.write(SpawnPlayerMessage);
-}
-
-#[derive(Resource)]
-pub struct DebugGizmos(pub Vec<(Vec3, Vec3)>);
-
-pub fn draw_gizmos(mut gizmos: Gizmos, debug_gizmos: Res<DebugGizmos>) {
-    for gizmo in &debug_gizmos.0 {
-        let start = gizmo.0;
-        let end = gizmo.1;
-        let color = RED;
-        gizmos.line(start, end, color);
-    }
-}
-
-pub fn draw_enemy_fov(
-    enemy_transforms: Query<&Transform, With<Enemy>>,
-    mut gizmos: Gizmos,
-) {
-    for transform in enemy_transforms {
-        let pos = transform.translation;
-        let forward = transform.forward();
-        let range = ENEMY_VISION_RANGE;
-
-        // Cone edges
-        let half_angle = ENEMY_FOV.to_radians() / 2.0;
-        let left_dir: Vec3 =
-            (Quat::from_rotation_y(half_angle) * forward).normalize();
-        let right_dir: Vec3 =
-            (Quat::from_rotation_y(-half_angle) * forward).normalize();
-
-        gizmos.ray(pos, left_dir * range, BLUE_700);
-        gizmos.ray(pos, right_dir * range, BLUE_700);
-    }
 }

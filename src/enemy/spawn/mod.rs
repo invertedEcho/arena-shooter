@@ -1,5 +1,3 @@
-use std::num::NonZero;
-
 use crate::{
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
@@ -18,7 +16,6 @@ use bevy::prelude::*;
 use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
 };
-use bevy_rich_text3d::{Text3d, Text3dStyling, TextAtlas};
 
 use crate::enemy::Enemy;
 
@@ -30,7 +27,6 @@ impl Plugin for EnemySpawnPlugin {
             Update,
             (handle_spawn_enemies_at_enemy_spawn_locations_message,),
         );
-        // app.add_systems(PreUpdate, add_enemy_state_text);
     }
 }
 
@@ -61,16 +57,8 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
         With<EnemySpawnLocation>,
     >,
     archipelago_ref: Option<Res<ArchipelagoRef>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for event in message_reader.read() {
-        let mat = materials.add(StandardMaterial {
-            base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
-            alpha_mode: AlphaMode::Mask(0.5),
-            unlit: true,
-            cull_mode: None,
-            ..Default::default()
-        });
         let Some(ref archipelago_ref) = archipelago_ref else {
             warn!(
                 "Received enemy spawn message but archipelago_ref doesnt \
@@ -206,78 +194,8 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                         Transform::from_xyz(0.0, -0.8, 0.0),
                         AgentEnemyEntityPointer(enemy_entity),
                     ));
-                    commands.entity(enemy_entity).with_child((
-                        Text3d::new(format!(" | {:?}", "Checkifseeable")),
-                        Text3dStyling {
-                            size: 64.,
-                            stroke: NonZero::new(10),
-                            color: Srgba::new(1., 0., 0., 1.),
-                            stroke_color: Srgba::BLACK,
-                            world_scale: Some(Vec2::splat(0.25)),
-                            layer_offset: 0.001,
-                            ..Default::default()
-                        },
-                        Mesh3d::default(),
-                        MeshMaterial3d(mat.clone()),
-                        Transform {
-                            translation: Vec3::new(0.0, 1.0, 0.0),
-                            rotation: Quat::from_euler(
-                                EulerRot::XYZ,
-                                180_f32.to_radians(),
-                                0.0,
-                                180_f32.to_radians(),
-                            ),
-                            scale: Vec3::ONE,
-                        },
-                        EnemyDebugText(enemy_entity),
-                    ));
                 }
             }
         }
-    }
-}
-
-#[derive(Component)]
-struct EnemyDebugText(pub Entity);
-
-fn add_enemy_state_text(
-    mut commands: Commands,
-    enemy_query: Query<(Entity, &Enemy), Added<Enemy>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    for (entity, enemy) in enemy_query {
-        let mat = materials.add(StandardMaterial {
-            base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
-            alpha_mode: AlphaMode::Mask(0.5),
-            unlit: true,
-            cull_mode: None,
-            ..Default::default()
-        });
-
-        commands.entity(entity).with_child((
-            Text3d::new(format!(" | {:?}", enemy.state)),
-            Text3dStyling {
-                size: 64.,
-                stroke: NonZero::new(10),
-                color: Srgba::new(1., 0., 0., 1.),
-                stroke_color: Srgba::BLACK,
-                world_scale: Some(Vec2::splat(0.25)),
-                layer_offset: 0.001,
-                ..Default::default()
-            },
-            Mesh3d::default(),
-            MeshMaterial3d(mat.clone()),
-            Transform {
-                translation: Vec3::new(0.0, 1.0, 0.0),
-                rotation: Quat::from_euler(
-                    EulerRot::XYZ,
-                    180_f32.to_radians(),
-                    0.0,
-                    180_f32.to_radians(),
-                ),
-                scale: Vec3::ONE,
-            },
-            EnemyDebugText(entity),
-        ));
     }
 }
