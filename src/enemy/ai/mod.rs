@@ -1,13 +1,17 @@
 use bevy::prelude::*;
 
 use crate::{
-    enemy::ai::systems::{
-        check_if_enemy_can_see_player, check_if_enemy_reached_target,
-        handle_chasing_enemies,
+    enemy::ai::{
+        components::EnemyHotspot,
+        systems::{
+            check_if_enemy_can_see_player, check_if_enemy_reached_target,
+            handle_chasing_enemies,
+        },
     },
     game_flow::states::InGameState,
 };
 
+pub mod components;
 mod systems;
 
 pub const ENEMY_VISION_RANGE: f32 = 30.0;
@@ -39,7 +43,7 @@ pub struct EnemyAiPlugin;
 
 impl Plugin for EnemyAiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.register_type::<EnemyHotspot>().add_systems(
             Update,
             (
                 handle_chasing_enemies,

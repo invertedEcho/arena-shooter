@@ -132,6 +132,10 @@ pub fn check_if_enemy_reached_target(
     enemy_agents_query: Query<(&AgentEnemyEntityPointer, &AgentState)>,
 ) {
     for (agent_enemy_entity_pointer, agent_state) in enemy_agents_query {
+        if *agent_state != AgentState::ReachedTarget {
+            continue;
+        }
+
         let Ok(mut enemy) = enemy_query.get_mut(agent_enemy_entity_pointer.0)
         else {
             warn!(
@@ -141,9 +145,7 @@ pub fn check_if_enemy_reached_target(
             );
             continue;
         };
-        if *agent_state == AgentState::ReachedTarget {
-            enemy.state = EnemyState::CheckIfPlayerSeeable;
-        }
+        enemy.state = EnemyState::CheckIfPlayerSeeable;
     }
 }
 
@@ -184,4 +186,26 @@ pub fn handle_chasing_enemies(
             character_controller_entity: entity,
         });
     }
+}
+
+fn get_closest_transform_from_point(
+    source: Vec3,
+    targets: Vec<Vec3>,
+) -> Option<Vec3> {
+    if targets.is_empty() {
+        return None;
+    }
+
+    let mut closest_point = targets[0];
+
+    for point in targets {
+        let distance_of_closest_point = closest_point.length();
+
+        let distance = (source - point).length();
+        if distance_of_closest_point < distance {
+            closest_point = point;
+        }
+    }
+
+    Some(closest_point)
 }

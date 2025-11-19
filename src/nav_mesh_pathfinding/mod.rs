@@ -9,7 +9,9 @@ use landmass_rerecast::{
 
 use crate::{
     character_controller::{CHARACTER_HEIGHT, MAX_SLOPE_ANGLE},
-    enemy::{Enemy, EnemyState, spawn::AgentEnemyEntityPointer},
+    enemy::{
+        Enemy, ai::components::EnemyState, spawn::AgentEnemyEntityPointer,
+    },
     game_flow::states::LoadingGameSubState,
     world::world_objects::medkit::Medkit,
 };

@@ -130,7 +130,7 @@ pub fn reflect_enemy_state_to_current_animation(
             EnemyState::CheckIfPlayerSeeable => ENEMY_IDLE_GUN_ANIMATION,
         };
 
-        if new_animation_index == ENEMY_DEATH_ANIMATION {
+        if enemy.state == EnemyState::Dead {
             animation_transitions.play(
                 &mut animation_player,
                 animations.animation_node_indices[new_animation_index],
