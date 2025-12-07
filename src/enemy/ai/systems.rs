@@ -82,7 +82,9 @@ pub fn enemy_state_decision_system(
                     let enemy_can_see_player =
                         first_hit.entity == player_entity;
                     if enemy_can_see_player {
-                        enemy.update_state(EnemyState::RotateTowardsPlayer);
+                        if enemy.state != EnemyState::AttackPlayer {
+                            enemy.update_state(EnemyState::RotateTowardsPlayer);
+                        }
                     } else if enemy.state != EnemyState::GoToAgentTarget {
                         // the player is in range of the enemy, also in the fov cone of the enemy, but
                         // there is a obstacle in the way, so we need to give the enemy agent a new
@@ -237,13 +239,13 @@ pub fn handle_chasing_enemies(
 
 pub fn rotate_enemies_towards_player_over_time(
     enemy_query: Query<
-        (&Enemy, &mut Transform),
+        (Entity, &mut Enemy, &mut Transform),
         (With<Enemy>, Without<Player>),
     >,
     player_transform: Single<&Transform, With<Player>>,
     time: Res<Time>,
 ) {
-    for (enemy, mut enemy_transform) in enemy_query {
+    for (enemy_entity, mut enemy, mut enemy_transform) in enemy_query {
         if enemy.state != EnemyState::RotateTowardsPlayer {
             continue;
         };
@@ -274,16 +276,11 @@ pub fn rotate_enemies_towards_player_over_time(
             ROTATION_SPEED * time.delta_secs(),
         );
         if is_facing_target(&enemy_transform, &player_transform) {
-            // hmm what do we do here?
             info!(
-                "enemy is now facing player, what to do now? maybe there is \
-                 something in the way again"
+                "enemy {} is now facing player, attacking the player",
+                enemy_entity
             );
-            // info!(
-            //     "enemy {} is now facing player, attacking the player",
-            //     enemy_entity
-            // );
-            // enemy.update_state(EnemyState::AttackPlayer);
+            enemy.update_state(EnemyState::AttackPlayer);
         }
     }
 }
