@@ -1,5 +1,7 @@
+use std::f32::consts::PI;
+
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
 
 use crate::{
     character_controller::components::MovementState,
@@ -9,7 +11,9 @@ use crate::{
     player::{
         Player, PlayerDeathMessage,
         animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
-        camera::components::{ViewModelCamera, WorldModelCamera},
+        camera::components::{
+            PlayerWeaponModel, ViewModelCamera, WorldModelCamera,
+        },
         shooting::{
             components::{
                 BloodScreenEffect, MuzzleFlash, PlayerShootCooldownTimer,
@@ -357,4 +361,29 @@ pub fn handle_player_death_event(
         **player_movement_state = MovementState::Idle;
         next_in_game_state.set(InGameState::PlayerDead);
     }
+}
+
+pub fn weapon_sway(
+    time: Res<Time>,
+    mouse_motion: Res<AccumulatedMouseMotion>,
+    mut transform: Single<&mut Transform, With<PlayerWeaponModel>>,
+) {
+    // how fast it will return to initial position
+    const DAMPING: f32 = 12.0;
+
+    // how strong the sway is
+    const SWAY_MULTIPLIER: f32 = 0.0005;
+
+    let delta = mouse_motion.delta;
+
+    let pitch = -delta.y * SWAY_MULTIPLIER;
+    let yaw = delta.x * SWAY_MULTIPLIER;
+
+    let sway_rot = Quat::from_rotation_x(pitch) * Quat::from_rotation_y(yaw);
+
+    transform.rotation *= sway_rot;
+
+    transform.rotation = transform
+        .rotation
+        .slerp(Quat::from_rotation_y(PI), DAMPING * time.delta_secs());
 }

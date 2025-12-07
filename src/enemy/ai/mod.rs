@@ -1,12 +1,9 @@
 use bevy::prelude::*;
 
 use crate::{
-    enemy::{
-        ai::systems::{
-            check_if_enemy_can_see_player, check_if_enemy_reached_target,
-            handle_chasing_enemies,
-        },
-        shooting::systems::enemy_shoot_player,
+    enemy::ai::systems::{
+        check_if_enemy_can_see_player, check_if_enemy_reached_target,
+        handle_chasing_enemies,
     },
     game_flow::states::InGameState,
 };
