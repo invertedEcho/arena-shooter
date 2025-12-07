@@ -103,40 +103,42 @@ pub fn update_yaw_pitch_on_mouse_motion(
 ) {
     let delta = mouse_motion.delta;
 
-    if delta != Vec2::ZERO {
-        // pitch like nodding yes with your head
-        let delta_pitch = -delta.y * 0.001;
-
-        // yaw like nodding no with your head
-        let delta_yaw = -delta.x * 0.002;
-
-        // existing rotation
-        let (current_yaw_camera, current_pitch_camera, current_roll_camera) =
-            world_model_camera_transform
-                .rotation
-                .to_euler(EulerRot::YXZ);
-
-        let (current_yaw_player, current_pitch_player, current_roll_player) =
-            player_transform.rotation.to_euler(EulerRot::YXZ);
-
-        let new_yaw_player = delta_yaw + current_yaw_player;
-
-        let new_pitch_camera = (delta_pitch + current_pitch_camera)
-            .clamp(-PITCH_LIMIT, PITCH_LIMIT);
-
-        world_model_camera_transform.rotation = Quat::from_euler(
-            EulerRot::YXZ,
-            current_yaw_camera,
-            new_pitch_camera,
-            current_roll_camera,
-        );
-        player_transform.rotation = Quat::from_euler(
-            EulerRot::YXZ,
-            new_yaw_player,
-            current_pitch_player,
-            current_roll_player,
-        );
+    if delta == Vec2::ZERO {
+        return;
     }
+
+    // pitch like nodding yes with your head
+    let delta_pitch = -delta.y * 0.001;
+
+    // yaw like nodding no with your head
+    let delta_yaw = -delta.x * 0.002;
+
+    // existing rotation
+    let (current_yaw_camera, current_pitch_camera, current_roll_camera) =
+        world_model_camera_transform
+            .rotation
+            .to_euler(EulerRot::YXZ);
+
+    let (current_yaw_player, current_pitch_player, current_roll_player) =
+        player_transform.rotation.to_euler(EulerRot::YXZ);
+
+    let new_yaw_player = delta_yaw + current_yaw_player;
+
+    let new_pitch_camera =
+        (delta_pitch + current_pitch_camera).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+
+    world_model_camera_transform.rotation = Quat::from_euler(
+        EulerRot::YXZ,
+        current_yaw_camera,
+        new_pitch_camera,
+        current_roll_camera,
+    );
+    player_transform.rotation = Quat::from_euler(
+        EulerRot::YXZ,
+        new_yaw_player,
+        current_pitch_player,
+        current_roll_player,
+    );
 }
 
 // 'w -> the world borrow lifetime, e.g. how long this query can read/write world data
