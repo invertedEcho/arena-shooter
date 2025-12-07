@@ -4,11 +4,10 @@ use crate::enemy::animate::{
     messages::PlayEnemyAnimationMessage,
     systems::{
         link_enemy_animation, load_enemy_animations, play_enemy_animation,
-        play_enemy_death_animation, setup_enemy_animation,
+        setup_enemy_animation,
     },
 };
 
-mod components;
 pub mod messages;
 mod resources;
 pub mod systems;
@@ -31,7 +30,6 @@ impl Plugin for AnimateEnemyPlugin {
                     setup_enemy_animation,
                     link_enemy_animation,
                     play_enemy_animation,
-                    play_enemy_death_animation,
                 ),
             )
             .add_message::<PlayEnemyAnimationMessage>();

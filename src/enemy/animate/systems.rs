@@ -11,7 +11,6 @@ use crate::{
             get_animation_index_for_enemy_animation_type,
             messages::PlayEnemyAnimationMessage, resources::EnemyAnimations,
         },
-        shooting::messages::EnemyKilledMessage,
     },
     shared::components::AnimationPlayerEntityPointer,
 };
@@ -106,10 +105,10 @@ pub fn play_enemy_animation(
     )>,
 ) {
     for event in message_reader.read() {
-        info!(
-            "Playing animation {:?} for enemy entity {:?}",
-            event.animaton_type, event.enemy
-        );
+        // info!(
+        //     "Playing animation {:?} for enemy entity {:?}",
+        //     event.animaton_type, event.enemy
+        // );
         let Ok((enemy, animation_player_entity_pointer)) =
             enemy_query.get(event.enemy)
         else {
@@ -184,19 +183,3 @@ pub fn play_enemy_animation(
 //         }
 //     }
 // }
-
-pub fn play_enemy_death_animation(
-    mut message_reader: MessageReader<EnemyKilledMessage>,
-    mut message_writer: MessageWriter<PlayEnemyAnimationMessage>,
-) {
-    // TODO: nevermind, just do where EnemyKilledMessage is written.
-    // this might look stupid, e.g. why not just write the message where we also
-    // EnemyKilledMessage, but this way we can seperate animations into this module
-    for message in message_reader.read() {
-        message_writer.write(PlayEnemyAnimationMessage {
-            enemy: message.0,
-            animaton_type: EnemyAnimationType::Death,
-            repeat: false,
-        });
-    }
-}

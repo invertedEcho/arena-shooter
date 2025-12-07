@@ -72,7 +72,7 @@ fn handle_game_mode_wave_start_message(
 // or have smarter ai
 pub fn get_enemy_count_per_wave(wave: usize) -> usize {
     match wave {
-        1 => 3,
+        1 => 1,
         2 => 4,
         3 => 6,
         4 => 8,

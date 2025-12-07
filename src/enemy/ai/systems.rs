@@ -18,7 +18,7 @@ use crate::{
 /// transform. In addition, if the state hasn't been `AttackPlayer` yet, it will be set to
 /// `AttackPlayer`. If not, the enemy state will be set to `ChasingPlayer`, if not yet set.
 pub fn check_if_enemy_can_see_player(
-    enemy_query: Query<(&mut Enemy, Entity, &mut Transform), Without<Player>>,
+    enemy_query: Query<(&mut Enemy, Entity, &Transform), Without<Player>>,
     mut enemy_agents_query: Query<(
         &AgentEnemyEntityPointer,
         &mut AgentTarget3d,
@@ -26,11 +26,12 @@ pub fn check_if_enemy_can_see_player(
     spatial_query: SpatialQuery,
     player_query: Single<(Entity, &Transform), With<Player>>,
     mut animation_message_writer: MessageWriter<PlayEnemyAnimationMessage>,
+    mut enemy_can_see_player_message_writer: MessageWriter<EnemyCanSeePlayer>,
 ) {
     let (player_entity, player_transform) = *player_query;
     let player_position = player_transform.translation;
 
-    for (mut enemy, enemy_entity, mut enemy_transform) in enemy_query {
+    for (mut enemy, enemy_entity, enemy_transform) in enemy_query {
         if enemy.state == EnemyState::Dead {
             continue;
         }
@@ -99,20 +100,8 @@ pub fn check_if_enemy_can_see_player(
         ) {
             let enemy_can_see_player = first_hit.entity == player_entity;
             if enemy_can_see_player {
-                enemy_transform.look_at(player_transform.translation, Vec3::Y);
-                if enemy.state != EnemyState::AttackPlayer {
-                    debug!(
-                        "Enemy can see player, changing state to \
-                         AttackPlayer. Previous enemy state: {:?}",
-                        enemy.state
-                    );
-                    animation_message_writer.write(PlayEnemyAnimationMessage {
-                        enemy: enemy_entity,
-                        animaton_type: EnemyAnimationType::IdleGunPointing,
-                        repeat: true,
-                    });
-                    enemy.state = EnemyState::AttackPlayer;
-                };
+                enemy_can_see_player_message_writer
+                    .write(EnemyCanSeePlayer(enemy_entity));
             } else if enemy.state != EnemyState::GoToLastKnownLocation {
                 let Some((_, mut agent_target)) = enemy_agents_query
                     .iter_mut()
@@ -232,6 +221,53 @@ pub fn handle_chasing_enemies(
             ),
             character_controller_entity: entity,
         });
+    }
+}
+
+#[derive(Message)]
+pub struct EnemyCanSeePlayer(pub Entity);
+
+pub fn handle_enemy_can_see_player_message(
+    mut message_reader: MessageReader<EnemyCanSeePlayer>,
+    mut enemy_query: Query<
+        (&mut Enemy, &mut Transform),
+        (With<Enemy>, Without<Player>),
+    >,
+    player_transform: Single<&Transform, With<Player>>,
+    mut animation_message_writer: MessageWriter<PlayEnemyAnimationMessage>,
+) {
+    for message in message_reader.read() {
+        let Ok((mut enemy, mut enemy_transform)) =
+            enemy_query.get_mut(message.0)
+        else {
+            warn!(
+                "Received EnemyLookAtPlayerMessage with invalid enemy entity: \
+                 {}",
+                message.0
+            );
+            continue;
+        };
+        if enemy.state == EnemyState::Dead {
+            continue;
+        };
+
+        // TODO: but this needs to happen gradually over time, not immediately but no idea how to do tht
+        enemy_transform.look_at(player_transform.translation, Vec3::Y);
+
+        // if finished looking at player, begin shooting
+        if enemy.state != EnemyState::AttackPlayer {
+            info!(
+                "Enemy can see player, changing state to AttackPlayer. \
+                 Previous enemy state: {:?}",
+                enemy.state
+            );
+            animation_message_writer.write(PlayEnemyAnimationMessage {
+                enemy: message.0,
+                animaton_type: EnemyAnimationType::IdleGunPointing,
+                repeat: true,
+            });
+            enemy.state = EnemyState::AttackPlayer;
+        };
     }
 }
 

@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use crate::{
     enemy::{
         Enemy, EnemyState,
+        animate::{EnemyAnimationType, messages::PlayEnemyAnimationMessage},
         shooting::{
             components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
         },
@@ -27,6 +28,9 @@ pub fn handle_player_bullet_hit_enemy_message(
         PlayerBulletHitEnemyMessage,
     >,
     mut enemy_killed_event_writer: MessageWriter<EnemyKilledMessage>,
+    mut play_enemy_animation_message_writer: MessageWriter<
+        PlayEnemyAnimationMessage,
+    >,
 ) {
     for message in player_bullet_hit_enemy_message_reader.read() {
         let Ok((enemy_entity, mut enemy)) =
@@ -40,8 +44,24 @@ pub fn handle_player_bullet_hit_enemy_message(
             continue;
         };
         enemy.health -= message.damage;
-        if enemy.health <= 0.0 {
+
+        if enemy.health > 0.0 {
+            play_enemy_animation_message_writer.write(
+                PlayEnemyAnimationMessage {
+                    enemy: enemy_entity,
+                    animaton_type: EnemyAnimationType::HitReceive,
+                    repeat: false,
+                },
+            );
+        } else {
             enemy_killed_event_writer.write(EnemyKilledMessage(enemy_entity));
+            play_enemy_animation_message_writer.write(
+                PlayEnemyAnimationMessage {
+                    enemy: enemy_entity,
+                    animaton_type: EnemyAnimationType::Death,
+                    repeat: false,
+                },
+            );
         }
     }
 }

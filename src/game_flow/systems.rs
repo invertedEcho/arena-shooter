@@ -1,13 +1,12 @@
 use avian3d::prelude::ColliderConstructorHierarchyReady;
 use bevy::{
-    animation, prelude::*, window::{CursorGrabMode, CursorOptions, PrimaryWindow}
+    prelude::*,
+    window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use bevy_rerecast::{Navmesh, prelude::NavmeshReady};
 
 use crate::{
-    enemy::{
-        Enemy,
-    },
+    enemy::Enemy,
     game_flow::{
         game_mode::{GameModeState, StartWaveGameModeMessage},
         states::{

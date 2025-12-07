@@ -4,8 +4,9 @@ use crate::{
     enemy::ai::{
         components::EnemyHotspot,
         systems::{
-            check_if_enemy_can_see_player, check_if_enemy_reached_target,
-            handle_chasing_enemies,
+            EnemyCanSeePlayer, check_if_enemy_can_see_player,
+            check_if_enemy_reached_target, handle_chasing_enemies,
+            handle_enemy_can_see_player_message,
         },
     },
     game_flow::states::InGameState,
@@ -43,14 +44,17 @@ pub struct EnemyAiPlugin;
 
 impl Plugin for EnemyAiPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<EnemyHotspot>().add_systems(
-            Update,
-            (
-                handle_chasing_enemies,
-                check_if_enemy_can_see_player,
-                check_if_enemy_reached_target,
-            )
-                .run_if(in_state(InGameState::Playing)),
-        );
+        app.register_type::<EnemyHotspot>()
+            .add_message::<EnemyCanSeePlayer>()
+            .add_systems(
+                Update,
+                (
+                    handle_chasing_enemies,
+                    check_if_enemy_can_see_player,
+                    check_if_enemy_reached_target,
+                    handle_enemy_can_see_player_message,
+                )
+                    .run_if(in_state(InGameState::Playing)),
+            );
     }
 }
