@@ -135,10 +135,10 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 ..default()
                             },
                             Grounded::default(),
-                            LockedAxes::new()
-                                .lock_rotation_x()
-                                .lock_rotation_y()
-                                .lock_rotation_z(),
+                            // LockedAxes::new()
+                            //     .lock_rotation_x()
+                            //     .lock_rotation_y()
+                            //     .lock_rotation_z(),
                             RigidBody::Kinematic,
                             Collider::capsule(
                                 CHARACTER_CAPSULE_RADIUS,
@@ -169,8 +169,10 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                     LOCAL_FEET_CHARACTER,
                                     0.0,
                                 ),
+                                // enemy model needs to be rotated 180 degrees
                                 rotation: Quat::from_rotation_y(PI),
-                                scale: Vec3::splat(1.0),
+                                // scale: Vec3::splat(1.0),
+                                ..default()
                             },
                             SceneRoot(enemy_model),
                             Visibility::Visible,

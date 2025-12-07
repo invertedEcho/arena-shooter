@@ -2,19 +2,20 @@ use bevy::prelude::*;
 
 #[derive(Default, Reflect, PartialEq, Debug)]
 pub enum EnemyState {
-    /// Go to hotspot markers on the map, used when Enemy has no information about the player and
-    /// also not in the FOV
-    PatrolHotspots,
-    /// Check if the enemy can see the player, respecting a FOV with a cone
     #[default]
-    CheckIfPlayerSeeable,
-    /// Going to the last known location of the player
-    GoToLastKnownLocation,
+    Idle,
+    /// The player is in the enemy fov and no obstacles are in the way, the enemy will be rotated
+    /// towards the player over time until it has direct eye contact with the player
+    PlayerInFOV,
+    GoToAgentTarget,
+    EnemyAgentReachedTarget,
     /// Enemy can see the player, will shoot the player now
     AttackPlayer,
     /// This state will be set when `enemy.health == 0.0`. A death animation will be played and
     /// afterwards the enemy will be despawned.
     Dead,
+    /// This state is set when the enemies should rotate towards the player direction over time
+    RotateTowardsPlayer,
 }
 
 /// A marker component which is spawned at locations the enemies patrol when they do not know where

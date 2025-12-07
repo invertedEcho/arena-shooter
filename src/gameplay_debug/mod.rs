@@ -1,9 +1,17 @@
 use std::num::NonZero;
 
-use bevy::{color::palettes::{css::RED, tailwind::BLUE_700}, prelude::*};
-use bevy_rich_text3d::{LoadFonts, Text3d, Text3dPlugin, Text3dStyling, TextAtlas};
+use bevy::{
+    color::palettes::{css::RED, tailwind::BLUE_700},
+    prelude::*,
+};
+use bevy_rich_text3d::{
+    LoadFonts, Text3d, Text3dPlugin, Text3dStyling, TextAtlas,
+};
 
-use crate::{enemy::{ai::{ENEMY_FOV, ENEMY_VISION_RANGE}, Enemy}};
+use crate::enemy::{
+    Enemy,
+    ai::{ENEMY_FOV, ENEMY_VISION_RANGE},
+};
 
 pub struct GameplayDebugPlugin;
 
@@ -21,7 +29,10 @@ impl Plugin for GameplayDebugPlugin {
             font_directories: vec!["assets/fonts/Exo_2/static".to_owned()],
             ..Default::default()
         });
-        app.add_systems(Update, (draw_gizmos, draw_enemy_fov, add_enemy_state_text)); 
+        app.add_systems(
+            Update,
+            (draw_gizmos, draw_enemy_fov, add_enemy_state_text),
+        );
 
         // https://github.com/mintlu8/bevy_rich_text3d/issues/19
         app.add_systems(PreUpdate, update_enemy_debug_text);
@@ -34,7 +45,7 @@ impl Plugin for GameplayDebugPlugin {
 pub struct DebugGizmoLine {
     pub start: Vec3,
     pub end: Vec3,
-    pub despawn_timer: Timer
+    pub despawn_timer: Timer,
 }
 
 #[derive(Resource)]
@@ -49,7 +60,10 @@ pub fn draw_gizmos(mut gizmos: Gizmos, debug_gizmos: Res<DebugGizmos>) {
     }
 }
 
-fn tick_despawn_timer_debug_gizmo_lines(mut debug_gizmos: ResMut<DebugGizmos>, time: Res<Time>) {
+fn tick_despawn_timer_debug_gizmo_lines(
+    mut debug_gizmos: ResMut<DebugGizmos>,
+    time: Res<Time>,
+) {
     debug_gizmos.0.retain_mut(|gizmo| {
         gizmo.despawn_timer.tick(time.delta());
         !gizmo.despawn_timer.is_finished()
@@ -77,15 +91,19 @@ pub fn draw_enemy_fov(
     }
 }
 
-fn update_enemy_debug_text(mut query: Query<(&mut Text3d, &EnemyDebugText)>, changed_enemies: Query<(Entity, &Enemy), Changed<Enemy>>) {
+fn update_enemy_debug_text(
+    mut query: Query<(&mut Text3d, &EnemyDebugText)>,
+    changed_enemies: Query<(Entity, &Enemy), Changed<Enemy>>,
+) {
     for (enemy_entity, enemy) in changed_enemies {
-        let Some((mut text, _)) = query.iter_mut().find(|e| e.1.0 == enemy_entity) else {
+        let Some((mut text, _)) =
+            query.iter_mut().find(|e| e.1.0 == enemy_entity)
+        else {
             continue;
         };
         *text = Text3d::new(format!("{} | {:?}", enemy_entity, enemy.state));
     }
 }
-
 
 #[derive(Component)]
 struct EnemyDebugText(pub Entity);

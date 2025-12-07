@@ -1,8 +1,11 @@
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{color::palettes::css::WHITE, prelude::*};
 
 use crate::{
-    character_controller::components::CharacterControllerBundle,
+    character_controller::{
+        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+        components::CharacterControllerBundle,
+    },
     game_flow::states::AppState,
     player::{
         Player, camera::messages::SpawnPlayerCamerasMessage,
@@ -32,6 +35,8 @@ fn handle_player_spawn_event(
     mut spawn_player_cameras_message_writer: MessageWriter<
         SpawnPlayerCamerasMessage,
     >,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for _ in player_spawn_message_reader.read() {
         info!("read player spawn event, spawning player");
@@ -45,6 +50,14 @@ fn handle_player_spawn_event(
                 DebugRender::collider(Color::WHITE),
                 CharacterControllerBundle::default(),
                 DespawnOnExit(AppState::InGame),
+                Mesh3d(meshes.add(Capsule3d::new(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: WHITE.into(),
+                    ..Default::default()
+                })),
             ))
             .id();
 

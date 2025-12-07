@@ -31,3 +31,12 @@ pub struct Enemy {
     pub state: EnemyState,
     pub health: f32,
 }
+
+impl Enemy {
+    pub fn update_state(&mut self, new_state: EnemyState) {
+        if self.state != new_state {
+            println!("Enemy State change: {:?} -> {:?}", self.state, new_state);
+            self.state = new_state;
+        }
+    }
+}

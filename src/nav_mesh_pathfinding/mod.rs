@@ -1,5 +1,4 @@
 use avian_rerecast::AvianBackendPlugin;
-use avian3d::prelude::*;
 use bevy::{platform::collections::HashSet, prelude::*};
 use bevy_landmass::prelude::*;
 use bevy_rerecast::prelude::*;
@@ -9,9 +8,6 @@ use landmass_rerecast::{
 
 use crate::{
     character_controller::{CHARACTER_HEIGHT, MAX_SLOPE_ANGLE},
-    enemy::{
-        Enemy, ai::components::EnemyState, spawn::AgentEnemyEntityPointer,
-    },
     game_flow::states::LoadingGameSubState,
     world::world_objects::medkit::Medkit,
 };
@@ -31,7 +27,6 @@ impl Plugin for NavMeshPathfindingPlugin {
             OnEnter(LoadingGameSubState::CollidersReady),
             generate_navmesh_on_map_colliders_ready,
         );
-        app.add_systems(Update, update_agent_velocity_from_physics_velocity);
     }
 }
 
@@ -82,39 +77,5 @@ fn generate_navmesh_on_map_colliders_ready(
             archipelago_ref: ArchipelagoRef3d::new(archipelago_id),
             nav_mesh: NavMeshHandle3d(navmesh),
         });
-    }
-}
-
-fn update_agent_velocity_from_physics_velocity(
-    mut agent_query: Query<(
-        &mut Velocity3d,
-        &AgentState,
-        &AgentEnemyEntityPointer,
-    )>,
-    mut enemy_query: Query<(&LinearVelocity, &mut Enemy)>,
-) {
-    for (mut agent_velocity, agent_state, agent_enemy_entity_pointer) in
-        agent_query.iter_mut()
-    {
-        let Ok((enemy_velocity, mut enemy)) =
-            enemy_query.get_mut(agent_enemy_entity_pointer.0)
-        else {
-            warn!(
-                "Couldn't find enemy with LinearVelocity by id {}",
-                agent_enemy_entity_pointer.0
-            );
-            continue;
-        };
-        if *agent_state == AgentState::TargetNotOnNavMesh {
-            // FIXME: if the player is somewhere the enemy cant reach,
-            // the enemy will never be able to get to the player.
-            // we should just try nearby locations instead
-
-            // if the target is not on the navmesh, we let our systems make a new Target, until it
-            // is on the navmesh again.
-            enemy.state = EnemyState::CheckIfPlayerSeeable;
-        }
-
-        agent_velocity.velocity = enemy_velocity.0;
     }
 }

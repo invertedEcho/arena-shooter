@@ -13,14 +13,19 @@ use bevy_inspector_egui::{
 use bevy_skein::SkeinPlugin;
 
 use crate::{
-    character_controller::CharacterControllerPlugin, enemy::EnemyPlugin, game_flow::GameFlowPlugin, game_settings::get_or_create_game_settings, gameplay_debug::GameplayDebugPlugin, music::MusicPlugin, nav_mesh_pathfinding::NavMeshPathfindingPlugin, particles::ParticlesPlugin, player::PlayerPlugin, shared::CommonPlugin, user_interface::UserInterfacePlugin, world::WorldPlugin
+    character_controller::CharacterControllerPlugin, enemy::EnemyPlugin,
+    game_flow::GameFlowPlugin, game_settings::get_or_create_game_settings,
+    gameplay_debug::GameplayDebugPlugin, music::MusicPlugin,
+    nav_mesh_pathfinding::NavMeshPathfindingPlugin, particles::ParticlesPlugin,
+    player::PlayerPlugin, shared::CommonPlugin,
+    user_interface::UserInterfacePlugin, world::WorldPlugin,
 };
 
-mod gameplay_debug;
 mod character_controller;
 mod enemy;
 mod game_flow;
 mod game_settings;
+mod gameplay_debug;
 mod music;
 mod nav_mesh_pathfinding;
 mod particles;
@@ -71,7 +76,7 @@ fn main() {
 
     // External plugins
     app.add_plugins(PhysicsPlugins::default())
-        // .add_plugins(PhysicsDebugPlugin)
+        .add_plugins(PhysicsDebugPlugin)
         .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
     app.add_plugins(SkeinPlugin::default());
     app.add_plugins(HanabiPlugin);

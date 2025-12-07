@@ -189,7 +189,7 @@ pub fn handle_enemy_killed_message(
             continue;
         };
 
-        enemy.state = EnemyState::Dead;
+        enemy.update_state(EnemyState::Dead);
         commands
             .entity(enemy_entity)
             .remove::<RigidBody>()

@@ -105,10 +105,6 @@ pub fn play_enemy_animation(
     )>,
 ) {
     for event in message_reader.read() {
-        // info!(
-        //     "Playing animation {:?} for enemy entity {:?}",
-        //     event.animaton_type, event.enemy
-        // );
         let Ok((enemy, animation_player_entity_pointer)) =
             enemy_query.get(event.enemy)
         else {
@@ -154,32 +150,5 @@ pub fn play_enemy_animation(
                 Duration::ZERO,
             );
         }
-
-        // commands.entity(enemy_entity).insert(PlayHitAnimationTimer(
-        //     Timer::from_seconds(0.5, TimerMode::Once),
-        // ));
     }
 }
-
-// maybe its possible to queue animations? so we dont have to do this manually
-// pub fn handle_play_hit_animation_timer(
-//     mut commands: Commands,
-//     time: Res<Time>,
-//     query: Query<(Entity, &EnemyState, &mut PlayHitAnimationTimer)>,
-// ) {
-//     for (enemy_entity, enemy_state, mut play_hit_animation) in query {
-//         if *enemy_state == EnemyState::Dead {
-//             continue;
-//         }
-//         play_hit_animation.0.tick(time.delta());
-//
-//         if play_hit_animation.0.just_finished() {
-//             // TODO: hm we need to set the correct animation to play now depending on the enemystate, but
-//             // lets not do this here but have a MessageWriter
-//             // enemy.state = EnemyState::Idle;
-//             commands
-//                 .entity(enemy_entity)
-//                 .remove::<PlayHitAnimationTimer>();
-//         }
-//     }
-// }
