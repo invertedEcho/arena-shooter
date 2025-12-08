@@ -15,8 +15,8 @@ use crate::{
             CROSSHAIR_BULLET_HIT_PATH, MAIN_CROSSHAIR_PATH,
             components::{
                 CurrentWaveText, EnemiesLeftText, EnemyScoreText,
-                PlayerCarriedAmmoText, PlayerHealthText, PlayerHud,
-                PlayerLoadedAmmoText, PlayerScoreText,
+                PlayerCarriedAmmoText, PlayerCrosshair, PlayerHealthText,
+                PlayerHud, PlayerLoadedAmmoText, PlayerScoreText,
             },
         },
         shooting::{
@@ -97,9 +97,20 @@ pub fn spawn_player_hud(
                 ..default()
             },
             DespawnOnExit(InGameState::Playing),
-            PlayerHud,
+            PlayerCrosshair,
         ))
         .with_child(ImageNode::new(asset_server.load(MAIN_CROSSHAIR_PATH)));
+}
+
+pub fn update_player_crosshair_visibility(
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    mut player_cross_hair: Single<&mut Visibility, With<PlayerCrosshair>>,
+) {
+    if mouse_input.just_pressed(MouseButton::Right) {
+        **player_cross_hair = Visibility::Hidden;
+    } else if mouse_input.just_released(MouseButton::Right) {
+        **player_cross_hair = Visibility::Visible;
+    }
 }
 
 pub fn update_player_health_text(

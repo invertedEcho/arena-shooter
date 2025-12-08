@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, time::Duration};
 
 use avian3d::prelude::*;
 use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
@@ -11,8 +11,11 @@ use crate::{
     player::{
         Player, PlayerDeathMessage,
         animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
-        camera::components::{
-            PlayerWeaponModel, ViewModelCamera, WorldModelCamera,
+        camera::{
+            DEFAULT_POSITION_PLAYER_WEAPON,
+            components::{
+                PlayerWeaponModel, ViewModelCamera, WorldModelCamera,
+            },
         },
         shooting::{
             components::{
@@ -53,6 +56,7 @@ pub fn setup_player_weapon(
             max_loaded_ammo: 30,
             carried_ammo: 99999,
             reloading: false,
+            is_shooting: false,
         });
     }
 }
@@ -72,6 +76,12 @@ pub fn handle_input(
 ) {
     let mouse_button_left_pressed = mouse_input.pressed(MouseButton::Left);
     let reload_button_pressed = keyboard_input.just_pressed(KeyCode::KeyR);
+
+    if mouse_input.just_pressed(MouseButton::Left) {
+        player_weapon.is_shooting = true;
+    } else if mouse_input.just_released(MouseButton::Left) {
+        player_weapon.is_shooting = false;
+    }
 
     if mouse_button_left_pressed {
         if player_weapon_shoot_cooldown_timer_query.iter().len() != 0 {
@@ -222,6 +232,10 @@ pub fn handle_reload_player_weapon_message(
         PlayArmWithWeaponAnimationMessage,
     >,
     mut message_reader: MessageReader<ReloadPlayerWeaponMessage>,
+    mut player_weapon_model_transform: Single<
+        &mut Transform,
+        With<PlayerWeaponModel>,
+    >,
 ) {
     for _ in message_reader.read() {
         // dont allow reloading when already reloading
@@ -256,6 +270,8 @@ pub fn handle_reload_player_weapon_message(
             repeat: false,
             block_until_done: true,
         });
+        player_weapon_model_transform.translation =
+            DEFAULT_POSITION_PLAYER_WEAPON;
     }
 }
 
@@ -304,6 +320,7 @@ pub fn play_shooting_sound_on_player_weapon_fired(
             AudioPlayer::new(shoot_sound),
             PlaybackSettings::ONCE,
             Name::new("shoot sound player"),
+            DespawnTimer(Timer::from_seconds(2.0, TimerMode::Once)),
         ));
     }
 }
@@ -386,4 +403,13 @@ pub fn weapon_sway(
     transform.rotation = transform
         .rotation
         .slerp(Quat::from_rotation_y(PI), DAMPING * time.delta_secs());
+}
+
+pub fn disable_running_while_shooting(
+    mut player_weapon: Single<&mut PlayerWeapon>,
+    mut player_movement_state: Single<&mut MovementState, With<Player>>,
+) {
+    if player_weapon.is_shooting {
+        *player_movement_state.into_inner() = MovementState::Walking;
+    }
 }

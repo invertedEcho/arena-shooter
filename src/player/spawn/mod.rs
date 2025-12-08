@@ -45,6 +45,8 @@ fn handle_player_spawn_event(
                 DebugRender::collider(Color::WHITE),
                 CharacterControllerBundle::default(),
                 DespawnOnExit(AppState::InGame),
+                // disabled so egui inspector doesnt flicker
+                // SleepingDisabled,
             ))
             .id();
 

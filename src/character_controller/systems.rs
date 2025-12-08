@@ -9,7 +9,7 @@ use crate::{
         components::{CharacterController, Grounded, MovementState},
         messages::{MovementAction, MovementDirection},
     },
-    player::Player,
+    player::{Player, shooting::components::PlayerWeapon},
     world::world_objects::medkit::Medkit,
 };
 
@@ -17,14 +17,18 @@ pub fn handle_keyboard_input_for_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut movement_action_writer: MessageWriter<MovementAction>,
     player_query: Single<
-        (&Transform, &mut MovementState, Entity),
+        (&Transform, &mut MovementState, Entity, &PlayerWeapon),
         With<Player>,
     >,
 ) {
-    let (player_transform, mut movement_state, player_entity) =
+    let (player_transform, mut movement_state, player_entity, player_weapon) =
         player_query.into_inner();
 
-    let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
+    let shift_pressed = keyboard_input.pressed(KeyCode::ShiftLeft);
+    let reloading_or_shooting =
+        player_weapon.reloading || player_weapon.is_shooting;
+
+    let speed = if shift_pressed && !reloading_or_shooting {
         RUN_VELOCITY
     } else {
         WALK_VELOCITY
