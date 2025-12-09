@@ -5,7 +5,8 @@ use crate::{
     player::hud::systems::{
         spawn_bullet_hit_crosshair, spawn_player_hud, spawn_score_hud,
         spawn_wave_info_hud, update_player_ammo_text,
-        update_player_health_text, update_score_hud, update_wave_info_hud,
+        update_player_crosshair_visibility, update_player_health_text,
+        update_score_hud, update_wave_info_hud,
     },
 };
 
@@ -29,6 +30,7 @@ impl Plugin for PlayerHudPlugin {
                 update_player_ammo_text,
                 spawn_bullet_hit_crosshair,
                 update_score_hud,
+                update_player_crosshair_visibility,
             )
                 .run_if(in_state(InGameState::Playing)),
         )

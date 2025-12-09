@@ -13,6 +13,7 @@ pub struct PlayerWeapon {
     pub carried_ammo: u32,
     pub max_loaded_ammo: u32,
     pub reloading: bool,
+    pub is_shooting: bool,
 }
 
 #[derive(Component)]

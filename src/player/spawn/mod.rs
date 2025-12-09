@@ -58,6 +58,8 @@ fn handle_player_spawn_event(
                     base_color: WHITE.into(),
                     ..Default::default()
                 })),
+                // so egui inspector doesnt flicker
+                // SleepingDisabled,
             ))
             .id();
 

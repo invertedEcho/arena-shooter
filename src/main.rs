@@ -13,20 +13,21 @@ use bevy_inspector_egui::{
 use bevy_skein::SkeinPlugin;
 
 use crate::{
-    character_controller::CharacterControllerPlugin, enemy::EnemyPlugin,
-    game_flow::GameFlowPlugin, game_settings::get_or_create_game_settings,
-    gameplay_debug::GameplayDebugPlugin, music::MusicPlugin,
+    audio::AudioPlugin, character_controller::CharacterControllerPlugin,
+    enemy::EnemyPlugin, game_flow::GameFlowPlugin,
+    game_settings::get_or_create_game_settings,
+    gameplay_debug::GameplayDebugPlugin,
     nav_mesh_pathfinding::NavMeshPathfindingPlugin, particles::ParticlesPlugin,
     player::PlayerPlugin, shared::CommonPlugin,
     user_interface::UserInterfacePlugin, world::WorldPlugin,
 };
 
+mod audio;
 mod character_controller;
 mod enemy;
 mod game_flow;
 mod game_settings;
 mod gameplay_debug;
-mod music;
 mod nav_mesh_pathfinding;
 mod particles;
 mod player;
@@ -96,7 +97,7 @@ fn main() {
         .add_plugins(EnemyPlugin)
         .add_plugins(UserInterfacePlugin)
         .add_plugins(ParticlesPlugin)
-        .add_plugins(MusicPlugin)
+        .add_plugins(AudioPlugin)
         .add_plugins(NavMeshPathfindingPlugin)
         .add_plugins(CharacterControllerPlugin)
         .add_plugins(GameplayDebugPlugin);

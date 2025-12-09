@@ -1,10 +1,14 @@
 use crate::{
-    player::camera::{
-        PLAYER_CAMERA_Y_OFFSET,
-        components::{
-            FreeCam, PlayerCameraState, PlayerWeaponModel, WorldModelCamera,
+    player::{
+        camera::{
+            DEFAULT_POSITION_PLAYER_WEAPON, PLAYER_CAMERA_Y_OFFSET,
+            SCOPE_NEAR_POSITION_PLAYER_WEAPON,
+            components::{
+                FreeCam, PlayerCameraState, PlayerWeaponModel, WorldModelCamera,
+            },
+            messages::SpawnPlayerCamerasMessage,
         },
-        messages::SpawnPlayerCamerasMessage,
+        shooting::components::PlayerWeapon,
     },
     shared::systems::apply_render_layers_to_children,
 };
@@ -68,16 +72,9 @@ pub fn setup_player_cameras(
                 .spawn((
                     SceneRoot(weapon_model),
                     Transform {
-                        translation: Vec3 {
-                            x: 0.05,
-                            y: -0.14,
-                            z: -0.2,
-                        },
+                        translation: DEFAULT_POSITION_PLAYER_WEAPON,
                         scale: Vec3::splat(1.0),
                         // rotate 180 degrees as weapon is spawned wrong way
-                        // radians are a different way of representing rotations
-                        // PI = 180 degrees
-                        // FRAC_PI_2 (e.g. PI / 2) = 90 degrees
                         rotation: Quat::from_rotation_y(PI),
                     },
                     RenderLayers::layer(1),
@@ -87,6 +84,27 @@ pub fn setup_player_cameras(
                 ))
                 .observe(apply_render_layers_to_children);
         });
+    }
+}
+
+pub fn handle_player_scope_aim(
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    mut player_weapon_model_transform: Single<
+        &mut Transform,
+        With<PlayerWeaponModel>,
+    >,
+    player_weapon: Single<&PlayerWeapon>,
+) {
+    if player_weapon.reloading {
+        return;
+    }
+
+    if mouse_input.just_pressed(MouseButton::Right) {
+        player_weapon_model_transform.translation =
+            SCOPE_NEAR_POSITION_PLAYER_WEAPON;
+    } else if mouse_input.just_released(MouseButton::Right) {
+        player_weapon_model_transform.translation =
+            DEFAULT_POSITION_PLAYER_WEAPON;
     }
 }
 
@@ -103,40 +121,42 @@ pub fn update_yaw_pitch_on_mouse_motion(
 ) {
     let delta = mouse_motion.delta;
 
-    if delta != Vec2::ZERO {
-        // pitch like nodding yes with your head
-        let delta_pitch = -delta.y * 0.001;
-
-        // yaw like nodding no with your head
-        let delta_yaw = -delta.x * 0.002;
-
-        // existing rotation
-        let (current_yaw_camera, current_pitch_camera, current_roll_camera) =
-            world_model_camera_transform
-                .rotation
-                .to_euler(EulerRot::YXZ);
-
-        let (current_yaw_player, current_pitch_player, current_roll_player) =
-            player_transform.rotation.to_euler(EulerRot::YXZ);
-
-        let new_yaw_player = delta_yaw + current_yaw_player;
-
-        let new_pitch_camera = (delta_pitch + current_pitch_camera)
-            .clamp(-PITCH_LIMIT, PITCH_LIMIT);
-
-        world_model_camera_transform.rotation = Quat::from_euler(
-            EulerRot::YXZ,
-            current_yaw_camera,
-            new_pitch_camera,
-            current_roll_camera,
-        );
-        player_transform.rotation = Quat::from_euler(
-            EulerRot::YXZ,
-            new_yaw_player,
-            current_pitch_player,
-            current_roll_player,
-        );
+    if delta == Vec2::ZERO {
+        return;
     }
+
+    // pitch like nodding yes with your head
+    let delta_pitch = -delta.y * 0.001;
+
+    // yaw like nodding no with your head
+    let delta_yaw = -delta.x * 0.002;
+
+    // existing rotation
+    let (current_yaw_camera, current_pitch_camera, current_roll_camera) =
+        world_model_camera_transform
+            .rotation
+            .to_euler(EulerRot::YXZ);
+
+    let (current_yaw_player, current_pitch_player, current_roll_player) =
+        player_transform.rotation.to_euler(EulerRot::YXZ);
+
+    let new_yaw_player = delta_yaw + current_yaw_player;
+
+    let new_pitch_camera =
+        (delta_pitch + current_pitch_camera).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+
+    world_model_camera_transform.rotation = Quat::from_euler(
+        EulerRot::YXZ,
+        current_yaw_camera,
+        new_pitch_camera,
+        current_roll_camera,
+    );
+    player_transform.rotation = Quat::from_euler(
+        EulerRot::YXZ,
+        new_yaw_player,
+        current_pitch_player,
+        current_roll_player,
+    );
 }
 
 // 'w -> the world borrow lifetime, e.g. how long this query can read/write world data
