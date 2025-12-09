@@ -21,7 +21,7 @@ pub struct Player {
     pub camera_state: PlayerCameraState,
 }
 
-pub const DEFAULT_PLAYER_HEALTH: f32 = 100.0;
+pub const DEFAULT_PLAYER_HEALTH: f32 = 100000000.0;
 
 impl Default for Player {
     fn default() -> Self {

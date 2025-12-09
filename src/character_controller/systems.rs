@@ -9,20 +9,35 @@ use crate::{
         components::{CharacterController, Grounded, MovementState},
         messages::{MovementAction, MovementDirection},
     },
-    player::{Player, shooting::components::PlayerWeapon},
+    player::{
+        Player, camera::components::PlayerCameraState,
+        shooting::components::PlayerWeapon,
+    },
     world::world_objects::medkit::Medkit,
 };
 
 pub fn handle_keyboard_input_for_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut movement_action_writer: MessageWriter<MovementAction>,
-    player_query: Single<
-        (&Transform, &mut MovementState, Entity, &PlayerWeapon),
-        With<Player>,
-    >,
+    player_query: Single<(
+        &Transform,
+        &mut MovementState,
+        Entity,
+        &PlayerWeapon,
+        &Player,
+    )>,
 ) {
-    let (player_transform, mut movement_state, player_entity, player_weapon) =
-        player_query.into_inner();
+    let (
+        player_transform,
+        mut movement_state,
+        player_entity,
+        player_weapon,
+        player,
+    ) = player_query.into_inner();
+
+    if player.camera_state == PlayerCameraState::FreeCam {
+        return;
+    }
 
     let shift_pressed = keyboard_input.pressed(KeyCode::ShiftLeft);
     let reloading_or_shooting =

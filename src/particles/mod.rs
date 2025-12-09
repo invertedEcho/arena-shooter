@@ -1,10 +1,7 @@
 use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
 
-use crate::{
-    player::Player,
-    utils::random::get_random_number_from_range_i32_to_f32_with_fixed_step,
-};
+use crate::{player::Player, utils::random::get_random_number_from_range};
 
 const BULLET_IMPACT_PARTICLE_LIFETIME: f32 = 0.1;
 const BULLET_IMPACT_PARTICLE_VELOCITY: f32 = 3.0;
@@ -132,8 +129,7 @@ fn handle_spawn_bullet_impact_effect(
             continue;
         };
 
-        let random_z_rotation =
-            get_random_number_from_range_i32_to_f32_with_fixed_step(0, 5);
+        let random_z_rotation = get_random_number_from_range(0..5) as f32;
 
         let rotation_z = Quat::from_rotation_z(random_z_rotation);
         let rotation_towards_player_perpendicular =

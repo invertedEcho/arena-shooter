@@ -33,6 +33,16 @@ pub fn free_mouse(
     primary_cursor_options.grab_mode = CursorGrabMode::None;
 }
 
+pub fn manual_free_mouse(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut primary_cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyU) {
+        primary_cursor_options.grab_mode = CursorGrabMode::None;
+        primary_cursor_options.visible = true;
+    }
+}
+
 pub fn handle_escape_in_game(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     current_in_game_state: If<Res<State<InGameState>>>,
@@ -182,4 +192,16 @@ pub fn on_enter_app_state_in_game(
     mut spawn_player_message_writer: MessageWriter<SpawnPlayerMessage>,
 ) {
     spawn_player_message_writer.write(SpawnPlayerMessage);
+}
+
+pub fn pause_all_animations(animation_players: Query<&mut AnimationPlayer>) {
+    for mut animation_player in animation_players {
+        animation_player.pause_all();
+    }
+}
+
+pub fn resume_all_animations(animation_players: Query<&mut AnimationPlayer>) {
+    for mut animation_player in animation_players {
+        animation_player.resume_all();
+    }
 }

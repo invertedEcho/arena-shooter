@@ -6,14 +6,13 @@ use crate::{
     enemy::{
         Enemy, EnemyState,
         animate::{
-            ENEMY_DEATH_ANIMATION, ENEMY_HIT_RECEIVE_ANIMATION,
-            ENEMY_IDLE_GUN_ANIMATION, ENEMY_IDLE_GUN_POINTING_ANIMATION,
-            ENEMY_MODEL_NAME, ENEMY_MODEL_PATH, ENEMY_RUN_ANIMATION,
-            TOTAL_ENEMY_MODEL_ANIMATIONS, components::PlayHitAnimationTimer,
-            resources::EnemyAnimations,
+            ENEMY_MODEL_NAME, ENEMY_MODEL_PATH, EnemyAnimationType,
+            TOTAL_ENEMY_MODEL_ANIMATIONS,
+            get_animation_index_for_enemy_animation_type,
+            get_animation_type_for_enemy_state,
+            messages::PlayEnemyAnimationMessage, resources::EnemyAnimations,
         },
     },
-    player::shooting::messages::PlayerBulletHitEnemyMessage,
     shared::components::AnimationPlayerEntityPointer,
 };
 
@@ -56,7 +55,9 @@ pub fn setup_enemy_animation(
             .play(
                 &mut player,
                 enemy_animations.animation_node_indices
-                    [ENEMY_IDLE_GUN_ANIMATION],
+                    [get_animation_index_for_enemy_animation_type(
+                        &EnemyAnimationType::IdleGun,
+                    )],
                 Duration::ZERO,
             )
             .repeat();
@@ -94,64 +95,10 @@ pub fn link_enemy_animation(
     }
 }
 
-pub fn reflect_enemy_state_to_current_animation(
+pub fn play_enemy_animation(
     animations: Res<EnemyAnimations>,
-    changed_enemies: Query<
-        (&Enemy, &AnimationPlayerEntityPointer),
-        Changed<Enemy>,
-    >,
-    mut animation_players_and_animation_transitions: Query<(
-        Entity,
-        &mut AnimationPlayer,
-        &mut AnimationTransitions,
-    )>,
-) {
-    for (enemy, animation_player_entity_pointer) in changed_enemies {
-        let Some(res) =
-            animation_players_and_animation_transitions.iter_mut().find(
-                |(entity, _, _)| *entity == animation_player_entity_pointer.0,
-            )
-        else {
-            warn!(
-                "could not find animation player and transitions for changed \
-                 enemy!"
-            );
-            continue;
-        };
-
-        let (_, mut animation_player, mut animation_transitions) = res;
-
-        let new_animation_index = match enemy.state {
-            EnemyState::AttackPlayer => ENEMY_IDLE_GUN_POINTING_ANIMATION,
-            EnemyState::Dead => ENEMY_DEATH_ANIMATION,
-            EnemyState::ChasingPlayer => ENEMY_RUN_ANIMATION,
-            EnemyState::Idle => ENEMY_IDLE_GUN_ANIMATION,
-            EnemyState::CheckIfPlayerSeeable => ENEMY_IDLE_GUN_ANIMATION,
-        };
-
-        if new_animation_index == ENEMY_DEATH_ANIMATION {
-            animation_transitions.play(
-                &mut animation_player,
-                animations.animation_node_indices[new_animation_index],
-                Duration::from_millis(250),
-            );
-        } else {
-            animation_transitions
-                .play(
-                    &mut animation_player,
-                    animations.animation_node_indices[new_animation_index],
-                    Duration::from_millis(250),
-                )
-                .repeat();
-        }
-    }
-}
-
-pub fn play_enemy_hit_animation(
-    mut commands: Commands,
-    animations: Res<EnemyAnimations>,
-    mut message_reader: MessageReader<PlayerBulletHitEnemyMessage>,
-    enemy_query: Query<(Entity, &Enemy, &AnimationPlayerEntityPointer)>,
+    mut message_reader: MessageReader<PlayEnemyAnimationMessage>,
+    enemy_query: Query<(&EnemyState, &AnimationPlayerEntityPointer)>,
     mut animation_players_and_transitions: Query<(
         Entity,
         &mut AnimationPlayer,
@@ -159,18 +106,18 @@ pub fn play_enemy_hit_animation(
     )>,
 ) {
     for event in message_reader.read() {
-        let Some((enemy_entity, enemy, animation_player_entity_pointer)) =
-            enemy_query.iter().find(|(e, _, _)| *e == event.enemy_hit)
+        let Ok((enemy_state, animation_player_entity_pointer)) =
+            enemy_query.get(event.enemy)
         else {
             warn!(
                 "Tried to play enemy hit animation, but could not find an \
                  Enemy with the entity from the event {} that contains an \
                  AnimationPlayerEntityPointer!",
-                event.enemy_hit
+                event.enemy
             );
             continue;
         };
-        if enemy.state == EnemyState::Dead {
+        if *enemy_state == EnemyState::Dead {
             continue;
         }
 
@@ -186,37 +133,41 @@ pub fn play_enemy_hit_animation(
             continue;
         };
 
-        animation_transitions.play(
-            &mut animation_player,
-            animations.animation_node_indices[ENEMY_HIT_RECEIVE_ANIMATION],
-            Duration::ZERO,
-        );
+        let animation_index =
+            get_animation_index_for_enemy_animation_type(&event.animaton_type);
 
-        commands.entity(enemy_entity).insert(PlayHitAnimationTimer(
-            Timer::from_seconds(0.5, TimerMode::Once),
-        ));
+        if event.repeat {
+            animation_transitions
+                .play(
+                    &mut animation_player,
+                    animations.animation_node_indices[animation_index],
+                    Duration::ZERO,
+                )
+                .repeat();
+        } else {
+            animation_transitions.play(
+                &mut animation_player,
+                animations.animation_node_indices[animation_index],
+                Duration::ZERO,
+            );
+        }
     }
 }
 
-// maybe its possible to queue animations? so we dont have to do this manually
-pub fn handle_play_hit_animation_timer(
-    mut commands: Commands,
-    time: Res<Time>,
-    query: Query<(Entity, &mut Enemy, &mut PlayHitAnimationTimer)>,
+pub fn update_animation_on_enemy_state_change(
+    changed_enemies: Query<(Entity, &EnemyState), Changed<EnemyState>>,
+    mut message_writer: MessageWriter<PlayEnemyAnimationMessage>,
 ) {
-    for (enemy_entity, mut enemy, mut play_hit_animation) in query {
-        if enemy.state == EnemyState::Dead {
-            continue;
-        }
-        play_hit_animation.0.tick(time.delta());
+    for (entity, new_enemy_state) in changed_enemies {
+        let animation_type =
+            get_animation_type_for_enemy_state(new_enemy_state);
 
-        if play_hit_animation.0.just_finished() {
-            // TODO: hm we need to set the correct animation to play now depending on the enemystate, but
-            // lets not do this here but have a MessageWriter
-            enemy.state = EnemyState::Idle;
-            commands
-                .entity(enemy_entity)
-                .remove::<PlayHitAnimationTimer>();
-        }
+        let repeat = *new_enemy_state != EnemyState::Dead;
+
+        message_writer.write(PlayEnemyAnimationMessage {
+            enemy: entity,
+            animaton_type: animation_type,
+            repeat,
+        });
     }
 }

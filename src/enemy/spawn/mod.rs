@@ -4,9 +4,10 @@ use crate::{
         LOCAL_FEET_CHARACTER, RUN_VELOCITY, WALK_VELOCITY,
         components::{CharacterController, Grounded},
     },
-    enemy::animate::ENEMY_MODEL_PATH,
+    enemy::{ai::components::EnemyState, animate::ENEMY_MODEL_PATH},
     game_flow::states::AppState,
     nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS},
+    shared::components::Health,
 };
 use avian3d::{
     math::{PI, Quaternion},
@@ -122,8 +123,6 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                     let spawn_location_translation =
                         chosen_spawn_location.1.translation;
 
-                    // TODO: Adjust character controller so we can use the
-                    // CharacterControllerBundle for enemies too
                     let enemy_entity = commands
                         .spawn((
                             Name::new("Enemy"),
@@ -132,15 +131,14 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 spawn_location_translation.y,
                                 spawn_location_translation.z,
                             ),
-                            Enemy {
-                                health: 100.0,
-                                ..default()
-                            },
+                            Enemy,
+                            Health(100.0),
+                            EnemyState::default(),
                             Grounded::default(),
-                            LockedAxes::new()
-                                .lock_rotation_x()
-                                .lock_rotation_y()
-                                .lock_rotation_z(),
+                            // LockedAxes::new()
+                            //     .lock_rotation_x()
+                            //     .lock_rotation_y()
+                            //     .lock_rotation_z(),
                             RigidBody::Kinematic,
                             Collider::capsule(
                                 CHARACTER_CAPSULE_RADIUS,
@@ -171,12 +169,15 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                     LOCAL_FEET_CHARACTER,
                                     0.0,
                                 ),
+                                // enemy model needs to be rotated 180 degrees
                                 rotation: Quat::from_rotation_y(PI),
-                                scale: Vec3::splat(1.0),
+                                // scale: Vec3::splat(1.0),
+                                ..default()
                             },
                             SceneRoot(enemy_model),
                             Visibility::Visible,
                         ))
+                        .with_child(())
                         .id();
                     commands.entity(enemy_entity).with_child((
                         Name::new("Enemy Pathfinding Agent"),

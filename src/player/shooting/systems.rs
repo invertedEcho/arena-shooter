@@ -1,4 +1,4 @@
-use std::{f32::consts::PI, time::Duration};
+use std::f32::consts::PI;
 
 use avian3d::prelude::*;
 use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
@@ -30,7 +30,7 @@ use crate::{
         },
     },
     shared::{DEFAULT_BULLET_DAMAGE, components::DespawnTimer},
-    utils::random::get_random_number_from_range_i32,
+    utils::random::get_random_number_from_range,
 };
 
 /// How long it takes to reload for a partial reload (and playing the corresponding animation), e.g. some bullets are left in
@@ -333,7 +333,8 @@ pub fn spawn_muzzle_flash(
     player_camera_entity: Single<Entity, With<ViewModelCamera>>,
 ) {
     for _ in player_shot_message_reader.read() {
-        let random_rotation_angle = get_random_number_from_range_i32(0, 5);
+        let random_rotation_angle = get_random_number_from_range(0..5);
+
         commands.entity(*player_camera_entity).with_child((
             Transform {
                 // TODO: this must change depending on the cameras FOV
@@ -402,13 +403,4 @@ pub fn weapon_sway(
     transform.rotation = transform
         .rotation
         .slerp(Quat::from_rotation_y(PI), DAMPING * time.delta_secs());
-}
-
-pub fn disable_running_while_shooting(
-    mut player_weapon: Single<&mut PlayerWeapon>,
-    mut player_movement_state: Single<&mut MovementState, With<Player>>,
-) {
-    if player_weapon.is_shooting {
-        *player_movement_state.into_inner() = MovementState::Walking;
-    }
 }
