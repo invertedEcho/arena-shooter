@@ -310,7 +310,6 @@ pub fn play_shooting_sound_on_player_weapon_fired(
     mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
 ) {
     for _ in message_reader.read() {
-        info!("playing sound");
         let shoot_sound = asset_server.load(
             "sfx/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 \
              Single MP3.mp3",
