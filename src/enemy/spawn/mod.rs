@@ -4,9 +4,10 @@ use crate::{
         LOCAL_FEET_CHARACTER, RUN_VELOCITY, WALK_VELOCITY,
         components::{CharacterController, Grounded},
     },
-    enemy::animate::ENEMY_MODEL_PATH,
+    enemy::{ai::components::EnemyState, animate::ENEMY_MODEL_PATH},
     game_flow::states::AppState,
     nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS},
+    shared::components::Health,
 };
 use avian3d::{
     math::{PI, Quaternion},
@@ -130,10 +131,9 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 spawn_location_translation.y,
                                 spawn_location_translation.z,
                             ),
-                            Enemy {
-                                health: 100.0,
-                                ..default()
-                            },
+                            Enemy,
+                            Health(100.0),
+                            EnemyState::default(),
                             Grounded::default(),
                             // LockedAxes::new()
                             //     .lock_rotation_x()

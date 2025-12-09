@@ -1,10 +1,13 @@
 use bevy::prelude::*;
 
-use crate::enemy::animate::{
-    messages::PlayEnemyAnimationMessage,
-    systems::{
-        link_enemy_animation, load_enemy_animations, play_enemy_animation,
-        setup_enemy_animation,
+use crate::enemy::{
+    ai::components::EnemyState,
+    animate::{
+        messages::PlayEnemyAnimationMessage,
+        systems::{
+            link_enemy_animation, load_enemy_animations, play_enemy_animation,
+            setup_enemy_animation, update_animation_on_enemy_state_change,
+        },
     },
 };
 
@@ -30,6 +33,7 @@ impl Plugin for AnimateEnemyPlugin {
                     setup_enemy_animation,
                     link_enemy_animation,
                     play_enemy_animation,
+                    update_animation_on_enemy_state_change,
                 ),
             )
             .add_message::<PlayEnemyAnimationMessage>();
@@ -55,5 +59,19 @@ fn get_animation_index_for_enemy_animation_type(
         EnemyAnimationType::IdleGun => 5,
         EnemyAnimationType::IdleGunPointing => 6,
         EnemyAnimationType::Run => 16,
+    }
+}
+
+fn get_animation_type_for_enemy_state(
+    enemy_state: &EnemyState,
+) -> EnemyAnimationType {
+    match enemy_state {
+        EnemyState::Idle => EnemyAnimationType::IdleGun,
+        EnemyState::PlayerInFOV => EnemyAnimationType::IdleGun,
+        EnemyState::Dead => EnemyAnimationType::Death,
+        EnemyState::GoToAgentTarget => EnemyAnimationType::Run,
+        EnemyState::EnemyAgentReachedTarget => EnemyAnimationType::IdleGun,
+        EnemyState::AttackPlayer => EnemyAnimationType::IdleGunPointing,
+        EnemyState::RotateTowardsPlayer => EnemyAnimationType::IdleGun,
     }
 }

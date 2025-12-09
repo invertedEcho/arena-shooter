@@ -5,9 +5,8 @@ use crate::{
         components::EnemyHotspot,
         messages::UpdateEnemyAgentTargetMessage,
         systems::{
-            check_if_enemy_agent_reached_target, enemy_face_velocity_direction,
-            enemy_state_decision_system, handle_chasing_enemies,
-            handle_set_new_enemy_agent_target_message,
+            check_if_enemy_agent_reached_target, enemy_state_decision_system,
+            handle_chasing_enemies, handle_set_new_enemy_agent_target_message,
             rotate_enemies_towards_player_over_time,
             update_enemy_agents_velocity_from_physics_velocity,
         },
@@ -60,7 +59,6 @@ impl Plugin for EnemyAiPlugin {
                     check_if_enemy_agent_reached_target,
                     rotate_enemies_towards_player_over_time,
                     handle_set_new_enemy_agent_target_message,
-                    enemy_face_velocity_direction,
                 )
                     .run_if(in_state(InGameState::Playing)),
             );

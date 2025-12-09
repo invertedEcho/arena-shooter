@@ -9,6 +9,7 @@ use crate::{
             ENEMY_MODEL_NAME, ENEMY_MODEL_PATH, EnemyAnimationType,
             TOTAL_ENEMY_MODEL_ANIMATIONS,
             get_animation_index_for_enemy_animation_type,
+            get_animation_type_for_enemy_state,
             messages::PlayEnemyAnimationMessage, resources::EnemyAnimations,
         },
     },
@@ -97,7 +98,7 @@ pub fn link_enemy_animation(
 pub fn play_enemy_animation(
     animations: Res<EnemyAnimations>,
     mut message_reader: MessageReader<PlayEnemyAnimationMessage>,
-    enemy_query: Query<(&Enemy, &AnimationPlayerEntityPointer)>,
+    enemy_query: Query<(&EnemyState, &AnimationPlayerEntityPointer)>,
     mut animation_players_and_transitions: Query<(
         Entity,
         &mut AnimationPlayer,
@@ -105,7 +106,7 @@ pub fn play_enemy_animation(
     )>,
 ) {
     for event in message_reader.read() {
-        let Ok((enemy, animation_player_entity_pointer)) =
+        let Ok((enemy_state, animation_player_entity_pointer)) =
             enemy_query.get(event.enemy)
         else {
             warn!(
@@ -116,7 +117,7 @@ pub fn play_enemy_animation(
             );
             continue;
         };
-        if enemy.state == EnemyState::Dead {
+        if *enemy_state == EnemyState::Dead {
             continue;
         }
 
@@ -150,5 +151,23 @@ pub fn play_enemy_animation(
                 Duration::ZERO,
             );
         }
+    }
+}
+
+pub fn update_animation_on_enemy_state_change(
+    changed_enemies: Query<(Entity, &EnemyState), Changed<EnemyState>>,
+    mut message_writer: MessageWriter<PlayEnemyAnimationMessage>,
+) {
+    for (entity, new_enemy_state) in changed_enemies {
+        let animation_type =
+            get_animation_type_for_enemy_state(new_enemy_state);
+
+        let repeat = *new_enemy_state != EnemyState::Dead;
+
+        message_writer.write(PlayEnemyAnimationMessage {
+            enemy: entity,
+            animaton_type: animation_type,
+            repeat,
+        });
     }
 }

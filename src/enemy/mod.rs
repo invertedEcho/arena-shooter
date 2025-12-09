@@ -25,18 +25,7 @@ impl Plugin for EnemyPlugin {
     }
 }
 
+/// A marker component for an enemy
 #[derive(Component, Reflect, Default)]
 #[reflect(Component, Default)]
-pub struct Enemy {
-    pub state: EnemyState,
-    pub health: f32,
-}
-
-impl Enemy {
-    pub fn update_state(&mut self, new_state: EnemyState) {
-        if self.state != new_state {
-            println!("Enemy State change: {:?} -> {:?}", self.state, new_state);
-            self.state = new_state;
-        }
-    }
-}
+pub struct Enemy;

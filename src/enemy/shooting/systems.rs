@@ -18,12 +18,12 @@ use crate::{
             messages::PlayerBulletHitEnemyMessage,
         },
     },
-    shared::components::DespawnTimer,
+    shared::components::{DespawnTimer, Health},
     utils::random::get_random_number_from_range,
 };
 
 pub fn handle_player_bullet_hit_enemy_message(
-    mut enemy_query: Query<(Entity, &mut Enemy)>,
+    mut enemy_query: Query<(Entity, &mut Health), With<Enemy>>,
     mut player_bullet_hit_enemy_message_reader: MessageReader<
         PlayerBulletHitEnemyMessage,
     >,
@@ -33,7 +33,7 @@ pub fn handle_player_bullet_hit_enemy_message(
     >,
 ) {
     for message in player_bullet_hit_enemy_message_reader.read() {
-        let Ok((enemy_entity, mut enemy)) =
+        let Ok((enemy_entity, mut enemy_health)) =
             enemy_query.get_mut(message.enemy_hit)
         else {
             warn!(
@@ -43,9 +43,9 @@ pub fn handle_player_bullet_hit_enemy_message(
             );
             continue;
         };
-        enemy.health -= message.damage;
+        enemy_health.0 -= message.damage;
 
-        if enemy.health > 0.0 {
+        if enemy_health.0 > 0.0 {
             play_enemy_animation_message_writer.write(
                 PlayEnemyAnimationMessage {
                     enemy: enemy_entity,
@@ -71,7 +71,7 @@ pub fn enemy_shoot_player(
     asset_server: Res<AssetServer>,
     enemy_query: Query<(
         Entity,
-        &Enemy,
+        &EnemyState,
         &Transform,
         Option<&EnemyShootCooldownTimer>,
     )>,
@@ -80,10 +80,14 @@ pub fn enemy_shoot_player(
     mut player_death_message_writer: MessageWriter<PlayerDeathMessage>,
     mut debug_gizmos: ResMut<DebugGizmos>,
 ) {
-    for (enemy_entity, enemy, enemy_transform, enemy_shoot_cooldown_timer) in
-        enemy_query
+    for (
+        enemy_entity,
+        enemy_state,
+        enemy_transform,
+        enemy_shoot_cooldown_timer,
+    ) in enemy_query
     {
-        if enemy.state != EnemyState::AttackPlayer {
+        if *enemy_state != EnemyState::AttackPlayer {
             continue;
         }
 
@@ -104,7 +108,7 @@ pub fn enemy_shoot_player(
         let player_transform = player_query.1;
         let origin = enemy_transform.translation;
 
-        let random_x_offset = get_random_number_from_range(-1.0..1.0);
+        let random_x_offset = get_random_number_from_range(-0.5..0.5);
 
         let player_location_random_x_offset = player_transform
             .translation
@@ -174,10 +178,10 @@ pub fn tick_enemy_shoot_player_cooldown_timer(
 pub fn handle_enemy_killed_message(
     mut commands: Commands,
     mut message_reader: MessageReader<EnemyKilledMessage>,
-    mut enemy_query: Query<(Entity, &mut Enemy)>,
+    mut enemy_query: Query<(Entity, &mut EnemyState)>,
 ) {
     for message in message_reader.read() {
-        let Some((enemy_entity, mut enemy)) = enemy_query
+        let Some((enemy_entity, mut enemy_state)) = enemy_query
             .iter_mut()
             .find(|(entity, _)| *entity == message.0)
         else {
@@ -189,7 +193,7 @@ pub fn handle_enemy_killed_message(
             continue;
         };
 
-        enemy.update_state(EnemyState::Dead);
+        enemy_state.update_state(EnemyState::Dead);
         commands
             .entity(enemy_entity)
             .remove::<RigidBody>()

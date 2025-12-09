@@ -10,7 +10,7 @@ use bevy_rich_text3d::{
 
 use crate::enemy::{
     Enemy,
-    ai::{ENEMY_FOV, ENEMY_VISION_RANGE},
+    ai::{ENEMY_FOV, ENEMY_VISION_RANGE, components::EnemyState},
 };
 
 pub struct GameplayDebugPlugin;
@@ -93,15 +93,15 @@ pub fn draw_enemy_fov(
 
 fn update_enemy_debug_text(
     mut query: Query<(&mut Text3d, &EnemyDebugText)>,
-    changed_enemies: Query<(Entity, &Enemy), Changed<Enemy>>,
+    changed_enemies: Query<(Entity, &EnemyState), Changed<EnemyState>>,
 ) {
-    for (enemy_entity, enemy) in changed_enemies {
+    for (enemy_entity, enemy_state) in changed_enemies {
         let Some((mut text, _)) =
             query.iter_mut().find(|e| e.1.0 == enemy_entity)
         else {
             continue;
         };
-        *text = Text3d::new(format!("{} | {:?}", enemy_entity, enemy.state));
+        *text = Text3d::new(format!("{} | {:?}", enemy_entity, enemy_state));
     }
 }
 
@@ -110,10 +110,10 @@ struct EnemyDebugText(pub Entity);
 
 fn add_enemy_state_text(
     mut commands: Commands,
-    enemy_query: Query<(Entity, &Enemy), Added<Enemy>>,
+    enemy_query: Query<(Entity, &EnemyState), Added<EnemyState>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    for (entity, enemy) in enemy_query {
+    for (entity, enemy_state) in enemy_query {
         let mat = materials.add(StandardMaterial {
             base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
             alpha_mode: AlphaMode::Mask(0.5),
@@ -123,7 +123,7 @@ fn add_enemy_state_text(
         });
 
         commands.entity(entity).with_child((
-            Text3d::new(format!(" | {:?}", enemy.state)),
+            Text3d::new(format!(" | {:?}", enemy_state)),
             Text3dStyling {
                 size: 64.,
                 stroke: NonZero::new(10),

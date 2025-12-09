@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Default, Reflect, PartialEq, Debug)]
+#[derive(Default, Reflect, PartialEq, Debug, Component)]
 pub enum EnemyState {
     #[default]
     Idle,
@@ -16,6 +16,15 @@ pub enum EnemyState {
     Dead,
     /// This state is set when the enemies should rotate towards the player direction over time
     RotateTowardsPlayer,
+}
+
+impl EnemyState {
+    pub fn update_state(&mut self, new_state: EnemyState) {
+        if *self != new_state {
+            println!("Enemy State change: {:?} -> {:?}", *self, new_state);
+            *self = new_state;
+        }
+    }
 }
 
 /// A marker component which is spawned at locations the enemies patrol when they do not know where

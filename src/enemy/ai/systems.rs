@@ -12,17 +12,17 @@ use crate::{
             ENEMY_FOV, ENEMY_VISION_RANGE,
             messages::UpdateEnemyAgentTargetMessage,
         },
-        animate::{EnemyAnimationType, messages::PlayEnemyAnimationMessage},
         spawn::AgentEnemyEntityPointer,
     },
     player::Player,
-    utils::transform::is_facing_target,
+    utils::transform::is_facing_target_without_y,
 };
 
-// TODO: need some way to play animation when state changes -> but dont do that in this system
+/// This system is the only system allowed to change the enemy state
+/// Depending on the EnemyState, different systems will be run.
 pub fn enemy_state_decision_system(
     enemy_query: Query<
-        (Entity, &mut Enemy, &Transform),
+        (Entity, &Transform, &mut EnemyState),
         (With<Enemy>, Without<Player>),
     >,
     player_query: Single<(Entity, &Transform), With<Player>>,
@@ -31,8 +31,8 @@ pub fn enemy_state_decision_system(
         UpdateEnemyAgentTargetMessage,
     >,
 ) {
-    for (enemy_entity, mut enemy, enemy_transform) in enemy_query {
-        if enemy.state == EnemyState::Dead {
+    for (enemy_entity, enemy_transform, mut enemy_state) in enemy_query {
+        if *enemy_state == EnemyState::Dead {
             continue;
         }
         let (player_entity, player_transform) = *player_query;
@@ -76,28 +76,44 @@ pub fn enemy_state_decision_system(
                     let enemy_can_see_player =
                         first_hit.entity == player_entity;
                     if enemy_can_see_player {
-                        if enemy.state != EnemyState::AttackPlayer {
-                            enemy.update_state(EnemyState::RotateTowardsPlayer);
+                        info!(
+                            "Player is in enemy FOV and no obstacles are in \
+                             the way"
+                        );
+                        if is_facing_target_without_y(
+                            enemy_transform,
+                            player_transform,
+                        ) {
+                            info!(
+                                "enemy {} is now facing player, attacking the \
+                                 player",
+                                enemy_entity
+                            );
+                            enemy_state.update_state(EnemyState::AttackPlayer);
+                        } else {
+                            info!(
+                                "enemy is NOT facing player, changing to \
+                                 rotate towards player"
+                            );
+                            enemy_state
+                                .update_state(EnemyState::RotateTowardsPlayer);
                         }
-                    } else if enemy.state != EnemyState::GoToAgentTarget {
+                    } else if *enemy_state != EnemyState::GoToAgentTarget {
                         // the player is in range of the enemy, also in the fov cone of the enemy, but
                         // there is a obstacle in the way, so we need to give the enemy agent a new
                         // location to go to
                         set_new_enemy_agent_message_writer
                             .write(UpdateEnemyAgentTargetMessage(enemy_entity));
-                        enemy.update_state(EnemyState::GoToAgentTarget);
+                        enemy_state.update_state(EnemyState::GoToAgentTarget);
                     }
                 }
             } else {
-                enemy.update_state(EnemyState::RotateTowardsPlayer);
+                info!("player is not in enemy FOV");
+                enemy_state.update_state(EnemyState::RotateTowardsPlayer);
             }
-        } else if enemy.state != EnemyState::GoToAgentTarget {
-            // animation_message_writer.write(PlayEnemyAnimationMessage {
-            //     enemy: enemy_entity,
-            //     animaton_type: EnemyAnimationType::Run,
-            //     repeat: true,
+        } else if *enemy_state != EnemyState::GoToAgentTarget {
             info!("Player is not in range of enemy, > 30m");
-            enemy.update_state(EnemyState::GoToAgentTarget);
+            enemy_state.update_state(EnemyState::GoToAgentTarget);
             set_new_enemy_agent_message_writer
                 .write(UpdateEnemyAgentTargetMessage(enemy_entity));
             continue;
@@ -154,26 +170,21 @@ pub fn handle_set_new_enemy_agent_target_message(
 
         *agent_target = AgentTarget3d::Point(hit_point);
 
-        // animation_message_writer.write(PlayEnemyAnimationMessage {
-        //     enemy: enemy_entity,
-        //     animaton_type: EnemyAnimationType::Run,
-        //     repeat: true,
-        // });
         info!("Enemy {} has a new agent target", enemy_entity);
     }
 }
 
 pub fn check_if_enemy_agent_reached_target(
-    mut enemy_query: Query<&mut Enemy>,
+    mut enemy_query: Query<&mut EnemyState>,
     enemy_agents_query: Query<(&AgentEnemyEntityPointer, &AgentState)>,
-    mut animation_message_writer: MessageWriter<PlayEnemyAnimationMessage>,
 ) {
     for (agent_enemy_entity_pointer, agent_state) in enemy_agents_query {
         if *agent_state != AgentState::ReachedTarget {
             continue;
         }
 
-        let Ok(mut enemy) = enemy_query.get_mut(agent_enemy_entity_pointer.0)
+        let Ok(mut enemy_state) =
+            enemy_query.get_mut(agent_enemy_entity_pointer.0)
         else {
             warn!(
                 "Failed to find the enemy {} for given \
@@ -187,17 +198,12 @@ pub fn check_if_enemy_agent_reached_target(
             "Enemy has reached agent target! Now checking whether the player \
              is seeable"
         );
-        animation_message_writer.write(PlayEnemyAnimationMessage {
-            enemy: agent_enemy_entity_pointer.0,
-            animaton_type: EnemyAnimationType::Run,
-            repeat: true,
-        });
-        enemy.update_state(EnemyState::EnemyAgentReachedTarget);
+        enemy_state.update_state(EnemyState::EnemyAgentReachedTarget);
     }
 }
 
 pub fn handle_chasing_enemies(
-    mut enemy_query: Query<(&Enemy, Entity)>,
+    mut enemy_query: Query<(&EnemyState, Entity)>,
     enemy_agents_query: Query<(
         &AgentDesiredVelocity3d,
         &AgentEnemyEntityPointer,
@@ -207,7 +213,7 @@ pub fn handle_chasing_enemies(
     for (agent_desired_velocity, agent_enemy_entity_pointer) in
         enemy_agents_query
     {
-        let Ok((enemy, entity)) =
+        let Ok((enemy_state, entity)) =
             enemy_query.get_mut(agent_enemy_entity_pointer.0)
         else {
             warn!(
@@ -218,7 +224,7 @@ pub fn handle_chasing_enemies(
             continue;
         };
 
-        if enemy.state != EnemyState::GoToAgentTarget {
+        if *enemy_state != EnemyState::GoToAgentTarget {
             continue;
         }
 
@@ -233,14 +239,14 @@ pub fn handle_chasing_enemies(
 
 pub fn rotate_enemies_towards_player_over_time(
     enemy_query: Query<
-        (Entity, &mut Enemy, &mut Transform),
+        (&EnemyState, &mut Transform),
         (With<Enemy>, Without<Player>),
     >,
     player_transform: Single<&Transform, With<Player>>,
     time: Res<Time>,
 ) {
-    for (enemy_entity, mut enemy, mut enemy_transform) in enemy_query {
-        if enemy.state != EnemyState::RotateTowardsPlayer {
+    for (enemy_state, mut enemy_transform) in enemy_query {
+        if *enemy_state != EnemyState::RotateTowardsPlayer {
             continue;
         };
 
@@ -263,19 +269,12 @@ pub fn rotate_enemies_towards_player_over_time(
 
         let target_rotation = Quat::from_rotation_y(angle);
 
-        const ROTATION_SPEED: f32 = 2.5;
+        const ROTATION_SPEED: f32 = 3.5;
 
         enemy_transform.rotation = enemy_transform.rotation.slerp(
             target_rotation * enemy_transform.rotation,
             ROTATION_SPEED * time.delta_secs(),
         );
-        if is_facing_target(&enemy_transform, &player_transform) {
-            info!(
-                "enemy {} is now facing player, attacking the player",
-                enemy_entity
-            );
-            enemy.update_state(EnemyState::AttackPlayer);
-        }
     }
 }
 
@@ -314,40 +313,40 @@ pub fn update_enemy_agents_velocity_from_physics_velocity(
     }
 }
 
-pub fn enemy_face_velocity_direction(
-    mut query: Query<(&LinearVelocity, &mut Transform, &Enemy), With<Enemy>>,
-    time: Res<Time>,
-) {
-    for (velocity, mut transform, enemy) in &mut query {
-        continue;
-        if enemy.state == EnemyState::RotateTowardsPlayer {
-            continue;
-        }
-
-        let vel = velocity.0;
-
-        // Don’t rotate if velocity is extremely small
-        if vel.length_squared() < 0.0001 {
-            continue;
-        }
-
-        let mut dir = vel;
-        dir.y = 0.0;
-
-        if dir.length_squared() < 0.0001 {
-            continue;
-        }
-
-        // Calculate direction the enemy should face
-        let target_dir = dir.normalize();
-
-        // Create a quaternion facing that direction (Y-up)
-        let target_rotation = Quat::from_rotation_arc(Vec3::X, target_dir); // or Vec3::X depending on your model
-
-        // Smooth rotation (slerp)
-        let rotate_speed = 6.0; // adjust to taste
-        transform.rotation = transform
-            .rotation
-            .slerp(target_rotation, rotate_speed * time.delta_secs());
-    }
-}
+// pub fn enemy_face_velocity_direction(
+//     mut query: Query<(&LinearVelocity, &mut Transform, &Enemy), With<Enemy>>,
+//     time: Res<Time>,
+// ) {
+//     for (velocity, mut transform, enemy) in &mut query {
+//         continue;
+//         if enemy.state == EnemyState::RotateTowardsPlayer {
+//             continue;
+//         }
+//
+//         let vel = velocity.0;
+//
+//         // Don’t rotate if velocity is extremely small
+//         if vel.length_squared() < 0.0001 {
+//             continue;
+//         }
+//
+//         let mut dir = vel;
+//         dir.y = 0.0;
+//
+//         if dir.length_squared() < 0.0001 {
+//             continue;
+//         }
+//
+//         // Calculate direction the enemy should face
+//         let target_dir = dir.normalize();
+//
+//         // Create a quaternion facing that direction (Y-up)
+//         let target_rotation = Quat::from_rotation_arc(Vec3::X, target_dir); // or Vec3::X depending on your model
+//
+//         // Smooth rotation (slerp)
+//         let rotate_speed = 6.0; // adjust to taste
+//         transform.rotation = transform
+//             .rotation
+//             .slerp(target_rotation, rotate_speed * time.delta_secs());
+//     }
+// }

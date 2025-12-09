@@ -1,4 +1,4 @@
-use std::{f32::consts::PI, time::Duration};
+use std::f32::consts::PI;
 
 use avian3d::prelude::*;
 use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
@@ -403,13 +403,4 @@ pub fn weapon_sway(
     transform.rotation = transform
         .rotation
         .slerp(Quat::from_rotation_y(PI), DAMPING * time.delta_secs());
-}
-
-pub fn disable_running_while_shooting(
-    mut player_weapon: Single<&mut PlayerWeapon>,
-    mut player_movement_state: Single<&mut MovementState, With<Player>>,
-) {
-    if player_weapon.is_shooting {
-        *player_movement_state.into_inner() = MovementState::Walking;
-    }
 }
