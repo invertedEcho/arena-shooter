@@ -8,9 +8,11 @@ use crate::{
     },
     game_flow::states::AppState,
     player::{
-        Player, camera::messages::SpawnPlayerCamerasMessage,
+        DEFAULT_PLAYER_HEALTH, Player, PlayerBundle,
+        camera::messages::SpawnPlayerCamerasMessage,
         spawn::components::PlayerSpawnLocation,
     },
+    shared::components::Health,
 };
 
 pub mod components;
@@ -44,7 +46,7 @@ fn handle_player_spawn_event(
         let player_entity = commands
             .spawn((
                 Name::new("Player"),
-                Player::default(),
+                PlayerBundle::default(),
                 Transform::from_translation(player_spawn_location.translation),
                 Visibility::Visible,
                 DebugRender::collider(Color::WHITE),

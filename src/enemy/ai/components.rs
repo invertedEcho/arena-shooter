@@ -21,7 +21,7 @@ pub enum EnemyState {
 impl EnemyState {
     pub fn update_state(&mut self, new_state: EnemyState) {
         if *self != new_state {
-            println!("Enemy State change: {:?} -> {:?}", *self, new_state);
+            info!("Enemy State change: {:?} -> {:?}", *self, new_state);
             *self = new_state;
         }
     }

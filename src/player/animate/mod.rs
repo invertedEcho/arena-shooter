@@ -159,7 +159,7 @@ fn handle_play_arm_with_weapon_animation_event(
     mut commands: Commands,
     mut message_reader: MessageReader<PlayArmWithWeaponAnimationMessage>,
     animation_player_entity_pointer: Single<
-        (&AnimationPlayerEntityPointer, &Player),
+        (&AnimationPlayerEntityPointer, &PlayerCameraState),
         With<Player>,
     >,
     mut animation_players_and_animation_transitions: Query<(
@@ -171,9 +171,7 @@ fn handle_play_arm_with_weapon_animation_event(
     animation_block_timer: Option<Res<AnimationBlockTimer>>,
 ) {
     for event in message_reader.read() {
-        if animation_player_entity_pointer.1.camera_state
-            == PlayerCameraState::FreeCam
-        {
+        if *animation_player_entity_pointer.1 == PlayerCameraState::FreeCam {
             continue;
         }
 

@@ -1,11 +1,14 @@
 use bevy::prelude::*;
 
-use crate::player::{
-    animate::PlayerAnimatePlugin,
-    camera::{PlayerCameraPlugin, components::PlayerCameraState},
-    hud::PlayerHudPlugin,
-    shooting::PlayerShootingPlugin,
-    spawn::PlayerSpawnPlugin,
+use crate::{
+    player::{
+        animate::PlayerAnimatePlugin,
+        camera::{PlayerCameraPlugin, components::PlayerCameraState},
+        hud::PlayerHudPlugin,
+        shooting::PlayerShootingPlugin,
+        spawn::PlayerSpawnPlugin,
+    },
+    shared::components::Health,
 };
 
 mod animate;
@@ -14,20 +17,25 @@ mod hud;
 pub mod shooting;
 pub mod spawn;
 
+pub const DEFAULT_PLAYER_HEALTH: f32 = 100.0;
+
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
-pub struct Player {
-    pub health: f32,
-    pub camera_state: PlayerCameraState,
+pub struct Player;
+
+#[derive(Bundle)]
+pub struct PlayerBundle {
+    player: Player,
+    health: Health,
+    player_camera_state: PlayerCameraState,
 }
 
-pub const DEFAULT_PLAYER_HEALTH: f32 = 100000000.0;
-
-impl Default for Player {
+impl Default for PlayerBundle {
     fn default() -> Self {
-        Player {
-            health: DEFAULT_PLAYER_HEALTH,
-            camera_state: PlayerCameraState::Normal,
+        Self {
+            player: Player,
+            health: Health(DEFAULT_PLAYER_HEALTH),
+            player_camera_state: PlayerCameraState::default(),
         }
     }
 }

@@ -23,83 +23,85 @@ use crate::{
             components::PlayerWeapon, messages::PlayerBulletHitEnemyMessage,
         },
     },
-    shared::components::DespawnTimer,
+    shared::components::{DespawnTimer, Health},
     user_interface::ITALIC_GAME_FONT_PATH,
 };
 
 pub fn spawn_player_hud(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    player_info: Query<&Player>,
+    player_health_query: Query<&Health, Added<Player>>,
 ) {
-    // if no player exists, we can assume the hud was spawned before the player was
-    // spawned, and thus can use the default corresponding values
-    let player_health = match player_info.single() {
-        Ok(player) => player.health,
-        Err(_) => Player::default().health,
-    };
+    for player_health in player_health_query {
+        commands
+            .spawn((
+                Node {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::SpaceBetween,
+                    align_items: AlignItems::End,
+                    padding: UiRect::all(Val::Px(16.0)),
+                    ..default()
+                },
+                PlayerHud,
+            ))
+            .with_children(|parent| {
+                parent
+                    .spawn(Node {
+                        column_gap: Val::Px(16.0),
+                        ..default()
+                    })
+                    .with_children(|parent| {
+                        parent.spawn((
+                            Text::new("HP"),
+                            TextFont {
+                                font: asset_server.load(ITALIC_GAME_FONT_PATH),
+                                ..default()
+                            },
+                        ));
+                        parent.spawn((
+                            Text::new(player_health.0.to_string()),
+                            PlayerHealthText,
+                            TextFont {
+                                font: asset_server.load(ITALIC_GAME_FONT_PATH),
+                                ..default()
+                            },
+                        ));
+                    });
+                parent
+                    .spawn(Node {
+                        column_gap: Val::Px(16.0),
+                        ..default()
+                    })
+                    .with_children(|parent| {
+                        parent.spawn((Text::new(""), PlayerLoadedAmmoText));
+                        parent.spawn(Text::new("/"));
+                        parent.spawn((Text::new(""), PlayerCarriedAmmoText));
+                    });
+            });
+    }
+}
 
-    commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                flex_direction: FlexDirection::Row,
-                justify_content: JustifyContent::SpaceBetween,
-                align_items: AlignItems::End,
-                padding: UiRect::all(Val::Px(16.0)),
-                ..default()
-            },
-            DespawnOnExit(InGameState::Playing),
-            PlayerHud,
-        ))
-        .with_children(|parent| {
-            parent
-                .spawn(Node {
-                    column_gap: Val::Px(16.0),
+pub fn spawn_player_crosshair(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    player_query: Query<Entity, Added<Player>>,
+) {
+    for _ in player_query {
+        commands
+            .spawn((
+                Node {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
                     ..default()
-                })
-                .with_children(|parent| {
-                    parent.spawn((
-                        Text::new("HP"),
-                        TextFont {
-                            font: asset_server.load(ITALIC_GAME_FONT_PATH),
-                            ..default()
-                        },
-                    ));
-                    parent.spawn((
-                        Text::new(player_health.to_string()),
-                        PlayerHealthText,
-                        TextFont {
-                            font: asset_server.load(ITALIC_GAME_FONT_PATH),
-                            ..default()
-                        },
-                    ));
-                });
-            parent
-                .spawn(Node {
-                    column_gap: Val::Px(16.0),
-                    ..default()
-                })
-                .with_children(|parent| {
-                    parent.spawn((Text::new(""), PlayerLoadedAmmoText));
-                    parent.spawn(Text::new("/"));
-                    parent.spawn((Text::new(""), PlayerCarriedAmmoText));
-                });
-        });
-    commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            DespawnOnExit(InGameState::Playing),
-            PlayerCrosshair,
-        ))
-        .with_child(ImageNode::new(asset_server.load(MAIN_CROSSHAIR_PATH)));
+                },
+                PlayerCrosshair,
+            ))
+            .with_child(ImageNode::new(asset_server.load(MAIN_CROSSHAIR_PATH)));
+    }
 }
 
 pub fn update_player_crosshair_visibility(
@@ -114,10 +116,11 @@ pub fn update_player_crosshair_visibility(
 }
 
 pub fn update_player_health_text(
-    player: Single<&Player, Changed<Player>>,
+    player_health: Single<&Health, (Changed<Health>, With<Player>)>,
     mut player_health_text: Single<&mut Text, With<PlayerHealthText>>,
 ) {
-    ***player_health_text = player.health.to_string();
+    info!("player health has changed!");
+    ***player_health_text = player_health.0.to_string();
 }
 
 pub fn update_player_ammo_text(
@@ -243,4 +246,34 @@ pub fn update_wave_info_hud(
             game_state_wave.enemies_left_from_current_wave.to_string(),
         );
     }
+}
+
+pub fn hide_player_hud(
+    mut player_hud_visibility: Single<&mut Visibility, With<PlayerHud>>,
+) {
+    **player_hud_visibility = Visibility::Hidden;
+}
+
+pub fn show_player_hud(
+    mut player_hud_visibility: Single<&mut Visibility, With<PlayerHud>>,
+) {
+    **player_hud_visibility = Visibility::Visible;
+}
+
+pub fn hide_player_crosshair(
+    mut player_crosshair_visibility: Single<
+        &mut Visibility,
+        With<PlayerCrosshair>,
+    >,
+) {
+    **player_crosshair_visibility = Visibility::Hidden;
+}
+
+pub fn show_player_crosshair(
+    mut player_crosshair_visibility: Single<
+        &mut Visibility,
+        With<PlayerCrosshair>,
+    >,
+) {
+    **player_crosshair_visibility = Visibility::Visible;
 }

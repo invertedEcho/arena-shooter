@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use crate::{
     game_flow::states::AppState,
     player::{DEFAULT_PLAYER_HEALTH, Player},
+    shared::components::Health,
 };
 
 const MEDKIT_MODEL_PATH: &str = "models/world_objects/medkit.gltf";
@@ -94,9 +95,11 @@ pub fn rotate_and_float_medkits(
 
 pub fn detect_collision_medkit_with_player(
     medkit_query: Query<(&mut Medkit, &CollidingEntities, &mut Visibility)>,
-    mut player_query: Single<(Entity, &mut Player)>,
+    mut player_query: Single<(Entity, &mut Health), With<Player>>,
 ) {
-    let player_full_hp = player_query.1.health == DEFAULT_PLAYER_HEALTH;
+    let (player_entity, mut player_health) = player_query.into_inner();
+
+    let player_full_hp = player_health.0 == DEFAULT_PLAYER_HEALTH;
 
     for (mut medkit, colliding_entities, mut visibility) in medkit_query {
         if !medkit.active {
@@ -104,12 +107,11 @@ pub fn detect_collision_medkit_with_player(
         }
 
         let player_collied_with_medkit =
-            colliding_entities.contains(&player_query.0);
+            colliding_entities.contains(&player_entity);
 
         if player_collied_with_medkit && !player_full_hp {
-            player_query.1.health += medkit.health_to_give;
-            player_query.1.health =
-                player_query.1.health.clamp(0.0, DEFAULT_PLAYER_HEALTH);
+            player_health.0 += medkit.health_to_give;
+            player_health.0 = player_health.0.clamp(0.0, DEFAULT_PLAYER_HEALTH);
             medkit.active = false;
             *visibility = Visibility::Hidden;
         }

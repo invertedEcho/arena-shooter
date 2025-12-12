@@ -174,7 +174,7 @@ type AnyCamEntityQuery<'w, 's> = Query<
 >;
 
 pub fn toggle_freecam(
-    mut player_query: Single<(Entity, &Transform, &mut Player)>,
+    mut player_query: Single<(Entity, &Transform, &mut PlayerCameraState)>,
     mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     camera_entities: AnyCamEntityQuery,
@@ -184,12 +184,12 @@ pub fn toggle_freecam(
     >,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyC) {
-        let player_entity = player_query.0;
-        let player_transform = player_query.1;
-        let player = &mut player_query.2;
-        match player.camera_state {
+        let (player_entity, player_transform, mut player_camera_state) =
+            player_query.into_inner();
+
+        match *player_camera_state {
             PlayerCameraState::Normal => {
-                player.camera_state = PlayerCameraState::FreeCam;
+                *player_camera_state = PlayerCameraState::FreeCam;
                 for player_camera_entity in camera_entities {
                     commands.entity(player_camera_entity).despawn();
                 }
@@ -210,7 +210,7 @@ pub fn toggle_freecam(
             }
             PlayerCameraState::FreeCam => {
                 info!("requested freecam -> normal");
-                player_query.2.camera_state = PlayerCameraState::Normal;
+                *player_camera_state = PlayerCameraState::Normal;
                 info!("player camera state now set to normal");
                 for free_cam_entity in free_cam_entity_query {
                     debug!("despawning free cam entity {}", free_cam_entity);

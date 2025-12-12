@@ -24,7 +24,7 @@ pub fn handle_keyboard_input_for_player(
         &mut MovementState,
         Entity,
         &PlayerWeapon,
-        &Player,
+        &PlayerCameraState,
     )>,
 ) {
     let (
@@ -32,10 +32,10 @@ pub fn handle_keyboard_input_for_player(
         mut movement_state,
         player_entity,
         player_weapon,
-        player,
+        player_camera_state,
     ) = player_query.into_inner();
 
-    if player.camera_state == PlayerCameraState::FreeCam {
+    if *player_camera_state == PlayerCameraState::FreeCam {
         return;
     }
 

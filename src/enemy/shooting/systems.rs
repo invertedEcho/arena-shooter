@@ -76,10 +76,13 @@ pub fn enemy_shoot_player(
         Option<&EnemyShootCooldownTimer>,
     )>,
     spatial_query: SpatialQuery,
-    mut player_query: Single<(Entity, &Transform, &mut Player), With<Player>>,
+    player_query: Single<(Entity, &Transform, &mut Health), With<Player>>,
     mut player_death_message_writer: MessageWriter<PlayerDeathMessage>,
     mut debug_gizmos: ResMut<DebugGizmos>,
 ) {
+    let (player_entity, player_transform, mut player_health) =
+        player_query.into_inner();
+
     for (
         enemy_entity,
         enemy_state,
@@ -105,7 +108,6 @@ pub fn enemy_shoot_player(
             )));
 
         // do raycast from enemy to player direction
-        let player_transform = player_query.1;
         let origin = enemy_transform.translation;
 
         let random_x_offset = get_random_number_from_range(-0.5..0.5);
@@ -137,7 +139,7 @@ pub fn enemy_shoot_player(
             continue;
         };
 
-        if first_hit.entity == player_query.0 {
+        if first_hit.entity == player_entity {
             commands.spawn((
                 ImageNode {
                     image: asset_server
@@ -149,12 +151,8 @@ pub fn enemy_shoot_player(
                 DespawnOnExit(InGameState::Playing),
             ));
 
-            player_query.2.health -= 25.0;
-            if player_query.2.health <= 0.0 {
-                info!(
-                    "player health is {}, writing death message",
-                    player_query.2.health
-                );
+            player_health.0 -= 25.0;
+            if player_health.0 <= 0.0 {
                 player_death_message_writer.write(PlayerDeathMessage);
             }
         }
