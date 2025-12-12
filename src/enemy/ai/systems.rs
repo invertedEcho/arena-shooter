@@ -76,25 +76,12 @@ pub fn enemy_state_decision_system(
                     let enemy_can_see_player =
                         first_hit.entity == player_entity;
                     if enemy_can_see_player {
-                        info!(
-                            "Player is in enemy FOV and no obstacles are in \
-                             the way"
-                        );
                         if is_facing_target_without_y(
                             enemy_transform,
                             player_transform,
                         ) {
-                            info!(
-                                "enemy {} is now facing player, attacking the \
-                                 player",
-                                enemy_entity
-                            );
                             enemy_state.update_state(EnemyState::AttackPlayer);
                         } else {
-                            info!(
-                                "enemy is NOT facing player, changing to \
-                                 rotate towards player"
-                            );
                             enemy_state
                                 .update_state(EnemyState::RotateTowardsPlayer);
                         }

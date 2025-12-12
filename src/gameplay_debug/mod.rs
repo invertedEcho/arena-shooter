@@ -31,12 +31,14 @@ impl Plugin for GameplayDebugPlugin {
         });
         app.add_systems(
             Update,
-            (draw_gizmos, draw_enemy_fov, add_enemy_state_text),
+            (
+                draw_gizmos,
+                draw_enemy_fov,
+                add_enemy_state_text,
+                update_enemy_debug_text,
+                tick_despawn_timer_debug_gizmo_lines,
+            ),
         );
-
-        // https://github.com/mintlu8/bevy_rich_text3d/issues/19
-        app.add_systems(PreUpdate, update_enemy_debug_text);
-        app.add_systems(Update, tick_despawn_timer_debug_gizmo_lines);
 
         app.insert_resource(DebugGizmos(Vec::new()));
     }

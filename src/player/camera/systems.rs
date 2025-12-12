@@ -1,4 +1,5 @@
 use crate::{
+    game_flow::states::AppState,
     player::{
         camera::{
             DEFAULT_POSITION_PLAYER_WEAPON, PLAYER_CAMERA_Y_OFFSET,
@@ -204,6 +205,7 @@ pub fn toggle_freecam(
                         player_transform.translation.z,
                     ),
                     FreeCam,
+                    DespawnOnExit(AppState::InGame),
                 ));
             }
             PlayerCameraState::FreeCam => {

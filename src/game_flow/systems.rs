@@ -70,34 +70,7 @@ pub fn spawn_main_menu_camera(mut commands: Commands) {
         Transform::from_xyz(10.0, 20.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
         MainMenuCamera,
         bevy_inspector_egui::bevy_egui::PrimaryEguiContext,
-    ));
-}
-
-pub fn handle_exit_in_game(
-    mut commands: Commands,
-    enemies: Query<Entity, With<Enemy>>,
-    players: Query<Entity, (With<Player>, Without<Enemy>)>,
-    free_cam_cameras: Query<Entity, With<FreeCam>>,
-) {
-    info!("Despawning all enemies");
-    for enemy in enemies {
-        commands.entity(enemy).despawn();
-    }
-    info!("Despawning all players");
-    for player in players {
-        commands.entity(player).despawn();
-    }
-    for free_cam_camera in free_cam_cameras {
-        info!("Despawning free cam");
-        commands.entity(free_cam_camera).despawn();
-    }
-
-    info!("Spawning Main Menu Camera");
-    commands.spawn((
-        Camera::default(),
-        Camera3d::default(),
-        Transform::from_xyz(10.0, 20.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
-        MainMenuCamera,
+        DespawnOnExit(AppState::MainMenu),
     ));
 }
 
@@ -178,14 +151,6 @@ pub fn on_game_loading_state_nav_mesh_ready(
         }
         GameModeState::FreeRoam => {}
     }
-}
-
-pub fn on_exit_main_menu(
-    mut commands: Commands,
-    main_menu_camera: Single<Entity, With<MainMenuCamera>>,
-) {
-    info!("Entered playing state, despawning main menu camera");
-    commands.entity(*main_menu_camera).despawn();
 }
 
 pub fn on_enter_app_state_in_game(
