@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::shared::WeaponType;
+
 #[derive(Component)]
 pub struct PlayerShootCooldownTimer(pub Timer);
 
@@ -14,6 +16,7 @@ pub struct PlayerWeapon {
     pub max_loaded_ammo: u32,
     pub reloading: bool,
     pub is_shooting: bool,
+    pub weapon_type: WeaponType,
 }
 
 #[derive(Component)]

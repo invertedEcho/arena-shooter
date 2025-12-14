@@ -10,7 +10,7 @@ use crate::{
         messages::{MovementAction, MovementDirection},
     },
     player::{
-        Player, camera::components::PlayerCameraState,
+        camera::components::PlayerCameraState,
         shooting::components::PlayerWeapon,
     },
     world::world_objects::medkit::Medkit,
@@ -40,10 +40,9 @@ pub fn handle_keyboard_input_for_player(
     }
 
     let shift_pressed = keyboard_input.pressed(KeyCode::ShiftLeft);
-    let reloading_or_shooting =
-        player_weapon.reloading || player_weapon.is_shooting;
+    let reloading = player_weapon.reloading;
 
-    let speed = if shift_pressed && !reloading_or_shooting {
+    let speed = if shift_pressed && !reloading {
         RUN_VELOCITY
     } else {
         WALK_VELOCITY

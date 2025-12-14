@@ -71,15 +71,7 @@ fn handle_game_mode_wave_start_message(
 // TODO: spawn enemies that make the player take more damage
 // or have smarter ai
 pub fn get_enemy_count_per_wave(wave: usize) -> usize {
-    match wave {
-        1 => 1,
-        2 => 4,
-        3 => 6,
-        4 => 8,
-        5 => 10,
-        6 => 12,
-        _ => 14,
-    }
+    if wave == 1 { 1 } else { wave + 2 }
 }
 
 fn handle_game_state_wave_changed(

@@ -14,11 +14,12 @@ use crate::{
             handle_reload_player_weapon_message,
             play_shooting_sound_on_player_weapon_fired, setup_player_weapon,
             spawn_muzzle_flash, tick_player_weapon_reload_timer,
-            tick_player_weapon_shoot_cooldown_timer, weapon_sway,
+            tick_player_weapon_shoot_cooldown_timer,
         },
     },
 };
 
+pub mod asset_paths;
 pub mod components;
 pub mod messages;
 mod resources;
@@ -45,7 +46,6 @@ impl Plugin for PlayerShootingPlugin {
                     tick_player_weapon_reload_timer,
                     handle_player_death_event,
                     play_shooting_sound_on_player_weapon_fired,
-                    weapon_sway,
                 )
                     .run_if(in_state(InGameState::Playing)),
             );

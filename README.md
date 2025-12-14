@@ -12,6 +12,11 @@
 5. Run the app
   - `cargo run`
 
+> [!IMPORTANT]
+> Some game assets are not included in this repository and are not covered by the GPL. These assets are proprietary and were obtained under separate licenses.
+> Release builds of the game may include these assets bundled inside the game binary. The assets are provided only as part of the compiled game and are not redistributed as standalone files.
+
+
 ## Todo and feature list
 - [x] User interface
 - [x] Player movement

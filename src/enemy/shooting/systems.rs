@@ -151,7 +151,10 @@ pub fn enemy_shoot_player(
                 DespawnOnExit(InGameState::Playing),
             ));
 
-            player_health.0 -= 25.0;
+            // TODO: doesnt really make sense to have random number of damage but we do that for now for more "realism"
+            let random_damage = get_random_number_from_range(10..15);
+
+            player_health.0 -= random_damage as f32;
             if player_health.0 <= 0.0 {
                 player_death_message_writer.write(PlayerDeathMessage);
             }

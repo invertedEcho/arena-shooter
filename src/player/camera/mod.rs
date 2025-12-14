@@ -9,7 +9,7 @@ use crate::{
             free_cam_orbit, handle_free_cam_movement, handle_player_scope_aim,
             make_player_weapon_hidden, make_player_weapon_visible,
             setup_player_cameras, toggle_freecam,
-            update_yaw_pitch_on_mouse_motion,
+            update_yaw_pitch_on_mouse_motion, weapon_sway,
         },
     },
 };
@@ -17,19 +17,9 @@ use crate::{
 pub mod components;
 pub mod messages;
 mod systems;
+pub mod weapon_positions;
 
 pub const PLAYER_CAMERA_Y_OFFSET: f32 = 0.4;
-
-pub const DEFAULT_POSITION_PLAYER_WEAPON: Vec3 = Vec3 {
-    x: 0.05,
-    y: -0.14,
-    z: -0.2,
-};
-pub const SCOPE_NEAR_POSITION_PLAYER_WEAPON: Vec3 = Vec3 {
-    x: -0.04,
-    y: -0.114,
-    z: 0.1,
-};
 
 pub struct PlayerCameraPlugin;
 
@@ -48,6 +38,7 @@ impl Plugin for PlayerCameraPlugin {
                     toggle_freecam,
                     handle_free_cam_movement,
                     handle_player_scope_aim,
+                    weapon_sway,
                 ),
             )
             .add_systems(

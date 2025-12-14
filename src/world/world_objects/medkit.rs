@@ -95,7 +95,7 @@ pub fn rotate_and_float_medkits(
 
 pub fn detect_collision_medkit_with_player(
     medkit_query: Query<(&mut Medkit, &CollidingEntities, &mut Visibility)>,
-    mut player_query: Single<(Entity, &mut Health), With<Player>>,
+    player_query: Single<(Entity, &mut Health), With<Player>>,
 ) {
     let (player_entity, mut player_health) = player_query.into_inner();
 

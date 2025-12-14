@@ -6,7 +6,6 @@ use bevy::{
 use bevy_rerecast::{Navmesh, prelude::NavmeshReady};
 
 use crate::{
-    enemy::Enemy,
     game_flow::{
         game_mode::{GameModeState, StartWaveGameModeMessage},
         states::{
@@ -14,7 +13,7 @@ use crate::{
         },
     },
     nav_mesh_pathfinding::NavMeshHandle,
-    player::{Player, camera::components::FreeCam, spawn::SpawnPlayerMessage},
+    player::spawn::SpawnPlayerMessage,
     user_interface::main_menu::MainMenuCamera,
     world::resources::WorldSceneHandle,
 };

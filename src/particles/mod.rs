@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
 
-use crate::{player::Player, utils::random::get_random_number_from_range};
+use crate::{
+    player::Player, shared::components::DespawnTimer,
+    utils::random::get_random_number_from_range,
+};
 
 const BULLET_IMPACT_PARTICLE_LIFETIME: f32 = 0.1;
 const BULLET_IMPACT_PARTICLE_VELOCITY: f32 = 3.0;
@@ -159,6 +162,7 @@ fn handle_spawn_bullet_impact_effect(
         commands.spawn((
             ParticleEffect::new(bullet_impact_effect_handle.clone()),
             transform,
+            DespawnTimer(Timer::from_seconds(1.0, TimerMode::Once)),
         ));
     }
 }

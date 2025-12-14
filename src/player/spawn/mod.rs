@@ -8,11 +8,9 @@ use crate::{
     },
     game_flow::states::AppState,
     player::{
-        DEFAULT_PLAYER_HEALTH, Player, PlayerBundle,
-        camera::messages::SpawnPlayerCamerasMessage,
+        PlayerBundle, camera::messages::SpawnPlayerCamerasMessage,
         spawn::components::PlayerSpawnLocation,
     },
-    shared::components::Health,
 };
 
 pub mod components;

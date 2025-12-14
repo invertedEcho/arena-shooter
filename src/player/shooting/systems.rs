@@ -1,7 +1,5 @@
-use std::f32::consts::PI;
-
 use avian3d::prelude::*;
-use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
+use bevy::prelude::*;
 
 use crate::{
     character_controller::components::MovementState,
@@ -12,10 +10,10 @@ use crate::{
         Player, PlayerDeathMessage,
         animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
         camera::{
-            DEFAULT_POSITION_PLAYER_WEAPON,
             components::{
                 PlayerWeaponModel, ViewModelCamera, WorldModelCamera,
             },
+            weapon_positions::{AimType, get_position_for_weapon},
         },
         shooting::{
             components::{
@@ -29,7 +27,10 @@ use crate::{
             resources::PlayerWeaponReloadTimer,
         },
     },
-    shared::{DEFAULT_BULLET_DAMAGE, components::DespawnTimer},
+    shared::{
+        DEFAULT_BULLET_DAMAGE, WeaponType, components::DespawnTimer,
+        get_fire_delay_by_weapon_type,
+    },
     utils::random::get_random_number_from_range,
 };
 
@@ -57,6 +58,7 @@ pub fn setup_player_weapon(
             carried_ammo: 99999,
             reloading: false,
             is_shooting: false,
+            weapon_type: WeaponType::AssaultRifle,
         });
     }
 }
@@ -127,11 +129,15 @@ pub fn handle_player_weapon_fired_message(
         SpawnBulletImpactEffectMessage,
     >,
     world_model_camera_query: WorldModelCameraQuery,
-    player_entity: Single<Entity, With<Player>>,
+    player_query: Single<(Entity, &PlayerWeapon), With<Player>>,
 ) {
+    let (player_entity, player_weapon) = player_query.into_inner();
+
     for _ in message_reader.read() {
+        let fire_delay =
+            get_fire_delay_by_weapon_type(&player_weapon.weapon_type);
         commands.spawn(PlayerShootCooldownTimer(Timer::from_seconds(
-            0.1,
+            fire_delay,
             TimerMode::Once,
         )));
 
@@ -144,7 +150,7 @@ pub fn handle_player_weapon_fired_message(
             500.0,
             false,
             &SpatialQueryFilter::default()
-                .with_excluded_entities([*player_entity]),
+                .with_excluded_entities([player_entity]),
         ) {
             let entity_hit = first_hit.entity;
 
@@ -270,8 +276,12 @@ pub fn handle_reload_player_weapon_message(
             repeat: false,
             block_until_done: true,
         });
-        player_weapon_model_transform.translation =
-            DEFAULT_POSITION_PLAYER_WEAPON;
+
+        let weapon_position = get_position_for_weapon(
+            &player_weapon.weapon_type,
+            AimType::Normal,
+        );
+        player_weapon_model_transform.translation = weapon_position;
     }
 }
 
@@ -378,29 +388,4 @@ pub fn handle_player_death_event(
         **player_movement_state = MovementState::Idle;
         next_in_game_state.set(InGameState::PlayerDead);
     }
-}
-
-pub fn weapon_sway(
-    time: Res<Time>,
-    mouse_motion: Res<AccumulatedMouseMotion>,
-    mut transform: Single<&mut Transform, With<PlayerWeaponModel>>,
-) {
-    // how fast it will return to initial position
-    const DAMPING: f32 = 12.0;
-
-    // how strong the sway is
-    const SWAY_MULTIPLIER: f32 = 0.0005;
-
-    let delta = mouse_motion.delta;
-
-    let pitch = -delta.y * SWAY_MULTIPLIER;
-    let yaw = delta.x * SWAY_MULTIPLIER;
-
-    let sway_rot = Quat::from_rotation_x(pitch) * Quat::from_rotation_y(yaw);
-
-    transform.rotation *= sway_rot;
-
-    transform.rotation = transform
-        .rotation
-        .slerp(Quat::from_rotation_y(PI), DAMPING * time.delta_secs());
 }
