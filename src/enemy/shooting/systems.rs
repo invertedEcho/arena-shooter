@@ -78,7 +78,7 @@ pub fn enemy_shoot_player(
     spatial_query: SpatialQuery,
     player_query: Single<(Entity, &Transform, &mut Health), With<Player>>,
     mut player_death_message_writer: MessageWriter<PlayerDeathMessage>,
-    mut debug_gizmos: ResMut<DebugGizmos>,
+    mut debug_gizmos: Option<ResMut<DebugGizmos>>,
 ) {
     let (player_entity, player_transform, mut player_health) =
         player_query.into_inner();
@@ -122,11 +122,14 @@ pub fn enemy_shoot_player(
             continue;
         };
 
-        debug_gizmos.0.push(DebugGizmoLine {
-            start: origin,
-            end: player_location_random_x_offset,
-            despawn_timer: Timer::from_seconds(0.5, TimerMode::Once),
-        });
+        // debug gizmos may not exist when running release build
+        if let Some(ref mut debug_gizmos) = debug_gizmos {
+            debug_gizmos.0.push(DebugGizmoLine {
+                start: origin,
+                end: player_location_random_x_offset,
+                despawn_timer: Timer::from_seconds(0.5, TimerMode::Once),
+            });
+        }
 
         let Some(first_hit) = spatial_query.cast_ray(
             origin,

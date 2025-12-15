@@ -8,7 +8,7 @@ use crate::{
     },
     game_flow::states::AppState,
     player::{
-        PlayerBundle, camera::messages::SpawnPlayerCamerasMessage,
+        Player, PlayerBundle, camera::messages::SpawnPlayerCamerasMessage,
         spawn::components::PlayerSpawnLocation,
     },
 };
@@ -37,8 +37,12 @@ fn handle_player_spawn_event(
     >,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    existing_players: Query<Entity, With<Player>>,
 ) {
     for _ in player_spawn_message_reader.read() {
+        for existing_player in existing_players {
+            commands.entity(existing_player).despawn();
+        }
         info!("read player spawn event, spawning player");
 
         let player_entity = commands

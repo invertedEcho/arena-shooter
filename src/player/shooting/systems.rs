@@ -8,7 +8,6 @@ use crate::{
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
     player::{
         Player, PlayerDeathMessage,
-        animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
         camera::{
             components::{
                 PlayerWeaponModel, ViewModelCamera, WorldModelCamera,
@@ -58,7 +57,7 @@ pub fn setup_player_weapon(
             carried_ammo: 99999,
             reloading: false,
             is_shooting: false,
-            weapon_type: WeaponType::AssaultRifle,
+            weapon_type: WeaponType::Pistol,
         });
     }
 }
@@ -67,16 +66,19 @@ pub fn handle_input(
     mouse_input: Res<ButtonInput<MouseButton>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_shot_messsage_writer: MessageWriter<PlayerWeaponFiredMessage>,
-    mut play_arm_with_weapon_animation_message_writer: MessageWriter<
-        PlayArmWithWeaponAnimationMessage,
-    >,
     mut reload_player_weapon_message_writer: MessageWriter<
         ReloadPlayerWeaponMessage,
     >,
     player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
     mut player_weapon: Single<&mut PlayerWeapon>,
 ) {
-    let mouse_button_left_pressed = mouse_input.pressed(MouseButton::Left);
+    let shoot_button_pressed =
+        if player_weapon.weapon_type == WeaponType::Pistol {
+            mouse_input.just_pressed(MouseButton::Left)
+        } else {
+            mouse_input.pressed(MouseButton::Left)
+        };
+
     let reload_button_pressed = keyboard_input.just_pressed(KeyCode::KeyR);
 
     if mouse_input.just_pressed(MouseButton::Left) {
@@ -85,7 +87,7 @@ pub fn handle_input(
         player_weapon.is_shooting = false;
     }
 
-    if mouse_button_left_pressed {
+    if shoot_button_pressed {
         if player_weapon_shoot_cooldown_timer_query.iter().len() != 0 {
             return;
         }
@@ -100,14 +102,6 @@ pub fn handle_input(
         }
 
         player_weapon.loaded_ammo -= 1;
-
-        play_arm_with_weapon_animation_message_writer.write(
-            PlayArmWithWeaponAnimationMessage {
-                animation_type: ArmWithWeaponAnimation::Shoot,
-                repeat: false,
-                block_until_done: true,
-            },
-        );
 
         player_shot_messsage_writer.write(PlayerWeaponFiredMessage);
     }
@@ -234,9 +228,6 @@ pub fn handle_blood_screen_effect(
 pub fn handle_reload_player_weapon_message(
     mut commands: Commands,
     mut player_weapon: Single<&mut PlayerWeapon>,
-    mut animation_message_writer: MessageWriter<
-        PlayArmWithWeaponAnimationMessage,
-    >,
     mut message_reader: MessageReader<ReloadPlayerWeaponMessage>,
     mut player_weapon_model_transform: Single<
         &mut Transform,
@@ -264,18 +255,7 @@ pub fn handle_reload_player_weapon_message(
             TimerMode::Once,
         )));
 
-        let animation_type = if player_weapon.loaded_ammo == 0 {
-            ArmWithWeaponAnimation::FullReload
-        } else {
-            ArmWithWeaponAnimation::PartialReload
-        };
-
         player_weapon.reloading = true;
-        animation_message_writer.write(PlayArmWithWeaponAnimationMessage {
-            animation_type,
-            repeat: false,
-            block_until_done: true,
-        });
 
         let weapon_position = get_position_for_weapon(
             &player_weapon.weapon_type,

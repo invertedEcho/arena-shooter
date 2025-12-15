@@ -11,10 +11,10 @@ pub const DEFAULT_BULLET_DAMAGE: f32 = 7.5;
 
 pub struct CommonPlugin;
 
-#[derive(Reflect)]
+#[derive(Reflect, PartialEq)]
 pub enum WeaponType {
-    AssaultRifle,
     Pistol,
+    AssaultRifle,
 }
 
 impl Plugin for CommonPlugin {
@@ -28,7 +28,7 @@ impl Plugin for CommonPlugin {
 
 pub fn get_fire_delay_by_weapon_type(weapon_type: &WeaponType) -> f32 {
     match weapon_type {
-        WeaponType::AssaultRifle => 0.2,
         WeaponType::Pistol => 0.5,
+        WeaponType::AssaultRifle => 0.2,
     }
 }

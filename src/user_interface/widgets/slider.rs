@@ -80,6 +80,13 @@ pub fn build_slider<T: Component>(
     )
 }
 
+type AnyInteractionWithSlider = Or<(
+    Changed<SliderValue>,
+    Changed<SliderRange>,
+    Changed<Hovered>,
+    Changed<CoreSliderDragState>,
+)>;
+
 /// Update the visuals of the slider based on the slider state.
 pub fn update_slider_style(
     sliders: Query<
@@ -90,14 +97,7 @@ pub fn update_slider_style(
             &Hovered,
             &CoreSliderDragState,
         ),
-        (
-            Or<(
-                Changed<SliderValue>,
-                Changed<SliderRange>,
-                Changed<Hovered>,
-                Changed<CoreSliderDragState>,
-            )>,
-        ),
+        AnyInteractionWithSlider,
     >,
     children: Query<&Children>,
     mut thumbs: Query<(&mut Node, &mut BackgroundColor, Has<SliderThumb>)>,

@@ -10,15 +10,13 @@ use crate::{
             weapon_positions::{AimType, get_position_for_weapon},
         },
         shooting::{
-            asset_paths::{
-                ASSAULT_RIFLE_MODEL_PATH, get_asset_path_for_weapon_type,
-            },
+            asset_paths::get_asset_path_for_weapon_type,
             components::PlayerWeapon,
         },
     },
     shared::{WeaponType, systems::apply_render_layers_to_children},
 };
-use std::f32::consts::{FRAC_PI_2, PI};
+use std::f32::consts::FRAC_PI_2;
 
 use bevy::{
     camera::visibility::RenderLayers, input::mouse::AccumulatedMouseMotion,
@@ -44,6 +42,7 @@ pub fn setup_player_cameras(
         info!("Inserting player cameras into player entity {}", message.0);
         commands.entity(message.0).with_children(|parent| {
             parent.spawn((
+                Name::new("WorldModelCamera"),
                 WorldModelCamera,
                 Camera {
                     order: 0,
@@ -58,6 +57,7 @@ pub fn setup_player_cameras(
             ));
 
             parent.spawn((
+                Name::new("ViewModelCamera"),
                 ViewModelCamera,
                 Camera3d::default(),
                 Camera {
@@ -80,6 +80,7 @@ pub fn setup_player_cameras(
                 get_position_for_weapon(&WeaponType::Pistol, AimType::Normal);
             parent
                 .spawn((
+                    Name::new("PlayerWeaponModel"),
                     SceneRoot(weapon_model),
                     Transform {
                         translation: weapon_position,

@@ -5,12 +5,10 @@ use bevy::{
 
 use crate::{
     game_flow::{
-        game_mode::GameStateWave,
-        score::GameScore,
-        states::{AppState, InGameState},
+        game_mode::GameStateWave, score::GameScore, states::InGameState,
     },
     player::{
-        Player,
+        Player, PlayerReady,
         hud::{
             CROSSHAIR_BULLET_HIT_PATH, MAIN_CROSSHAIR_PATH,
             components::{
@@ -30,57 +28,64 @@ use crate::{
 pub fn spawn_player_hud(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    player_health_query: Query<&Health, Added<Player>>,
+    player_query: Single<(&Health, &PlayerWeapon), Added<PlayerReady>>,
 ) {
-    for player_health in player_health_query {
-        commands
-            .spawn((
-                Node {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    flex_direction: FlexDirection::Row,
-                    justify_content: JustifyContent::SpaceBetween,
-                    align_items: AlignItems::End,
-                    padding: UiRect::all(Val::Px(16.0)),
+    let (player_health, player_weapon) = player_query.into_inner();
+
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::End,
+                padding: UiRect::all(Val::Px(16.0)),
+                ..default()
+            },
+            PlayerHud,
+            DespawnOnExit(InGameState::Playing),
+        ))
+        .with_children(|parent| {
+            parent
+                .spawn(Node {
+                    column_gap: Val::Px(16.0),
                     ..default()
-                },
-                PlayerHud,
-            ))
-            .with_children(|parent| {
-                parent
-                    .spawn(Node {
-                        column_gap: Val::Px(16.0),
-                        ..default()
-                    })
-                    .with_children(|parent| {
-                        parent.spawn((
-                            Text::new("HP"),
-                            TextFont {
-                                font: asset_server.load(ITALIC_GAME_FONT_PATH),
-                                ..default()
-                            },
-                        ));
-                        parent.spawn((
-                            Text::new(player_health.0.to_string()),
-                            PlayerHealthText,
-                            TextFont {
-                                font: asset_server.load(ITALIC_GAME_FONT_PATH),
-                                ..default()
-                            },
-                        ));
-                    });
-                parent
-                    .spawn(Node {
-                        column_gap: Val::Px(16.0),
-                        ..default()
-                    })
-                    .with_children(|parent| {
-                        parent.spawn((Text::new(""), PlayerLoadedAmmoText));
-                        parent.spawn(Text::new("/"));
-                        parent.spawn((Text::new(""), PlayerCarriedAmmoText));
-                    });
-            });
-    }
+                })
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new("HP"),
+                        TextFont {
+                            font: asset_server.load(ITALIC_GAME_FONT_PATH),
+                            ..default()
+                        },
+                    ));
+                    parent.spawn((
+                        Text::new(player_health.0.to_string()),
+                        PlayerHealthText,
+                        TextFont {
+                            font: asset_server.load(ITALIC_GAME_FONT_PATH),
+                            ..default()
+                        },
+                    ));
+                });
+            parent
+                .spawn(Node {
+                    column_gap: Val::Px(16.0),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new(player_weapon.loaded_ammo.to_string()),
+                        PlayerLoadedAmmoText,
+                    ));
+                    parent.spawn(Text::new("/"));
+                    parent.spawn((
+                        Text::new(player_weapon.carried_ammo.to_string()),
+                        PlayerCarriedAmmoText,
+                    ));
+                });
+        });
 }
 
 pub fn spawn_player_crosshair(
@@ -98,6 +103,7 @@ pub fn spawn_player_crosshair(
                     align_items: AlignItems::Center,
                     ..default()
                 },
+                DespawnOnExit(InGameState::Playing),
                 PlayerCrosshair,
             ))
             .with_child(ImageNode::new(asset_server.load(MAIN_CROSSHAIR_PATH)));
@@ -173,7 +179,7 @@ pub fn spawn_score_hud(mut commands: Commands, game_score: Res<GameScore>) {
                 padding: UiRect::all(Val::Px(16.0)),
                 ..default()
             },
-            DespawnOnExit(AppState::InGame),
+            DespawnOnExit(InGameState::Playing),
         ))
         .with_children(|parent| {
             parent.spawn(Node { ..default() }).with_child((
