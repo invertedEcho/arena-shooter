@@ -2,7 +2,6 @@ use bevy::prelude::*;
 
 use crate::{
     player::{
-        animate::PlayerAnimatePlugin,
         camera::{PlayerCameraPlugin, components::PlayerCameraState},
         hud::PlayerHudPlugin,
         shooting::PlayerShootingPlugin,
@@ -51,7 +50,6 @@ impl Plugin for PlayerPlugin {
             .add_plugins(PlayerSpawnPlugin)
             .add_plugins(PlayerCameraPlugin)
             .add_plugins(PlayerShootingPlugin)
-            .add_plugins(PlayerHudPlugin)
-            .add_plugins(PlayerAnimatePlugin);
+            .add_plugins(PlayerHudPlugin);
     }
 }

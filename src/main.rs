@@ -82,12 +82,14 @@ fn main() {
     app.add_plugins(SkeinPlugin::default());
     app.add_plugins(HanabiPlugin);
 
-    app.add_plugins(EguiPlugin::default())
-        .add_plugins(WorldInspectorPlugin::new());
-    app.insert_resource(bevy_egui::EguiGlobalSettings {
-        auto_create_primary_context: false,
-        ..default()
-    });
+    if cfg!(debug_assertions) {
+        app.add_plugins(EguiPlugin::default())
+            .add_plugins(WorldInspectorPlugin::new());
+        app.insert_resource(bevy_egui::EguiGlobalSettings {
+            auto_create_primary_context: false,
+            ..default()
+        });
+    }
 
     // own plugins
     app.add_plugins(PlayerPlugin)
@@ -99,8 +101,11 @@ fn main() {
         .add_plugins(ParticlesPlugin)
         .add_plugins(AudioPlugin)
         .add_plugins(NavMeshPathfindingPlugin)
-        .add_plugins(CharacterControllerPlugin)
-        .add_plugins(GameplayDebugPlugin);
+        .add_plugins(CharacterControllerPlugin);
+
+    if cfg!(debug_assertions) {
+        app.add_plugins(GameplayDebugPlugin);
+    }
 
     app.run();
 }
