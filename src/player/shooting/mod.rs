@@ -3,17 +3,17 @@ use bevy::prelude::*;
 use crate::{
     game_flow::states::InGameState,
     player::shooting::{
-        components::PlayerWeapon,
         messages::{
             PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage,
             ReloadPlayerWeaponMessage,
         },
         systems::{
-            handle_blood_screen_effect, handle_input,
-            handle_player_death_event, handle_player_weapon_fired_message,
+            add_player_weapons_to_new_players, handle_blood_screen_effect,
+            handle_input, handle_player_death_event,
+            handle_player_weapon_fired_message,
             handle_reload_player_weapon_message,
-            play_shooting_sound_on_player_weapon_fired, setup_player_weapon,
-            spawn_muzzle_flash, tick_player_weapon_reload_timer,
+            play_shooting_sound_on_player_weapon_fired, spawn_muzzle_flash,
+            tick_player_weapon_reload_timer,
             tick_player_weapon_shoot_cooldown_timer,
         },
     },
@@ -32,7 +32,6 @@ impl Plugin for PlayerShootingPlugin {
         app.add_message::<PlayerWeaponFiredMessage>()
             .add_message::<PlayerBulletHitEnemyMessage>()
             .add_message::<ReloadPlayerWeaponMessage>()
-            .register_type::<PlayerWeapon>()
             .add_systems(
                 Update,
                 (
@@ -42,7 +41,7 @@ impl Plugin for PlayerShootingPlugin {
                     handle_reload_player_weapon_message,
                     spawn_muzzle_flash,
                     handle_player_weapon_fired_message,
-                    setup_player_weapon,
+                    add_player_weapons_to_new_players,
                     tick_player_weapon_reload_timer,
                     handle_player_death_event,
                     play_shooting_sound_on_player_weapon_fired,

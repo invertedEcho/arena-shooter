@@ -7,8 +7,7 @@ use crate::{
         spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
     },
     game_flow::score::GameScore,
-    player::{DEFAULT_PLAYER_HEALTH, Player, spawn::SpawnPlayerMessage},
-    shared::components::Health,
+    player::spawn::SpawnPlayerMessage,
 };
 
 pub struct GameModePlugin;

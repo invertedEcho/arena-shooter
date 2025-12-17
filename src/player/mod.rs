@@ -4,7 +4,7 @@ use crate::{
     player::{
         camera::{PlayerCameraPlugin, components::PlayerCameraState},
         hud::PlayerHudPlugin,
-        shooting::{PlayerShootingPlugin, components::PlayerWeapon},
+        shooting::{PlayerShootingPlugin, components::PlayerWeapons},
         spawn::PlayerSpawnPlugin,
     },
     shared::components::Health,
@@ -58,12 +58,12 @@ impl Plugin for PlayerPlugin {
     }
 }
 
-type ReadyPlayersWithoutMarker =
-    (With<Player>, With<PlayerWeapon>, Without<PlayerReady>);
+type PlayersWithoutReadyMarker =
+    (With<Player>, With<PlayerWeapons>, Without<PlayerReady>);
 
 fn mark_players_as_ready(
     mut commands: Commands,
-    query: Query<Entity, ReadyPlayersWithoutMarker>,
+    query: Query<Entity, PlayersWithoutReadyMarker>,
 ) {
     for entity in query {
         commands.entity(entity).insert(PlayerReady);

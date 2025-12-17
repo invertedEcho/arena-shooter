@@ -32,3 +32,24 @@ pub fn get_fire_delay_by_weapon_type(weapon_type: &WeaponType) -> f32 {
         WeaponType::AssaultRifle => 0.2,
     }
 }
+
+/// Static information of the weapon
+#[derive(Component)]
+pub struct WeaponStats {
+    /// The type of the weapon
+    pub weapon_type: WeaponType,
+    /// How much ammunition the weapon can hold at most (e.g. in the barrel)
+    pub max_loaded_ammo: u32,
+}
+
+#[derive(Component)]
+pub struct WeaponState {
+    pub loaded_ammo: u32,
+    pub carried_ammo: u32,
+}
+
+#[derive(PartialEq)]
+pub enum WeaponSlot {
+    Primary,
+    Secondary,
+}

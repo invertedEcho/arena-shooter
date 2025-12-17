@@ -1,3 +1,5 @@
+use std::thread::current;
+
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
@@ -17,7 +19,7 @@ use crate::{
         shooting::{
             components::{
                 BloodScreenEffect, MuzzleFlash, PlayerShootCooldownTimer,
-                PlayerWeapon,
+                PlayerWeapons, Weapon,
             },
             messages::{
                 PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage,
@@ -27,8 +29,8 @@ use crate::{
         },
     },
     shared::{
-        DEFAULT_BULLET_DAMAGE, WeaponType, components::DespawnTimer,
-        get_fire_delay_by_weapon_type,
+        DEFAULT_BULLET_DAMAGE, WeaponSlot, WeaponState, WeaponStats,
+        WeaponType, components::DespawnTimer, get_fire_delay_by_weapon_type,
     },
     utils::random::get_random_number_from_range,
 };
@@ -46,18 +48,35 @@ type WorldModelCameraQuery<'w, 's> = Single<
     (With<WorldModelCamera>, Without<Player>),
 >;
 
-pub fn setup_player_weapon(
+pub fn add_player_weapons_to_new_players(
     added_players: Query<Entity, Added<Player>>,
     mut commands: Commands,
 ) {
     for player_entity in added_players {
-        commands.entity(player_entity).insert(PlayerWeapon {
-            loaded_ammo: 30,
-            max_loaded_ammo: 30,
-            carried_ammo: 99999,
-            reloading: false,
-            is_shooting: false,
-            weapon_type: WeaponType::Pistol,
+        commands.entity(player_entity).insert(PlayerWeapons {
+            active: WeaponSlot::Primary,
+            weapons: [
+                Weapon {
+                    stats: WeaponStats {
+                        weapon_type: WeaponType::AssaultRifle,
+                        max_loaded_ammo: 30,
+                    },
+                    state: WeaponState {
+                        loaded_ammo: 30,
+                        carried_ammo: 120,
+                    },
+                },
+                Weapon {
+                    stats: WeaponStats {
+                        weapon_type: WeaponType::Pistol,
+                        max_loaded_ammo: 15,
+                    },
+                    state: WeaponState {
+                        loaded_ammo: 15,
+                        carried_ammo: 50,
+                    },
+                },
+            ],
         });
     }
 }
@@ -70,21 +89,23 @@ pub fn handle_input(
         ReloadPlayerWeaponMessage,
     >,
     player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
-    mut player_weapon: Single<&mut PlayerWeapon>,
+    mut player_weapons: Single<&mut PlayerWeapons>,
 ) {
-    let shoot_button_pressed =
-        if player_weapon.weapon_type == WeaponType::Pistol {
-            mouse_input.just_pressed(MouseButton::Left)
-        } else {
-            mouse_input.pressed(MouseButton::Left)
-        };
+    let current_weapon_secondary =
+        player_weapons.active == WeaponSlot::Secondary;
+
+    let shoot_button_pressed = if current_weapon_secondary {
+        mouse_input.just_pressed(MouseButton::Left)
+    } else {
+        mouse_input.pressed(MouseButton::Left)
+    };
 
     let reload_button_pressed = keyboard_input.just_pressed(KeyCode::KeyR);
 
     if mouse_input.just_pressed(MouseButton::Left) {
-        player_weapon.is_shooting = true;
+        player_weapons.is_shooting = true;
     } else if mouse_input.just_released(MouseButton::Left) {
-        player_weapon.is_shooting = false;
+        player_weapons.is_shooting = false;
     }
 
     if shoot_button_pressed {
@@ -93,15 +114,15 @@ pub fn handle_input(
         }
 
         // TODO: play a sound which indicates empty magazine
-        if player_weapon.loaded_ammo == 0 {
+        if player_weapons.weapons[].state.loaded_ammo == 0 {
             return;
         }
 
-        if player_weapon.reloading {
+        if player_weapons.is_reloading {
             return;
         }
 
-        player_weapon.loaded_ammo -= 1;
+        current_player_weapon.state.loaded_ammo -= 1;
 
         player_shot_messsage_writer.write(PlayerWeaponFiredMessage);
     }

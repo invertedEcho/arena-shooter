@@ -44,7 +44,6 @@ pub fn spawn_player_hud(
                 ..default()
             },
             PlayerHud,
-            DespawnOnExit(InGameState::Playing),
         ))
         .with_children(|parent| {
             parent
@@ -71,19 +70,34 @@ pub fn spawn_player_hud(
                 });
             parent
                 .spawn(Node {
-                    column_gap: Val::Px(16.0),
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::End,
+                    row_gap: px(8.0),
                     ..default()
                 })
                 .with_children(|parent| {
-                    parent.spawn((
-                        Text::new(player_weapon.loaded_ammo.to_string()),
-                        PlayerLoadedAmmoText,
-                    ));
-                    parent.spawn(Text::new("/"));
-                    parent.spawn((
-                        Text::new(player_weapon.carried_ammo.to_string()),
-                        PlayerCarriedAmmoText,
-                    ));
+                    parent.spawn((Text::new("1: Rifle")));
+                    parent.spawn((Text::new("2: Pistol")));
+                    parent
+                        .spawn(Node {
+                            column_gap: Val::Px(16.0),
+                            ..default()
+                        })
+                        .with_children(|parent| {
+                            parent.spawn((
+                                Text::new(
+                                    player_weapon.loaded_ammo.to_string(),
+                                ),
+                                PlayerLoadedAmmoText,
+                            ));
+                            parent.spawn(Text::new("/"));
+                            parent.spawn((
+                                Text::new(
+                                    player_weapon.carried_ammo.to_string(),
+                                ),
+                                PlayerCarriedAmmoText,
+                            ));
+                        });
                 });
         });
 }

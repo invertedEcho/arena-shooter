@@ -7,13 +7,12 @@ use bevy_rerecast::{Navmesh, prelude::NavmeshReady};
 
 use crate::{
     game_flow::{
-        game_mode::{GameModeState, StartGameModeMessage},
+        game_mode::StartGameModeMessage,
         states::{
             AppState, InGameState, LoadingGameSubState, SelectedMapState,
         },
     },
     nav_mesh_pathfinding::NavMeshHandle,
-    player::spawn::SpawnPlayerMessage,
     user_interface::main_menu::MainMenuCamera,
     world::resources::WorldSceneHandle,
 };
