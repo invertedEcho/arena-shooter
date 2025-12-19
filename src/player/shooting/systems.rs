@@ -292,10 +292,10 @@ pub fn handle_reload_player_weapon_message(
             PARTIAL_RELOAD_TIME
         };
 
-        commands.insert_resource(PlayerWeaponReloadTimer(Timer::from_seconds(
-            reload_timer_duration,
-            TimerMode::Once,
-        )));
+        commands.insert_resource(PlayerWeaponReloadTimer {
+            timer: Timer::from_seconds(reload_timer_duration, TimerMode::Once),
+            weapon_slot: active_slot,
+        });
 
         player_weapon.reloading = true;
 
@@ -321,19 +321,21 @@ pub fn tick_player_weapon_reload_timer(
     if !player_weapons.reloading {
         return;
     }
-    reload_timer.0.tick(time.delta());
-    if reload_timer.0.just_finished() {
+
+    let timer = &mut reload_timer.timer;
+    timer.tick(time.delta());
+
+    if timer.just_finished() {
         player_weapons.reloading = false;
 
-        let active_slot = player_weapons.active_slot;
-
-        let active_weapon_stats =
-            player_weapons.weapons[active_slot].stats.clone();
+        let weapon_stats = player_weapons.weapons[reload_timer.weapon_slot]
+            .stats
+            .clone();
         let active_weapon_state =
-            &mut player_weapons.weapons[active_slot].state;
+            &mut player_weapons.weapons[reload_timer.weapon_slot].state;
 
-        let missing_bullets_to_load = active_weapon_stats.max_loaded_ammo
-            - active_weapon_state.loaded_ammo;
+        let missing_bullets_to_load =
+            weapon_stats.max_loaded_ammo - active_weapon_state.loaded_ammo;
 
         // TODO: i think this can be simplifiedk
         if active_weapon_state.carried_ammo > missing_bullets_to_load {

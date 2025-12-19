@@ -19,8 +19,6 @@ pub struct PlayerWeapons {
 pub struct Weapon {
     pub stats: WeaponStats,
     pub state: WeaponState,
-    // pub reloading: bool,
-    // pub is_shooting: bool,
 }
 
 #[derive(Component)]
