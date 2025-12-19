@@ -10,12 +10,8 @@ use crate::{
             weapon_positions::{AimType, get_position_for_weapon},
         },
         shooting::{
-            asset_paths::{
-                ASSAULT_RIFLE_MODEL_PATH, PISTOL_MODEL_PATH,
-                get_asset_path_for_weapon_type,
-            },
-            components::PlayerWeapons,
-            messages::PlayerWeaponSlotChangeMessage,
+            asset_paths::get_asset_path_for_weapon_type,
+            components::PlayerWeapons, messages::PlayerWeaponSlotChangeMessage,
         },
     },
     shared::{WeaponType, systems::apply_render_layers_to_children},
@@ -364,14 +360,12 @@ pub fn update_player_weapon_model(
 
         let weapon_type =
             &player_weapons.weapons[new_slot_index].stats.weapon_type;
+        info!("new weapon type: {}", weapon_type);
 
         let weapon_position =
             get_position_for_weapon(weapon_type, AimType::Normal);
 
-        let model_path = match weapon_type {
-            WeaponType::Pistol => PISTOL_MODEL_PATH,
-            WeaponType::AssaultRifle => ASSAULT_RIFLE_MODEL_PATH,
-        };
+        let model_path = get_asset_path_for_weapon_type(weapon_type);
 
         let weapon_model =
             asset_server.load(GltfAssetLabel::Scene(0).from_asset(model_path));

@@ -1,5 +1,5 @@
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{input::mouse::MouseWheel, prelude::*};
 
 use crate::{
     character_controller::components::MovementState,
@@ -23,7 +23,7 @@ use crate::{
                 PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage,
                 PlayerWeaponSlotChangeMessage, ReloadPlayerWeaponMessage,
             },
-            resources::PlayerWeaponReloadTimer,
+            resources::{ChangeWeaponCooldown, WeaponReloadTimer},
         },
     },
     shared::{
@@ -292,7 +292,7 @@ pub fn handle_reload_player_weapon_message(
             PARTIAL_RELOAD_TIME
         };
 
-        commands.insert_resource(PlayerWeaponReloadTimer {
+        commands.insert_resource(WeaponReloadTimer {
             timer: Timer::from_seconds(reload_timer_duration, TimerMode::Once),
             weapon_slot: active_slot,
         });
@@ -311,7 +311,7 @@ pub fn handle_reload_player_weapon_message(
 
 pub fn tick_player_weapon_reload_timer(
     mut player_weapons: Single<&mut PlayerWeapons>,
-    reload_timer: Option<ResMut<PlayerWeaponReloadTimer>>,
+    reload_timer: Option<ResMut<WeaponReloadTimer>>,
     time: Res<Time>,
 ) {
     let Some(mut reload_timer) = reload_timer else {
@@ -425,15 +425,54 @@ pub fn handle_player_death_event(
 }
 
 pub fn handle_weapon_slot_change(
+    mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut mouse_scroll_message_reader: MessageReader<MouseWheel>,
     mut player_weapons: Single<&mut PlayerWeapons>,
     mut message_writer: MessageWriter<PlayerWeaponSlotChangeMessage>,
+    existing_change_weapon_cooldown: Option<Res<ChangeWeaponCooldown>>,
 ) {
+    // dont allow changing weapon if on cooldown
+    if existing_change_weapon_cooldown.is_some() {
+        return;
+    }
+
+    let old_slot = player_weapons.active_slot;
+    let mut new_slot = old_slot;
+
+    for mouse_scroll_message in mouse_scroll_message_reader.read() {
+        if mouse_scroll_message.y != 0. {
+            let current_slot = player_weapons.active_slot;
+            new_slot = if current_slot == 0 { 1 } else { 0 };
+        }
+    }
+
     if keyboard_input.just_pressed(KeyCode::Digit1) {
-        player_weapons.active_slot = 0;
-        message_writer.write(PlayerWeaponSlotChangeMessage(0));
+        new_slot = 0;
     } else if keyboard_input.just_pressed(KeyCode::Digit2) {
-        player_weapons.active_slot = 1;
-        message_writer.write(PlayerWeaponSlotChangeMessage(1));
+        new_slot = 1;
+    }
+
+    if old_slot != new_slot {
+        info!("Weapon slot changed!");
+        player_weapons.active_slot = new_slot;
+        message_writer.write(PlayerWeaponSlotChangeMessage(new_slot));
+        commands.insert_resource(ChangeWeaponCooldown(Timer::from_seconds(
+            0.05,
+            TimerMode::Once,
+        )));
+    }
+}
+
+pub fn handle_change_weapon_slot_cooldown(
+    mut commands: Commands,
+    existing_change_weapon_cooldown: Option<ResMut<ChangeWeaponCooldown>>,
+    time: Res<Time>,
+) {
+    if let Some(mut change_weapon_cooldown) = existing_change_weapon_cooldown {
+        change_weapon_cooldown.0.tick(time.delta());
+        if change_weapon_cooldown.0.just_finished() {
+            commands.remove_resource::<ChangeWeaponCooldown>();
+        }
     }
 }
