@@ -71,19 +71,21 @@ pub fn build_checkbox<T: Component>(
     )
 }
 
+type AnyCheckboxInteraction = Or<(
+    With<Checkbox>,
+    (
+        Added<Checkbox>,
+        Changed<Hovered>,
+        Added<Checked>,
+        Added<InteractionDisabled>,
+    ),
+)>;
+
 // Update the element's styles.
 pub fn update_checkbox_style(
     mut checkboxes: Query<
         (Has<Checked>, &Hovered, &Children),
-        Or<(
-            With<Checkbox>,
-            (
-                Added<Checkbox>,
-                Changed<Hovered>,
-                Added<Checked>,
-                Added<InteractionDisabled>,
-            ),
-        )>,
+        AnyCheckboxInteraction,
     >,
     mut border_colors: Query<
         (&mut BorderColor, &mut Children),

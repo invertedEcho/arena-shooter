@@ -7,7 +7,7 @@ use crate::{
     game_flow::states::InGameState,
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
     player::{
-        Player, PlayerDeathMessage,
+        Player, PlayerDeathMessage, PlayerReady,
         camera::{
             components::{
                 PlayerWeaponModel, ViewModelCamera, WorldModelCamera,
@@ -139,6 +139,7 @@ pub fn handle_input(
     }
 
     if reload_button_pressed {
+        info!("reload button pressed sending message");
         reload_player_weapon_message_writer.write(ReloadPlayerWeaponMessage);
     }
 }
@@ -227,6 +228,7 @@ pub fn tick_player_weapon_shoot_cooldown_timer(
     }
 }
 
+// TODO: Move to player/hud module
 // TODO: this thing is too much (visually) -> only show it when player dead
 pub fn handle_blood_screen_effect(
     mut blood_screen_effect_query: Query<(
@@ -262,7 +264,7 @@ pub fn handle_blood_screen_effect(
 
 pub fn handle_reload_player_weapon_message(
     mut commands: Commands,
-    mut player_weapon: Single<&mut PlayerWeapons>,
+    mut player_weapons: Single<&mut PlayerWeapons>,
     mut message_reader: MessageReader<ReloadPlayerWeaponMessage>,
     mut player_weapon_model_transform: Single<
         &mut Transform,
@@ -270,19 +272,23 @@ pub fn handle_reload_player_weapon_message(
     >,
 ) {
     for _ in message_reader.read() {
+        info!("received reload player wepaon message message");
         // dont allow reloading when already reloading
-        if player_weapon.reloading {
+        if player_weapons.reloading {
+            info!("already reloading ignoring reloadmessage");
             return;
         }
 
-        let active_slot = player_weapon.active_slot;
+        let active_slot = player_weapons.active_slot;
         let player_weapon_stats =
-            player_weapon.weapons[active_slot].stats.clone();
-        let player_weapon_state = &mut player_weapon.weapons[active_slot].state;
+            player_weapons.weapons[active_slot].stats.clone();
+        let player_weapon_state =
+            &mut player_weapons.weapons[active_slot].state;
 
         if player_weapon_state.loaded_ammo
             == player_weapon_stats.max_loaded_ammo
         {
+            info!("plaleyr weapon already full");
             return;
         }
 
@@ -292,14 +298,15 @@ pub fn handle_reload_player_weapon_message(
             PARTIAL_RELOAD_TIME
         };
 
-        commands.insert_resource(WeaponReloadTimer {
-            timer: Timer::from_seconds(reload_timer_duration, TimerMode::Once),
-            weapon_slot: active_slot,
-        });
+        info!("inserting weaponreloadtimer");
+        commands.insert_resource(WeaponReloadTimer(Timer::from_seconds(
+            reload_timer_duration,
+            TimerMode::Once,
+        )));
 
-        player_weapon.reloading = true;
+        player_weapons.reloading = true;
 
-        let weapon_type = &player_weapon.weapons[player_weapon.active_slot]
+        let weapon_type = &player_weapons.weapons[player_weapons.active_slot]
             .stats
             .weapon_type;
         let weapon_position =
@@ -322,17 +329,17 @@ pub fn tick_player_weapon_reload_timer(
         return;
     }
 
-    let timer = &mut reload_timer.timer;
+    let timer = &mut reload_timer.0;
     timer.tick(time.delta());
 
     if timer.just_finished() {
         player_weapons.reloading = false;
 
-        let weapon_stats = player_weapons.weapons[reload_timer.weapon_slot]
-            .stats
-            .clone();
+        let active_slot = player_weapons.active_slot;
+
+        let weapon_stats = player_weapons.weapons[active_slot].stats.clone();
         let active_weapon_state =
-            &mut player_weapons.weapons[reload_timer.weapon_slot].state;
+            &mut player_weapons.weapons[active_slot].state;
 
         let missing_bullets_to_load =
             weapon_stats.max_loaded_ammo - active_weapon_state.loaded_ammo;
@@ -348,6 +355,7 @@ pub fn tick_player_weapon_reload_timer(
     }
 }
 
+// TODO: Move to audio module
 pub fn play_shooting_sound_on_player_weapon_fired(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -368,6 +376,7 @@ pub fn play_shooting_sound_on_player_weapon_fired(
     }
 }
 
+// TODO: Move to player/hud module
 pub fn spawn_muzzle_flash(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
@@ -454,13 +463,15 @@ pub fn handle_weapon_slot_change(
     }
 
     if old_slot != new_slot {
-        info!("Weapon slot changed!");
         player_weapons.active_slot = new_slot;
         message_writer.write(PlayerWeaponSlotChangeMessage(new_slot));
         commands.insert_resource(ChangeWeaponCooldown(Timer::from_seconds(
             0.05,
             TimerMode::Once,
         )));
+        // cancel any ongoing reload
+        commands.remove_resource::<WeaponReloadTimer>();
+        player_weapons.reloading = false;
     }
 }
 
