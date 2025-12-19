@@ -15,22 +15,29 @@ use crate::{
                 CurrentWaveText, EnemiesLeftText, EnemyScoreText,
                 PlayerCarriedAmmoText, PlayerCrosshair, PlayerHealthText,
                 PlayerHud, PlayerLoadedAmmoText, PlayerScoreText,
+                PlayerWeaponText,
             },
         },
         shooting::{
-            components::PlayerWeapon, messages::PlayerBulletHitEnemyMessage,
+            components::PlayerWeapons,
+            messages::{
+                PlayerBulletHitEnemyMessage, PlayerWeaponSlotChangeMessage,
+            },
         },
     },
     shared::components::{DespawnTimer, Health},
-    user_interface::ITALIC_GAME_FONT_PATH,
+    user_interface::{ITALIC_GAME_FONT_PATH, shared::PRIMARY_COLOR},
 };
 
 pub fn spawn_player_hud(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    player_query: Single<(&Health, &PlayerWeapon), Added<PlayerReady>>,
+    player_query: Single<(&Health, &PlayerWeapons), Added<PlayerReady>>,
 ) {
-    let (player_health, player_weapon) = player_query.into_inner();
+    let (player_health, player_weapons) = player_query.into_inner();
+
+    let weapon_state =
+        &player_weapons.weapons[player_weapons.active_slot].state;
 
     commands
         .spawn((
@@ -76,8 +83,30 @@ pub fn spawn_player_hud(
                     ..default()
                 })
                 .with_children(|parent| {
-                    parent.spawn((Text::new("1: Rifle")));
-                    parent.spawn((Text::new("2: Pistol")));
+                    for (index, player_weapon) in
+                        player_weapons.weapons.iter().enumerate()
+                    {
+                        let text_color = if player_weapons.active_slot == index
+                        {
+                            PRIMARY_COLOR
+                        } else {
+                            Color::WHITE.to_srgba()
+                        };
+
+                        parent.spawn((
+                            Text::new(format!(
+                                "{}: {}",
+                                index + 1,
+                                player_weapon.stats.weapon_type
+                            )),
+                            TextFont {
+                                font: asset_server.load(ITALIC_GAME_FONT_PATH),
+                                ..default()
+                            },
+                            TextColor(text_color.into()),
+                            PlayerWeaponText(index),
+                        ));
+                    }
                     parent
                         .spawn(Node {
                             column_gap: Val::Px(16.0),
@@ -85,17 +114,32 @@ pub fn spawn_player_hud(
                         })
                         .with_children(|parent| {
                             parent.spawn((
-                                Text::new(
-                                    player_weapon.loaded_ammo.to_string(),
-                                ),
+                                Text::new(weapon_state.loaded_ammo.to_string()),
                                 PlayerLoadedAmmoText,
+                                TextFont {
+                                    font: asset_server
+                                        .load(ITALIC_GAME_FONT_PATH),
+                                    ..default()
+                                },
                             ));
-                            parent.spawn(Text::new("/"));
+                            parent.spawn((
+                                Text::new("/"),
+                                TextFont {
+                                    font: asset_server
+                                        .load(ITALIC_GAME_FONT_PATH),
+                                    ..default()
+                                },
+                            ));
                             parent.spawn((
                                 Text::new(
-                                    player_weapon.carried_ammo.to_string(),
+                                    weapon_state.carried_ammo.to_string(),
                                 ),
                                 PlayerCarriedAmmoText,
+                                TextFont {
+                                    font: asset_server
+                                        .load(ITALIC_GAME_FONT_PATH),
+                                    ..default()
+                                },
                             ));
                         });
                 });
@@ -144,7 +188,7 @@ pub fn update_player_health_text(
 }
 
 pub fn update_player_ammo_text(
-    player_weapon: Single<&PlayerWeapon, Changed<PlayerWeapon>>,
+    player_weapons: Single<&PlayerWeapons, Changed<PlayerWeapons>>,
     mut player_loaded_ammo_text: Single<
         &mut Text,
         (With<PlayerLoadedAmmoText>, Without<PlayerCarriedAmmoText>),
@@ -154,8 +198,10 @@ pub fn update_player_ammo_text(
         (With<PlayerCarriedAmmoText>, Without<PlayerLoadedAmmoText>),
     >,
 ) {
-    ***player_loaded_ammo_text = player_weapon.loaded_ammo.to_string();
-    ***player_carried_ammo_text = player_weapon.carried_ammo.to_string();
+    let active_weapon = &player_weapons.weapons[player_weapons.active_slot];
+
+    ***player_loaded_ammo_text = active_weapon.state.loaded_ammo.to_string();
+    ***player_carried_ammo_text = active_weapon.state.carried_ammo.to_string();
 }
 
 pub fn spawn_bullet_hit_crosshair(
@@ -296,4 +342,22 @@ pub fn show_player_crosshair(
     >,
 ) {
     **player_crosshair_visibility = Visibility::Visible;
+}
+
+pub fn update_selected_weapon(
+    mut message_reader: MessageReader<PlayerWeaponSlotChangeMessage>,
+    mut player_weapon_texts: Query<(&mut TextColor, &PlayerWeaponText)>,
+) {
+    for message in message_reader.read() {
+        let weapon_slot = message.0;
+        for (mut text_color, player_weapon_text) in
+            player_weapon_texts.iter_mut()
+        {
+            if player_weapon_text.0 == weapon_slot {
+                text_color.0 = PRIMARY_COLOR.into();
+            } else {
+                text_color.0 = Color::WHITE;
+            }
+        }
+    }
 }

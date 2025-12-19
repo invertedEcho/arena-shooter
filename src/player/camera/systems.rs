@@ -10,8 +10,12 @@ use crate::{
             weapon_positions::{AimType, get_position_for_weapon},
         },
         shooting::{
-            asset_paths::get_asset_path_for_weapon_type,
-            components::PlayerWeapon,
+            asset_paths::{
+                ASSAULT_RIFLE_MODEL_PATH, PISTOL_MODEL_PATH,
+                get_asset_path_for_weapon_type,
+            },
+            components::PlayerWeapons,
+            messages::PlayerWeaponSlotChangeMessage,
         },
     },
     shared::{WeaponType, systems::apply_render_layers_to_children},
@@ -103,23 +107,23 @@ pub fn handle_player_scope_aim(
         &mut Transform,
         With<PlayerWeaponModel>,
     >,
-    player_weapon: Single<&PlayerWeapon>,
+    player_weapons: Single<&PlayerWeapons>,
 ) {
-    if player_weapon.reloading {
+    if player_weapons.reloading {
         return;
     }
 
+    let weapon_type = &player_weapons.weapons[player_weapons.active_slot]
+        .stats
+        .weapon_type;
+
     if mouse_input.just_pressed(MouseButton::Right) {
-        let weapon_position = get_position_for_weapon(
-            &player_weapon.weapon_type,
-            AimType::Scoped,
-        );
+        let weapon_position =
+            get_position_for_weapon(weapon_type, AimType::Scoped);
         player_weapon_model_transform.translation = weapon_position;
     } else if mouse_input.just_released(MouseButton::Right) {
-        let weapon_position = get_position_for_weapon(
-            &player_weapon.weapon_type,
-            AimType::Normal,
-        );
+        let weapon_position =
+            get_position_for_weapon(weapon_type, AimType::Normal);
         player_weapon_model_transform.translation = weapon_position;
     }
 }
@@ -340,4 +344,41 @@ pub fn weapon_sway(
         Quat::from_rotation_y(FRAC_PI_2),
         DAMPING * time.delta_secs(),
     );
+}
+
+pub fn update_player_weapon_model(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    mut message_reader: MessageReader<PlayerWeaponSlotChangeMessage>,
+    player_weapon_model_query: Single<
+        (Entity, &mut Transform),
+        With<PlayerWeaponModel>,
+    >,
+    player_weapons: Single<&PlayerWeapons>,
+) {
+    let (player_weapon_model_entity, mut player_weapon_model_transform) =
+        player_weapon_model_query.into_inner();
+
+    for message in message_reader.read() {
+        let new_slot_index = message.0;
+
+        let weapon_type =
+            &player_weapons.weapons[new_slot_index].stats.weapon_type;
+
+        let weapon_position =
+            get_position_for_weapon(weapon_type, AimType::Normal);
+
+        let model_path = match weapon_type {
+            WeaponType::Pistol => PISTOL_MODEL_PATH,
+            WeaponType::AssaultRifle => ASSAULT_RIFLE_MODEL_PATH,
+        };
+
+        let weapon_model =
+            asset_server.load(GltfAssetLabel::Scene(0).from_asset(model_path));
+
+        player_weapon_model_transform.translation = weapon_position;
+        commands
+            .entity(player_weapon_model_entity)
+            .insert((SceneRoot(weapon_model),));
+    }
 }

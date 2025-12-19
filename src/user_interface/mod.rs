@@ -16,7 +16,7 @@ pub mod main_menu;
 mod map_selection;
 mod pause_menu;
 mod settings_menu;
-mod shared;
+pub mod shared;
 mod widgets;
 
 const DEFAULT_GAME_FONT_PATH: &str = "fonts/Exo_2/static/Exo2-Regular.ttf";

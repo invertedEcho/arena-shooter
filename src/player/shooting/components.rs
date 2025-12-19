@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::shared::{WeaponSlot, WeaponState, WeaponStats};
+use crate::shared::{WeaponState, WeaponStats};
 
 #[derive(Component)]
 pub struct PlayerShootCooldownTimer(pub Timer);
@@ -10,10 +10,10 @@ pub struct MuzzleFlash;
 
 #[derive(Component)]
 pub struct PlayerWeapons {
-    pub active: WeaponSlot,
+    pub active_slot: usize,
     pub weapons: [Weapon; 2],
-    pub is_shooting: bool,
-    pub is_reloading: bool,
+    pub shooting: bool,
+    pub reloading: bool,
 }
 
 pub struct Weapon {

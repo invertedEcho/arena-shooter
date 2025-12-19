@@ -1,5 +1,3 @@
-use std::thread::current;
-
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
@@ -23,13 +21,13 @@ use crate::{
             },
             messages::{
                 PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage,
-                ReloadPlayerWeaponMessage,
+                PlayerWeaponSlotChangeMessage, ReloadPlayerWeaponMessage,
             },
             resources::PlayerWeaponReloadTimer,
         },
     },
     shared::{
-        DEFAULT_BULLET_DAMAGE, WeaponSlot, WeaponState, WeaponStats,
+        DEFAULT_BULLET_DAMAGE, WeaponSlotType, WeaponState, WeaponStats,
         WeaponType, components::DespawnTimer, get_fire_delay_by_weapon_type,
     },
     utils::random::get_random_number_from_range,
@@ -54,12 +52,15 @@ pub fn add_player_weapons_to_new_players(
 ) {
     for player_entity in added_players {
         commands.entity(player_entity).insert(PlayerWeapons {
-            active: WeaponSlot::Primary,
+            shooting: false,
+            reloading: false,
+            active_slot: 1,
             weapons: [
                 Weapon {
                     stats: WeaponStats {
                         weapon_type: WeaponType::AssaultRifle,
                         max_loaded_ammo: 30,
+                        weapon_slot_type: WeaponSlotType::Primary,
                     },
                     state: WeaponState {
                         loaded_ammo: 30,
@@ -70,6 +71,7 @@ pub fn add_player_weapons_to_new_players(
                     stats: WeaponStats {
                         weapon_type: WeaponType::Pistol,
                         max_loaded_ammo: 15,
+                        weapon_slot_type: WeaponSlotType::Secondary,
                     },
                     state: WeaponState {
                         loaded_ammo: 15,
@@ -91,8 +93,11 @@ pub fn handle_input(
     player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
     mut player_weapons: Single<&mut PlayerWeapons>,
 ) {
-    let current_weapon_secondary =
-        player_weapons.active == WeaponSlot::Secondary;
+    let current_weapon_secondary = player_weapons.weapons
+        [player_weapons.active_slot]
+        .stats
+        .weapon_slot_type
+        == WeaponSlotType::Secondary;
 
     let shoot_button_pressed = if current_weapon_secondary {
         mouse_input.just_pressed(MouseButton::Left)
@@ -103,9 +108,9 @@ pub fn handle_input(
     let reload_button_pressed = keyboard_input.just_pressed(KeyCode::KeyR);
 
     if mouse_input.just_pressed(MouseButton::Left) {
-        player_weapons.is_shooting = true;
+        player_weapons.shooting = true;
     } else if mouse_input.just_released(MouseButton::Left) {
-        player_weapons.is_shooting = false;
+        player_weapons.shooting = false;
     }
 
     if shoot_button_pressed {
@@ -114,15 +119,21 @@ pub fn handle_input(
         }
 
         // TODO: play a sound which indicates empty magazine
-        if player_weapons.weapons[].state.loaded_ammo == 0 {
+        let active_weapon_empty = player_weapons.weapons
+            [player_weapons.active_slot]
+            .state
+            .loaded_ammo
+            == 0;
+        if active_weapon_empty {
             return;
         }
 
-        if player_weapons.is_reloading {
+        if player_weapons.reloading {
             return;
         }
 
-        current_player_weapon.state.loaded_ammo -= 1;
+        let active_slot = player_weapons.active_slot;
+        player_weapons.weapons[active_slot].state.loaded_ammo -= 1;
 
         player_shot_messsage_writer.write(PlayerWeaponFiredMessage);
     }
@@ -144,13 +155,16 @@ pub fn handle_player_weapon_fired_message(
         SpawnBulletImpactEffectMessage,
     >,
     world_model_camera_query: WorldModelCameraQuery,
-    player_query: Single<(Entity, &PlayerWeapon), With<Player>>,
+    player_query: Single<(Entity, &PlayerWeapons), With<Player>>,
 ) {
     let (player_entity, player_weapon) = player_query.into_inner();
 
     for _ in message_reader.read() {
-        let fire_delay =
-            get_fire_delay_by_weapon_type(&player_weapon.weapon_type);
+        let fire_delay = get_fire_delay_by_weapon_type(
+            &player_weapon.weapons[player_weapon.active_slot]
+                .stats
+                .weapon_type,
+        );
         commands.spawn(PlayerShootCooldownTimer(Timer::from_seconds(
             fire_delay,
             TimerMode::Once,
@@ -248,7 +262,7 @@ pub fn handle_blood_screen_effect(
 
 pub fn handle_reload_player_weapon_message(
     mut commands: Commands,
-    mut player_weapon: Single<&mut PlayerWeapon>,
+    mut player_weapon: Single<&mut PlayerWeapons>,
     mut message_reader: MessageReader<ReloadPlayerWeaponMessage>,
     mut player_weapon_model_transform: Single<
         &mut Transform,
@@ -261,11 +275,18 @@ pub fn handle_reload_player_weapon_message(
             return;
         }
 
-        if player_weapon.loaded_ammo == player_weapon.max_loaded_ammo {
+        let active_slot = player_weapon.active_slot;
+        let player_weapon_stats =
+            player_weapon.weapons[active_slot].stats.clone();
+        let player_weapon_state = &mut player_weapon.weapons[active_slot].state;
+
+        if player_weapon_state.loaded_ammo
+            == player_weapon_stats.max_loaded_ammo
+        {
             return;
         }
 
-        let reload_timer_duration = if player_weapon.loaded_ammo == 0 {
+        let reload_timer_duration = if player_weapon_state.loaded_ammo == 0 {
             FULL_RELOAD_TIME
         } else {
             PARTIAL_RELOAD_TIME
@@ -278,16 +299,18 @@ pub fn handle_reload_player_weapon_message(
 
         player_weapon.reloading = true;
 
-        let weapon_position = get_position_for_weapon(
-            &player_weapon.weapon_type,
-            AimType::Normal,
-        );
+        let weapon_type = &player_weapon.weapons[player_weapon.active_slot]
+            .stats
+            .weapon_type;
+        let weapon_position =
+            get_position_for_weapon(weapon_type, AimType::Normal);
+
         player_weapon_model_transform.translation = weapon_position;
     }
 }
 
 pub fn tick_player_weapon_reload_timer(
-    mut player_weapon: Single<&mut PlayerWeapon>,
+    mut player_weapons: Single<&mut PlayerWeapons>,
     reload_timer: Option<ResMut<PlayerWeaponReloadTimer>>,
     time: Res<Time>,
 ) {
@@ -295,22 +318,30 @@ pub fn tick_player_weapon_reload_timer(
         return;
     };
 
-    if !player_weapon.reloading {
+    if !player_weapons.reloading {
         return;
     }
     reload_timer.0.tick(time.delta());
     if reload_timer.0.just_finished() {
-        player_weapon.reloading = false;
+        player_weapons.reloading = false;
 
-        let missing_bullets_to_load =
-            player_weapon.max_loaded_ammo - player_weapon.loaded_ammo;
+        let active_slot = player_weapons.active_slot;
 
-        if player_weapon.carried_ammo > missing_bullets_to_load {
-            player_weapon.loaded_ammo += missing_bullets_to_load;
-            player_weapon.carried_ammo -= missing_bullets_to_load;
+        let active_weapon_stats =
+            player_weapons.weapons[active_slot].stats.clone();
+        let active_weapon_state =
+            &mut player_weapons.weapons[active_slot].state;
+
+        let missing_bullets_to_load = active_weapon_stats.max_loaded_ammo
+            - active_weapon_state.loaded_ammo;
+
+        // TODO: i think this can be simplifiedk
+        if active_weapon_state.carried_ammo > missing_bullets_to_load {
+            active_weapon_state.loaded_ammo += missing_bullets_to_load;
+            active_weapon_state.carried_ammo -= missing_bullets_to_load;
         } else {
-            player_weapon.loaded_ammo = player_weapon.carried_ammo;
-            player_weapon.carried_ammo = 0;
+            active_weapon_state.loaded_ammo = active_weapon_state.carried_ammo;
+            active_weapon_state.carried_ammo = 0;
         }
     }
 }
@@ -388,5 +419,19 @@ pub fn handle_player_death_event(
     for _ in message_reader.read() {
         **player_movement_state = MovementState::Idle;
         next_in_game_state.set(InGameState::PlayerDead);
+    }
+}
+
+pub fn handle_weapon_slot_change(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut player_weapons: Single<&mut PlayerWeapons>,
+    mut message_writer: MessageWriter<PlayerWeaponSlotChangeMessage>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Digit1) {
+        player_weapons.active_slot = 0;
+        message_writer.write(PlayerWeaponSlotChangeMessage(0));
+    } else if keyboard_input.just_pressed(KeyCode::Digit2) {
+        player_weapons.active_slot = 1;
+        message_writer.write(PlayerWeaponSlotChangeMessage(1));
     }
 }

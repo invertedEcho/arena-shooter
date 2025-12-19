@@ -26,3 +26,6 @@ pub struct EnemiesLeftText;
 
 #[derive(Component)]
 pub struct PlayerCrosshair;
+
+#[derive(Component)]
+pub struct PlayerWeaponText(pub usize);

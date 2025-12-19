@@ -11,7 +11,7 @@ use crate::{
     },
     player::{
         camera::components::PlayerCameraState,
-        shooting::components::PlayerWeapon,
+        shooting::components::PlayerWeapons,
     },
     world::world_objects::medkit::Medkit,
 };
@@ -23,7 +23,7 @@ pub fn handle_keyboard_input_for_player(
         &Transform,
         &mut MovementState,
         Entity,
-        &PlayerWeapon,
+        &PlayerWeapons,
         &PlayerCameraState,
     )>,
 ) {
@@ -31,7 +31,7 @@ pub fn handle_keyboard_input_for_player(
         player_transform,
         mut movement_state,
         player_entity,
-        player_weapon,
+        player_weapons,
         player_camera_state,
     ) = player_query.into_inner();
 
@@ -40,7 +40,7 @@ pub fn handle_keyboard_input_for_player(
     }
 
     let shift_pressed = keyboard_input.pressed(KeyCode::ShiftLeft);
-    let reloading = player_weapon.reloading;
+    let reloading = player_weapons.reloading;
 
     let speed = if shift_pressed && !reloading {
         RUN_VELOCITY
@@ -124,6 +124,8 @@ pub fn handle_movement_actions_for_character_controllers(
             MovementDirection::Jump => {
                 if grounded.0 {
                     velocity.y = JUMP_VELOCITY;
+                } else {
+                    info!("not grounded, not allowing jump");
                 }
             }
             // TODO: should probably move the content of this block elsewhere
