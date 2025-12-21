@@ -3,25 +3,25 @@ use bevy::prelude::*;
 use crate::shared::WeaponType;
 
 const NORMAL_POSITION_PISTOL: Vec3 = Vec3 {
-    x: 0.35,
-    y: -0.05,
-    z: -0.9,
+    x: 0.25,
+    y: -0.25,
+    z: -0.5,
 };
 
 const SCOPED_POSITION_PISTOL: Vec3 = Vec3 {
     x: 0.0,
-    y: 0.11,
-    z: -0.4,
+    y: -0.2,
+    z: -0.3,
 };
 
 const NORMAL_POSITION_ASSAULT_RIFLE: Vec3 = Vec3 {
-    x: 0.4,
-    y: -0.2,
-    z: -1.0,
+    x: 0.2,
+    y: -0.3,
+    z: -0.5,
 };
 const SCOPED_POSITION_ASSAULT_RIFLE: Vec3 = Vec3 {
     x: 0.0,
-    y: -0.05,
+    y: -0.3,
     z: -0.3,
 };
 
@@ -33,7 +33,7 @@ pub enum AimType {
 
 pub fn get_position_for_weapon(
     weapon_type: &WeaponType,
-    aim_type: AimType,
+    aim_type: &AimType,
 ) -> Vec3 {
     match weapon_type {
         WeaponType::Pistol => match aim_type {

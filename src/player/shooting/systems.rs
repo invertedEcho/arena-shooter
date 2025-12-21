@@ -50,7 +50,7 @@ pub fn add_player_weapons_to_new_players(
         commands.entity(player_entity).insert(PlayerWeapons {
             shooting: false,
             reloading: false,
-            active_slot: 1,
+            active_slot: 0,
             aim_type: AimType::Normal,
             weapons: [
                 Weapon {
@@ -307,7 +307,7 @@ pub fn handle_reload_player_weapon_message(
             .stats
             .weapon_type;
         let weapon_position =
-            get_position_for_weapon(weapon_type, AimType::Normal);
+            get_position_for_weapon(weapon_type, &AimType::Normal);
 
         player_weapon_model_transform.translation = weapon_position;
     }
@@ -341,7 +341,7 @@ pub fn tick_player_weapon_reload_timer(
         let missing_bullets_to_load =
             weapon_stats.max_loaded_ammo - active_weapon_state.loaded_ammo;
 
-        // TODO: i think this can be simplifiedk
+        // TODO: i think this can be simplified
         if active_weapon_state.carried_ammo > missing_bullets_to_load {
             active_weapon_state.loaded_ammo += missing_bullets_to_load;
             active_weapon_state.carried_ammo -= missing_bullets_to_load;
@@ -390,7 +390,6 @@ pub fn handle_weapon_slot_change(
     mut message_writer: MessageWriter<PlayerWeaponSlotChangeMessage>,
     existing_change_weapon_cooldown: Option<Res<ChangeWeaponCooldown>>,
 ) {
-    return;
     // dont allow changing weapon if on cooldown
     if existing_change_weapon_cooldown.is_some() {
         return;

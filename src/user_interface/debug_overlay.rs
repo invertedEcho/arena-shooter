@@ -40,9 +40,6 @@ struct CurrentMainMenuStateText;
 #[derive(Component)]
 struct PlayerInfoText;
 
-#[derive(Component)]
-struct PlayerMovementStateText;
-
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
         .spawn((

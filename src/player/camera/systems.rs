@@ -17,7 +17,7 @@ use crate::{
             },
         },
     },
-    shared::{WeaponType, systems::apply_render_layers_to_children},
+    shared::WeaponType,
     utils::random::get_random_number_from_range,
 };
 use std::f32::consts::FRAC_PI_2;
@@ -28,7 +28,7 @@ use super::components::{
 
 use bevy::{
     camera::visibility::RenderLayers, input::mouse::AccumulatedMouseMotion,
-    light::NotShadowCaster, prelude::*,
+    prelude::*,
 };
 use bevy_inspector_egui::bevy_egui;
 
@@ -60,18 +60,19 @@ pub fn setup_player_cameras(
                 Camera3d::default(),
                 Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
                 Projection::from(PerspectiveProjection {
-                    fov: 90.0_f32.to_radians(),
+                    fov: 80.0_f32.to_radians(),
                     ..default()
                 }),
             ));
 
             let weapon_model_path =
-                get_asset_path_for_weapon_type(&WeaponType::Pistol);
+                get_asset_path_for_weapon_type(&WeaponType::AssaultRifle);
             let weapon_model = asset_server
                 .load(GltfAssetLabel::Scene(0).from_asset(weapon_model_path));
-
-            let weapon_position =
-                get_position_for_weapon(&WeaponType::Pistol, AimType::Normal);
+            let weapon_position = get_position_for_weapon(
+                &WeaponType::AssaultRifle,
+                &AimType::Normal,
+            );
             parent
                 .spawn((
                     Name::new("ViewModelCamera"),
@@ -86,25 +87,19 @@ pub fn setup_player_cameras(
                     bevy_egui::PrimaryEguiContext,
                     RenderLayers::layer(1),
                     Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
-                    Projection::from(PerspectiveProjection {
-                        fov: 65.0_f32.to_radians(),
-                        ..default()
-                    }),
                 ))
                 .with_child((
                     Name::new("PlayerWeaponModel"),
                     SceneRoot(weapon_model),
                     Transform {
                         translation: weapon_position,
-                        scale: Vec3::splat(3.0),
+                        scale: Vec3::splat(2.0),
                         rotation: Quat::from_rotation_y(FRAC_PI_2),
                     },
-                    RenderLayers::layer(1),
-                    NotShadowCaster,
                     PlayerWeaponModel,
                     Visibility::Visible,
-                ))
-                .observe(apply_render_layers_to_children);
+                    RenderLayers::layer(1),
+                ));
         });
     }
 }
@@ -129,12 +124,12 @@ pub fn handle_player_scope_aim(
     if mouse_input.just_pressed(MouseButton::Right) {
         player_weapons.aim_type = AimType::Scoped;
         let weapon_position =
-            get_position_for_weapon(&weapon_type, AimType::Scoped);
+            get_position_for_weapon(&weapon_type, &AimType::Scoped);
         player_weapon_model_transform.translation = weapon_position;
     } else if mouse_input.just_released(MouseButton::Right) {
         player_weapons.aim_type = AimType::Normal;
         let weapon_position =
-            get_position_for_weapon(&weapon_type, AimType::Normal);
+            get_position_for_weapon(&weapon_type, &AimType::Normal);
         player_weapon_model_transform.translation = weapon_position;
     }
 }
@@ -356,10 +351,9 @@ pub fn update_player_weapon_model(
 
         let weapon_type =
             &player_weapons.weapons[new_slot_index].stats.weapon_type;
-        info!("new weapon type: {}", weapon_type);
 
         let weapon_position =
-            get_position_for_weapon(weapon_type, AimType::Normal);
+            get_position_for_weapon(weapon_type, &AimType::Normal);
 
         let model_path = get_asset_path_for_weapon_type(weapon_type);
 
@@ -379,7 +373,7 @@ pub fn spawn_muzzle_flash(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut player_shot_message_reader: MessageReader<PlayerWeaponFiredMessage>,
-    player_camera_entity: Single<Entity, With<PlayerWeaponModel>>,
+    player_camera_entity: Single<Entity, With<ViewModelCamera>>,
     player_weapons: Single<&PlayerWeapons>,
 ) {
     for _ in player_shot_message_reader.read() {
