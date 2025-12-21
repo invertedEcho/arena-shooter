@@ -12,7 +12,6 @@ use crate::{
             handle_change_weapon_slot_cooldown, handle_input,
             handle_player_death_event, handle_player_weapon_fired_message,
             handle_reload_player_weapon_message, handle_weapon_slot_change,
-            play_shooting_sound_on_player_weapon_fired,
             tick_player_weapon_reload_timer,
             tick_player_weapon_shoot_cooldown_timer,
         },
@@ -44,7 +43,6 @@ impl Plugin for PlayerShootingPlugin {
                     add_player_weapons_to_new_players,
                     tick_player_weapon_reload_timer,
                     handle_player_death_event,
-                    play_shooting_sound_on_player_weapon_fired,
                     handle_weapon_slot_change,
                     handle_change_weapon_slot_cooldown,
                 )

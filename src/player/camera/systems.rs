@@ -17,8 +17,7 @@ use crate::{
             },
         },
     },
-    shared::WeaponType,
-    utils::random::get_random_number_from_range,
+    shared::{WeaponType, components::DespawnTimer},
 };
 use std::f32::consts::FRAC_PI_2;
 
@@ -373,25 +372,21 @@ pub fn spawn_muzzle_flash(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut player_shot_message_reader: MessageReader<PlayerWeaponFiredMessage>,
-    player_camera_entity: Single<Entity, With<ViewModelCamera>>,
+    player_weapon_model_entity: Single<Entity, With<PlayerWeaponModel>>,
     player_weapons: Single<&PlayerWeapons>,
 ) {
     for _ in player_shot_message_reader.read() {
         let active_weapon = player_weapons.active_slot;
-        let random_rotation_angle = get_random_number_from_range(0..5);
         let muzzle_flash_position = get_muzzle_flash_position_for_weapon(
             &player_weapons.weapons[active_weapon].stats.weapon_type,
             &player_weapons.aim_type,
         );
 
-        commands.entity(*player_camera_entity).with_child((
+        commands.entity(*player_weapon_model_entity).with_child((
             Transform {
                 translation: muzzle_flash_position,
-                // rotation: Quat::from_axis_angle(
-                //     Vec3::Z,
-                //     random_rotation_angle as f32,
-                // ),
-                ..default()
+                rotation: Quat::from_euler(EulerRot::XYZ, 0.0, -FRAC_PI_2, 0.0),
+                scale: Vec3::splat(2.0),
             },
             MuzzleFlash,
             Mesh3d(meshes.add(Plane3d {
@@ -399,16 +394,13 @@ pub fn spawn_muzzle_flash(
                 normal: Dir3::Z,
             })),
             MeshMaterial3d(materials.add(StandardMaterial {
-                base_color_texture: Some(
-                    // TODO: dont use cropped version to avoid the bleeding
-                    // thing
-                    asset_server.load("muzzle_flash.png"),
-                ),
+                base_color_texture: Some(asset_server.load("muzzle_flash.png")),
                 alpha_mode: AlphaMode::Blend,
                 unlit: true,
                 ..default()
             })),
-            // DespawnTimer(Timer::from_seconds(0.05, TimerMode::Once)),
+            DespawnTimer(Timer::from_seconds(0.05, TimerMode::Once)),
+            RenderLayers::layer(1),
         ));
     }
 }

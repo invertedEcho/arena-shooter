@@ -25,7 +25,7 @@ use crate::{
     },
     shared::{
         DEFAULT_BULLET_DAMAGE, WeaponSlotType, WeaponState, WeaponStats,
-        WeaponType, components::DespawnTimer, get_fire_delay_by_weapon_type,
+        WeaponType, get_fire_delay_by_weapon_type,
     },
 };
 
@@ -352,27 +352,7 @@ pub fn tick_player_weapon_reload_timer(
     }
 }
 
-// TODO: Move to audio module
-pub fn play_shooting_sound_on_player_weapon_fired(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
-) {
-    for _ in message_reader.read() {
-        let shoot_sound = asset_server.load(
-            "sfx/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 \
-             Single MP3.mp3",
-        );
-
-        commands.spawn((
-            AudioPlayer::new(shoot_sound),
-            PlaybackSettings::ONCE,
-            Name::new("shoot sound player"),
-            DespawnTimer(Timer::from_seconds(2.0, TimerMode::Once)),
-        ));
-    }
-}
-
+// TODO: move to game_flow module
 pub fn handle_player_death_event(
     mut message_reader: MessageReader<PlayerDeathMessage>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
