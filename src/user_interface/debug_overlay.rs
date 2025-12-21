@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 
 use crate::{
-    character_controller::components::MovementState,
     game_flow::states::{AppDebugState, AppState, InGameState, MainMenuState},
     player::Player,
 };
@@ -24,7 +23,6 @@ impl Plugin for DebugOverlayPlugin {
                 toggle_debug,
                 update_player_info_text,
                 update_current_main_menu_state,
-                update_player_movement_state_text,
             ),
         );
     }
@@ -41,9 +39,6 @@ struct CurrentMainMenuStateText;
 
 #[derive(Component)]
 struct PlayerInfoText;
-
-#[derive(Component)]
-struct PlayerMovementStateText;
 
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
@@ -62,21 +57,6 @@ fn spawn_debug_overlay(mut commands: Commands) {
             parent.spawn((
                 Text::new(""),
                 PlayerInfoText,
-                TextFont {
-                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                    ..default()
-                },
-            ));
-            parent.spawn((
-                Text::new("Player Movement State:"),
-                TextFont {
-                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                    ..default()
-                },
-            ));
-            parent.spawn((
-                Text::new(""),
-                PlayerMovementStateText,
                 TextFont {
                     font_size: DEBUG_OVERLAY_TEXT_SIZE,
                     ..default()
@@ -196,18 +176,5 @@ fn update_player_info_text(
 ) {
     for mut player_info_text in player_text {
         **player_info_text = format!("{:?}", *changed_player);
-    }
-}
-
-fn update_player_movement_state_text(
-    changed_player_movement_state: Single<
-        &MovementState,
-        Changed<MovementState>,
-    >,
-    player_movement_state_text: Query<&mut Text, With<PlayerMovementStateText>>,
-) {
-    for mut player_movement_state_text in player_movement_state_text {
-        **player_movement_state_text =
-            format!("{:?}", *changed_player_movement_state);
     }
 }

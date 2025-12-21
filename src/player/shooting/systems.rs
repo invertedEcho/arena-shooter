@@ -1,36 +1,32 @@
-use std::f32::consts::PI;
-
 use avian3d::prelude::*;
-use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
+use bevy::{input::mouse::MouseWheel, prelude::*};
 
 use crate::{
-    character_controller::components::MovementState,
     enemy::Enemy,
     game_flow::states::InGameState,
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
     player::{
         Player, PlayerDeathMessage,
-        animate::{ArmWithWeaponAnimation, PlayArmWithWeaponAnimationMessage},
         camera::{
-            DEFAULT_POSITION_PLAYER_WEAPON,
-            components::{
-                PlayerWeaponModel, ViewModelCamera, WorldModelCamera,
-            },
+            components::{PlayerWeaponModel, WorldCamera},
+            weapon_positions::{AimType, get_position_for_weapon},
         },
         shooting::{
             components::{
-                BloodScreenEffect, MuzzleFlash, PlayerShootCooldownTimer,
-                PlayerWeapon,
+                BloodScreenEffect, PlayerShootCooldownTimer, PlayerWeapons,
+                Weapon,
             },
             messages::{
                 PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage,
-                ReloadPlayerWeaponMessage,
+                PlayerWeaponSlotChangeMessage, ReloadPlayerWeaponMessage,
             },
-            resources::PlayerWeaponReloadTimer,
+            resources::{ChangeWeaponCooldown, WeaponReloadTimer},
         },
     },
-    shared::{DEFAULT_BULLET_DAMAGE, components::DespawnTimer},
-    utils::random::get_random_number_from_range,
+    shared::{
+        DEFAULT_BULLET_DAMAGE, WeaponSlotType, WeaponState, WeaponStats,
+        WeaponType, get_fire_delay_by_weapon_type,
+    },
 };
 
 /// How long it takes to reload for a partial reload (and playing the corresponding animation), e.g. some bullets are left in
@@ -43,20 +39,43 @@ type WorldModelCameraQuery<'w, 's> = Single<
     'w,
     's,
     (Entity, &'static GlobalTransform),
-    (With<WorldModelCamera>, Without<Player>),
+    (With<WorldCamera>, Without<Player>),
 >;
 
-pub fn setup_player_weapon(
+pub fn add_player_weapons_to_new_players(
     added_players: Query<Entity, Added<Player>>,
     mut commands: Commands,
 ) {
     for player_entity in added_players {
-        commands.entity(player_entity).insert(PlayerWeapon {
-            loaded_ammo: 30,
-            max_loaded_ammo: 30,
-            carried_ammo: 99999,
+        commands.entity(player_entity).insert(PlayerWeapons {
+            shooting: false,
             reloading: false,
-            is_shooting: false,
+            active_slot: 0,
+            aim_type: AimType::Normal,
+            weapons: [
+                Weapon {
+                    stats: WeaponStats {
+                        weapon_type: WeaponType::AssaultRifle,
+                        max_loaded_ammo: 30,
+                        weapon_slot_type: WeaponSlotType::Primary,
+                    },
+                    state: WeaponState {
+                        loaded_ammo: 30,
+                        carried_ammo: 120,
+                    },
+                },
+                Weapon {
+                    stats: WeaponStats {
+                        weapon_type: WeaponType::Pistol,
+                        max_loaded_ammo: 15,
+                        weapon_slot_type: WeaponSlotType::Secondary,
+                    },
+                    state: WeaponState {
+                        loaded_ammo: 15,
+                        carried_ammo: 50,
+                    },
+                },
+            ],
         });
     }
 }
@@ -65,52 +84,59 @@ pub fn handle_input(
     mouse_input: Res<ButtonInput<MouseButton>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_shot_messsage_writer: MessageWriter<PlayerWeaponFiredMessage>,
-    mut play_arm_with_weapon_animation_message_writer: MessageWriter<
-        PlayArmWithWeaponAnimationMessage,
-    >,
     mut reload_player_weapon_message_writer: MessageWriter<
         ReloadPlayerWeaponMessage,
     >,
     player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
-    mut player_weapon: Single<&mut PlayerWeapon>,
+    mut player_weapons: Single<&mut PlayerWeapons>,
 ) {
-    let mouse_button_left_pressed = mouse_input.pressed(MouseButton::Left);
+    let current_weapon_secondary = player_weapons.weapons
+        [player_weapons.active_slot]
+        .stats
+        .weapon_slot_type
+        == WeaponSlotType::Secondary;
+
+    let shoot_button_pressed = if current_weapon_secondary {
+        mouse_input.just_pressed(MouseButton::Left)
+    } else {
+        mouse_input.pressed(MouseButton::Left)
+    };
+
     let reload_button_pressed = keyboard_input.just_pressed(KeyCode::KeyR);
 
     if mouse_input.just_pressed(MouseButton::Left) {
-        player_weapon.is_shooting = true;
+        player_weapons.shooting = true;
     } else if mouse_input.just_released(MouseButton::Left) {
-        player_weapon.is_shooting = false;
+        player_weapons.shooting = false;
     }
 
-    if mouse_button_left_pressed {
+    if shoot_button_pressed {
         if player_weapon_shoot_cooldown_timer_query.iter().len() != 0 {
             return;
         }
 
         // TODO: play a sound which indicates empty magazine
-        if player_weapon.loaded_ammo == 0 {
+        let active_weapon_empty = player_weapons.weapons
+            [player_weapons.active_slot]
+            .state
+            .loaded_ammo
+            == 0;
+        if active_weapon_empty {
             return;
         }
 
-        if player_weapon.reloading {
+        if player_weapons.reloading {
             return;
         }
 
-        player_weapon.loaded_ammo -= 1;
-
-        play_arm_with_weapon_animation_message_writer.write(
-            PlayArmWithWeaponAnimationMessage {
-                animation_type: ArmWithWeaponAnimation::Shoot,
-                repeat: false,
-                block_until_done: true,
-            },
-        );
+        let active_slot = player_weapons.active_slot;
+        player_weapons.weapons[active_slot].state.loaded_ammo -= 1;
 
         player_shot_messsage_writer.write(PlayerWeaponFiredMessage);
     }
 
     if reload_button_pressed {
+        info!("reload button pressed sending message");
         reload_player_weapon_message_writer.write(ReloadPlayerWeaponMessage);
     }
 }
@@ -127,11 +153,18 @@ pub fn handle_player_weapon_fired_message(
         SpawnBulletImpactEffectMessage,
     >,
     world_model_camera_query: WorldModelCameraQuery,
-    player_entity: Single<Entity, With<Player>>,
+    player_query: Single<(Entity, &PlayerWeapons), With<Player>>,
 ) {
+    let (player_entity, player_weapon) = player_query.into_inner();
+
     for _ in message_reader.read() {
+        let fire_delay = get_fire_delay_by_weapon_type(
+            &player_weapon.weapons[player_weapon.active_slot]
+                .stats
+                .weapon_type,
+        );
         commands.spawn(PlayerShootCooldownTimer(Timer::from_seconds(
-            0.1,
+            fire_delay,
             TimerMode::Once,
         )));
 
@@ -144,7 +177,7 @@ pub fn handle_player_weapon_fired_message(
             500.0,
             false,
             &SpatialQueryFilter::default()
-                .with_excluded_entities([*player_entity]),
+                .with_excluded_entities([player_entity]),
         ) {
             let entity_hit = first_hit.entity;
 
@@ -192,6 +225,7 @@ pub fn tick_player_weapon_shoot_cooldown_timer(
     }
 }
 
+// TODO: Move to player/hud module
 // TODO: this thing is too much (visually) -> only show it when player dead
 pub fn handle_blood_screen_effect(
     mut blood_screen_effect_query: Query<(
@@ -227,10 +261,7 @@ pub fn handle_blood_screen_effect(
 
 pub fn handle_reload_player_weapon_message(
     mut commands: Commands,
-    mut player_weapon: Single<&mut PlayerWeapon>,
-    mut animation_message_writer: MessageWriter<
-        PlayArmWithWeaponAnimationMessage,
-    >,
+    mut player_weapons: Single<&mut PlayerWeapons>,
     mut message_reader: MessageReader<ReloadPlayerWeaponMessage>,
     mut player_weapon_model_transform: Single<
         &mut Transform,
@@ -238,169 +269,150 @@ pub fn handle_reload_player_weapon_message(
     >,
 ) {
     for _ in message_reader.read() {
+        info!("received reload player wepaon message message");
         // dont allow reloading when already reloading
-        if player_weapon.reloading {
+        if player_weapons.reloading {
+            info!("already reloading ignoring reloadmessage");
             return;
         }
 
-        if player_weapon.loaded_ammo == player_weapon.max_loaded_ammo {
+        let active_slot = player_weapons.active_slot;
+        let player_weapon_stats =
+            player_weapons.weapons[active_slot].stats.clone();
+        let player_weapon_state =
+            &mut player_weapons.weapons[active_slot].state;
+
+        if player_weapon_state.loaded_ammo
+            == player_weapon_stats.max_loaded_ammo
+        {
+            info!("plaleyr weapon already full");
             return;
         }
 
-        let reload_timer_duration = if player_weapon.loaded_ammo == 0 {
+        let reload_timer_duration = if player_weapon_state.loaded_ammo == 0 {
             FULL_RELOAD_TIME
         } else {
             PARTIAL_RELOAD_TIME
         };
 
-        commands.insert_resource(PlayerWeaponReloadTimer(Timer::from_seconds(
+        info!("inserting weaponreloadtimer");
+        commands.insert_resource(WeaponReloadTimer(Timer::from_seconds(
             reload_timer_duration,
             TimerMode::Once,
         )));
 
-        let animation_type = if player_weapon.loaded_ammo == 0 {
-            ArmWithWeaponAnimation::FullReload
-        } else {
-            ArmWithWeaponAnimation::PartialReload
-        };
+        player_weapons.reloading = true;
 
-        player_weapon.reloading = true;
-        animation_message_writer.write(PlayArmWithWeaponAnimationMessage {
-            animation_type,
-            repeat: false,
-            block_until_done: true,
-        });
-        player_weapon_model_transform.translation =
-            DEFAULT_POSITION_PLAYER_WEAPON;
+        let weapon_type = &player_weapons.weapons[player_weapons.active_slot]
+            .stats
+            .weapon_type;
+        let weapon_position =
+            get_position_for_weapon(weapon_type, &AimType::Normal);
+
+        player_weapon_model_transform.translation = weapon_position;
     }
 }
 
 pub fn tick_player_weapon_reload_timer(
-    mut player_weapon: Single<&mut PlayerWeapon>,
-    reload_timer: Option<ResMut<PlayerWeaponReloadTimer>>,
+    mut player_weapons: Single<&mut PlayerWeapons>,
+    reload_timer: Option<ResMut<WeaponReloadTimer>>,
     time: Res<Time>,
 ) {
     let Some(mut reload_timer) = reload_timer else {
         return;
     };
 
-    if !player_weapon.reloading {
+    if !player_weapons.reloading {
         return;
     }
-    reload_timer.0.tick(time.delta());
-    if reload_timer.0.just_finished() {
-        player_weapon.reloading = false;
+
+    let timer = &mut reload_timer.0;
+    timer.tick(time.delta());
+
+    if timer.just_finished() {
+        player_weapons.reloading = false;
+
+        let active_slot = player_weapons.active_slot;
+
+        let weapon_stats = player_weapons.weapons[active_slot].stats.clone();
+        let active_weapon_state =
+            &mut player_weapons.weapons[active_slot].state;
 
         let missing_bullets_to_load =
-            player_weapon.max_loaded_ammo - player_weapon.loaded_ammo;
+            weapon_stats.max_loaded_ammo - active_weapon_state.loaded_ammo;
 
-        if player_weapon.carried_ammo > missing_bullets_to_load {
-            player_weapon.loaded_ammo += missing_bullets_to_load;
-            player_weapon.carried_ammo -= missing_bullets_to_load;
+        // TODO: i think this can be simplified
+        if active_weapon_state.carried_ammo > missing_bullets_to_load {
+            active_weapon_state.loaded_ammo += missing_bullets_to_load;
+            active_weapon_state.carried_ammo -= missing_bullets_to_load;
         } else {
-            player_weapon.loaded_ammo = player_weapon.carried_ammo;
-            player_weapon.carried_ammo = 0;
+            active_weapon_state.loaded_ammo = active_weapon_state.carried_ammo;
+            active_weapon_state.carried_ammo = 0;
         }
     }
 }
 
-pub fn play_shooting_sound_on_player_weapon_fired(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
-) {
-    for _ in message_reader.read() {
-        let shoot_sound = asset_server.load(
-            "sfx/Snake's Authentic Gun Sounds/Full Sound/7.62x39/MP3/762x39 \
-             Single MP3.mp3",
-        );
-
-        commands.spawn((
-            AudioPlayer::new(shoot_sound),
-            PlaybackSettings::ONCE,
-            Name::new("shoot sound player"),
-            DespawnTimer(Timer::from_seconds(2.0, TimerMode::Once)),
-        ));
-    }
-}
-
-pub fn spawn_muzzle_flash(
-    asset_server: Res<AssetServer>,
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut player_shot_message_reader: MessageReader<PlayerWeaponFiredMessage>,
-    player_camera_entity: Single<Entity, With<ViewModelCamera>>,
-) {
-    for _ in player_shot_message_reader.read() {
-        let random_rotation_angle = get_random_number_from_range(0..5);
-
-        commands.entity(*player_camera_entity).with_child((
-            Transform {
-                // TODO: this must change depending on the cameras FOV
-                translation: Vec3 {
-                    x: 0.3,
-                    y: -0.1,
-                    z: -0.5,
-                },
-                rotation: Quat::from_axis_angle(
-                    Vec3::Z,
-                    random_rotation_angle as f32,
-                ),
-                ..default()
-            },
-            MuzzleFlash,
-            Mesh3d(meshes.add(Plane3d {
-                half_size: Vec2::splat(0.1),
-                normal: Dir3::Z,
-            })),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color_texture: Some(
-                    // TODO: dont use cropped version to avoid the bleeding
-                    // thing
-                    asset_server.load("muzzle_flash_cropped.png"),
-                ),
-                alpha_mode: AlphaMode::Blend,
-                unlit: true,
-                ..default()
-            })),
-            DespawnTimer(Timer::from_seconds(0.05, TimerMode::Once)),
-        ));
-    }
-}
-
+// TODO: move to game_flow module
 pub fn handle_player_death_event(
     mut message_reader: MessageReader<PlayerDeathMessage>,
-    mut player_movement_state: Single<&mut MovementState, With<Player>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
     for _ in message_reader.read() {
-        **player_movement_state = MovementState::Idle;
         next_in_game_state.set(InGameState::PlayerDead);
     }
 }
 
-pub fn weapon_sway(
-    time: Res<Time>,
-    mouse_motion: Res<AccumulatedMouseMotion>,
-    mut transform: Single<&mut Transform, With<PlayerWeaponModel>>,
+pub fn handle_weapon_slot_change(
+    mut commands: Commands,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut mouse_scroll_message_reader: MessageReader<MouseWheel>,
+    mut player_weapons: Single<&mut PlayerWeapons>,
+    mut message_writer: MessageWriter<PlayerWeaponSlotChangeMessage>,
+    existing_change_weapon_cooldown: Option<Res<ChangeWeaponCooldown>>,
 ) {
-    // how fast it will return to initial position
-    const DAMPING: f32 = 12.0;
+    // dont allow changing weapon if on cooldown
+    if existing_change_weapon_cooldown.is_some() {
+        return;
+    }
 
-    // how strong the sway is
-    const SWAY_MULTIPLIER: f32 = 0.0005;
+    let old_slot = player_weapons.active_slot;
+    let mut new_slot = old_slot;
 
-    let delta = mouse_motion.delta;
+    for mouse_scroll_message in mouse_scroll_message_reader.read() {
+        if mouse_scroll_message.y != 0. {
+            let current_slot = player_weapons.active_slot;
+            new_slot = if current_slot == 0 { 1 } else { 0 };
+        }
+    }
 
-    let pitch = -delta.y * SWAY_MULTIPLIER;
-    let yaw = delta.x * SWAY_MULTIPLIER;
+    if keyboard_input.just_pressed(KeyCode::Digit1) {
+        new_slot = 0;
+    } else if keyboard_input.just_pressed(KeyCode::Digit2) {
+        new_slot = 1;
+    }
 
-    let sway_rot = Quat::from_rotation_x(pitch) * Quat::from_rotation_y(yaw);
+    if old_slot != new_slot {
+        player_weapons.active_slot = new_slot;
+        message_writer.write(PlayerWeaponSlotChangeMessage(new_slot));
+        commands.insert_resource(ChangeWeaponCooldown(Timer::from_seconds(
+            0.05,
+            TimerMode::Once,
+        )));
+        // cancel any ongoing reload
+        commands.remove_resource::<WeaponReloadTimer>();
+        player_weapons.reloading = false;
+    }
+}
 
-    transform.rotation *= sway_rot;
-
-    transform.rotation = transform
-        .rotation
-        .slerp(Quat::from_rotation_y(PI), DAMPING * time.delta_secs());
+pub fn handle_change_weapon_slot_cooldown(
+    mut commands: Commands,
+    existing_change_weapon_cooldown: Option<ResMut<ChangeWeaponCooldown>>,
+    time: Res<Time>,
+) {
+    if let Some(mut change_weapon_cooldown) = existing_change_weapon_cooldown {
+        change_weapon_cooldown.0.tick(time.delta());
+        if change_weapon_cooldown.0.just_finished() {
+            commands.remove_resource::<ChangeWeaponCooldown>();
+        }
+    }
 }

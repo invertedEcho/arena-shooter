@@ -2,26 +2,35 @@ use crate::{
     game_flow::states::AppState,
     player::{
         camera::{
-            DEFAULT_POSITION_PLAYER_WEAPON, PLAYER_CAMERA_Y_OFFSET,
-            SCOPE_NEAR_POSITION_PLAYER_WEAPON,
-            components::{
-                FreeCam, PlayerCameraState, PlayerWeaponModel, WorldModelCamera,
-            },
+            PLAYER_CAMERA_Y_OFFSET,
             messages::SpawnPlayerCamerasMessage,
+            weapon_positions::{
+                AimType, get_muzzle_flash_position_for_weapon,
+                get_position_for_weapon,
+            },
         },
-        shooting::components::PlayerWeapon,
+        shooting::{
+            asset_paths::get_asset_path_for_weapon_type,
+            components::PlayerWeapons,
+            messages::{
+                PlayerWeaponFiredMessage, PlayerWeaponSlotChangeMessage,
+            },
+        },
     },
-    shared::systems::apply_render_layers_to_children,
+    shared::{WeaponType, components::DespawnTimer},
 };
-use std::f32::consts::{FRAC_PI_2, PI};
+use std::f32::consts::FRAC_PI_2;
+
+use super::components::{
+    FreeCam, MuzzleFlash, PlayerCameraState, PlayerWeaponModel, WorldCamera,
+};
 
 use bevy::{
     camera::visibility::RenderLayers, input::mouse::AccumulatedMouseMotion,
-    light::NotShadowCaster, prelude::*,
+    prelude::*,
 };
 use bevy_inspector_egui::bevy_egui;
 
-use crate::player::animate::PLAYER_ARM_WEAPON_PATH;
 use crate::player::{Player, camera::ViewModelCamera};
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
@@ -30,20 +39,19 @@ pub fn setup_player_cameras(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut message_reader: MessageReader<SpawnPlayerCamerasMessage>,
+    player_entity: Single<Entity, With<Player>>,
 ) {
-    for message in message_reader.read() {
+    for _ in message_reader.read() {
         info!(
             "Received SpawnPlayerCamerasMessage, spawning weapon model and \
              player cameras"
         );
 
-        let weapon_model = asset_server
-            .load(GltfAssetLabel::Scene(0).from_asset(PLAYER_ARM_WEAPON_PATH));
-
-        info!("Inserting player cameras into player entity {}", message.0);
-        commands.entity(message.0).with_children(|parent| {
+        info!("Inserting player cameras into player entity");
+        commands.entity(*player_entity).with_children(|parent| {
             parent.spawn((
-                WorldModelCamera,
+                Name::new("WorldCamera"),
+                WorldCamera,
                 Camera {
                     order: 0,
                     ..default()
@@ -51,39 +59,46 @@ pub fn setup_player_cameras(
                 Camera3d::default(),
                 Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
                 Projection::from(PerspectiveProjection {
-                    fov: 90.0_f32.to_radians(),
+                    fov: 80.0_f32.to_radians(),
                     ..default()
                 }),
             ));
 
-            parent.spawn((
-                ViewModelCamera,
-                Camera3d::default(),
-                Camera {
-                    order: 1,
-                    ..default()
-                },
-                // needed so our inspector is shown again when we enter game, as we despawn
-                // `WorldUiCamera` and spawn player camera
-                bevy_egui::PrimaryEguiContext,
-                RenderLayers::layer(1),
-                Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
-            ));
+            let weapon_model_path =
+                get_asset_path_for_weapon_type(&WeaponType::AssaultRifle);
+            let weapon_model = asset_server
+                .load(GltfAssetLabel::Scene(0).from_asset(weapon_model_path));
+            let weapon_position = get_position_for_weapon(
+                &WeaponType::AssaultRifle,
+                &AimType::Normal,
+            );
             parent
                 .spawn((
+                    Name::new("ViewModelCamera"),
+                    ViewModelCamera,
+                    Camera3d::default(),
+                    Camera {
+                        order: 1,
+                        ..default()
+                    },
+                    // needed so our inspector is shown again when we enter game, as we despawn
+                    // `WorldUiCamera` and spawn player camera
+                    bevy_egui::PrimaryEguiContext,
+                    RenderLayers::layer(1),
+                    Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
+                ))
+                .with_child((
+                    Name::new("PlayerWeaponModel"),
                     SceneRoot(weapon_model),
                     Transform {
-                        translation: DEFAULT_POSITION_PLAYER_WEAPON,
-                        scale: Vec3::splat(1.0),
-                        // rotate 180 degrees as weapon is spawned wrong way
-                        rotation: Quat::from_rotation_y(PI),
+                        translation: weapon_position,
+                        scale: Vec3::splat(2.0),
+                        rotation: Quat::from_rotation_y(FRAC_PI_2),
                     },
-                    RenderLayers::layer(1),
-                    NotShadowCaster,
                     PlayerWeaponModel,
                     Visibility::Visible,
-                ))
-                .observe(apply_render_layers_to_children);
+                    RenderLayers::layer(1),
+                ));
         });
     }
 }
@@ -94,70 +109,60 @@ pub fn handle_player_scope_aim(
         &mut Transform,
         With<PlayerWeaponModel>,
     >,
-    player_weapon: Single<&PlayerWeapon>,
+    mut player_weapons: Single<&mut PlayerWeapons>,
 ) {
-    if player_weapon.reloading {
+    if player_weapons.reloading {
         return;
     }
 
+    let weapon_type = player_weapons.weapons[player_weapons.active_slot]
+        .stats
+        .weapon_type
+        .clone();
+
     if mouse_input.just_pressed(MouseButton::Right) {
-        player_weapon_model_transform.translation =
-            SCOPE_NEAR_POSITION_PLAYER_WEAPON;
+        player_weapons.aim_type = AimType::Scoped;
+        let weapon_position =
+            get_position_for_weapon(&weapon_type, &AimType::Scoped);
+        player_weapon_model_transform.translation = weapon_position;
     } else if mouse_input.just_released(MouseButton::Right) {
-        player_weapon_model_transform.translation =
-            DEFAULT_POSITION_PLAYER_WEAPON;
+        player_weapons.aim_type = AimType::Normal;
+        let weapon_position =
+            get_position_for_weapon(&weapon_type, &AimType::Normal);
+        player_weapon_model_transform.translation = weapon_position;
     }
 }
 
-/// We seperate between player transform and camera transform.
-/// This is because if the user would look straight down, the collider would literally lay on the
-/// ground. So, we only change yaw of player, and do pitch via the camera transform
+type AnyCamera = Or<(With<WorldCamera>, With<ViewModelCamera>)>;
+
 pub fn update_yaw_pitch_on_mouse_motion(
     mouse_motion: Res<AccumulatedMouseMotion>,
-    mut world_model_camera_transform: Single<
-        &mut Transform,
-        (With<WorldModelCamera>, Without<Player>),
-    >,
-    mut player_transform: Single<&mut Transform, With<Player>>,
+    camera_transforms: Query<&mut Transform, AnyCamera>,
 ) {
     let delta = mouse_motion.delta;
-
     if delta == Vec2::ZERO {
         return;
     }
 
-    // pitch like nodding yes with your head
     let delta_pitch = -delta.y * 0.001;
-
-    // yaw like nodding no with your head
     let delta_yaw = -delta.x * 0.002;
 
-    // existing rotation
-    let (current_yaw_camera, current_pitch_camera, current_roll_camera) =
-        world_model_camera_transform
-            .rotation
-            .to_euler(EulerRot::YXZ);
+    for mut transform in camera_transforms {
+        let (current_yaw_camera, current_pitch_camera, current_roll_camera) =
+            transform.rotation.to_euler(EulerRot::YXZ);
 
-    let (current_yaw_player, current_pitch_player, current_roll_player) =
-        player_transform.rotation.to_euler(EulerRot::YXZ);
+        let new_yaw_camera = delta_yaw + current_yaw_camera;
 
-    let new_yaw_player = delta_yaw + current_yaw_player;
+        let new_pitch_camera = (delta_pitch + current_pitch_camera)
+            .clamp(-PITCH_LIMIT, PITCH_LIMIT);
 
-    let new_pitch_camera =
-        (delta_pitch + current_pitch_camera).clamp(-PITCH_LIMIT, PITCH_LIMIT);
-
-    world_model_camera_transform.rotation = Quat::from_euler(
-        EulerRot::YXZ,
-        current_yaw_camera,
-        new_pitch_camera,
-        current_roll_camera,
-    );
-    player_transform.rotation = Quat::from_euler(
-        EulerRot::YXZ,
-        new_yaw_player,
-        current_pitch_player,
-        current_roll_player,
-    );
+        transform.rotation = Quat::from_euler(
+            EulerRot::YXZ,
+            new_yaw_camera,
+            new_pitch_camera,
+            current_roll_camera,
+        );
+    }
 }
 
 // 'w -> the world borrow lifetime, e.g. how long this query can read/write world data
@@ -168,13 +173,13 @@ type AnyCamEntityQuery<'w, 's> = Query<
     Entity,
     Or<(
         With<ViewModelCamera>,
-        With<WorldModelCamera>,
+        With<WorldCamera>,
         With<PlayerWeaponModel>,
     )>,
 >;
 
 pub fn toggle_freecam(
-    mut player_query: Single<(Entity, &Transform, &mut PlayerCameraState)>,
+    player_query: Single<(&Transform, &mut PlayerCameraState)>,
     mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     camera_entities: AnyCamEntityQuery,
@@ -184,7 +189,7 @@ pub fn toggle_freecam(
     >,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyC) {
-        let (player_entity, player_transform, mut player_camera_state) =
+        let (player_transform, mut player_camera_state) =
             player_query.into_inner();
 
         match *player_camera_state {
@@ -217,7 +222,7 @@ pub fn toggle_freecam(
                     commands.entity(free_cam_entity).despawn();
                 }
                 spawn_player_cameras_message_writer
-                    .write(SpawnPlayerCamerasMessage(player_entity));
+                    .write(SpawnPlayerCamerasMessage);
             }
         }
     }
@@ -299,4 +304,103 @@ pub fn make_player_weapon_hidden(
     mut player_weapon: Single<&mut Visibility, With<PlayerWeaponModel>>,
 ) {
     **player_weapon = Visibility::Hidden;
+}
+
+pub fn weapon_sway(
+    time: Res<Time>,
+    mouse_motion: Res<AccumulatedMouseMotion>,
+    mut transform: Single<&mut Transform, With<PlayerWeaponModel>>,
+) {
+    // how fast it will return to initial position
+    const DAMPING: f32 = 12.0;
+
+    // how strong the sway is
+    const SWAY_MULTIPLIER: f32 = 0.0005;
+
+    let delta = mouse_motion.delta;
+
+    let pitch = -delta.y * SWAY_MULTIPLIER;
+    let yaw = delta.x * SWAY_MULTIPLIER;
+
+    let sway_rot = Quat::from_rotation_x(pitch) * Quat::from_rotation_y(yaw);
+
+    transform.rotation *= sway_rot;
+
+    transform.rotation = transform.rotation.slerp(
+        Quat::from_rotation_y(FRAC_PI_2),
+        DAMPING * time.delta_secs(),
+    );
+}
+
+pub fn update_player_weapon_model(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    mut message_reader: MessageReader<PlayerWeaponSlotChangeMessage>,
+    player_weapon_model_query: Single<
+        (Entity, &mut Transform),
+        With<PlayerWeaponModel>,
+    >,
+    player_weapons: Single<&PlayerWeapons>,
+) {
+    let (player_weapon_model_entity, mut player_weapon_model_transform) =
+        player_weapon_model_query.into_inner();
+
+    for message in message_reader.read() {
+        let new_slot_index = message.0;
+
+        let weapon_type =
+            &player_weapons.weapons[new_slot_index].stats.weapon_type;
+
+        let weapon_position =
+            get_position_for_weapon(weapon_type, &AimType::Normal);
+
+        let model_path = get_asset_path_for_weapon_type(weapon_type);
+
+        let weapon_model =
+            asset_server.load(GltfAssetLabel::Scene(0).from_asset(model_path));
+
+        player_weapon_model_transform.translation = weapon_position;
+        commands
+            .entity(player_weapon_model_entity)
+            .insert((SceneRoot(weapon_model),));
+    }
+}
+
+pub fn spawn_muzzle_flash(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut player_shot_message_reader: MessageReader<PlayerWeaponFiredMessage>,
+    player_weapon_model_entity: Single<Entity, With<PlayerWeaponModel>>,
+    player_weapons: Single<&PlayerWeapons>,
+) {
+    for _ in player_shot_message_reader.read() {
+        let active_weapon = player_weapons.active_slot;
+        let muzzle_flash_position = get_muzzle_flash_position_for_weapon(
+            &player_weapons.weapons[active_weapon].stats.weapon_type,
+            &player_weapons.aim_type,
+        );
+
+        commands.entity(*player_weapon_model_entity).with_child((
+            Transform {
+                translation: muzzle_flash_position,
+                rotation: Quat::from_euler(EulerRot::XYZ, 0.0, -FRAC_PI_2, 0.0),
+                scale: Vec3::splat(2.0),
+            },
+            MuzzleFlash,
+            Mesh3d(meshes.add(Plane3d {
+                half_size: Vec2::splat(0.1),
+                normal: Dir3::Z,
+            })),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color_texture: Some(asset_server.load("muzzle_flash.png")),
+                alpha_mode: AlphaMode::Blend,
+                unlit: true,
+                ..default()
+            })),
+            DespawnTimer(Timer::from_seconds(0.05, TimerMode::Once)),
+            RenderLayers::layer(1),
+        ));
+    }
 }

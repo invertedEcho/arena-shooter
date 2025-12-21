@@ -8,11 +8,9 @@ use crate::{
     },
     game_flow::states::AppState,
     player::{
-        DEFAULT_PLAYER_HEALTH, Player, PlayerBundle,
-        camera::messages::SpawnPlayerCamerasMessage,
+        Player, PlayerBundle, camera::messages::SpawnPlayerCamerasMessage,
         spawn::components::PlayerSpawnLocation,
     },
-    shared::components::Health,
 };
 
 pub mod components;
@@ -39,33 +37,34 @@ fn handle_player_spawn_event(
     >,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    existing_players: Query<Entity, With<Player>>,
 ) {
     for _ in player_spawn_message_reader.read() {
+        for existing_player in existing_players {
+            commands.entity(existing_player).despawn();
+        }
         info!("read player spawn event, spawning player");
 
-        let player_entity = commands
-            .spawn((
-                Name::new("Player"),
-                PlayerBundle::default(),
-                Transform::from_translation(player_spawn_location.translation),
-                Visibility::Visible,
-                DebugRender::collider(Color::WHITE),
-                CharacterControllerBundle::default(),
-                DespawnOnExit(AppState::InGame),
-                Mesh3d(meshes.add(Capsule3d::new(
-                    CHARACTER_CAPSULE_RADIUS,
-                    CHARACTER_CAPSULE_LENGTH,
-                ))),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: WHITE.into(),
-                    ..Default::default()
-                })),
-                // so egui inspector doesnt flicker
-                // SleepingDisabled,
-            ))
-            .id();
+        commands.spawn((
+            Name::new("Player"),
+            PlayerBundle::default(),
+            Transform::from_translation(player_spawn_location.translation),
+            Visibility::Visible,
+            DebugRender::collider(Color::WHITE),
+            CharacterControllerBundle::default(),
+            DespawnOnExit(AppState::InGame),
+            Mesh3d(meshes.add(Capsule3d::new(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: WHITE.into(),
+                ..Default::default()
+            })),
+            // so egui inspector doesnt flicker
+            // SleepingDisabled,
+        ));
 
-        spawn_player_cameras_message_writer
-            .write(SpawnPlayerCamerasMessage(player_entity));
+        spawn_player_cameras_message_writer.write(SpawnPlayerCamerasMessage);
     }
 }

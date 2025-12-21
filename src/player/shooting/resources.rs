@@ -1,4 +1,7 @@
 use bevy::prelude::*;
 
 #[derive(Resource)]
-pub struct PlayerWeaponReloadTimer(pub Timer);
+pub struct WeaponReloadTimer(pub Timer);
+
+#[derive(Resource)]
+pub struct ChangeWeaponCooldown(pub Timer);

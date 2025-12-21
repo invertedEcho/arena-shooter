@@ -3,22 +3,22 @@ use bevy::prelude::*;
 use crate::{
     game_flow::states::InGameState,
     player::shooting::{
-        components::PlayerWeapon,
         messages::{
             PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage,
-            ReloadPlayerWeaponMessage,
+            PlayerWeaponSlotChangeMessage, ReloadPlayerWeaponMessage,
         },
         systems::{
-            handle_blood_screen_effect, handle_input,
+            add_player_weapons_to_new_players, handle_blood_screen_effect,
+            handle_change_weapon_slot_cooldown, handle_input,
             handle_player_death_event, handle_player_weapon_fired_message,
-            handle_reload_player_weapon_message,
-            play_shooting_sound_on_player_weapon_fired, setup_player_weapon,
-            spawn_muzzle_flash, tick_player_weapon_reload_timer,
-            tick_player_weapon_shoot_cooldown_timer, weapon_sway,
+            handle_reload_player_weapon_message, handle_weapon_slot_change,
+            tick_player_weapon_reload_timer,
+            tick_player_weapon_shoot_cooldown_timer,
         },
     },
 };
 
+pub mod asset_paths;
 pub mod components;
 pub mod messages;
 mod resources;
@@ -31,7 +31,7 @@ impl Plugin for PlayerShootingPlugin {
         app.add_message::<PlayerWeaponFiredMessage>()
             .add_message::<PlayerBulletHitEnemyMessage>()
             .add_message::<ReloadPlayerWeaponMessage>()
-            .register_type::<PlayerWeapon>()
+            .add_message::<PlayerWeaponSlotChangeMessage>()
             .add_systems(
                 Update,
                 (
@@ -39,13 +39,12 @@ impl Plugin for PlayerShootingPlugin {
                     tick_player_weapon_shoot_cooldown_timer,
                     handle_blood_screen_effect,
                     handle_reload_player_weapon_message,
-                    spawn_muzzle_flash,
                     handle_player_weapon_fired_message,
-                    setup_player_weapon,
+                    add_player_weapons_to_new_players,
                     tick_player_weapon_reload_timer,
                     handle_player_death_event,
-                    play_shooting_sound_on_player_weapon_fired,
-                    weapon_sway,
+                    handle_weapon_slot_change,
+                    handle_change_weapon_slot_cooldown,
                 )
                     .run_if(in_state(InGameState::Playing)),
             );

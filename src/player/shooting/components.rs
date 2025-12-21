@@ -1,19 +1,25 @@
 use bevy::prelude::*;
 
+use crate::{
+    player::camera::weapon_positions::AimType,
+    shared::{WeaponState, WeaponStats},
+};
+
 #[derive(Component)]
 pub struct PlayerShootCooldownTimer(pub Timer);
 
 #[derive(Component)]
-pub struct MuzzleFlash;
-
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-pub struct PlayerWeapon {
-    pub loaded_ammo: u32,
-    pub carried_ammo: u32,
-    pub max_loaded_ammo: u32,
+pub struct PlayerWeapons {
+    pub active_slot: usize,
+    pub weapons: [Weapon; 2],
+    pub shooting: bool,
     pub reloading: bool,
-    pub is_shooting: bool,
+    pub aim_type: AimType,
+}
+
+pub struct Weapon {
+    pub stats: WeaponStats,
+    pub state: WeaponState,
 }
 
 #[derive(Component)]

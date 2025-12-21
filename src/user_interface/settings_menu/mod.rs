@@ -455,8 +455,7 @@ fn apply_game_settings(
             window.mode = WindowMode::Windowed;
         }
 
-        // TODO: should happen in audio plugin? but then we have to make even more modules public
-        // etc
+        // TODO: should happen in audio plugin
         let master_volume = game_settings.master_volume;
         let new_master_volume =
             Volume::Linear((master_volume / 100.0).clamp(0.0, 1.0));

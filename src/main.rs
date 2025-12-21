@@ -13,13 +13,18 @@ use bevy_inspector_egui::{
 use bevy_skein::SkeinPlugin;
 
 use crate::{
-    audio::AudioPlugin, character_controller::CharacterControllerPlugin,
-    enemy::EnemyPlugin, game_flow::GameFlowPlugin,
+    audio::AudioPlugin,
+    character_controller::CharacterControllerPlugin,
+    enemy::EnemyPlugin,
+    game_flow::GameFlowPlugin,
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
-    nav_mesh_pathfinding::NavMeshPathfindingPlugin, particles::ParticlesPlugin,
-    player::PlayerPlugin, shared::CommonPlugin,
-    user_interface::UserInterfacePlugin, world::WorldPlugin,
+    nav_mesh_pathfinding::NavMeshPathfindingPlugin,
+    particles::ParticlesPlugin,
+    player::PlayerPlugin,
+    shared::{CommonPlugin, systems::apply_render_layers_to_children},
+    user_interface::UserInterfacePlugin,
+    world::WorldPlugin,
 };
 
 mod audio;
@@ -82,12 +87,14 @@ fn main() {
     app.add_plugins(SkeinPlugin::default());
     app.add_plugins(HanabiPlugin);
 
-    app.add_plugins(EguiPlugin::default())
-        .add_plugins(WorldInspectorPlugin::new());
-    app.insert_resource(bevy_egui::EguiGlobalSettings {
-        auto_create_primary_context: false,
-        ..default()
-    });
+    if cfg!(debug_assertions) {
+        app.add_plugins(EguiPlugin::default())
+            .add_plugins(WorldInspectorPlugin::new());
+        app.insert_resource(bevy_egui::EguiGlobalSettings {
+            auto_create_primary_context: false,
+            ..default()
+        });
+    }
 
     // own plugins
     app.add_plugins(PlayerPlugin)
@@ -99,8 +106,12 @@ fn main() {
         .add_plugins(ParticlesPlugin)
         .add_plugins(AudioPlugin)
         .add_plugins(NavMeshPathfindingPlugin)
-        .add_plugins(CharacterControllerPlugin)
-        .add_plugins(GameplayDebugPlugin);
+        .add_plugins(CharacterControllerPlugin);
+
+    if cfg!(debug_assertions) {
+        app.add_plugins(GameplayDebugPlugin);
+    }
+    app.add_observer(apply_render_layers_to_children);
 
     app.run();
 }

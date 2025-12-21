@@ -2,21 +2,23 @@ use bevy::prelude::*;
 
 use crate::{
     enemy::{
+        Enemy,
         shooting::messages::EnemyKilledMessage,
         spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
     },
     game_flow::score::GameScore,
+    player::spawn::SpawnPlayerMessage,
 };
 
 pub struct GameModePlugin;
 
 impl Plugin for GameModePlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<StartWaveGameModeMessage>()
+        app.add_message::<StartGameModeMessage>()
             .add_systems(
                 Update,
                 (
-                    handle_game_mode_wave_start_message,
+                    handle_start_game_mode_message,
                     handle_game_state_wave_changed,
                     handle_enemy_killed_event,
                 ),
@@ -27,7 +29,7 @@ impl Plugin for GameModePlugin {
 }
 
 #[derive(Message)]
-pub struct StartWaveGameModeMessage;
+pub struct StartGameModeMessage;
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 pub enum GameModeState {
@@ -44,42 +46,42 @@ pub struct GameStateWave {
     pub enemies_left_from_current_wave: usize,
 }
 
-fn handle_game_mode_wave_start_message(
-    mut message_reader: MessageReader<StartWaveGameModeMessage>,
+fn handle_start_game_mode_message(
+    mut commands: Commands,
+    mut message_reader: MessageReader<StartGameModeMessage>,
     mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
+    mut player_spawn_message_writer: MessageWriter<SpawnPlayerMessage>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
+    existing_enemies: Query<Entity, With<Enemy>>,
+    current_game_mode: Res<State<GameModeState>>,
 ) {
     for _ in message_reader.read() {
-        info!(
-            "Got game mode wave start message, updating states to reflect \
-             changes and spawning enemies and players."
-        );
+        info!("Got game mode start message");
+        player_spawn_message_writer.write(SpawnPlayerMessage);
 
-        let enemy_count = get_enemy_count_per_wave(1);
-        next_game_state_wave.set(GameStateWave {
-            current_wave: 1,
-            enemies_left_from_current_wave: enemy_count,
-            enemies_killed: 0,
-        });
-        spawn_enemies_message_writer.write(SpawnEnemiesMessage {
-            enemy_count,
-            spawn_strategy: EnemySpawnStrategy::RandomSelection,
-        });
+        for existing_enemy in existing_enemies {
+            commands.entity(existing_enemy).despawn();
+        }
+
+        if *current_game_mode.get() == GameModeState::Waves {
+            let enemy_count = get_enemy_count_per_wave(1);
+            next_game_state_wave.set(GameStateWave {
+                current_wave: 1,
+                enemies_left_from_current_wave: enemy_count,
+                enemies_killed: 0,
+            });
+            spawn_enemies_message_writer.write(SpawnEnemiesMessage {
+                enemy_count,
+                spawn_strategy: EnemySpawnStrategy::RandomSelection,
+            });
+        }
     }
 }
 
 // TODO: spawn enemies that make the player take more damage
 // or have smarter ai
 pub fn get_enemy_count_per_wave(wave: usize) -> usize {
-    match wave {
-        1 => 1,
-        2 => 4,
-        3 => 6,
-        4 => 8,
-        5 => 10,
-        6 => 12,
-        _ => 14,
-    }
+    if wave == 1 { 1 } else { wave + 2 }
 }
 
 fn handle_game_state_wave_changed(

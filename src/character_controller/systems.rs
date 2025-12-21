@@ -6,12 +6,12 @@ use crate::{
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
         MAX_SLOPE_ANGLE, RUN_VELOCITY, WALK_VELOCITY,
-        components::{CharacterController, Grounded, MovementState},
+        components::{CharacterController, Grounded},
         messages::{MovementAction, MovementDirection},
     },
     player::{
-        Player, camera::components::PlayerCameraState,
-        shooting::components::PlayerWeapon,
+        camera::components::{PlayerCameraState, WorldCamera},
+        shooting::components::PlayerWeapons,
     },
     world::world_objects::medkit::Medkit,
 };
@@ -19,63 +19,50 @@ use crate::{
 pub fn handle_keyboard_input_for_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut movement_action_writer: MessageWriter<MovementAction>,
-    player_query: Single<(
-        &Transform,
-        &mut MovementState,
-        Entity,
-        &PlayerWeapon,
-        &PlayerCameraState,
-    )>,
+    player_query: Single<(Entity, &PlayerWeapons, &PlayerCameraState)>,
+    camera_transform: Single<&Transform, With<WorldCamera>>,
 ) {
-    let (
-        player_transform,
-        mut movement_state,
-        player_entity,
-        player_weapon,
-        player_camera_state,
-    ) = player_query.into_inner();
+    let (player_entity, player_weapons, player_camera_state) =
+        player_query.into_inner();
 
     if *player_camera_state == PlayerCameraState::FreeCam {
         return;
     }
 
     let shift_pressed = keyboard_input.pressed(KeyCode::ShiftLeft);
-    let reloading_or_shooting =
-        player_weapon.reloading || player_weapon.is_shooting;
+    let reloading = player_weapons.reloading;
 
-    let speed = if shift_pressed && !reloading_or_shooting {
+    let speed = if shift_pressed && !reloading {
         RUN_VELOCITY
     } else {
         WALK_VELOCITY
     };
 
-    let mut local_velocity = Vec3::ZERO;
+    let forward_camera = camera_transform.forward();
+    let right = camera_transform.right();
+
+    let Ok(forward_camera) =
+        Dir3::from_xyz(forward_camera.x, 0.0, forward_camera.z)
+    else {
+        return;
+    };
+    let Ok(right) = Dir3::from_xyz(right.x, 0.0, right.z) else {
+        return;
+    };
+
+    let mut velocity = Vec3::ZERO;
 
     if keyboard_input.pressed(KeyCode::KeyW) {
-        local_velocity.z -= 1.0 * speed;
+        velocity += forward_camera * speed;
     }
     if keyboard_input.pressed(KeyCode::KeyA) {
-        local_velocity.x -= 1.0 * speed;
+        velocity -= right * speed;
     }
     if keyboard_input.pressed(KeyCode::KeyD) {
-        local_velocity.x += 1.0 * speed;
+        velocity += right * speed;
     }
     if keyboard_input.pressed(KeyCode::KeyS) {
-        local_velocity.z += 1.0 * speed;
-    }
-
-    if local_velocity.x == 0.0 && local_velocity.z == 0.0 {
-        if *movement_state != MovementState::Idle {
-            *movement_state = MovementState::Idle;
-        }
-    } else if speed == RUN_VELOCITY {
-        if *movement_state != MovementState::Running {
-            *movement_state = MovementState::Running;
-        }
-    } else if speed == WALK_VELOCITY
-        && *movement_state != MovementState::Walking
-    {
-        *movement_state = MovementState::Walking;
+        velocity -= forward_camera * speed;
     }
 
     if keyboard_input.just_pressed(KeyCode::Space) {
@@ -85,14 +72,12 @@ pub fn handle_keyboard_input_for_player(
         });
     }
 
-    if local_velocity == Vec3::ZERO {
+    if velocity == Vec3::ZERO {
         return;
     }
 
-    let world_velocity = player_transform.rotation * local_velocity;
-
     movement_action_writer.write(MovementAction {
-        direction: MovementDirection::Move(world_velocity),
+        direction: MovementDirection::Move(velocity),
         character_controller_entity: player_entity,
     });
 }
@@ -125,6 +110,8 @@ pub fn handle_movement_actions_for_character_controllers(
             MovementDirection::Jump => {
                 if grounded.0 {
                     velocity.y = JUMP_VELOCITY;
+                } else {
+                    info!("not grounded, not allowing jump");
                 }
             }
             // TODO: should probably move the content of this block elsewhere

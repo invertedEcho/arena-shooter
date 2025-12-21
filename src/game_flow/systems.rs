@@ -6,15 +6,13 @@ use bevy::{
 use bevy_rerecast::{Navmesh, prelude::NavmeshReady};
 
 use crate::{
-    enemy::Enemy,
     game_flow::{
-        game_mode::{GameModeState, StartWaveGameModeMessage},
+        game_mode::StartGameModeMessage,
         states::{
             AppState, InGameState, LoadingGameSubState, SelectedMapState,
         },
     },
     nav_mesh_pathfinding::NavMeshHandle,
-    player::{Player, camera::components::FreeCam, spawn::SpawnPlayerMessage},
     user_interface::main_menu::MainMenuCamera,
     world::resources::WorldSceneHandle,
 };
@@ -137,26 +135,14 @@ pub fn check_navmesh_ready(
 
 pub fn on_game_loading_state_nav_mesh_ready(
     mut next_app_state: ResMut<NextState<AppState>>,
-    mut start_game_mode_message_writer: MessageWriter<StartWaveGameModeMessage>,
-    game_mode_state: Res<State<GameModeState>>,
+    mut start_game_mode_message_writer: MessageWriter<StartGameModeMessage>,
 ) {
     info!(
         "Entered nav_mesh_ready loading state, everything is ready now. \
          Writing StartGameModeMessage.",
     );
     next_app_state.set(AppState::InGame);
-    match game_mode_state.get() {
-        GameModeState::Waves => {
-            start_game_mode_message_writer.write(StartWaveGameModeMessage);
-        }
-        GameModeState::FreeRoam => {}
-    }
-}
-
-pub fn on_enter_app_state_in_game(
-    mut spawn_player_message_writer: MessageWriter<SpawnPlayerMessage>,
-) {
-    spawn_player_message_writer.write(SpawnPlayerMessage);
+    start_game_mode_message_writer.write(StartGameModeMessage);
 }
 
 pub fn pause_all_animations(animation_players: Query<&mut AnimationPlayer>) {

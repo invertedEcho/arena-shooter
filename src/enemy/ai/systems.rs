@@ -256,7 +256,7 @@ pub fn rotate_enemies_towards_player_over_time(
 
         let target_rotation = Quat::from_rotation_y(angle);
 
-        const ROTATION_SPEED: f32 = 3.5;
+        const ROTATION_SPEED: f32 = 6.5;
 
         enemy_transform.rotation = enemy_transform.rotation.slerp(
             target_rotation * enemy_transform.rotation,

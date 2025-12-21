@@ -37,6 +37,7 @@ pub fn apply_render_layers_to_children(
     else {
         return;
     };
+    info!("Applying render layers on children of entity {}", parent);
     children.iter_descendants(parent).for_each(|entity| {
         if transforms.contains(entity) {
             commands.entity(entity).insert(render_layers.clone());

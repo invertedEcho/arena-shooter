@@ -71,36 +71,38 @@ pub fn build_checkbox<T: Component>(
     )
 }
 
+type AnyCheckboxInteraction = Or<(
+    With<Checkbox>,
+    (
+        Added<Checkbox>,
+        Changed<Hovered>,
+        Added<Checked>,
+        Added<InteractionDisabled>,
+    ),
+)>;
+
 // Update the element's styles.
 pub fn update_checkbox_style(
-    mut q_checkbox: Query<
+    mut checkboxes: Query<
         (Has<Checked>, &Hovered, &Children),
-        Or<(
-            With<Checkbox>,
-            (
-                Added<Checkbox>,
-                Changed<Hovered>,
-                Added<Checked>,
-                Added<InteractionDisabled>,
-            ),
-        )>,
+        AnyCheckboxInteraction,
     >,
-    mut q_border_color: Query<
+    mut border_colors: Query<
         (&mut BorderColor, &mut Children),
         Without<Checkbox>,
     >,
-    mut q_bg_color: Query<
+    mut background_colors: Query<
         &mut BackgroundColor,
         (Without<Checkbox>, Without<Children>),
     >,
 ) {
-    for (checked, Hovered(is_hovering), children) in q_checkbox.iter_mut() {
+    for (checked, Hovered(is_hovering), children) in checkboxes.iter_mut() {
         let Some(border_id) = children.first() else {
             continue;
         };
 
         let Ok((mut border_color, border_children)) =
-            q_border_color.get_mut(*border_id)
+            border_colors.get_mut(*border_id)
         else {
             continue;
         };
@@ -110,7 +112,7 @@ pub fn update_checkbox_style(
             continue;
         };
 
-        let Ok(mut mark_bg) = q_bg_color.get_mut(*mark_id) else {
+        let Ok(mut mark_bg) = background_colors.get_mut(*mark_id) else {
             warn!("Checkbox mark entity lacking a background color.");
             continue;
         };
