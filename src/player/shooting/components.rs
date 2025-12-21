@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 
-use crate::shared::{WeaponState, WeaponStats};
+use crate::{
+    player::camera::weapon_positions::AimType,
+    shared::{WeaponState, WeaponStats},
+};
 
 #[derive(Component)]
 pub struct PlayerShootCooldownTimer(pub Timer);
-
-#[derive(Component)]
-pub struct MuzzleFlash;
 
 #[derive(Component)]
 pub struct PlayerWeapons {
@@ -14,6 +14,7 @@ pub struct PlayerWeapons {
     pub weapons: [Weapon; 2],
     pub shooting: bool,
     pub reloading: bool,
+    pub aim_type: AimType,
 }
 
 pub struct Weapon {

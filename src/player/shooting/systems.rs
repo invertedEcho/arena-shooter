@@ -2,22 +2,19 @@ use avian3d::prelude::*;
 use bevy::{input::mouse::MouseWheel, prelude::*};
 
 use crate::{
-    character_controller::components::MovementState,
     enemy::Enemy,
     game_flow::states::InGameState,
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
     player::{
-        Player, PlayerDeathMessage, PlayerReady,
+        Player, PlayerDeathMessage,
         camera::{
-            components::{
-                PlayerWeaponModel, ViewModelCamera, WorldModelCamera,
-            },
+            components::{PlayerWeaponModel, WorldCamera},
             weapon_positions::{AimType, get_position_for_weapon},
         },
         shooting::{
             components::{
-                BloodScreenEffect, MuzzleFlash, PlayerShootCooldownTimer,
-                PlayerWeapons, Weapon,
+                BloodScreenEffect, PlayerShootCooldownTimer, PlayerWeapons,
+                Weapon,
             },
             messages::{
                 PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage,
@@ -30,7 +27,6 @@ use crate::{
         DEFAULT_BULLET_DAMAGE, WeaponSlotType, WeaponState, WeaponStats,
         WeaponType, components::DespawnTimer, get_fire_delay_by_weapon_type,
     },
-    utils::random::get_random_number_from_range,
 };
 
 /// How long it takes to reload for a partial reload (and playing the corresponding animation), e.g. some bullets are left in
@@ -43,7 +39,7 @@ type WorldModelCameraQuery<'w, 's> = Single<
     'w,
     's,
     (Entity, &'static GlobalTransform),
-    (With<WorldModelCamera>, Without<Player>),
+    (With<WorldCamera>, Without<Player>),
 >;
 
 pub fn add_player_weapons_to_new_players(
@@ -55,6 +51,7 @@ pub fn add_player_weapons_to_new_players(
             shooting: false,
             reloading: false,
             active_slot: 1,
+            aim_type: AimType::Normal,
             weapons: [
                 Weapon {
                     stats: WeaponStats {
@@ -376,59 +373,11 @@ pub fn play_shooting_sound_on_player_weapon_fired(
     }
 }
 
-// TODO: Move to player/hud module
-pub fn spawn_muzzle_flash(
-    asset_server: Res<AssetServer>,
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut player_shot_message_reader: MessageReader<PlayerWeaponFiredMessage>,
-    player_camera_entity: Single<Entity, With<ViewModelCamera>>,
-) {
-    for _ in player_shot_message_reader.read() {
-        let random_rotation_angle = get_random_number_from_range(0..5);
-
-        commands.entity(*player_camera_entity).with_child((
-            Transform {
-                // TODO: this must change depending on the cameras FOV
-                translation: Vec3 {
-                    x: 0.3,
-                    y: -0.1,
-                    z: -0.5,
-                },
-                rotation: Quat::from_axis_angle(
-                    Vec3::Z,
-                    random_rotation_angle as f32,
-                ),
-                ..default()
-            },
-            MuzzleFlash,
-            Mesh3d(meshes.add(Plane3d {
-                half_size: Vec2::splat(0.1),
-                normal: Dir3::Z,
-            })),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color_texture: Some(
-                    // TODO: dont use cropped version to avoid the bleeding
-                    // thing
-                    asset_server.load("muzzle_flash_cropped.png"),
-                ),
-                alpha_mode: AlphaMode::Blend,
-                unlit: true,
-                ..default()
-            })),
-            DespawnTimer(Timer::from_seconds(0.05, TimerMode::Once)),
-        ));
-    }
-}
-
 pub fn handle_player_death_event(
     mut message_reader: MessageReader<PlayerDeathMessage>,
-    mut player_movement_state: Single<&mut MovementState, With<Player>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
     for _ in message_reader.read() {
-        **player_movement_state = MovementState::Idle;
         next_in_game_state.set(InGameState::PlayerDead);
     }
 }
@@ -441,6 +390,7 @@ pub fn handle_weapon_slot_change(
     mut message_writer: MessageWriter<PlayerWeaponSlotChangeMessage>,
     existing_change_weapon_cooldown: Option<Res<ChangeWeaponCooldown>>,
 ) {
+    return;
     // dont allow changing weapon if on cooldown
     if existing_change_weapon_cooldown.is_some() {
         return;

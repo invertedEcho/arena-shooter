@@ -25,7 +25,7 @@ const SCOPED_POSITION_ASSAULT_RIFLE: Vec3 = Vec3 {
     z: -0.3,
 };
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum AimType {
     Normal,
     Scoped,
@@ -43,6 +43,24 @@ pub fn get_position_for_weapon(
         WeaponType::AssaultRifle => match aim_type {
             AimType::Normal => NORMAL_POSITION_ASSAULT_RIFLE,
             AimType::Scoped => SCOPED_POSITION_ASSAULT_RIFLE,
+        },
+    }
+}
+
+// TODO: this must change depending on the cameras FOV
+pub fn get_muzzle_flash_position_for_weapon(
+    weapon_type: &WeaponType,
+    aim_type: &AimType,
+) -> Vec3 {
+    const NORMAL_POSITION_PISTOL: Vec3 = Vec3::new(0.1, -0.08, -0.2);
+    match weapon_type {
+        WeaponType::Pistol => match aim_type {
+            AimType::Normal => NORMAL_POSITION_PISTOL,
+            AimType::Scoped => Vec3::ZERO,
+        },
+        WeaponType::AssaultRifle => match aim_type {
+            AimType::Normal => Vec3::ZERO,
+            AimType::Scoped => Vec3::ZERO,
         },
     }
 }
