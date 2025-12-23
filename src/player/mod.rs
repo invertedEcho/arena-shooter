@@ -4,7 +4,10 @@ use crate::{
     player::{
         camera::{PlayerCameraPlugin, components::PlayerCameraState},
         hud::PlayerHudPlugin,
-        shooting::{PlayerShootingPlugin, components::PlayerWeapons},
+        shooting::{
+            PlayerShootingPlugin,
+            components::{AimType, PlayerWeapons},
+        },
         spawn::PlayerSpawnPlugin,
     },
     shared::components::Health,
@@ -30,6 +33,7 @@ pub struct PlayerBundle {
     player: Player,
     health: Health,
     player_camera_state: PlayerCameraState,
+    aim_type: AimType,
 }
 
 impl Default for PlayerBundle {
@@ -38,6 +42,7 @@ impl Default for PlayerBundle {
             player: Player,
             health: Health(DEFAULT_PLAYER_HEALTH),
             player_camera_state: PlayerCameraState::default(),
+            aim_type: AimType::Normal,
         }
     }
 }

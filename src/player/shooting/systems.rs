@@ -9,12 +9,12 @@ use crate::{
         Player, PlayerDeathMessage,
         camera::{
             components::{PlayerWeaponModel, WorldCamera},
-            weapon_positions::{AimType, get_position_for_weapon},
+            weapon_positions::get_position_for_weapon,
         },
         shooting::{
             components::{
-                BloodScreenEffect, PlayerShootCooldownTimer, PlayerWeapons,
-                Weapon,
+                AimType, BloodScreenEffect, PlayerShootCooldownTimer,
+                PlayerWeapons, Weapon,
             },
             messages::{
                 PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage,
@@ -51,7 +51,6 @@ pub fn add_player_weapons_to_new_players(
             shooting: false,
             reloading: false,
             active_slot: 0,
-            aim_type: AimType::Normal,
             weapons: [
                 Weapon {
                     stats: WeaponStats {
@@ -415,4 +414,8 @@ pub fn handle_change_weapon_slot_cooldown(
             commands.remove_resource::<ChangeWeaponCooldown>();
         }
     }
+}
+
+pub fn reset_aim_type_on_pause(mut aim_type: Single<&mut AimType>) {
+    **aim_type = AimType::Normal;
 }

@@ -1,17 +1,18 @@
 use crate::{
     game_flow::states::AppState,
     player::{
+        Player,
         camera::{
             PLAYER_CAMERA_Y_OFFSET,
+            components::ViewModelCamera,
             messages::SpawnPlayerCamerasMessage,
             weapon_positions::{
-                AimType, get_muzzle_flash_position_for_weapon,
-                get_position_for_weapon,
+                get_muzzle_flash_position_for_weapon, get_position_for_weapon,
             },
         },
         shooting::{
             asset_paths::get_asset_path_for_weapon_type,
-            components::PlayerWeapons,
+            components::{AimType, PlayerWeapons},
             messages::{
                 PlayerWeaponFiredMessage, PlayerWeaponSlotChangeMessage,
             },
@@ -30,8 +31,6 @@ use bevy::{
     prelude::*,
 };
 use bevy_inspector_egui::bevy_egui;
-
-use crate::player::{Player, camera::ViewModelCamera};
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 
@@ -105,31 +104,36 @@ pub fn setup_player_cameras(
 
 pub fn handle_player_scope_aim(
     mouse_input: Res<ButtonInput<MouseButton>>,
-    mut player_weapon_model_transform: Single<
-        &mut Transform,
-        With<PlayerWeaponModel>,
-    >,
-    mut player_weapons: Single<&mut PlayerWeapons>,
+    player_query: Single<(&mut PlayerWeapons, &mut AimType)>,
 ) {
+    let (player_weapons, mut aim_type) = player_query.into_inner();
+
     if player_weapons.reloading {
         return;
     }
 
-    let weapon_type = player_weapons.weapons[player_weapons.active_slot]
-        .stats
-        .weapon_type
-        .clone();
-
     if mouse_input.just_pressed(MouseButton::Right) {
-        player_weapons.aim_type = AimType::Scoped;
-        let weapon_position =
-            get_position_for_weapon(&weapon_type, &AimType::Scoped);
-        player_weapon_model_transform.translation = weapon_position;
+        *aim_type = AimType::Scoped;
     } else if mouse_input.just_released(MouseButton::Right) {
-        player_weapons.aim_type = AimType::Normal;
-        let weapon_position =
-            get_position_for_weapon(&weapon_type, &AimType::Normal);
-        player_weapon_model_transform.translation = weapon_position;
+        *aim_type = AimType::Normal;
+    }
+}
+
+pub fn update_weapon_position_changed_aim_type(
+    query: Query<&AimType, Changed<AimType>>,
+    mut player_weapon_model_transform: Single<
+        &mut Transform,
+        With<PlayerWeaponModel>,
+    >,
+    player_weapons: Single<&PlayerWeapons>,
+) {
+    for changed_aim_type in query {
+        let weapon_type = &player_weapons.weapons[player_weapons.active_slot]
+            .stats
+            .weapon_type;
+        let new_position =
+            get_position_for_weapon(weapon_type, changed_aim_type);
+        player_weapon_model_transform.translation = new_position;
     }
 }
 
@@ -373,13 +377,15 @@ pub fn spawn_muzzle_flash(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut player_shot_message_reader: MessageReader<PlayerWeaponFiredMessage>,
     player_weapon_model_entity: Single<Entity, With<PlayerWeaponModel>>,
-    player_weapons: Single<&PlayerWeapons>,
+    player_query: Single<(&PlayerWeapons, &AimType)>,
 ) {
+    let (player_weapons, aim_type) = player_query.into_inner();
+
     for _ in player_shot_message_reader.read() {
         let active_weapon = player_weapons.active_slot;
         let muzzle_flash_position = get_muzzle_flash_position_for_weapon(
             &player_weapons.weapons[active_weapon].stats.weapon_type,
-            &player_weapons.aim_type,
+            aim_type,
         );
 
         commands.entity(*player_weapon_model_entity).with_child((

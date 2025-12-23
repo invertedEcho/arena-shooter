@@ -12,7 +12,7 @@ use crate::{
             handle_change_weapon_slot_cooldown, handle_input,
             handle_player_death_event, handle_player_weapon_fired_message,
             handle_reload_player_weapon_message, handle_weapon_slot_change,
-            tick_player_weapon_reload_timer,
+            reset_aim_type_on_pause, tick_player_weapon_reload_timer,
             tick_player_weapon_shoot_cooldown_timer,
         },
     },
@@ -47,6 +47,7 @@ impl Plugin for PlayerShootingPlugin {
                     handle_change_weapon_slot_cooldown,
                 )
                     .run_if(in_state(InGameState::Playing)),
-            );
+            )
+            .add_systems(OnEnter(InGameState::Paused), reset_aim_type_on_pause);
     }
 }

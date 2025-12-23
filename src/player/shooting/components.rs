@@ -1,9 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{
-    player::camera::weapon_positions::AimType,
-    shared::{WeaponState, WeaponStats},
-};
+use crate::shared::{WeaponState, WeaponStats};
 
 #[derive(Component)]
 pub struct PlayerShootCooldownTimer(pub Timer);
@@ -14,7 +11,6 @@ pub struct PlayerWeapons {
     pub weapons: [Weapon; 2],
     pub shooting: bool,
     pub reloading: bool,
-    pub aim_type: AimType,
 }
 
 pub struct Weapon {
@@ -44,4 +40,10 @@ impl Default for BloodScreenEffect {
             currrent_timer_iteration: 1,
         }
     }
+}
+
+#[derive(PartialEq, Clone, Component)]
+pub enum AimType {
+    Normal,
+    Scoped,
 }

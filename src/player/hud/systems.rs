@@ -5,10 +5,13 @@ use bevy::{
 
 use crate::{
     game_flow::{
-        game_mode::GameStateWave, score::GameScore, states::InGameState,
+        game_mode::GameStateWave,
+        score::GameScore,
+        states::{AppState, InGameState},
     },
     player::{
         Player, PlayerReady,
+        camera::components::AimType,
         hud::{
             CROSSHAIR_BULLET_HIT_PATH, MAIN_CROSSHAIR_PATH,
             components::{
@@ -34,6 +37,7 @@ pub fn spawn_player_hud(
     mut commands: Commands,
     player_query: Single<(&Health, &PlayerWeapons), Added<PlayerReady>>,
 ) {
+    info!("Spawning player hud because PlayerReady was inserted");
     let (player_health, player_weapons) = player_query.into_inner();
 
     let weapon_state =
@@ -51,6 +55,7 @@ pub fn spawn_player_hud(
                 ..default()
             },
             PlayerHud,
+            DespawnOnExit(AppState::InGame),
         ))
         .with_children(|parent| {
             parent
@@ -161,30 +166,29 @@ pub fn spawn_player_crosshair(
                     align_items: AlignItems::Center,
                     ..default()
                 },
-                DespawnOnExit(InGameState::Playing),
                 PlayerCrosshair,
+                DespawnOnExit(AppState::InGame),
             ))
             .with_child(ImageNode::new(asset_server.load(MAIN_CROSSHAIR_PATH)));
     }
 }
 
 pub fn update_player_crosshair_visibility(
-    mouse_input: Res<ButtonInput<MouseButton>>,
+    player_aim_type: Single<&AimType, Changed<AimType>>,
     mut player_cross_hair: Single<&mut Visibility, With<PlayerCrosshair>>,
 ) {
-    if mouse_input.just_pressed(MouseButton::Right) {
-        **player_cross_hair = Visibility::Hidden;
-    } else if mouse_input.just_released(MouseButton::Right) {
-        **player_cross_hair = Visibility::Visible;
+    match *player_aim_type {
+        AimType::Normal => **player_cross_hair = Visibility::Visible,
+        AimType::Scoped => **player_cross_hair = Visibility::Hidden,
     }
 }
 
 pub fn update_player_health_text(
-    player_health: Single<&Health, (Changed<Health>, With<Player>)>,
+    player_health: Single<&Health, Changed<Health>>,
     mut player_health_text: Single<&mut Text, With<PlayerHealthText>>,
 ) {
-    info!("player health has changed!");
-    ***player_health_text = player_health.0.to_string();
+    info!("Updated player health text");
+    player_health_text.0 = player_health.0.to_string();
 }
 
 pub fn update_player_ammo_text(
@@ -327,12 +331,19 @@ pub fn show_player_hud(
 }
 
 pub fn hide_player_crosshair(
-    mut player_crosshair_visibility: Single<
+    mut player_crosshair_visibility: Query<
         &mut Visibility,
         With<PlayerCrosshair>,
     >,
 ) {
-    **player_crosshair_visibility = Visibility::Hidden;
+    info!(
+        "Count of player crosshairs: {}",
+        player_crosshair_visibility.count()
+    );
+    for mut player_crosshair_visibility in player_crosshair_visibility {
+        info!("Hiding player crosshair");
+        *player_crosshair_visibility = Visibility::Hidden;
+    }
 }
 
 pub fn show_player_crosshair(

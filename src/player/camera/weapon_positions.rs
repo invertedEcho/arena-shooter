@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::shared::WeaponType;
+use crate::{player::shooting::components::AimType, shared::WeaponType};
 
 const NORMAL_POSITION_PISTOL: Vec3 = Vec3 {
     x: 0.25,
@@ -24,12 +24,6 @@ const SCOPED_POSITION_ASSAULT_RIFLE: Vec3 = Vec3 {
     y: -0.3,
     z: -0.3,
 };
-
-#[derive(PartialEq, Clone)]
-pub enum AimType {
-    Normal,
-    Scoped,
-}
 
 pub fn get_position_for_weapon(
     weapon_type: &WeaponType,
