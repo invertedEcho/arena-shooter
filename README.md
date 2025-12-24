@@ -88,10 +88,9 @@ fn spawn_player_hud(
 - [x] User interface
 - [x] Player movement
   - [x] Basic movement
-  - [x] Write a proper kinematic character controller from scratch because i dont want to just copy some code
+  - [x] Write a proper kinematic character controller from scratch
     - [x] Climb slopes
     - [x] slide along walls when going into walls instead of zeroeing velocity
-    - there are still some improvements and fixes needed, but it works pretty good so far
 - [x] Different maps to play on
 - [X] Game modes
   - [x] Wave mode (the game gets more difficult each round, e.g. more enemies are spawned)
@@ -105,6 +104,18 @@ fn spawn_player_hud(
   - [x] Chasing the player via pathfinding
   - [ ] Going to locations the player made noises
 - [ ] Multiplayer
+- [ ] Weapon animations
+  - [x] Weapon sway
+  - [ ] Weapon recoil animation (e.g. when shooting kick back)
+  - [ ] Interpolate translation when switching aiming
+- [ ] Audio Settings menu
+  - [x] Global volume
+  - [ ] Audio volume
+  - [ ] Music volume
+- [ ] Graphics settings menu 
+  - [ ] Target FPS
+- [ ] Input menu
+  - [ ] Change keybinds of all inputs in the game
 - and probably more stuff already implemented and coming soon..
 
 
