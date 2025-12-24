@@ -4,13 +4,20 @@ use bevy::{
     color::palettes::{css::RED, tailwind::BLUE_700},
     prelude::*,
 };
+use bevy_inspector_egui::{
+    bevy_egui::{EguiContext, EguiPrimaryContextPass, PrimaryEguiContext},
+    egui,
+};
 use bevy_rich_text3d::{
     LoadFonts, Text3d, Text3dPlugin, Text3dStyling, TextAtlas,
 };
 
-use crate::enemy::{
-    Enemy,
-    ai::{ENEMY_FOV, ENEMY_VISION_RANGE, components::EnemyState},
+use crate::{
+    enemy::{
+        Enemy,
+        ai::{ENEMY_FOV, ENEMY_VISION_RANGE, components::EnemyState},
+    },
+    player::Player,
 };
 
 pub struct GameplayDebugPlugin;
@@ -39,6 +46,7 @@ impl Plugin for GameplayDebugPlugin {
                 tick_despawn_timer_debug_gizmo_lines,
             ),
         );
+        app.add_systems(EguiPrimaryContextPass, player_inspector);
 
         app.insert_resource(DebugGizmos(Vec::new()));
     }
@@ -150,4 +158,30 @@ fn add_enemy_state_text(
             EnemyDebugText(entity),
         ));
     }
+}
+
+fn player_inspector(world: &mut World) {
+    let mut ui_ctx = match world
+        .query_filtered::<&mut EguiContext, With<PrimaryEguiContext>>()
+        .single_mut(world)
+    {
+        Ok(ctx) => ctx.clone(),
+        _ => return,
+    };
+
+    egui::Window::new("Player Inspector").show(ui_ctx.get_mut(), |ui| {
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            if let Ok(player_entity) =
+                world.query_filtered::<Entity, With<Player>>().single(world)
+            {
+                ui.label(format!("Player Entity ID: {:?}", player_entity));
+
+                bevy_inspector_egui::bevy_inspector::ui_for_entity(
+                    world,
+                    player_entity,
+                    ui,
+                );
+            }
+        })
+    });
 }
