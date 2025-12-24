@@ -218,11 +218,6 @@ fn apply_collide_and_slide(
             let impulse = desired_velocity.reject_from_normalized(normal);
             // we need to check again if the new velocity (impulse) would also penetrate an
             // obstacle until we dont or we reach MAX_HITS, where we just zero out velocity
-            info!(
-                "obstacle in the way, sliding along wall by recursive call to \
-                 apply_collide_and_slide: {}",
-                impulse
-            );
 
             // update our transform so shape cast origin is correct
             let new_transform = Transform {
@@ -264,8 +259,7 @@ pub fn update_on_ground(
             grounded.0 = on_ground;
         }
 
-        if on_ground && velocity.y <= 0.0 {
-            info!("Zeroeing out y velocity");
+        if on_ground && velocity.y < 0.0 {
             velocity.y = 0.0
         }
     }
@@ -300,7 +294,7 @@ pub fn check_above_head(
     spatial_query: SpatialQuery,
 ) {
     for (entity_itself, mut velocity, transform, grounded) in query {
-        if (grounded.0) {
+        if grounded.0 {
             continue;
         };
         let Some(_) = spatial_query.cast_shape(
