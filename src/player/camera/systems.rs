@@ -426,3 +426,15 @@ pub fn interpolate_weapon_position(
         .translation
         .lerp(target_destination, time.delta_secs() * SPEED);
 }
+
+pub fn do_weapon_kickback(
+    mut player_weapon_model_transform: Single<
+        &mut Transform,
+        With<PlayerWeaponModel>,
+    >,
+    mut player_shot_message_reader: MessageReader<PlayerWeaponFiredMessage>,
+) {
+    for _ in player_shot_message_reader.read() {
+        player_weapon_model_transform.rotation *= Quat::from_rotation_z(0.15);
+    }
+}

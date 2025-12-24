@@ -305,6 +305,7 @@ pub fn check_above_head(
             transform.translation,
             Quat::IDENTITY,
             Dir3::Y,
+            // TODO: investigate whether we can further decrease this value
             &ShapeCastConfig::default().with_max_distance(0.1),
             &SpatialQueryFilter::default()
                 .with_excluded_entities([entity_itself]),
@@ -314,7 +315,6 @@ pub fn check_above_head(
 
         // if there is something above the current shape, stop vertical movement, to prevent
         // clipping into ceilings
-        info!("something above head, decreasing velocity");
         velocity.y -= 0.1;
     }
 }
