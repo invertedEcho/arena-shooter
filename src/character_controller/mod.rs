@@ -41,7 +41,7 @@ impl Plugin for CharacterControllerPlugin {
                     apply_movement_damping,
                     update_on_ground,
                     apply_gravity_over_time,
-                    check_above_head,
+                    check_above_head.after(update_on_ground),
                 ),
             )
             .add_systems(
