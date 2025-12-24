@@ -4,7 +4,7 @@ use crate::{
     character_controller::{
         messages::MovementAction,
         systems::{
-            apply_gravity_over_time, apply_movement_damping,
+            apply_gravity_over_time, apply_movement_damping, check_above_head,
             handle_keyboard_input_for_player,
             handle_movement_actions_for_character_controllers,
             update_on_ground,
@@ -41,6 +41,7 @@ impl Plugin for CharacterControllerPlugin {
                     apply_movement_damping,
                     update_on_ground,
                     apply_gravity_over_time,
+                    check_above_head,
                 ),
             )
             .add_systems(

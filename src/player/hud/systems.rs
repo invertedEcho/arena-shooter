@@ -11,7 +11,6 @@ use crate::{
     },
     player::{
         Player, PlayerReady,
-        camera::components::AimType,
         hud::{
             CROSSHAIR_BULLET_HIT_PATH, MAIN_CROSSHAIR_PATH,
             components::{
@@ -21,6 +20,7 @@ use crate::{
                 PlayerWeaponText,
             },
         },
+        shooting::components::AimType,
         shooting::{
             components::PlayerWeapons,
             messages::{
@@ -331,19 +331,13 @@ pub fn show_player_hud(
 }
 
 pub fn hide_player_crosshair(
-    mut player_crosshair_visibility: Query<
+    mut player_crosshair_visibility: Single<
         &mut Visibility,
         With<PlayerCrosshair>,
     >,
 ) {
-    info!(
-        "Count of player crosshairs: {}",
-        player_crosshair_visibility.count()
-    );
-    for mut player_crosshair_visibility in player_crosshair_visibility {
-        info!("Hiding player crosshair");
-        *player_crosshair_visibility = Visibility::Hidden;
-    }
+    info!("Hiding player crosshair");
+    **player_crosshair_visibility = Visibility::Hidden;
 }
 
 pub fn show_player_crosshair(

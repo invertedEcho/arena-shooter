@@ -110,8 +110,6 @@ pub fn handle_movement_actions_for_character_controllers(
             MovementDirection::Jump => {
                 if grounded.0 {
                     velocity.y = JUMP_VELOCITY;
-                } else {
-                    info!("not grounded, not allowing jump");
                 }
             }
             // TODO: should probably move the content of this block elsewhere
@@ -251,5 +249,34 @@ pub fn apply_movement_damping(
     for mut velocity in query {
         velocity.x *= 0.9;
         velocity.z *= 0.9;
+    }
+}
+
+pub fn check_above_head(
+    query: Query<
+        (Entity, &mut LinearVelocity, &Transform),
+        With<CharacterController>,
+    >,
+    spatial_query: SpatialQuery,
+) {
+    for (entity_itself, mut velocity, transform) in query {
+        let Some(_) = spatial_query.cast_shape(
+            &Collider::capsule(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ),
+            transform.translation,
+            Quat::IDENTITY,
+            Dir3::Y,
+            &ShapeCastConfig::default().with_max_distance(0.1),
+            &SpatialQueryFilter::default()
+                .with_excluded_entities([entity_itself]),
+        ) else {
+            continue;
+        };
+
+        // if there is something above the current shape, stop vertical movement, to prevent
+        // clipping into ceilings
+        velocity.y -= 0.1;
     }
 }

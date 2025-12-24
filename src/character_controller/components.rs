@@ -39,7 +39,7 @@ impl Default for CharacterControllerBundle {
                     CHARACTER_CAPSULE_LENGTH,
                 ),
                 Vec3::ZERO,
-                Quaternion::default(),
+                Quaternion::IDENTITY,
                 Dir3::NEG_Y,
             )
             .with_max_distance(0.1),

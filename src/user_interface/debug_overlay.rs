@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    character_controller::components::Grounded,
     game_flow::states::{AppDebugState, AppState, InGameState, MainMenuState},
     player::Player,
 };
@@ -23,6 +24,7 @@ impl Plugin for DebugOverlayPlugin {
                 toggle_debug,
                 update_player_info_text,
                 update_current_main_menu_state,
+                update_grounded_player,
             ),
         );
     }
@@ -39,6 +41,9 @@ struct CurrentMainMenuStateText;
 
 #[derive(Component)]
 struct PlayerInfoText;
+
+#[derive(Component)]
+struct PlayerGroundedText;
 
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
@@ -106,6 +111,8 @@ fn spawn_debug_overlay(mut commands: Commands) {
                     ..default()
                 },
             ));
+            parent.spawn((Text::new("Player Grounded")));
+            parent.spawn((Text::new(""), PlayerGroundedText));
         });
 }
 
@@ -177,4 +184,11 @@ fn update_player_info_text(
     for mut player_info_text in player_text {
         **player_info_text = format!("{:?}", *changed_player);
     }
+}
+
+fn update_grounded_player(
+    query: Single<&Grounded, (Changed<Grounded>, With<Player>)>,
+    mut text_query: Single<&mut Text, With<PlayerGroundedText>>,
+) {
+    text_query.0 = query.0.to_string();
 }
