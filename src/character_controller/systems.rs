@@ -107,8 +107,6 @@ pub fn handle_movement_actions_for_character_controllers(
             continue;
         };
 
-        // TODO: jump and move should really be the same, we just have a function that probably
-        // needs to be recursive and checks with shapecast and rejects
         match *direction {
             MovementDirection::Jump => {
                 if grounded.0 {
@@ -116,16 +114,21 @@ pub fn handle_movement_actions_for_character_controllers(
                 }
             }
             MovementDirection::Move(world_velocity) => {
+                // exclude medkits because we want to be able to walk through medkits
                 let excluded_entities: Vec<Entity> = medkit_query
                     .iter()
                     .chain(std::iter::once(character_controller_entity))
                     .collect();
+
+                let spatial_query_filter = &SpatialQueryFilter::default()
+                    .with_excluded_entities(excluded_entities.clone());
+
                 apply_collide_and_slide(
                     &mut velocity,
                     world_velocity,
-                    &excluded_entities,
                     transform,
                     &mut spatial_query,
+                    spatial_query_filter,
                     time.delta_secs(),
                     0,
                 );
@@ -137,9 +140,9 @@ pub fn handle_movement_actions_for_character_controllers(
 fn apply_collide_and_slide(
     current_velocity: &mut Vec3,
     desired_velocity: Vec3,
-    excluded_entities: &Vec<Entity>,
     origin_transform: &Transform,
     spatial_query: &mut SpatialQuery,
+    spatial_query_filter: &SpatialQueryFilter,
     time_delta_secs: f32,
     current_hit_count: usize,
 ) {
@@ -160,10 +163,6 @@ fn apply_collide_and_slide(
 
     let ray_origin = origin_transform.translation
         - direction_from_world_velocity.as_vec3() * 0.025;
-
-    // also exclude medkits
-    let spatial_query_filter = &SpatialQueryFilter::default()
-        .with_excluded_entities(excluded_entities.clone());
 
     if let Some(hit_ahead) = spatial_query.cast_shape(
         &Collider::capsule(CHARACTER_CAPSULE_RADIUS, CHARACTER_CAPSULE_LENGTH),
@@ -224,6 +223,8 @@ fn apply_collide_and_slide(
                  apply_collide_and_slide: {}",
                 impulse
             );
+
+            // update our transform so shape cast origin is correct
             let new_transform = Transform {
                 translation: origin_transform.translation
                     + desired_velocity * time_delta_secs,
@@ -234,11 +235,9 @@ fn apply_collide_and_slide(
             apply_collide_and_slide(
                 current_velocity,
                 impulse,
-                excluded_entities,
-                // so this makes no sense, we wont be at the same transform once we have even one
-                // recursive iteration
                 &new_transform,
                 spatial_query,
+                spatial_query_filter,
                 time_delta_secs,
                 current_hit_count + 1,
             );
