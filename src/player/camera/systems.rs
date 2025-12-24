@@ -4,7 +4,7 @@ use crate::{
         Player,
         camera::{
             PLAYER_CAMERA_Y_OFFSET,
-            components::ViewModelCamera,
+            components::{InterpolateWeapon, ViewModelCamera},
             messages::SpawnPlayerCamerasMessage,
             weapon_positions::{
                 get_muzzle_flash_position_for_weapon, get_position_for_weapon,
@@ -116,24 +116,6 @@ pub fn handle_player_scope_aim(
         *aim_type = AimType::Scoped;
     } else if mouse_input.just_released(MouseButton::Right) {
         *aim_type = AimType::Normal;
-    }
-}
-
-pub fn update_weapon_position_changed_aim_type(
-    query: Query<&AimType, Changed<AimType>>,
-    mut player_weapon_model_transform: Single<
-        &mut Transform,
-        With<PlayerWeaponModel>,
-    >,
-    player_weapons: Single<&PlayerWeapons>,
-) {
-    for changed_aim_type in query {
-        let weapon_type = &player_weapons.weapons[player_weapons.active_slot]
-            .stats
-            .weapon_type;
-        let new_position =
-            get_position_for_weapon(weapon_type, changed_aim_type);
-        player_weapon_model_transform.translation = new_position;
     }
 }
 
@@ -409,4 +391,38 @@ pub fn spawn_muzzle_flash(
             RenderLayers::layer(1),
         ));
     }
+}
+
+pub fn update_target_weapon_position_for_changed_aim_type(
+    query: Query<(Entity, &AimType), Changed<AimType>>,
+    player_weapons: Single<&PlayerWeapons>,
+    mut commands: Commands,
+) {
+    for (player_entity, changed_aim_type) in query {
+        let weapon_type = &player_weapons.weapons[player_weapons.active_slot]
+            .stats
+            .weapon_type;
+        let target_position =
+            get_position_for_weapon(weapon_type, changed_aim_type);
+
+        commands
+            .entity(player_entity)
+            .insert(InterpolateWeapon { target_position });
+    }
+}
+
+pub fn interpolate_weapon_position(
+    interpolate_weapon: Single<&InterpolateWeapon>,
+    mut player_weapon_model_transform: Single<
+        &mut Transform,
+        With<PlayerWeaponModel>,
+    >,
+    time: Res<Time>,
+) {
+    const SPEED: f32 = 20.0;
+    let target_destination = interpolate_weapon.target_position;
+
+    player_weapon_model_transform.translation = player_weapon_model_transform
+        .translation
+        .lerp(target_destination, time.delta_secs() * SPEED);
 }
