@@ -28,7 +28,7 @@ pub fn setup_server(mut commands: Commands) {
 
 /// A marker component indcating which client this player belongs to
 #[derive(Component)]
-pub struct ClientId(pub Entity);
+pub struct ControllerByClient(pub Entity);
 
 pub fn handle_new_client(
     trigger: On<Add, Connected>,
@@ -38,6 +38,10 @@ pub fn handle_new_client(
 ) {
     println!("New client! {}", trigger.entity);
     println!("Spawning a player for the new client {}", trigger.entity);
+
+    commands
+        .entity(trigger.entity)
+        .insert(ReplicationSender::default());
 
     commands.spawn((
         Name::new("Player"),
@@ -58,6 +62,6 @@ pub fn handle_new_client(
             ..Default::default()
         })),
         Replicate::to_clients(NetworkTarget::All),
-        ClientId(trigger.entity),
+        ControllerByClient(trigger.entity),
     ));
 }
