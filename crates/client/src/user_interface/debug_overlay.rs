@@ -1,9 +1,7 @@
 use bevy::prelude::*;
 
-use crate::{
-    character_controller::components::Grounded,
-    game_flow::states::{AppDebugState, AppState, InGameState, MainMenuState},
-    player::Player,
+use crate::game_flow::states::{
+    AppDebugState, AppState, InGameState, MainMenuState,
 };
 
 const DEBUG_OVERLAY_TEXT_SIZE: f32 = 15.0;
@@ -22,9 +20,9 @@ impl Plugin for DebugOverlayPlugin {
                 update_current_app_state_text,
                 update_current_in_game_state_text,
                 toggle_debug,
-                update_player_info_text,
+                // update_player_info_text,
                 update_current_main_menu_state,
-                update_grounded_player,
+                // update_grounded_player,
             ),
         );
     }
@@ -177,18 +175,18 @@ fn toggle_debug(
     }
 }
 
-fn update_player_info_text(
-    changed_player: Single<&Player, Changed<Player>>,
-    player_text: Query<&mut Text, With<PlayerInfoText>>,
-) {
-    for mut player_info_text in player_text {
-        **player_info_text = format!("{:?}", *changed_player);
-    }
-}
-
-fn update_grounded_player(
-    query: Single<&Grounded, (Changed<Grounded>, With<Player>)>,
-    mut text_query: Single<&mut Text, With<PlayerGroundedText>>,
-) {
-    text_query.0 = query.0.to_string();
-}
+// fn update_player_info_text(
+//     changed_player: Single<&Player, Changed<Player>>,
+//     player_text: Query<&mut Text, With<PlayerInfoText>>,
+// ) {
+//     for mut player_info_text in player_text {
+//         **player_info_text = format!("{:?}", *changed_player);
+//     }
+// }
+//
+// fn update_grounded_player(
+//     query: Single<&Grounded, (Changed<Grounded>, With<Player>)>,
+//     mut text_query: Single<&mut Text, With<PlayerGroundedText>>,
+// ) {
+//     text_query.0 = query.0.to_string();
+// }

@@ -7,7 +7,6 @@ use landmass_rerecast::{
 };
 
 use crate::{
-    character_controller::{CHARACTER_HEIGHT, MAX_SLOPE_ANGLE},
     game_flow::states::LoadingGameSubState,
     world::world_objects::medkit::Medkit,
 };

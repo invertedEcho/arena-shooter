@@ -1,20 +1,16 @@
 use avian3d::prelude::*;
 use bevy::{input::mouse::MouseWheel, prelude::*};
+use shared::player::{AimType, PlayerWeaponModel, WorldCamera};
 
 use crate::{
-    enemy::Enemy,
     game_flow::states::InGameState,
-    particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
     player::{
         Player, PlayerDeathMessage,
-        camera::{
-            components::{PlayerWeaponModel, WorldCamera},
-            weapon_positions::get_position_for_weapon,
-        },
+        camera::weapon_positions::get_position_for_weapon,
         shooting::{
             components::{
-                AimType, BloodScreenEffect, PlayerShootCooldownTimer,
-                PlayerWeapons, Weapon,
+                BloodScreenEffect, PlayerShootCooldownTimer, PlayerWeapons,
+                Weapon,
             },
             messages::{
                 PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage,
@@ -144,13 +140,13 @@ pub fn handle_player_weapon_fired_message(
     mut commands: Commands,
     spatial_query: SpatialQuery,
     mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
-    enemy_entities: Query<Entity, With<Enemy>>,
+    // enemy_entities: Query<Entity, With<Enemy>>,
     mut player_bullet_hit_enemy_message_writer: MessageWriter<
         PlayerBulletHitEnemyMessage,
     >,
-    mut spawn_bullet_impact_effect_message_writer: MessageWriter<
-        SpawnBulletImpactEffectMessage,
-    >,
+    // mut spawn_bullet_impact_effect_message_writer: MessageWriter<
+    //     SpawnBulletImpactEffectMessage,
+    // >,
     world_model_camera_query: WorldModelCameraQuery,
     player_query: Single<(Entity, &PlayerWeapons), With<Player>>,
 ) {
@@ -180,32 +176,32 @@ pub fn handle_player_weapon_fired_message(
         ) {
             let entity_hit = first_hit.entity;
 
-            let did_hit_enemy =
-                enemy_entities.iter().any(|e| e == first_hit.entity);
+            // let did_hit_enemy =
+            //     enemy_entities.iter().any(|e| e == first_hit.entity);
 
-            if did_hit_enemy {
-                player_bullet_hit_enemy_message_writer.write(
-                    PlayerBulletHitEnemyMessage {
-                        enemy_hit: entity_hit,
-                        damage: DEFAULT_BULLET_DAMAGE,
-                    },
-                );
-            }
+            // if did_hit_enemy {
+            //     player_bullet_hit_enemy_message_writer.write(
+            //         PlayerBulletHitEnemyMessage {
+            //             enemy_hit: entity_hit,
+            //             damage: DEFAULT_BULLET_DAMAGE,
+            //         },
+            //     );
+            // }
 
             let hit_point = origin + direction * first_hit.distance;
 
-            let variant = if did_hit_enemy {
-                BulletImpactEffectVariant::Enemy
-            } else {
-                BulletImpactEffectVariant::World
-            };
-
-            spawn_bullet_impact_effect_message_writer.write(
-                SpawnBulletImpactEffectMessage {
-                    spawn_location: hit_point,
-                    variant,
-                },
-            );
+            // let variant = if did_hit_enemy {
+            //     BulletImpactEffectVariant::Enemy
+            // } else {
+            //     BulletImpactEffectVariant::World
+            // };
+            //
+            // spawn_bullet_impact_effect_message_writer.write(
+            //     SpawnBulletImpactEffectMessage {
+            //         spawn_location: hit_point,
+            //         variant,
+            //     },
+            // );
         }
     }
 }
@@ -268,10 +264,10 @@ pub fn handle_reload_player_weapon_message(
     >,
 ) {
     for _ in message_reader.read() {
-        info!("received reload player wepaon message message");
+        debug!("received reload player weapon message message");
         // dont allow reloading when already reloading
         if player_weapons.reloading {
-            info!("already reloading ignoring reloadmessage");
+            debug!("already reloading ignoring reloadmessage");
             return;
         }
 
@@ -284,7 +280,7 @@ pub fn handle_reload_player_weapon_message(
         if player_weapon_state.loaded_ammo
             == player_weapon_stats.max_loaded_ammo
         {
-            info!("plaleyr weapon already full");
+            debug!("Player weapon already full");
             return;
         }
 

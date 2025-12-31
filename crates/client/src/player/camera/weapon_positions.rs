@@ -1,6 +1,7 @@
 use bevy::prelude::*;
+use shared::player::AimType;
 
-use crate::{player::shooting::components::AimType, shared::WeaponType};
+use crate::shared::WeaponType;
 
 const NORMAL_POSITION_PISTOL: Vec3 = Vec3 {
     x: 0.25,

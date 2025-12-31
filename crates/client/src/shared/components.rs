@@ -9,6 +9,3 @@ pub struct DespawnTimer(pub Timer);
 /// pointing to the Entity of the AnimationPlayer and AnimationTransitions.
 #[derive(Component)]
 pub struct AnimationPlayerEntityPointer(pub Entity);
-
-#[derive(Component)]
-pub struct Health(pub f32);

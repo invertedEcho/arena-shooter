@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
 
 use crate::{
-    player::Player, shared::components::DespawnTimer,
+    shared::components::DespawnTimer,
     utils::random::get_random_number_from_range,
 };
 

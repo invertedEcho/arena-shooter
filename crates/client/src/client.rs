@@ -4,6 +4,8 @@ use lightyear::prelude::client::*;
 use lightyear::prelude::*;
 use shared::SERVER_ADDRESS;
 
+use crate::ClientId;
+
 pub struct ClientPlugin;
 
 impl Plugin for ClientPlugin {
@@ -19,13 +21,14 @@ pub struct StartMultiplayerMessage;
 pub fn handle_start_multiplayer_message(
     mut commands: Commands,
     mut message_reader: MessageReader<StartMultiplayerMessage>,
+    client_id: Res<ClientId>,
 ) {
-    for message in message_reader.read() {
+    for _ in message_reader.read() {
         info!("connecting to server...");
 
         let auth = Authentication::Manual {
             server_addr: SERVER_ADDRESS,
-            client_id: 0,
+            client_id: client_id.0,
             private_key: Key::default(),
             protocol_id: 0,
         };

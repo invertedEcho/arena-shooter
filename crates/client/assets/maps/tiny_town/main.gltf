@@ -54,7 +54,7 @@
 						}
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -82,7 +82,7 @@
 						}
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -110,7 +110,7 @@
 						}
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -138,7 +138,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -166,7 +166,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -194,7 +194,7 @@
 						}
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -222,7 +222,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -865,7 +865,7 @@
 						}
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -1498,7 +1498,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -2131,7 +2131,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -3054,7 +3054,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -3082,7 +3082,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -3110,7 +3110,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -3138,7 +3138,7 @@
 						}
 					},
 					{
-						"fun_shooter::world::components::Ground":{}
+						"client::world::components::Ground":{}
 					}
 				]
 			},
@@ -3172,7 +3172,7 @@
 						}
 					},
 					{
-						"fun_shooter::world::components::Ground":{}
+						"client::world::components::Ground":{}
 					}
 				]
 			},
@@ -3206,7 +3206,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Ground":{}
+						"client::world::components::Ground":{}
 					}
 				]
 			},
@@ -3348,7 +3348,7 @@
 						}
 					},
 					{
-						"fun_shooter::world::components::Ground":{}
+						"client::world::components::Ground":{}
 					}
 				]
 			},
@@ -5750,7 +5750,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -5789,7 +5789,7 @@
 						}
 					},
 					{
-						"fun_shooter::world::components::Ground":{}
+						"client::world::components::Ground":{}
 					}
 				]
 			},
@@ -6167,7 +6167,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -6195,7 +6195,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -6223,7 +6223,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -6251,7 +6251,7 @@
 						"avian3d::dynamics::rigid_body::RigidBody":"Static"
 					},
 					{
-						"fun_shooter::world::components::Wall":{}
+						"client::world::components::Wall":{}
 					}
 				]
 			},
@@ -6267,7 +6267,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6282,7 +6282,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6297,7 +6297,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6312,7 +6312,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6327,7 +6327,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6342,7 +6342,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6357,7 +6357,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6372,7 +6372,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6387,7 +6387,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6402,7 +6402,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6417,7 +6417,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6432,7 +6432,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6447,7 +6447,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6462,7 +6462,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::spawn::EnemySpawnLocation":{}
+						"client::enemy::spawn::EnemySpawnLocation":{}
 					}
 				]
 			},
@@ -6477,7 +6477,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::player::spawn::components::PlayerSpawnLocation":{}
+						"client::player::spawn::components::PlayerSpawnLocation":{}
 					}
 				]
 			},
@@ -6492,7 +6492,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::world::world_objects::medkit::MedkitSpawnLocation":{}
+						"client::world::world_objects::medkit::MedkitSpawnLocation":{}
 					}
 				]
 			},
@@ -6512,7 +6512,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::world::world_objects::medkit::MedkitSpawnLocation":{}
+						"client::world::world_objects::medkit::MedkitSpawnLocation":{}
 					}
 				]
 			},
@@ -6532,7 +6532,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::world::world_objects::medkit::MedkitSpawnLocation":{}
+						"client::world::world_objects::medkit::MedkitSpawnLocation":{}
 					}
 				]
 			},
@@ -6552,7 +6552,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::world::world_objects::medkit::MedkitSpawnLocation":{}
+						"client::world::world_objects::medkit::MedkitSpawnLocation":{}
 					}
 				]
 			},
@@ -6572,7 +6572,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::ai::components::EnemyHotspot":{}
+						"client::enemy::ai::components::EnemyHotspot":{}
 					}
 				]
 			},
@@ -6592,7 +6592,7 @@
 			"extras":{
 				"skein":[
 					{
-						"fun_shooter::enemy::ai::components::EnemyHotspot":{}
+						"client::enemy::ai::components::EnemyHotspot":{}
 					}
 				]
 			},

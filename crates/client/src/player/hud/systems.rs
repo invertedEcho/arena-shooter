@@ -2,6 +2,7 @@ use bevy::{
     color::palettes::tailwind::{BLUE_500, RED_500},
     prelude::*,
 };
+use shared::player::{AimType, Health};
 
 use crate::{
     game_flow::{
@@ -20,7 +21,6 @@ use crate::{
                 PlayerWeaponText,
             },
         },
-        shooting::components::AimType,
         shooting::{
             components::PlayerWeapons,
             messages::{
@@ -28,7 +28,7 @@ use crate::{
             },
         },
     },
-    shared::components::{DespawnTimer, Health},
+    shared::components::DespawnTimer,
     user_interface::{ITALIC_GAME_FONT_PATH, shared::PRIMARY_COLOR},
 };
 
@@ -336,7 +336,7 @@ pub fn hide_player_crosshair(
         With<PlayerCrosshair>,
     >,
 ) {
-    info!("Hiding player crosshair");
+    debug!("Hiding player crosshair");
     **player_crosshair_visibility = Visibility::Hidden;
 }
 

@@ -1,10 +1,8 @@
 use crate::{
     game_flow::states::AppState,
     player::{
-        Player,
         camera::{
             PLAYER_CAMERA_Y_OFFSET,
-            components::{InterpolateWeapon, ViewModelCamera},
             messages::SpawnPlayerCamerasMessage,
             weapon_positions::{
                 get_muzzle_flash_position_for_weapon, get_position_for_weapon,
@@ -12,7 +10,7 @@ use crate::{
         },
         shooting::{
             asset_paths::get_asset_path_for_weapon_type,
-            components::{AimType, PlayerWeapons},
+            components::PlayerWeapons,
             messages::{
                 PlayerWeaponFiredMessage, PlayerWeaponSlotChangeMessage,
             },
@@ -22,15 +20,15 @@ use crate::{
 };
 use std::f32::consts::FRAC_PI_2;
 
-use super::components::{
-    FreeCam, MuzzleFlash, PlayerCameraState, PlayerWeaponModel, WorldCamera,
-};
-
 use bevy::{
     camera::visibility::RenderLayers, input::mouse::AccumulatedMouseMotion,
     prelude::*,
 };
 use bevy_inspector_egui::bevy_egui;
+use shared::player::{
+    AimType, FreeCam, InterpolateWeapon, MuzzleFlash, Player,
+    PlayerCameraState, PlayerWeaponModel, ViewModelCamera, WorldCamera,
+};
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 

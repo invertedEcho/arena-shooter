@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+avian3d = "0.4.1"
 bevy = "0.17.3"
 lightyear = "0.25.5"
 serde = "1.0.228"

@@ -41,9 +41,3 @@ impl Default for BloodScreenEffect {
         }
     }
 }
-
-#[derive(PartialEq, Clone, Component)]
-pub enum AimType {
-    Normal,
-    Scoped,
-}

@@ -3,9 +3,9 @@ use bevy::prelude::*;
 use bevy_landmass::{
     AgentDesiredVelocity3d, AgentState, AgentTarget3d, Velocity3d,
 };
+use shared::player::Player;
 
 use crate::{
-    character_controller::messages::{MovementAction, MovementDirection},
     enemy::{
         Enemy, EnemyState,
         ai::{
@@ -14,7 +14,6 @@ use crate::{
         },
         spawn::AgentEnemyEntityPointer,
     },
-    player::Player,
     utils::transform::is_facing_target_without_y,
 };
 

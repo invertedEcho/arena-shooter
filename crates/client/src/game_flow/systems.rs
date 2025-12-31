@@ -12,7 +12,6 @@ use crate::{
             AppState, InGameState, LoadingGameSubState, SelectedMapState,
         },
     },
-    nav_mesh_pathfinding::NavMeshHandle,
     user_interface::main_menu::MainMenuCamera,
     world::resources::WorldSceneHandle,
 };
@@ -113,25 +112,25 @@ pub fn check_collider_constructor_hierarchy_ready(
     next_game_loading_state.set(LoadingGameSubState::CollidersReady);
 }
 
-pub fn check_navmesh_ready(
-    trigger: On<NavmeshReady>,
-    mut commands: Commands,
-    mut next_game_loading_state: ResMut<NextState<LoadingGameSubState>>,
-    mut nav_meshes: ResMut<Assets<Navmesh>>,
-) {
-    let Some(nav_mesh_handle) = nav_meshes.get_strong_handle(trigger.0) else {
-        panic!(
-            "Got navmeshready event but the Handle could not be found using \
-             the asset id from the trigger"
-        );
-    };
-
-    info!("Navmesh is now ready!");
-    next_game_loading_state.set(LoadingGameSubState::NavMeshReady);
-
-    commands.insert_resource(NavMeshHandle(nav_mesh_handle));
-    info!("NavMesh Handle stored");
-}
+// pub fn check_navmesh_ready(
+//     trigger: On<NavmeshReady>,
+//     mut commands: Commands,
+//     mut next_game_loading_state: ResMut<NextState<LoadingGameSubState>>,
+//     mut nav_meshes: ResMut<Assets<Navmesh>>,
+// ) {
+//     let Some(nav_mesh_handle) = nav_meshes.get_strong_handle(trigger.0) else {
+//         panic!(
+//             "Got navmeshready event but the Handle could not be found using \
+//              the asset id from the trigger"
+//         );
+//     };
+//
+//     info!("Navmesh is now ready!");
+//     next_game_loading_state.set(LoadingGameSubState::NavMeshReady);
+//
+//     commands.insert_resource(NavMeshHandle(nav_mesh_handle));
+//     info!("NavMesh Handle stored");
+// }
 
 pub fn on_game_loading_state_nav_mesh_ready(
     mut next_app_state: ResMut<NextState<AppState>>,

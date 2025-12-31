@@ -15,29 +15,26 @@ use lightyear::prelude::client::ClientPlugins;
 
 use crate::{
     audio::AudioPlugin,
-    character_controller::CharacterControllerPlugin,
     client::ClientPlugin,
-    enemy::EnemyPlugin,
     game_flow::GameFlowPlugin,
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
-    nav_mesh_pathfinding::NavMeshPathfindingPlugin,
-    particles::ParticlesPlugin,
     player::PlayerPlugin,
     shared::{CommonPlugin, systems::apply_render_layers_to_children},
     user_interface::UserInterfacePlugin,
     world::WorldPlugin,
 };
 
+// TODO: reintroduce all commented out plugins
 mod audio;
-mod character_controller;
+// mod character_controller;
 mod client;
-mod enemy;
+// mod enemy;
 mod game_flow;
 mod game_settings;
 mod gameplay_debug;
-mod nav_mesh_pathfinding;
-mod particles;
+// mod nav_mesh_pathfinding;
+// mod particles;
 mod player;
 mod shared;
 mod user_interface;
@@ -46,9 +43,19 @@ mod world;
 
 const GRAVITY: f32 = 9.81;
 
+#[derive(Resource)]
+pub struct ClientId(pub u64);
+
 fn main() {
     let mut app = App::new();
     let game_settings = get_or_create_game_settings();
+
+    let client_id = std::env::args()
+        .nth(1)
+        .expect("A client id must be specified");
+    app.insert_resource(ClientId(
+        client_id.parse().expect("A number must be used"),
+    ));
 
     app.insert_resource(game_settings.clone());
 
@@ -102,18 +109,19 @@ fn main() {
         });
     }
 
+    // FIXME: reintroduce all commented plugins again
     // own plugins
     app.add_plugins(ClientPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(WorldPlugin)
         .add_plugins(GameFlowPlugin)
         .add_plugins(CommonPlugin)
-        .add_plugins(EnemyPlugin)
+        // .add_plugins(EnemyPlugin)
         .add_plugins(UserInterfacePlugin)
-        .add_plugins(ParticlesPlugin)
-        .add_plugins(AudioPlugin)
-        .add_plugins(NavMeshPathfindingPlugin)
-        .add_plugins(CharacterControllerPlugin);
+        // .add_plugins(ParticlesPlugin)
+        .add_plugins(AudioPlugin);
+    // .add_plugins(NavMeshPathfindingPlugin);
+    // .add_plugins(CharacterControllerPlugin);
 
     if cfg!(debug_assertions) {
         app.add_plugins(GameplayDebugPlugin);

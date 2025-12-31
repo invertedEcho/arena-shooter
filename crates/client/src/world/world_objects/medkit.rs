@@ -2,12 +2,9 @@ use std::time::Duration;
 
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use shared::player::{DEFAULT_PLAYER_HEALTH, Health, Player};
 
-use crate::{
-    game_flow::states::AppState,
-    player::{DEFAULT_PLAYER_HEALTH, Player},
-    shared::components::Health,
-};
+use crate::game_flow::states::AppState;
 
 const MEDKIT_MODEL_PATH: &str = "models/world_objects/medkit.gltf";
 

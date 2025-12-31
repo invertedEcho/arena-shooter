@@ -1,51 +1,17 @@
 use bevy::prelude::*;
+use shared::player::{Player, PlayerReady};
 
-use crate::{
-    player::{
-        camera::{PlayerCameraPlugin, components::PlayerCameraState},
-        hud::PlayerHudPlugin,
-        shooting::{
-            PlayerShootingPlugin,
-            components::{AimType, PlayerWeapons},
-        },
-        spawn::PlayerSpawnPlugin,
-    },
-    shared::components::Health,
+use crate::player::{
+    camera::PlayerCameraPlugin,
+    hud::PlayerHudPlugin,
+    shooting::{PlayerShootingPlugin, components::PlayerWeapons},
+    spawn::PlayerSpawnPlugin,
 };
 
 pub mod camera;
 mod hud;
 pub mod shooting;
 pub mod spawn;
-
-pub const DEFAULT_PLAYER_HEALTH: f32 = 100.0;
-
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct Player;
-
-/// This component marks an entity as ready to be used for exterrnal systems that depend on the player, such as the HUD
-#[derive(Component)]
-pub struct PlayerReady;
-
-#[derive(Bundle)]
-pub struct PlayerBundle {
-    player: Player,
-    health: Health,
-    player_camera_state: PlayerCameraState,
-    aim_type: AimType,
-}
-
-impl Default for PlayerBundle {
-    fn default() -> Self {
-        Self {
-            player: Player,
-            health: Health(DEFAULT_PLAYER_HEALTH),
-            player_camera_state: PlayerCameraState::default(),
-            aim_type: AimType::Normal,
-        }
-    }
-}
 
 #[derive(Message)]
 pub struct PlayerDeathMessage;
@@ -54,8 +20,7 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<Player>()
-            .add_systems(Update, mark_players_as_ready)
+        app.add_systems(Update, mark_players_as_ready)
             .add_plugins(PlayerSpawnPlugin)
             .add_plugins(PlayerCameraPlugin)
             .add_plugins(PlayerShootingPlugin)

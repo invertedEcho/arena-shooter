@@ -152,6 +152,7 @@ fn handle_main_menu_button_pressed(
             }
             MainMenuButtonType::Multiplayer => {
                 start_multiplayer_message_writer.write(StartMultiplayerMessage);
+                next_main_menu_state.set(MainMenuState::MapSelection);
                 // connect to server and spawn map
             }
             MainMenuButtonType::SettingsMainMenu => {

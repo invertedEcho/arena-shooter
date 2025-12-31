@@ -7318,6 +7318,7 @@ dependencies = [
 name = "shared"
 version = "0.1.0"
 dependencies = [
+ "avian3d",
  "bevy",
  "lightyear",
  "serde",

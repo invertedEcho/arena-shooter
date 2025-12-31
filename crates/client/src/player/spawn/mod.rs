@@ -1,14 +1,11 @@
 use avian3d::prelude::*;
 use bevy::{color::palettes::css::WHITE, prelude::*};
+use lightyear::prelude::{NetworkTarget, Replicate};
 
 use crate::{
-    character_controller::{
-        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
-        components::CharacterControllerBundle,
-    },
     game_flow::states::AppState,
     player::{
-        Player, PlayerBundle, camera::messages::SpawnPlayerCamerasMessage,
+        Player, camera::messages::SpawnPlayerCamerasMessage,
         spawn::components::PlayerSpawnLocation,
     },
 };
@@ -26,7 +23,9 @@ impl Plugin for PlayerSpawnPlugin {
 }
 
 #[derive(Message)]
-pub struct SpawnPlayerMessage;
+pub struct SpawnPlayerMessage {
+    pub multiplayer: bool,
+}
 
 fn handle_player_spawn_event(
     mut commands: Commands,
@@ -39,31 +38,8 @@ fn handle_player_spawn_event(
     mut materials: ResMut<Assets<StandardMaterial>>,
     existing_players: Query<Entity, With<Player>>,
 ) {
-    for _ in player_spawn_message_reader.read() {
-        for existing_player in existing_players {
-            commands.entity(existing_player).despawn();
-        }
+    for message in player_spawn_message_reader.read() {
         info!("read player spawn event, spawning player");
-
-        commands.spawn((
-            Name::new("Player"),
-            PlayerBundle::default(),
-            Transform::from_translation(player_spawn_location.translation),
-            Visibility::Visible,
-            DebugRender::collider(Color::WHITE),
-            CharacterControllerBundle::default(),
-            DespawnOnExit(AppState::InGame),
-            Mesh3d(meshes.add(Capsule3d::new(
-                CHARACTER_CAPSULE_RADIUS,
-                CHARACTER_CAPSULE_LENGTH,
-            ))),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: WHITE.into(),
-                ..Default::default()
-            })),
-            // so egui inspector doesnt flicker
-            // SleepingDisabled,
-        ));
 
         spawn_player_cameras_message_writer.write(SpawnPlayerCamerasMessage);
     }

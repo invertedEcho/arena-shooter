@@ -9,7 +9,7 @@ use crate::{
             MainMenuState, SelectedMapState,
         },
         systems::{
-            check_collider_constructor_hierarchy_ready, check_navmesh_ready,
+            check_collider_constructor_hierarchy_ready,
             check_world_scene_loaded, free_mouse, grab_mouse,
             handle_escape_in_game, handle_map_loaded_with_dependencies,
             manual_free_mouse, on_game_loading_state_nav_mesh_ready,
@@ -40,7 +40,7 @@ impl Plugin for GameFlowPlugin {
             .add_plugins(GameScorePlugin)
             .add_plugins(GameModePlugin)
             .add_observer(check_collider_constructor_hierarchy_ready)
-            .add_observer(check_navmesh_ready)
+            // .add_observer(check_navmesh_ready)
             .add_systems(
                 OnEnter(LoadingGameSubState::NavMeshReady),
                 on_game_loading_state_nav_mesh_ready,
