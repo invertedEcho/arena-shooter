@@ -10,7 +10,6 @@ use bevy_inspector_egui::{
     bevy_egui::{self, EguiPlugin},
     quick::WorldInspectorPlugin,
 };
-use bevy_skein::SkeinPlugin;
 use lightyear::prelude::client::ClientPlugins;
 
 use crate::{
@@ -97,7 +96,6 @@ fn main() {
     app.add_plugins(PhysicsPlugins::default())
         // .add_plugins(PhysicsDebugPlugin)
         .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
-    app.add_plugins(SkeinPlugin::default());
     app.add_plugins(HanabiPlugin);
 
     if cfg!(debug_assertions) {

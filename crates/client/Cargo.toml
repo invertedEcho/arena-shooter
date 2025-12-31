@@ -12,7 +12,6 @@ bevy_hanabi = "0.17"
 bevy_landmass = "0.10.0"
 bevy_rerecast = "0.3.0"
 bevy_rich_text3d = "0.5.1"
-bevy_skein = "0.3"
 dirs = "6.0.0"
 landmass_rerecast = "0.1.0"
 lightyear = {version = "0.25.5", features = ["client", "netcode", "replication", "udp"]}

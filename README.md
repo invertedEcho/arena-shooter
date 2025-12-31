@@ -126,7 +126,6 @@ this project assumes 1 unit = 1m, e.g. a unit is like `Transform::from_xyz(1.0, 
 uses:
 - bevy for game engine
 - avian3d for physics
-- skein for bevy <-> blender integration (work with bevy components in blender)
 
 ## Credits
 

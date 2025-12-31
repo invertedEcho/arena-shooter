@@ -103,6 +103,7 @@ pub fn handle_map_loaded_with_dependencies(
     }
 }
 
+// FIXME: lets just do this for tinytown map too
 // this is only relevant for Map::MediumPlastic, because tiny town map has colliders in skein
 pub fn check_collider_constructor_hierarchy_ready(
     _: On<ColliderConstructorHierarchyReady>,

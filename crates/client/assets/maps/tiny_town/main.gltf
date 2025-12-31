@@ -1,6 +1,6 @@
 {
 	"asset":{
-		"generator":"Khronos glTF Blender I/O v4.5.49",
+		"generator":"Khronos glTF Blender I/O v5.0.21",
 		"version":"2.0"
 	},
 	"scene":0,
@@ -31,33 +31,12 @@
 				310,
 				311,
 				312,
-				313,
-				314,
-				315
+				313
 			]
 		}
 	],
 	"nodes":[
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.39100000262260437,
-								"y_length":1.399999976158142,
-								"z_length":3.299999952316284
-							}
-						}
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":0,
 			"name":"Cube",
 			"translation":[
@@ -67,25 +46,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.39100000262260437,
-								"y_length":1.399999976158142,
-								"z_length":3.299999952316284
-							}
-						}
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":1,
 			"name":"Cube.001",
 			"translation":[
@@ -95,25 +55,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.39100000262260437,
-								"y_length":1.399999976158142,
-								"z_length":3.299999952316284
-							}
-						}
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":2,
 			"name":"Cube.002",
 			"translation":[
@@ -123,25 +64,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.39100000262260437,
-								"y_length":1.399999976158142,
-								"z_length":3.299999952316284
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":3,
 			"name":"Cube.003",
 			"translation":[
@@ -151,25 +73,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.39100000262260437,
-								"y_length":1.399999976158142,
-								"z_length":3.299999952316284
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":4,
 			"name":"Cube.004",
 			"translation":[
@@ -179,25 +82,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.39100000262260437,
-								"y_length":1.399999976158142,
-								"z_length":3.299999952316284
-							}
-						}
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":5,
 			"name":"Cube.005",
 			"translation":[
@@ -207,25 +91,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":4.25,
-								"y_length":2.869999885559082,
-								"z_length":4.25
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":6,
 			"name":"Cube.006",
 			"translation":[
@@ -435,22 +300,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.27399998903274536,
-								"y_length":1.7000000476837158,
-								"z_length":0.7179999947547913
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					}
-				]
-			},
 			"mesh":17,
 			"name":"Cube.017",
 			"translation":[
@@ -850,25 +699,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":4.25,
-								"y_length":2.869999885559082,
-								"z_length":4.25
-							}
-						}
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":38,
 			"name":"Cube.038",
 			"translation":[
@@ -1483,25 +1313,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":4.25,
-								"y_length":2.869999885559082,
-								"z_length":4.25
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":70,
 			"name":"Cube.070",
 			"translation":[
@@ -2116,25 +1927,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":4.25,
-								"y_length":2.869999885559082,
-								"z_length":4.25
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":102,
 			"name":"Cube.102",
 			"translation":[
@@ -3014,22 +2806,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.27399998903274536,
-								"y_length":1.7000000476837158,
-								"z_length":0.7179999947547913
-							}
-						}
-					}
-				]
-			},
 			"mesh":147,
 			"name":"Cube.147",
 			"translation":[
@@ -3039,25 +2815,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.27799999713897705,
-								"y_length":1.7000000476837158,
-								"z_length":1.2799999713897705
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":148,
 			"name":"Cube.148",
 			"translation":[
@@ -3067,25 +2824,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.27799999713897705,
-								"y_length":1.7000000476837158,
-								"z_length":1.2799999713897705
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":149,
 			"name":"Cube.149",
 			"translation":[
@@ -3095,25 +2833,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.27799999713897705,
-								"y_length":1.7000000476837158,
-								"z_length":1.2799999713897705
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":150,
 			"name":"Cube.150",
 			"translation":[
@@ -3123,25 +2842,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.6079999804496765,
-								"y_length":0.6069999933242798,
-								"z_length":0.6079999804496765
-							}
-						}
-					},
-					{
-						"client::world::components::Ground":{}
-					}
-				]
-			},
 			"mesh":151,
 			"name":"Cube.152",
 			"rotation":[
@@ -3157,25 +2857,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.6909999847412109,
-								"y_length":0.6069999933242798,
-								"z_length":0.6909999847412109
-							}
-						}
-					},
-					{
-						"client::world::components::Ground":{}
-					}
-				]
-			},
 			"mesh":152,
 			"name":"Cube.153",
 			"rotation":[
@@ -3191,25 +2872,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.6299999952316284,
-								"y_length":0.6069999933242798,
-								"z_length":0.6299999952316284
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Ground":{}
-					}
-				]
-			},
 			"mesh":153,
 			"name":"Cube.154",
 			"translation":[
@@ -3333,25 +2995,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.6100000143051147,
-								"y_length":0.6069999933242798,
-								"z_length":0.6100000143051147
-							}
-						}
-					},
-					{
-						"client::world::components::Ground":{}
-					}
-				]
-			},
 			"mesh":163,
 			"name":"Cube.164",
 			"rotation":[
@@ -5735,25 +5378,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.27799999713897705,
-								"y_length":1.7000000476837158,
-								"z_length":1.2799999713897705
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":284,
 			"name":"Cube.151",
 			"translation":[
@@ -5774,32 +5398,10 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":25.0,
-								"y_length":0.009999999776482582,
-								"z_length":16.600000381469727
-							}
-						}
-					},
-					{
-						"client::world::components::Ground":{}
-					}
-				]
-			},
 			"mesh":285,
 			"name":"Plane"
 		},
 		{
-			"extras":{
-				"skein":[]
-			},
 			"mesh":286,
 			"name":"Plane.001",
 			"rotation":[
@@ -6146,31 +5748,9 @@
 				288,
 				289
 			],
-			"extras":{
-				"skein":[]
-			},
 			"name":"Map"
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":24.899999618530273,
-								"y_length":3.0799999237060547,
-								"z_length":0.10000000149011612
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":289,
 			"name":"MapWallCollider",
 			"translation":[
@@ -6180,25 +5760,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":24.899999618530273,
-								"y_length":3.0799999237060547,
-								"z_length":0.10000000149011612
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":290,
 			"name":"MapWallCollider.001",
 			"translation":[
@@ -6208,25 +5769,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.10000000149011612,
-								"y_length":3.0799999237060547,
-								"z_length":16.600000381469727
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":291,
 			"name":"MapWallCollider.002",
 			"translation":[
@@ -6236,25 +5778,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.10000000149011612,
-								"y_length":3.0799999237060547,
-								"z_length":16.600000381469727
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"client::world::components::Wall":{}
-					}
-				]
-			},
 			"mesh":292,
 			"name":"MapWallCollider.003",
 			"translation":[
@@ -6264,13 +5787,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.002",
 			"translation":[
 				-7.286757469177246,
@@ -6279,13 +5795,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.001",
 			"translation":[
 				7.306053161621094,
@@ -6294,13 +5803,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.003",
 			"translation":[
 				-7.408838272094727,
@@ -6309,13 +5811,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.004",
 			"translation":[
 				7.306053161621094,
@@ -6324,13 +5819,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.005",
 			"translation":[
 				7.306053161621094,
@@ -6339,13 +5827,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.006",
 			"translation":[
 				-7.494506359100342,
@@ -6354,13 +5835,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.007",
 			"translation":[
 				0.08358994871377945,
@@ -6369,13 +5843,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.008",
 			"translation":[
 				-0.009505987167358398,
@@ -6384,13 +5851,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.009",
 			"translation":[
 				0.08358994871377945,
@@ -6399,13 +5859,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.010",
 			"translation":[
 				0.08358994871377945,
@@ -6414,13 +5867,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.011",
 			"translation":[
 				2.866222858428955,
@@ -6429,13 +5875,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.012",
 			"translation":[
 				-2.943129539489746,
@@ -6444,13 +5883,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.013",
 			"translation":[
 				-2.943129539489746,
@@ -6459,13 +5891,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::spawn::EnemySpawnLocation":{}
-					}
-				]
-			},
 			"name":"EnemySpawnLocation.014",
 			"translation":[
 				2.794379234313965,
@@ -6474,13 +5899,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::player::spawn::components::PlayerSpawnLocation":{}
-					}
-				]
-			},
 			"name":"PlayerSpawnLocation",
 			"translation":[
 				3.1960625648498535,
@@ -6489,13 +5907,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::world::world_objects::medkit::MedkitSpawnLocation":{}
-					}
-				]
-			},
 			"name":"MedkitSpawnLocation.007",
 			"scale":[
 				0.5,
@@ -6509,13 +5920,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::world::world_objects::medkit::MedkitSpawnLocation":{}
-					}
-				]
-			},
 			"name":"MedkitSpawnLocation.003",
 			"scale":[
 				0.5,
@@ -6529,13 +5933,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::world::world_objects::medkit::MedkitSpawnLocation":{}
-					}
-				]
-			},
 			"name":"MedkitSpawnLocation.008",
 			"scale":[
 				0.5,
@@ -6549,13 +5946,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"client::world::world_objects::medkit::MedkitSpawnLocation":{}
-					}
-				]
-			},
 			"name":"MedkitSpawnLocation.009",
 			"scale":[
 				0.5,
@@ -6566,46 +5956,6 @@
 				4.153847694396973,
 				0.5239027738571167,
 				-6.06273078918457
-			]
-		},
-		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::ai::components::EnemyHotspot":{}
-					}
-				]
-			},
-			"name":"Empty",
-			"scale":[
-				0.5027409195899963,
-				0.5027409195899963,
-				0.5027409195899963
-			],
-			"translation":[
-				10.429391860961914,
-				0.5444272756576538,
-				-0.20191818475723267
-			]
-		},
-		{
-			"extras":{
-				"skein":[
-					{
-						"client::enemy::ai::components::EnemyHotspot":{}
-					}
-				]
-			},
-			"name":"Empty.001",
-			"scale":[
-				0.5027409195899963,
-				0.5027409195899963,
-				0.5027409195899963
-			],
-			"translation":[
-				-10.480199813842773,
-				0.5444272756576538,
-				-0.20191818475723267
 			]
 		}
 	],
@@ -10071,22 +9421,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.27799999713897705,
-								"y_length":1.7000000476837158,
-								"z_length":1.2799999713897705
-							}
-						}
-					}
-				]
-			},
 			"name":"Cube.421",
 			"primitives":[
 				{
@@ -10119,22 +9453,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.27799999713897705,
-								"y_length":1.7000000476837158,
-								"z_length":1.2799999713897705
-							}
-						}
-					}
-				]
-			},
 			"name":"Cube.422",
 			"primitives":[
 				{
@@ -10167,31 +9485,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.27799999713897705,
-								"y_length":1.7000000476837158,
-								"z_length":1.2799999713897705
-							}
-						}
-					},
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.27799999713897705,
-								"y_length":1.7000000476837158,
-								"z_length":1.2799999713897705
-							}
-						}
-					}
-				]
-			},
 			"name":"Cube.423",
 			"primitives":[
 				{
@@ -12392,22 +11685,6 @@
 			]
 		},
 		{
-			"extras":{
-				"skein":[
-					{
-						"avian3d::dynamics::rigid_body::RigidBody":"Static"
-					},
-					{
-						"avian3d::collision::collider::constructor::ColliderConstructor":{
-							"Cuboid":{
-								"x_length":0.27799999713897705,
-								"y_length":1.7000000476837158,
-								"z_length":1.2799999713897705
-							}
-						}
-					}
-				]
-			},
 			"name":"Cube.001",
 			"primitives":[
 				{

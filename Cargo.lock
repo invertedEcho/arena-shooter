@@ -443,24 +443,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-io"
-version = "2.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "456b8a8feb6f42d237746d4b3e9a178494627745c3c56c6ea55d92ba50d026fc"
-dependencies = [
- "autocfg",
- "cfg-if",
- "concurrent-queue",
- "futures-io",
- "futures-lite",
- "parking",
- "polling",
- "rustix 1.1.2",
- "slab",
- "windows-sys 0.61.2",
-]
-
-[[package]]
 name = "async-lock"
 version = "3.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1628,9 +1610,7 @@ checksum = "d5e053684d1735e62d8e491cb68f5d9f7219edcb6528d1ac5fe179f24e5fe497"
 dependencies = [
  "anyhow",
  "async-channel",
- "async-io",
  "bevy_app",
- "bevy_asset",
  "bevy_derive",
  "bevy_ecs",
  "bevy_log",
@@ -1642,7 +1622,6 @@ dependencies = [
  "hyper",
  "serde",
  "serde_json",
- "smol-hyper",
 ]
 
 [[package]]
@@ -1838,25 +1817,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_skein"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "533657a1875bf49d12f0758542ab8ef03ea3594ec5d16a4da9ec9c292844cee5"
-dependencies = [
- "bevy_app",
- "bevy_ecs",
- "bevy_gltf",
- "bevy_log",
- "bevy_platform",
- "bevy_reflect",
- "bevy_remote",
- "bevy_scene",
- "serde",
- "serde_json",
- "tracing",
-]
-
-[[package]]
 name = "bevy_sprite"
 version = "0.17.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1948,7 +1908,6 @@ checksum = "bcbbfa5a58a16c4228434d3018c23fde3d78dcd76ec5f5b2b482a21f4b158dd3"
 dependencies = [
  "async-channel",
  "async-executor",
- "async-io",
  "async-task",
  "atomic-waker",
  "bevy_platform",
@@ -2503,7 +2462,6 @@ dependencies = [
  "bevy_landmass",
  "bevy_rerecast",
  "bevy_rich_text3d",
- "bevy_skein",
  "dirs",
  "landmass_rerecast",
  "lightyear",
@@ -7413,19 +7371,6 @@ dependencies = [
  "wayland-protocols-wlr",
  "wayland-scanner",
  "xkeysym",
-]
-
-[[package]]
-name = "smol-hyper"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7428a49d323867702cd12b97b08a6b0104f39ec13b49117911f101271321bc1a"
-dependencies = [
- "async-executor",
- "async-io",
- "futures-io",
- "hyper",
- "pin-project-lite",
 ]
 
 [[package]]
