@@ -1,4 +1,4 @@
-﻿use bevy::prelude::*;
+﻿use bevy::{image::ToExtents, prelude::*};
 
 use crate::{
     game_flow::states::MainMenuState,
@@ -24,6 +24,7 @@ struct MainMenuButton(pub MainMenuButtonType);
 
 enum MainMenuButtonType {
     Singleplayer,
+    Multiplayer,
     SettingsMainMenu,
     Quit,
 }
@@ -70,6 +71,21 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 ))
                 .with_child((
                     Text::new("Singleplayer"),
+                    TextFont {
+                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                        font_size: SUB_HEADER_FONT_SIZE,
+                        ..default()
+                    },
+                ));
+            parent
+                .spawn((
+                    Node { ..default() },
+                    Button,
+                    MainMenuButton(MainMenuButtonType::Multiplayer),
+                    TextColor::WHITE,
+                ))
+                .with_child((
+                    Text::new("Multiplayer"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
                         font_size: SUB_HEADER_FONT_SIZE,
@@ -129,6 +145,9 @@ fn handle_main_menu_button_pressed(
         match main_menu_button.0 {
             MainMenuButtonType::Singleplayer => {
                 next_main_menu_state.set(MainMenuState::MapSelection);
+            }
+            MainMenuButtonType::Multiplayer => {
+                // connect to server and spawn map
             }
             MainMenuButtonType::SettingsMainMenu => {
                 next_main_menu_state.set(MainMenuState::Settings);
