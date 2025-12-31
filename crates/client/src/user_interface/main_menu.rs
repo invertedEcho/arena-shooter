@@ -1,6 +1,7 @@
-﻿use bevy::{image::ToExtents, prelude::*};
+﻿use bevy::prelude::*;
 
 use crate::{
+    client::StartMultiplayerMessage,
     game_flow::states::MainMenuState,
     user_interface::{
         DEFAULT_GAME_FONT_PATH, SUB_HEADER_FONT_SIZE, TITLE_FONT_SIZE,
@@ -137,6 +138,9 @@ fn handle_main_menu_button_pressed(
     >,
     mut app_exit_message_writer: MessageWriter<AppExit>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
+    mut start_multiplayer_message_writer: MessageWriter<
+        StartMultiplayerMessage,
+    >,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
         let Interaction::Pressed = interaction else {
@@ -147,6 +151,7 @@ fn handle_main_menu_button_pressed(
                 next_main_menu_state.set(MainMenuState::MapSelection);
             }
             MainMenuButtonType::Multiplayer => {
+                start_multiplayer_message_writer.write(StartMultiplayerMessage);
                 // connect to server and spawn map
             }
             MainMenuButtonType::SettingsMainMenu => {

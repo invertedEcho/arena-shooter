@@ -2,3 +2,8 @@
 name = "server"
 version = "0.1.0"
 edition = "2024"
+
+[dependencies]
+bevy = "0.17.3"
+lightyear = {version = "0.25.5", features = ["server", "netcode", "replication", "udp"]}
+shared = { version = "0.1.0", path = "../shared" }

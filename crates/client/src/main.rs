@@ -11,12 +11,12 @@ use bevy_inspector_egui::{
     quick::WorldInspectorPlugin,
 };
 use bevy_skein::SkeinPlugin;
-use lightyear::prelude::{client::ClientPlugins, server::ServerPlugins};
+use lightyear::prelude::client::ClientPlugins;
 
 use crate::{
     audio::AudioPlugin,
     character_controller::CharacterControllerPlugin,
-    client::setup_client,
+    client::ClientPlugin,
     enemy::EnemyPlugin,
     game_flow::GameFlowPlugin,
     game_settings::get_or_create_game_settings,
@@ -24,7 +24,6 @@ use crate::{
     nav_mesh_pathfinding::NavMeshPathfindingPlugin,
     particles::ParticlesPlugin,
     player::PlayerPlugin,
-    server::{handle_new_client, setup_server},
     shared::{CommonPlugin, systems::apply_render_layers_to_children},
     user_interface::UserInterfacePlugin,
     world::WorldPlugin,
@@ -40,8 +39,6 @@ mod gameplay_debug;
 mod nav_mesh_pathfinding;
 mod particles;
 mod player;
-mod protocol;
-mod server;
 mod shared;
 mod user_interface;
 mod utils;
@@ -50,92 +47,78 @@ mod world;
 const GRAVITY: f32 = 9.81;
 
 fn main() {
-    let run_mode = std::env::args().nth(1).expect(
-        "Please specify a run mode. Must be either 'client' or 'server'",
-    );
-
     let mut app = App::new();
-    if run_mode == "client" {
-        let game_settings = get_or_create_game_settings();
+    let game_settings = get_or_create_game_settings();
 
-        app.insert_resource(game_settings.clone());
+    app.insert_resource(game_settings.clone());
 
-        let window_mode = if game_settings.fullscreen {
-            WindowMode::BorderlessFullscreen(MonitorSelection::Current)
-        } else {
-            WindowMode::Windowed
-        };
+    let window_mode = if game_settings.fullscreen {
+        WindowMode::BorderlessFullscreen(MonitorSelection::Current)
+    } else {
+        WindowMode::Windowed
+    };
 
-        // bevy-builtin plugins
-        app.add_plugins(
-            DefaultPlugins
-                .set(bevy::log::LogPlugin {
-                    // stupid audio library bevy uses which uses info level for debug level messages.. smh
-                    filter: "symphonia_core=off,symphonia_bundle=off,\
-                             wgpu=error,naga=warn"
-                        .to_string(),
-                    ..default()
-                })
-                .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        title: "Fun Shooter".into(),
-                        name: Some("fun-shooter".into()),
-                        present_mode: PresentMode::AutoNoVsync,
-                        mode: window_mode,
-                        ..default()
-                    }),
+    // bevy-builtin plugins
+    app.add_plugins(
+        DefaultPlugins
+            .set(bevy::log::LogPlugin {
+                // stupid audio library bevy uses which uses info level for debug level messages.. smh
+                filter: "symphonia_core=off,symphonia_bundle=off,wgpu=error,\
+                         naga=warn"
+                    .to_string(),
+                ..default()
+            })
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: "Fun Shooter".into(),
+                    name: Some("fun-shooter".into()),
+                    present_mode: PresentMode::AutoNoVsync,
+                    mode: window_mode,
                     ..default()
                 }),
-        );
-
-        app.add_plugins(ClientPlugins::default());
-        app.add_systems(Startup, setup_client);
-
-        app.add_plugins((UiWidgetsPlugins, InputDispatchPlugin));
-        // app.add_plugins(FrameTimeDiagnosticsPlugin::default());
-        // app.add_plugins(LogDiagnosticsPlugin::default());
-
-        // External plugins
-        app.add_plugins(PhysicsPlugins::default())
-            // .add_plugins(PhysicsDebugPlugin)
-            .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
-        app.add_plugins(SkeinPlugin::default());
-        app.add_plugins(HanabiPlugin);
-
-        if cfg!(debug_assertions) {
-            app.add_plugins(EguiPlugin::default())
-                .add_plugins(WorldInspectorPlugin::new());
-            app.insert_resource(bevy_egui::EguiGlobalSettings {
-                auto_create_primary_context: false,
                 ..default()
-            });
-        }
+            }),
+    );
 
-        // own plugins
-        app.add_plugins(PlayerPlugin)
-            .add_plugins(WorldPlugin)
-            .add_plugins(GameFlowPlugin)
-            .add_plugins(CommonPlugin)
-            .add_plugins(EnemyPlugin)
-            .add_plugins(UserInterfacePlugin)
-            .add_plugins(ParticlesPlugin)
-            .add_plugins(AudioPlugin)
-            .add_plugins(NavMeshPathfindingPlugin)
-            .add_plugins(CharacterControllerPlugin);
+    app.add_plugins(ClientPlugins::default());
 
-        if cfg!(debug_assertions) {
-            app.add_plugins(GameplayDebugPlugin);
-        }
-        app.add_observer(apply_render_layers_to_children);
+    app.add_plugins((UiWidgetsPlugins, InputDispatchPlugin));
+    // app.add_plugins(FrameTimeDiagnosticsPlugin::default());
+    // app.add_plugins(LogDiagnosticsPlugin::default());
 
-        app.run();
-    } else if run_mode == "server" {
-        app.add_plugins(MinimalPlugins);
-        app.add_plugins(ServerPlugins::default());
-        app.add_systems(Startup, setup_server);
-        app.add_observer(handle_new_client);
-        app.run();
-    } else {
-        panic!("Unknown run mode. Must be either 'client' or 'server'");
+    // External plugins
+    app.add_plugins(PhysicsPlugins::default())
+        // .add_plugins(PhysicsDebugPlugin)
+        .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
+    app.add_plugins(SkeinPlugin::default());
+    app.add_plugins(HanabiPlugin);
+
+    if cfg!(debug_assertions) {
+        app.add_plugins(EguiPlugin::default())
+            .add_plugins(WorldInspectorPlugin::new());
+        app.insert_resource(bevy_egui::EguiGlobalSettings {
+            auto_create_primary_context: false,
+            ..default()
+        });
     }
+
+    // own plugins
+    app.add_plugins(ClientPlugin)
+        .add_plugins(PlayerPlugin)
+        .add_plugins(WorldPlugin)
+        .add_plugins(GameFlowPlugin)
+        .add_plugins(CommonPlugin)
+        .add_plugins(EnemyPlugin)
+        .add_plugins(UserInterfacePlugin)
+        .add_plugins(ParticlesPlugin)
+        .add_plugins(AudioPlugin)
+        .add_plugins(NavMeshPathfindingPlugin)
+        .add_plugins(CharacterControllerPlugin);
+
+    if cfg!(debug_assertions) {
+        app.add_plugins(GameplayDebugPlugin);
+    }
+    app.add_observer(apply_render_layers_to_children);
+
+    app.run();
 }

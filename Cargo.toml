@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/client", "crates/server"]
+members = ["crates/client", "crates/server", "crates/shared"]
 resolver = "3"
 
 # Enable a small amount of optimization in the dev profile.

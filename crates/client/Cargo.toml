@@ -15,7 +15,8 @@ bevy_rich_text3d = "0.5.1"
 bevy_skein = "0.3"
 dirs = "6.0.0"
 landmass_rerecast = "0.1.0"
-lightyear = {version = "0.25.5", features = ["client", "server", "netcode", "replication", "udp"]}
+lightyear = {version = "0.25.5", features = ["client", "netcode", "replication", "udp"]}
 rand = "0.9.2"
 serde = "1.0.228"
 serde_json = "1.0.145"
+shared = { version = "0.1.0", path = "../shared" }
