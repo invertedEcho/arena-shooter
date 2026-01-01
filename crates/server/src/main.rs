@@ -7,14 +7,16 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use lightyear::prelude::server::*;
 use lightyear::prelude::*;
 use shared::SERVER_ADDRESS;
+use shared::SharedPlugin;
 use shared::player::PlayerBundle;
-use shared::protocol::ProtocolPlugin;
 
 fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins);
     app.add_plugins(ServerPlugins::default());
-    app.add_plugins(ProtocolPlugin);
+
+    app.add_plugins(SharedPlugin);
+
     app.add_systems(Startup, setup_server);
     app.add_observer(handle_link_of);
     app.add_observer(handle_new_client);

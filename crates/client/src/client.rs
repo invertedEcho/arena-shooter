@@ -6,6 +6,7 @@ use shared::SERVER_ADDRESS;
 use shared::player::Player;
 
 use crate::ClientId;
+use crate::player::camera::messages::SpawnPlayerCamerasMessage;
 
 pub struct ClientPlugin;
 
@@ -53,22 +54,27 @@ pub fn handle_connect_to_server_message(
     }
 }
 
+/// This resource exists so we can easily retrieve the player entity throughout the game
+#[derive(Resource)]
+pub struct ClientLocalPlayer(pub Entity);
+
 fn handle_new_player(
     trigger: On<Add, (Player, Predicted)>,
     mut commands: Commands,
     player_query: Query<Has<Controlled>, (With<Predicted>, With<Player>)>,
+    mut spawn_player_camera_message_writer: MessageWriter<
+        SpawnPlayerCamerasMessage,
+    >,
 ) {
-    info!("A player was added");
-    info!(
-        "now we need to check if this is our player, e.g. if it has \
-         `Controlled` component"
-    );
     if let Ok(is_controlled) = player_query.get(trigger.entity)
         && is_controlled
     {
-        info!("!lksjdfkljsdf");
-        info!("We found our player!");
-        info!("Inserting a camera into our player");
-        commands.entity(trigger.entity).insert(Camera3d::default());
+        info!(
+            "We found our player, storing it in ClientLocalPlayer resource {}",
+            trigger.entity
+        );
+        commands.insert_resource(ClientLocalPlayer(trigger.entity));
+        spawn_player_camera_message_writer
+            .write(SpawnPlayerCamerasMessage(trigger.entity));
     }
 }

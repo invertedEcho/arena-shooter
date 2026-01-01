@@ -15,7 +15,6 @@ pub struct PlayerReady;
 pub struct PlayerBundle {
     player: Player,
     health: Health,
-    player_camera_state: PlayerCameraState,
     aim_type: AimType,
 }
 
@@ -24,7 +23,6 @@ impl Default for PlayerBundle {
         Self {
             player: Player,
             health: Health(DEFAULT_PLAYER_HEALTH),
-            player_camera_state: PlayerCameraState::default(),
             aim_type: AimType::Normal,
         }
     }
@@ -34,24 +32,6 @@ impl Default for PlayerBundle {
 pub struct Health(pub f32);
 
 // FIXME: camera stuff should not live in shared, move to client
-
-/// This camera is for rendering the whole world
-/// It has RenderLayer 0
-#[derive(Component)]
-pub struct WorldCamera;
-
-/// This camera is for rendering everything that should be above the world, so models dont clip
-/// into walls for example. Right now it only holds the PlayerWeaponModel.
-/// It has RenderLayer 1 so its rendered on top of WorldCamera
-#[derive(Debug, Component, Default)]
-pub struct ViewModelCamera;
-
-#[derive(Component, Debug, Default, PartialEq, Reflect)]
-pub enum PlayerCameraState {
-    #[default]
-    Normal,
-    FreeCam,
-}
 
 #[derive(Component)]
 pub struct PlayerWeaponModel;

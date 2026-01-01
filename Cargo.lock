@@ -2561,6 +2561,7 @@ dependencies = [
  "dirs",
  "landmass_rerecast",
  "lightyear",
+ "lightyear_avian3d",
  "rand",
  "serde",
  "serde_json",
@@ -7395,6 +7396,7 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui 0.35.0",
  "lightyear",
+ "lightyear_avian3d",
  "shared",
 ]
 

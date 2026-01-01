@@ -2,11 +2,12 @@ use bevy::prelude::*;
 use shared::player::{Player, PlayerReady};
 
 use crate::player::{
+    camera::PlayerCameraPlugin,
     hud::PlayerHudPlugin,
     shooting::{PlayerShootingPlugin, components::PlayerWeapons},
 };
 
-mod camera;
+pub mod camera;
 mod hud;
 pub mod shooting;
 
@@ -18,6 +19,7 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, mark_players_as_ready)
+            .add_plugins(PlayerCameraPlugin)
             .add_plugins(PlayerShootingPlugin)
             .add_plugins(PlayerHudPlugin);
     }

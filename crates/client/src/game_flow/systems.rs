@@ -7,9 +7,7 @@ use bevy::{
 use crate::{
     game_flow::{
         game_mode::StartGameModeMessage,
-        states::{
-            AppState, InGameState, LoadingGameSubState, SelectedMapState,
-        },
+        states::{AppState, InGameState, LoadingGameSubState},
     },
     user_interface::main_menu::MainMenuCamera,
     world::resources::WorldSceneHandle,

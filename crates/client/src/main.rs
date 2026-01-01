@@ -1,5 +1,4 @@
-use ::shared::protocol::ProtocolPlugin;
-use avian3d::prelude::*;
+use ::shared::SharedPlugin;
 use bevy::{
     input_focus::InputDispatchPlugin,
     prelude::*,
@@ -40,8 +39,6 @@ mod shared;
 mod user_interface;
 mod utils;
 mod world;
-
-const GRAVITY: f32 = 9.81;
 
 #[derive(Resource)]
 pub struct ClientId(pub u64);
@@ -89,16 +86,14 @@ fn main() {
 
     // lightyear plugins
     app.add_plugins(ClientPlugins::default());
-    app.add_plugins(ProtocolPlugin);
+
+    app.add_plugins(SharedPlugin);
 
     app.add_plugins((UiWidgetsPlugins, InputDispatchPlugin));
     // app.add_plugins(FrameTimeDiagnosticsPlugin::default());
     // app.add_plugins(LogDiagnosticsPlugin::default());
 
     // External plugins
-    app.add_plugins(PhysicsPlugins::default())
-        // .add_plugins(PhysicsDebugPlugin)
-        .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
     app.add_plugins(HanabiPlugin);
 
     if cfg!(debug_assertions) {
