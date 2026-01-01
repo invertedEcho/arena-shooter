@@ -62,6 +62,7 @@ pub fn handle_escape_in_game(
 pub fn spawn_main_menu_camera(mut commands: Commands) {
     info!("Spawning Main Menu Camera");
     commands.spawn((
+        Name::new("Main Menu Camera"),
         Camera::default(),
         Camera3d::default(),
         Transform::from_xyz(10.0, 20.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
@@ -110,7 +111,9 @@ pub fn check_collider_constructor_hierarchy_ready(
     mut next_game_loading_state: ResMut<NextState<LoadingGameSubState>>,
 ) {
     info!("Collider_constructor_hierarchy_ready is now!");
-    next_game_loading_state.set(LoadingGameSubState::CollidersReady);
+    // next_game_loading_state.set(LoadingGameSubState::CollidersReady);
+    // FIXME: add navmesh generation again
+    next_game_loading_state.set(LoadingGameSubState::NavMeshReady);
 }
 
 // pub fn check_navmesh_ready(

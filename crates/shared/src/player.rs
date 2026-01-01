@@ -1,8 +1,9 @@
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 pub const DEFAULT_PLAYER_HEALTH: f32 = 100.0;
 
-#[derive(Component, Debug, Reflect)]
+#[derive(Component, Debug, Reflect, Serialize, PartialEq, Deserialize)]
 #[reflect(Component)]
 pub struct Player;
 

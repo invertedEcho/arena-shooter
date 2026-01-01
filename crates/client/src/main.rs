@@ -1,3 +1,4 @@
+use ::shared::protocol::ProtocolPlugin;
 use avian3d::prelude::*;
 use bevy::{
     input_focus::InputDispatchPlugin,
@@ -86,7 +87,9 @@ fn main() {
             }),
     );
 
+    // lightyear plugins
     app.add_plugins(ClientPlugins::default());
+    app.add_plugins(ProtocolPlugin);
 
     app.add_plugins((UiWidgetsPlugins, InputDispatchPlugin));
     // app.add_plugins(FrameTimeDiagnosticsPlugin::default());
