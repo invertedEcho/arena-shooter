@@ -4,11 +4,13 @@ use shared::player::{Player, PlayerReady};
 use crate::player::{
     camera::PlayerCameraPlugin,
     hud::PlayerHudPlugin,
+    input::handle_keyboard_input_for_player,
     shooting::{PlayerShootingPlugin, components::PlayerWeapons},
 };
 
 pub mod camera;
 mod hud;
+pub mod input;
 pub mod shooting;
 
 #[derive(Message)]
@@ -18,10 +20,13 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, mark_players_as_ready)
-            .add_plugins(PlayerCameraPlugin)
-            .add_plugins(PlayerShootingPlugin)
-            .add_plugins(PlayerHudPlugin);
+        app.add_systems(
+            Update,
+            (mark_players_as_ready, handle_keyboard_input_for_player),
+        )
+        .add_plugins(PlayerCameraPlugin)
+        .add_plugins(PlayerShootingPlugin)
+        .add_plugins(PlayerHudPlugin);
     }
 }
 

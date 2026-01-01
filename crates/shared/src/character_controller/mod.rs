@@ -4,7 +4,6 @@ use crate::character_controller::{
     messages::MovementAction,
     systems::{
         apply_gravity_over_time, apply_movement_damping, check_above_head,
-        handle_keyboard_input_for_player,
         handle_movement_actions_for_character_controllers, update_on_ground,
     },
 };
@@ -42,10 +41,7 @@ impl Plugin for CharacterControllerPlugin {
             )
             .add_systems(
                 Update,
-                (
-                    handle_keyboard_input_for_player,
-                    handle_movement_actions_for_character_controllers,
-                ), // .run_if(in_state(InGameState::Playing)),
+                (handle_movement_actions_for_character_controllers,), // .run_if(in_state(InGameState::Playing)),
             );
     }
 }

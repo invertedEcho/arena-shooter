@@ -44,6 +44,7 @@ pub fn setup_player_cameras(
              player cameras"
         );
 
+        info!("Inserting PlayerCameraState into player");
         commands.entity(message.0).insert(PlayerCameraState::Normal);
 
         info!("Inserting player cameras into player entity");
@@ -164,61 +165,64 @@ type AnyCamEntityQuery<'w, 's> = Query<
     )>,
 >;
 
-pub fn toggle_freecam(
-    client_local_player: Option<ResMut<ClientLocalPlayer>>,
-    player_query: Single<(&Transform, &mut PlayerCameraState)>,
-    mut commands: Commands,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    camera_entities: AnyCamEntityQuery,
-    free_cam_entity_query: Query<Entity, With<FreeCam>>,
-    mut spawn_player_cameras_message_writer: MessageWriter<
-        SpawnPlayerCamerasMessage,
-    >,
-) {
-    if keyboard_input.just_pressed(KeyCode::KeyC) {
-        let Some(client_local_player) = client_local_player else {
-            return;
-        };
-
-        let (player_transform, mut player_camera_state) =
-            player_query.into_inner();
-        info!("okay freecam key pressed");
-
-        match *player_camera_state {
-            PlayerCameraState::Normal => {
-                *player_camera_state = PlayerCameraState::FreeCam;
-                for player_camera_entity in camera_entities {
-                    commands.entity(player_camera_entity).despawn();
-                }
-                commands.spawn((
-                    Camera3d::default(),
-                    Projection::from(PerspectiveProjection {
-                        fov: 80.0_f32.to_radians(),
-                        ..default()
-                    }),
-                    Transform::from_xyz(
-                        player_transform.translation.x,
-                        player_transform.translation.y + 2.0,
-                        player_transform.translation.z,
-                    ),
-                    FreeCam,
-                    DespawnOnExit(AppState::InGame),
-                ));
-            }
-            PlayerCameraState::FreeCam => {
-                info!("requested freecam -> normal");
-                *player_camera_state = PlayerCameraState::Normal;
-                info!("player camera state now set to normal");
-                for free_cam_entity in free_cam_entity_query {
-                    debug!("despawning free cam entity {}", free_cam_entity);
-                    commands.entity(free_cam_entity).despawn();
-                }
-                spawn_player_cameras_message_writer
-                    .write(SpawnPlayerCamerasMessage(client_local_player.0));
-            }
-        }
-    }
-}
+// FIXME: Reintroduce
+//
+// pub fn toggle_freecam(
+//     client_local_player: Option<ResMut<ClientLocalPlayer>>,
+//     player_query: Single<(&Transform, &mut PlayerCameraState)>,
+//     mut commands: Commands,
+//     keyboard_input: Res<ButtonInput<KeyCode>>,
+//     camera_entities: AnyCamEntityQuery,
+//     free_cam_entity_query: Query<Entity, With<FreeCam>>,
+//     mut spawn_player_cameras_message_writer: MessageWriter<
+//         SpawnPlayerCamerasMessage,
+//     >,
+// ) {
+//     info!("HELLO?");
+//     if keyboard_input.just_pressed(KeyCode::KeyC) {
+//         let Some(client_local_player) = client_local_player else {
+//             return;
+//         };
+//
+//         let (player_transform, mut player_camera_state) =
+//             player_query.into_inner();
+//         info!("okay freecam key pressed");
+//
+//         match *player_camera_state {
+//             PlayerCameraState::Normal => {
+//                 *player_camera_state = PlayerCameraState::FreeCam;
+//                 for player_camera_entity in camera_entities {
+//                     commands.entity(player_camera_entity).despawn();
+//                 }
+//                 commands.spawn((
+//                     Camera3d::default(),
+//                     Projection::from(PerspectiveProjection {
+//                         fov: 80.0_f32.to_radians(),
+//                         ..default()
+//                     }),
+//                     Transform::from_xyz(
+//                         player_transform.translation.x,
+//                         player_transform.translation.y + 2.0,
+//                         player_transform.translation.z,
+//                     ),
+//                     FreeCam,
+//                     DespawnOnExit(AppState::InGame),
+//                 ));
+//             }
+//             PlayerCameraState::FreeCam => {
+//                 info!("requested freecam -> normal");
+//                 *player_camera_state = PlayerCameraState::Normal;
+//                 info!("player camera state now set to normal");
+//                 for free_cam_entity in free_cam_entity_query {
+//                     debug!("despawning free cam entity {}", free_cam_entity);
+//                     commands.entity(free_cam_entity).despawn();
+//                 }
+//                 spawn_player_cameras_message_writer
+//                     .write(SpawnPlayerCamerasMessage(client_local_player.0));
+//             }
+//         }
+//     }
+// }
 
 pub fn handle_free_cam_movement(
     mut free_cam_transform: Single<&mut Transform, With<FreeCam>>,

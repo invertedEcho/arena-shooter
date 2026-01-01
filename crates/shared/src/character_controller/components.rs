@@ -1,12 +1,13 @@
 use avian3d::{math::Quaternion, prelude::*};
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
 
 /// A marker component indicating that an entity is using a character controller
-#[derive(Component)]
+#[derive(Component, Serialize, Deserialize, PartialEq)]
 pub struct CharacterController;
 
 #[derive(Bundle)]
@@ -47,7 +48,7 @@ impl Default for CharacterControllerBundle {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Serialize, Deserialize, PartialEq)]
 pub struct Grounded(pub bool);
 
 impl Default for Grounded {

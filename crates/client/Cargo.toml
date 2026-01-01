@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-avian3d = "0.4.1"
+avian3d = {version = "0.4.1", features = ["serialize"]}
 avian_rerecast = "0.3.0"
 bevy = { version = "0.17.2", features = ["mp3", "file_watcher", "wayland", "dynamic_linking", "experimental_bevy_ui_widgets", "track_location"] }
 bevy-inspector-egui = "0.34"

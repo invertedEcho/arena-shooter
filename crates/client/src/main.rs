@@ -117,7 +117,6 @@ fn main() {
         // .add_plugins(ParticlesPlugin)
         .add_plugins(AudioPlugin);
     // .add_plugins(NavMeshPathfindingPlugin);
-    // .add_plugins(CharacterControllerPlugin);
 
     if cfg!(debug_assertions) {
         app.add_plugins(GameplayDebugPlugin);

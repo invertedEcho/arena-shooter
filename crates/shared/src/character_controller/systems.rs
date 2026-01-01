@@ -1,78 +1,15 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
-use crate::character_controller::{
-    CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
-    MAX_SLOPE_ANGLE, RUN_VELOCITY, WALK_VELOCITY,
-    components::{CharacterController, Grounded},
-    messages::{MovementAction, MovementDirection},
+use crate::{
+    GRAVITY,
+    character_controller::{
+        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
+        MAX_SLOPE_ANGLE,
+        components::{CharacterController, Grounded},
+        messages::{MovementAction, MovementDirection},
+    },
 };
-
-pub fn handle_keyboard_input_for_player(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut movement_action_writer: MessageWriter<MovementAction>,
-    player_query: Single<(Entity, &PlayerWeapons, &PlayerCameraState)>,
-    camera_transform: Single<&Transform, With<WorldCamera>>,
-) {
-    let (player_entity, player_weapons, player_camera_state) =
-        player_query.into_inner();
-
-    if *player_camera_state == PlayerCameraState::FreeCam {
-        return;
-    }
-
-    let shift_pressed = keyboard_input.pressed(KeyCode::ShiftLeft);
-    let reloading = player_weapons.reloading;
-
-    let speed = if shift_pressed && !reloading {
-        RUN_VELOCITY
-    } else {
-        WALK_VELOCITY
-    };
-
-    let forward_camera = camera_transform.forward();
-    let right = camera_transform.right();
-
-    let Ok(forward_camera) =
-        Dir3::from_xyz(forward_camera.x, 0.0, forward_camera.z)
-    else {
-        return;
-    };
-    let Ok(right) = Dir3::from_xyz(right.x, 0.0, right.z) else {
-        return;
-    };
-
-    let mut velocity = Vec3::ZERO;
-
-    if keyboard_input.pressed(KeyCode::KeyW) {
-        velocity += forward_camera * speed;
-    }
-    if keyboard_input.pressed(KeyCode::KeyA) {
-        velocity -= right * speed;
-    }
-    if keyboard_input.pressed(KeyCode::KeyD) {
-        velocity += right * speed;
-    }
-    if keyboard_input.pressed(KeyCode::KeyS) {
-        velocity -= forward_camera * speed;
-    }
-
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        movement_action_writer.write(MovementAction {
-            direction: MovementDirection::Jump,
-            character_controller_entity: player_entity,
-        });
-    }
-
-    if velocity == Vec3::ZERO {
-        return;
-    }
-
-    movement_action_writer.write(MovementAction {
-        direction: MovementDirection::Move(velocity),
-        character_controller_entity: player_entity,
-    });
-}
 
 const MAX_DISTANCE_SHAPE_CAST_MOVEMENT: f32 = 0.3;
 pub fn handle_movement_actions_for_character_controllers(
@@ -83,7 +20,7 @@ pub fn handle_movement_actions_for_character_controllers(
     >,
     mut spatial_query: SpatialQuery,
     time: Res<Time>,
-    medkit_query: Query<Entity, With<Medkit>>,
+    // medkit_query: Query<Entity, With<Medkit>>,
 ) {
     for movement_action in movement_action_reader.read() {
         let direction = &movement_action.direction;
@@ -107,13 +44,14 @@ pub fn handle_movement_actions_for_character_controllers(
             }
             MovementDirection::Move(world_velocity) => {
                 // exclude medkits because we want to be able to walk through medkits
-                let excluded_entities: Vec<Entity> = medkit_query
-                    .iter()
-                    .chain(std::iter::once(character_controller_entity))
-                    .collect();
+                // let excluded_entities: Vec<Entity> = medkit_query
+                //     .iter()
+                //     .chain(std::iter::once(character_controller_entity))
+                //     .collect();
 
-                let spatial_query_filter = &SpatialQueryFilter::default()
-                    .with_excluded_entities(excluded_entities.clone());
+                // let spatial_query_filter = &SpatialQueryFilter::default()
+                //     .with_excluded_entities(excluded_entities.clone());
+                let spatial_query_filter = &SpatialQueryFilter::default();
 
                 apply_collide_and_slide(
                     &mut velocity,

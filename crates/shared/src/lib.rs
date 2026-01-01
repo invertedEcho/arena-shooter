@@ -6,15 +6,14 @@ use avian3d::{
     },
 };
 use bevy::prelude::*;
-use lightyear::{
-    avian3d::plugin::{AvianReplicationMode, LightyearAvianPlugin},
-    prelude::PredictionPlugin,
-};
+use lightyear::avian3d::plugin::{AvianReplicationMode, LightyearAvianPlugin};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
-use crate::protocol::ProtocolPlugin;
+use crate::{
+    character_controller::CharacterControllerPlugin, protocol::ProtocolPlugin,
+};
 
-// pub mod character_controller;
+pub mod character_controller;
 pub mod components;
 pub mod messages;
 pub mod player;
@@ -48,5 +47,8 @@ impl Plugin for SharedPlugin {
         )
         .add_plugins(PhysicsDebugPlugin)
         .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
+
+        // own plugins
+        app.add_plugins(CharacterControllerPlugin);
     }
 }

@@ -8,10 +8,15 @@ use lightyear::prelude::server::*;
 use lightyear::prelude::*;
 use shared::SERVER_ADDRESS;
 use shared::SharedPlugin;
+use shared::character_controller::components::CharacterControllerBundle;
+use shared::character_controller::{
+    CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+};
 use shared::player::PlayerBundle;
 
 fn main() {
     let mut app = App::new();
+    // TODO: use mimimalplugins
     app.add_plugins(DefaultPlugins);
     app.add_plugins(ServerPlugins::default());
 
@@ -40,7 +45,7 @@ pub fn setup_server(mut commands: Commands) {
         .id();
 
     commands.trigger(Start { entity: server });
-    commands.spawn((Camera3d::default()));
+    commands.spawn(Camera3d::default());
     commands.spawn((Node { ..default() }, Text::new("Server")));
 }
 
@@ -69,17 +74,15 @@ fn handle_new_client(
         commands.spawn((
             Name::new("Player"),
             PlayerBundle::default(),
-            // Transform::from_translation(player_spawn_location.translation),
             Transform::from_translation(vec3(0.0, 20.0, 0.0)),
             Visibility::Visible,
             // DebugRender::collider(Color::WHITE),
-            // CharacterControllerBundle::default(),
+            CharacterControllerBundle::default(),
             // DespawnOnExit(AppState::InGame),
-            // Mesh3d(meshes.add(Capsule3d::new(
-            //     CHARACTER_CAPSULE_RADIUS,
-            //     CHARACTER_CAPSULE_LENGTH,
-            // ))),
-            Mesh3d(meshes.add(Capsule3d::new(0.2, 1.0))),
+            Mesh3d(meshes.add(Capsule3d::new(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ))),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: WHITE.into(),
                 ..Default::default()
