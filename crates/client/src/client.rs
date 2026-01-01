@@ -11,18 +11,18 @@ pub struct ClientPlugin;
 
 impl Plugin for ClientPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<StartMultiplayerMessage>();
-        app.add_systems(Update, (handle_start_multiplayer_message));
+        app.add_message::<ConnectToServerMessage>();
+        app.add_systems(Update, handle_connect_to_server_message);
         app.add_observer(handle_new_player);
     }
 }
 
 #[derive(Message)]
-pub struct StartMultiplayerMessage;
+pub struct ConnectToServerMessage;
 
-pub fn handle_start_multiplayer_message(
+pub fn handle_connect_to_server_message(
     mut commands: Commands,
-    mut message_reader: MessageReader<StartMultiplayerMessage>,
+    mut message_reader: MessageReader<ConnectToServerMessage>,
     client_id: Res<ClientId>,
 ) {
     for _ in message_reader.read() {
@@ -53,30 +53,22 @@ pub fn handle_start_multiplayer_message(
     }
 }
 
-// fn handle_new_player(
-//     trigger: On<Add, (Player, Predicted)>,
-//     mut commands: Commands,
-//     player_query: Query<&Player>,
-// ) {
-//     commands.entity(trigger.entity).insert(Camera3d::default());
-// }
-
 fn handle_new_player(
     trigger: On<Add, (Player, Predicted)>,
     mut commands: Commands,
-    player_query: Query<(&Player, Has<Controlled>), With<Predicted>>,
+    player_query: Query<Has<Controlled>, (With<Predicted>, With<Player>)>,
 ) {
     info!("A player was added");
     info!(
         "now we need to check if this is our player, e.g. if it has \
          `Controlled` component"
     );
-    if let Ok((player, is_controlled)) = player_query.get(trigger.entity) {
-        if is_controlled {
-            info!("!lksjdfkljsdf");
-            info!("We found our player!");
-            // This is your player - add input, camera, etc.
-            commands.entity(trigger.entity).insert(Camera3d::default());
-        }
+    if let Ok(is_controlled) = player_query.get(trigger.entity)
+        && is_controlled
+    {
+        info!("!lksjdfkljsdf");
+        info!("We found our player!");
+        info!("Inserting a camera into our player");
+        commands.entity(trigger.entity).insert(Camera3d::default());
     }
 }

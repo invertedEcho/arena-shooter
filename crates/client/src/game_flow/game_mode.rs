@@ -1,8 +1,6 @@
 use bevy::prelude::*;
-use lightyear::prelude::Client;
-use shared::{components::ControlledByClient, player::Player};
 
-use crate::player::spawn::SpawnPlayerMessage;
+use crate::client::ConnectToServerMessage;
 
 pub struct GameModePlugin;
 
@@ -30,7 +28,6 @@ pub enum GameModeState {
     #[default]
     FreeRoam,
     Waves,
-    Multiplayer,
 }
 
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
@@ -42,41 +39,16 @@ pub struct GameStateWave {
 }
 
 fn handle_start_game_mode_message(
-    mut commands: Commands,
     mut message_reader: MessageReader<StartGameModeMessage>,
     // mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
-    mut player_spawn_message_writer: MessageWriter<SpawnPlayerMessage>,
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     // existing_enemies: Query<Entity, With<Enemy>>,
     current_game_mode: Res<State<GameModeState>>,
-    clients: Query<(Entity, &Client)>,
-    players_clients: Query<&ControlledByClient>,
-    added_controller_by_client: Query<
-        (Entity, &ControlledByClient),
-        Added<ControlledByClient>,
-    >,
-    players: Query<Entity, With<Player>>,
+    mut connect_to_server_message_writer: MessageWriter<ConnectToServerMessage>,
 ) {
     for _ in message_reader.read() {
         info!("Got game mode start message");
-
-        for client in clients {
-            info!("Found a client {:?}", client.0);
-            for player_client in players_clients {
-                if player_client.0 == client.0 {
-                    info!("OMG WE FOUND CORRECT PLAYER - CLIENT");
-                    commands.entity(client.0).insert(Camera3d::default());
-                } else {
-                    info!(
-                        "Found a player with controlled by client, but not \
-                         matching. We need: {} But this is: {}",
-                        client.0, player_client.0
-                    )
-                }
-            }
-        }
-
-        // player_spawn_message_writer.write(SpawnPlayerMessage);
+        connect_to_server_message_writer.write(ConnectToServerMessage);
 
         // for existing_enemy in existing_enemies {
         //     commands.entity(existing_enemy).despawn();

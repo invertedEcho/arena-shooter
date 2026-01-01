@@ -15,10 +15,14 @@ pub enum AppState {
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[source(AppState = AppState::LoadingGame)]
 pub enum LoadingGameSubState {
+    /// The map is being spawn
     #[default]
     SpawningMap,
+    /// The map is loaded with all its dependencies
     MapLoadedWithDependencies,
+    /// Avian generated all colliders for the map
     CollidersReady,
+    /// Navmesh generation succeeded and the navmesh is ready
     NavMeshReady,
 }
 

@@ -20,8 +20,8 @@ use crate::{
         },
     },
     shared::{
-        DEFAULT_BULLET_DAMAGE, WeaponSlotType, WeaponState, WeaponStats,
-        WeaponType, get_fire_delay_by_weapon_type,
+        WeaponSlotType, WeaponState, WeaponStats, WeaponType,
+        get_fire_delay_by_weapon_type,
     },
 };
 
@@ -141,9 +141,9 @@ pub fn handle_player_weapon_fired_message(
     spatial_query: SpatialQuery,
     mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
     // enemy_entities: Query<Entity, With<Enemy>>,
-    mut player_bullet_hit_enemy_message_writer: MessageWriter<
-        PlayerBulletHitEnemyMessage,
-    >,
+    // mut player_bullet_hit_enemy_message_writer: MessageWriter<
+    //     PlayerBulletHitEnemyMessage,
+    // >,
     // mut spawn_bullet_impact_effect_message_writer: MessageWriter<
     //     SpawnBulletImpactEffectMessage,
     // >,

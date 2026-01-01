@@ -1,16 +1,5 @@
-use std::num::NonZero;
-
-use bevy::{
-    color::palettes::{css::RED, tailwind::BLUE_700},
-    prelude::*,
-};
-use bevy_inspector_egui::{
-    bevy_egui::{EguiContext, EguiPrimaryContextPass, PrimaryEguiContext},
-    egui,
-};
-use bevy_rich_text3d::{
-    LoadFonts, Text3d, Text3dPlugin, Text3dStyling, TextAtlas,
-};
+use bevy::{color::palettes::css::RED, prelude::*};
+use bevy_rich_text3d::{LoadFonts, Text3dPlugin};
 
 pub struct GameplayDebugPlugin;
 

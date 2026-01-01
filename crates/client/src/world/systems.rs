@@ -57,40 +57,31 @@ pub fn spawn_map(
 
     let collider_rules = get_collider_rules_by_map(selected_map);
 
-    if collider_rules.is_empty() {
-        commands.spawn((
-            DespawnOnExit(AppState::InGame),
-            SceneRoot(world_scene_handle),
-            Name::new("World Scene Root"),
-            Visibility::Visible,
-        ));
-    } else {
-        let mut collider_hierarchy = ColliderConstructorHierarchy::new(
-            ColliderConstructor::ConvexHullFromMesh,
-        );
+    let mut collider_hierarchy = ColliderConstructorHierarchy::new(
+        ColliderConstructor::ConvexHullFromMesh,
+    );
 
-        for (name, maybe_constructor) in collider_rules {
-            match maybe_constructor {
-                Some(constructor) => {
-                    collider_hierarchy = collider_hierarchy
-                        .with_constructor_for_name(name, constructor);
-                }
-                None => {
-                    collider_hierarchy =
-                        collider_hierarchy.without_constructor_for_name(name);
-                }
+    for (name, maybe_constructor) in collider_rules {
+        match maybe_constructor {
+            Some(constructor) => {
+                collider_hierarchy = collider_hierarchy
+                    .with_constructor_for_name(name, constructor);
+            }
+            None => {
+                collider_hierarchy =
+                    collider_hierarchy.without_constructor_for_name(name);
             }
         }
-
-        commands.spawn((
-            DespawnOnExit(AppState::InGame),
-            SceneRoot(world_scene_handle),
-            collider_hierarchy,
-            Name::new("World Scene Root"),
-            Visibility::Visible,
-            RigidBody::Static,
-        ));
     }
+
+    commands.spawn((
+        DespawnOnExit(AppState::InGame),
+        SceneRoot(world_scene_handle),
+        collider_hierarchy,
+        Name::new("World Scene Root"),
+        Visibility::Visible,
+        RigidBody::Static,
+    ));
 }
 
 pub fn handle_spawn_debug_points_message(

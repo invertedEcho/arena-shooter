@@ -149,9 +149,6 @@ fn handle_game_mode_selection_button_press(
                 GameModeState::FreeRoam => {
                     next_game_mode_state.set(GameModeState::FreeRoam);
                 }
-                GameModeState::Multiplayer => {
-                    next_game_mode_state.set(GameModeState::Multiplayer);
-                }
             }
             next_app_state.set(AppState::LoadingGame);
         }

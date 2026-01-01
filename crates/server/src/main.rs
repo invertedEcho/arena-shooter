@@ -68,7 +68,7 @@ fn handle_new_client(
             Name::new("Player"),
             PlayerBundle::default(),
             // Transform::from_translation(player_spawn_location.translation),
-            Transform::from_translation(vec3(0.0, 10.0, 0.0)),
+            Transform::from_translation(vec3(0.0, 20.0, 0.0)),
             Visibility::Visible,
             // DebugRender::collider(Color::WHITE),
             // CharacterControllerBundle::default(),
@@ -93,10 +93,4 @@ fn handle_new_client(
             },
         ));
     }
-    // println!("New client! {}", trigger.entity);
-    // println!("Spawning a player for the new client {}", trigger.entity);
-    //
-    // commands
-    //     .entity(trigger.entity)
-    //     .insert(ReplicationSender::default());
 }

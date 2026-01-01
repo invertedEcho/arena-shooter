@@ -11,10 +11,9 @@ use crate::{
         systems::{
             check_collider_constructor_hierarchy_ready,
             check_world_scene_loaded, free_mouse, grab_mouse,
-            handle_escape_in_game, handle_map_loaded_with_dependencies,
-            manual_free_mouse, on_game_loading_state_nav_mesh_ready,
-            pause_all_animations, resume_all_animations,
-            spawn_main_menu_camera,
+            handle_escape_in_game, manual_free_mouse,
+            on_game_loading_state_nav_mesh_ready, pause_all_animations,
+            resume_all_animations, spawn_main_menu_camera,
         },
     },
     player::PlayerDeathMessage,
@@ -44,10 +43,6 @@ impl Plugin for GameFlowPlugin {
             .add_systems(
                 OnEnter(LoadingGameSubState::NavMeshReady),
                 on_game_loading_state_nav_mesh_ready,
-            )
-            .add_systems(
-                OnEnter(LoadingGameSubState::MapLoadedWithDependencies),
-                handle_map_loaded_with_dependencies,
             )
             .add_systems(
                 OnEnter(InGameState::Playing),

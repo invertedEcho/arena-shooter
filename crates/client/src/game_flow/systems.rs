@@ -3,7 +3,6 @@ use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
-use bevy_rerecast::{Navmesh, prelude::NavmeshReady};
 
 use crate::{
     game_flow::{
@@ -92,20 +91,6 @@ pub fn check_world_scene_loaded(
     }
 }
 
-pub fn handle_map_loaded_with_dependencies(
-    selected_map_state: Res<State<SelectedMapState>>,
-    mut next_game_loading_state: ResMut<NextState<LoadingGameSubState>>,
-) {
-    // if the map is tiny town and MapLoadedWithDependencies, the colliders are already
-    // spawned, because they are part of the map itself, so we can just set CollidersReady
-    // immediately
-    if *selected_map_state.get() == SelectedMapState::TinyTown {
-        next_game_loading_state.set(LoadingGameSubState::CollidersReady);
-    }
-}
-
-// FIXME: lets just do this for tinytown map too
-// this is only relevant for Map::MediumPlastic, because tiny town map has colliders in skein
 pub fn check_collider_constructor_hierarchy_ready(
     _: On<ColliderConstructorHierarchyReady>,
     mut next_game_loading_state: ResMut<NextState<LoadingGameSubState>>,
