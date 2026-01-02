@@ -37,14 +37,6 @@ pub enum MainMenuState {
     GameModeSelection,
 }
 
-// This is not a substate, as it needs to exist globally
-#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
-pub enum SelectedMapState {
-    #[default]
-    MediumPlastic,
-    TinyTown,
-}
-
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[states(scoped_entities)]
 #[source(AppState = AppState::InGame)]

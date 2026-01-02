@@ -9,8 +9,6 @@ use shared::player::{
 };
 
 use crate::{
-    client::ClientLocalPlayer,
-    game_flow::states::AppState,
     player::{
         camera::{
             PLAYER_CAMERA_Y_OFFSET,

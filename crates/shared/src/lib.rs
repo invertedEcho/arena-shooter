@@ -6,14 +6,19 @@ use avian3d::{
     },
 };
 use bevy::prelude::*;
-use lightyear::avian3d::plugin::{AvianReplicationMode, LightyearAvianPlugin};
+use lightyear::{
+    avian3d::plugin::{AvianReplicationMode, LightyearAvianPlugin},
+    input::native::plugin::InputPlugin,
+};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use crate::{
-    character_controller::CharacterControllerPlugin, protocol::ProtocolPlugin,
+    character_controller::CharacterControllerPlugin,
+    protocol::{Inputs, ProtocolPlugin},
 };
 
 pub mod character_controller;
+pub mod collider_rules;
 pub mod components;
 pub mod messages;
 pub mod player;
@@ -24,6 +29,9 @@ pub const SERVER_ADDRESS: SocketAddr =
     SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), SERVER_PORT);
 
 const GRAVITY: f32 = 9.81;
+
+pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
+pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
 
 /// Functionality that runs on both client and server
 pub struct SharedPlugin;
@@ -48,7 +56,17 @@ impl Plugin for SharedPlugin {
         .add_plugins(PhysicsDebugPlugin)
         .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
 
+        app.add_plugins(InputPlugin::<Inputs>::default());
+
         // own plugins
         app.add_plugins(CharacterControllerPlugin);
     }
+}
+
+// This is not a substate, as it needs to exist globally
+#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
+pub enum SelectedMapState {
+    #[default]
+    MediumPlastic,
+    TinyTown,
 }

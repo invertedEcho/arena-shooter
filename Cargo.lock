@@ -2565,6 +2565,7 @@ dependencies = [
  "landmass_rerecast",
  "lightyear",
  "lightyear_avian3d",
+ "lightyear_sync",
  "rand",
  "serde",
  "serde_json",
@@ -7412,6 +7413,7 @@ dependencies = [
 name = "server"
 version = "0.1.0"
 dependencies = [
+ "avian3d",
  "bevy",
  "bevy-inspector-egui 0.35.0",
  "lightyear",

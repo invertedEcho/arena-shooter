@@ -1,7 +1,8 @@
 use bevy::{color::palettes::css::WHITE, prelude::*};
+use shared::SelectedMapState;
 
 use crate::{
-    game_flow::states::{MainMenuState, SelectedMapState},
+    game_flow::states::MainMenuState,
     user_interface::{
         DEFAULT_GAME_FONT_PATH, SUB_HEADER_FONT_SIZE,
         common::{CommonUiButton, CommonUiButtonType},

@@ -7,65 +7,74 @@ use crate::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
         MAX_SLOPE_ANGLE,
         components::{CharacterController, Grounded},
-        messages::{MovementAction, MovementDirection},
     },
+    protocol::{Inputs, Movement},
 };
 
-const MAX_DISTANCE_SHAPE_CAST_MOVEMENT: f32 = 0.3;
-pub fn handle_movement_actions_for_character_controllers(
-    mut movement_action_reader: MessageReader<MovementAction>,
-    mut character_controller_query: Query<
-        (&mut LinearVelocity, &Grounded, &Transform),
-        With<CharacterController>,
-    >,
-    mut spatial_query: SpatialQuery,
-    time: Res<Time>,
-    // medkit_query: Query<Entity, With<Medkit>>,
+pub fn shared_movement(
+    velocity: &mut LinearVelocity,
+    input: &Inputs,
+    spatial_query: &mut SpatialQuery,
+    transform: &Transform,
+    origin_entity: Entity,
 ) {
-    for movement_action in movement_action_reader.read() {
-        let direction = &movement_action.direction;
-        let character_controller_entity =
-            movement_action.character_controller_entity;
-        let Ok((mut velocity, grounded, transform)) =
-            character_controller_query.get_mut(character_controller_entity)
-        else {
-            warn!(
-                "Failed to find Character Controller by Entity {}",
-                character_controller_entity
+    match input {
+        Inputs::Jump => {
+            velocity.y = JUMP_VELOCITY;
+            // if grounded.0 {
+            //     velocity.y = JUMP_VELOCITY;
+            // }
+        }
+        Inputs::Movement(movement) => {
+            // exclude medkits because we want to be able to walk through medkits
+            // let excluded_entities: Vec<Entity> = medkit_query
+            //     .iter()
+            //     .chain(std::iter::once(character_controller_entity))
+            //     .collect();
+
+            // let spatial_query_filter = &SpatialQueryFilter::default()
+            //     .with_excluded_entities(excluded_entities.clone());
+
+            // origin entity is player, this needs to exist as on server, the shape cast will hit
+            // the player. but why not on the client btw?
+            let spatial_query_filter = &SpatialQueryFilter::default()
+                .with_excluded_entities([origin_entity]);
+            let desired_velocity =
+                convert_movement_to_desired_velocity(movement);
+
+            info!("origin entity: {}", origin_entity);
+            apply_collide_and_slide(
+                velocity,
+                desired_velocity,
+                transform,
+                spatial_query,
+                spatial_query_filter,
+                1.0 / 60.0,
+                0,
             );
-            continue;
-        };
-
-        match *direction {
-            MovementDirection::Jump => {
-                if grounded.0 {
-                    velocity.y = JUMP_VELOCITY;
-                }
-            }
-            MovementDirection::Move(world_velocity) => {
-                // exclude medkits because we want to be able to walk through medkits
-                // let excluded_entities: Vec<Entity> = medkit_query
-                //     .iter()
-                //     .chain(std::iter::once(character_controller_entity))
-                //     .collect();
-
-                // let spatial_query_filter = &SpatialQueryFilter::default()
-                //     .with_excluded_entities(excluded_entities.clone());
-                let spatial_query_filter = &SpatialQueryFilter::default();
-
-                apply_collide_and_slide(
-                    &mut velocity,
-                    world_velocity,
-                    transform,
-                    &mut spatial_query,
-                    spatial_query_filter,
-                    time.delta_secs(),
-                    0,
-                );
-            }
         }
     }
 }
+
+fn convert_movement_to_desired_velocity(movement: &Movement) -> Vec3 {
+    let mut desired_velocity: Vec3 = vec3(0.0, 0.0, 0.0);
+    if movement.backwards {
+        desired_velocity.z += 4.0;
+    }
+    if movement.forward {
+        desired_velocity.z -= 4.0;
+    }
+    if movement.left {
+        desired_velocity.x -= 4.0;
+    }
+    if movement.right {
+        desired_velocity.x += 4.0;
+    }
+
+    desired_velocity
+}
+
+const MAX_DISTANCE_SHAPE_CAST_MOVEMENT: f32 = 0.3;
 
 fn apply_collide_and_slide(
     current_velocity: &mut Vec3,
@@ -73,7 +82,7 @@ fn apply_collide_and_slide(
     origin_transform: &Transform,
     spatial_query: &mut SpatialQuery,
     spatial_query_filter: &SpatialQueryFilter,
-    time_delta_secs: f32,
+    fixed_dt: f32,
     current_hit_count: usize,
 ) {
     const MAX_HITS: usize = 5;
@@ -105,6 +114,10 @@ fn apply_collide_and_slide(
         },
         spatial_query_filter,
     ) {
+        info!(
+            "Got shape cast hit, entity that was hit: {}",
+            hit_ahead.entity
+        );
         // obstacle in the way, check if we can slimb it
         // a normal is just a direction something is facing
         let normal = hit_ahead.normal1;
@@ -112,7 +125,7 @@ fn apply_collide_and_slide(
         let slope_climable = slope_angle < MAX_SLOPE_ANGLE;
 
         if slope_climable {
-            debug!("MOVEMENT: Climable slope!");
+            info!("MOVEMENT: Climable slope!");
             // this is the most important part to make the slope climbing possible.
             // instead of trying to go straight, we slide along the ground
             *current_velocity = desired_velocity.reject_from_normalized(normal);
@@ -135,12 +148,12 @@ fn apply_collide_and_slide(
                 let player_y = origin_transform.translation.y;
                 let difference_y = hit_down_y - player_y;
                 if difference_y.abs() < 0.3 {
-                    debug!("Snapping character controller to slope");
-                    current_velocity.y = difference_y / time_delta_secs;
+                    info!("Snapping character controller to slope");
+                    current_velocity.y = difference_y / fixed_dt;
                 }
             }
         } else {
-            debug!("MOVEMENT: Obstacle in the way, sliding along wall");
+            info!("MOVEMENT: Obstacle in the way, sliding along wall");
             // not climable, e.g. a wall. we want to slide along the wall,
             // similar to the collide and slide algorithm
             // the main difference is that we ignore the Y part,
@@ -152,7 +165,7 @@ fn apply_collide_and_slide(
             // update our transform so shape cast origin is correct
             let new_transform = Transform {
                 translation: origin_transform.translation
-                    + desired_velocity * time_delta_secs,
+                    + desired_velocity * fixed_dt,
                 rotation: origin_transform.rotation,
                 scale: origin_transform.scale,
             };
@@ -163,12 +176,12 @@ fn apply_collide_and_slide(
                 &new_transform,
                 spatial_query,
                 spatial_query_filter,
-                time_delta_secs,
+                fixed_dt,
                 current_hit_count + 1,
             );
         }
     } else {
-        debug!("MOVEMENT: No obstacle ahead, free movement");
+        info!("MOVEMENT: No obstacle ahead, free movement");
         // no obstacle ahead, free movement
         current_velocity.x = desired_velocity.x;
         current_velocity.z = desired_velocity.z;
@@ -183,6 +196,8 @@ pub fn update_on_ground(
     >,
 ) {
     for (hits, mut grounded, mut velocity) in &mut query {
+        info!("Currently grounded: {}", grounded.0);
+        info!("any shape hits?: {}", hits.0.len());
         let on_ground = !hits.0.is_empty();
 
         if grounded.0 != on_ground {
@@ -197,11 +212,10 @@ pub fn update_on_ground(
 
 pub fn apply_gravity_over_time(
     query: Query<(&Grounded, &mut LinearVelocity), With<CharacterController>>,
-    time: Res<Time>,
 ) {
     for (grounded, mut velocity) in query {
         if !grounded.0 {
-            velocity.y -= GRAVITY * time.delta_secs();
+            velocity.y -= GRAVITY * 1.0 / 60.0;
         }
     }
 }

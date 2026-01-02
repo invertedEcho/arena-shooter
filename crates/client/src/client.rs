@@ -1,9 +1,11 @@
 use bevy::prelude::*;
 use lightyear::netcode::Key;
 use lightyear::prelude::client::*;
+use lightyear::prelude::input::native::InputMarker;
 use lightyear::prelude::*;
 use shared::SERVER_ADDRESS;
 use shared::player::Player;
+use shared::protocol::Inputs;
 
 use crate::ClientId;
 use crate::player::camera::messages::SpawnPlayerCamerasMessage;
@@ -74,6 +76,9 @@ fn handle_new_player(
             trigger.entity
         );
         commands.insert_resource(ClientLocalPlayer(trigger.entity));
+        commands
+            .entity(trigger.entity)
+            .insert(InputMarker::<Inputs>::default());
         spawn_player_camera_message_writer
             .write(SpawnPlayerCamerasMessage(trigger.entity));
     }

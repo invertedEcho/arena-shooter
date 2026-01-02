@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use shared::SelectedMapState;
 
 use crate::{
     game_flow::{
@@ -6,7 +7,7 @@ use crate::{
         score::GameScorePlugin,
         states::{
             AppDebugState, AppState, InGameState, LoadingGameSubState,
-            MainMenuState, SelectedMapState,
+            MainMenuState,
         },
         systems::{
             check_collider_constructor_hierarchy_ready,

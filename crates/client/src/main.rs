@@ -10,7 +10,7 @@ use bevy_inspector_egui::{
     bevy_egui::{self, EguiPlugin},
     quick::WorldInspectorPlugin,
 };
-use lightyear::prelude::client::ClientPlugins;
+use lightyear::prelude::{client::ClientPlugins, *};
 
 use crate::{
     audio::AudioPlugin,
@@ -80,6 +80,10 @@ fn main() {
                     mode: window_mode,
                     ..default()
                 }),
+                ..default()
+            })
+            .set(AssetPlugin {
+                file_path: "../../assets".to_string(),
                 ..default()
             }),
     );

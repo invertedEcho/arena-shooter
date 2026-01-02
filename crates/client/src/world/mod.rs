@@ -5,15 +5,11 @@ use crate::world::systems::{handle_spawn_debug_points_message, spawn_map};
 use crate::world::world_objects::WorldObjectsPlugin;
 use bevy::prelude::*;
 
-mod collider_rules;
 pub mod components;
 pub mod messages;
 pub mod resources;
 mod systems;
 pub mod world_objects;
-
-const SMALL_MAP_PATH: &str = "maps/tiny_town/main.gltf";
-const MEDIUM_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
 
 pub struct WorldPlugin;
 

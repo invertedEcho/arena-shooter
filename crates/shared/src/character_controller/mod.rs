@@ -1,16 +1,12 @@
 use bevy::prelude::*;
 
-use crate::character_controller::{
-    messages::MovementAction,
-    systems::{
-        apply_gravity_over_time, apply_movement_damping, check_above_head,
-        handle_movement_actions_for_character_controllers, update_on_ground,
-    },
+use crate::character_controller::systems::{
+    apply_gravity_over_time, apply_movement_damping, check_above_head,
+    update_on_ground,
 };
 
 pub mod components;
-pub mod messages;
-mod systems;
+pub mod systems;
 
 pub const CHARACTER_CAPSULE_RADIUS: f32 = 0.2;
 pub const CHARACTER_CAPSULE_LENGTH: f32 = 1.3;
@@ -29,19 +25,14 @@ pub struct CharacterControllerPlugin;
 
 impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<MovementAction>()
-            .add_systems(
-                Update,
-                (
-                    apply_movement_damping,
-                    update_on_ground,
-                    apply_gravity_over_time,
-                    check_above_head.after(update_on_ground),
-                ),
-            )
-            .add_systems(
-                Update,
-                (handle_movement_actions_for_character_controllers,), // .run_if(in_state(InGameState::Playing)),
-            );
+        app.add_systems(
+            FixedUpdate,
+            (
+                apply_movement_damping,
+                update_on_ground,
+                apply_gravity_over_time,
+                check_above_head.after(update_on_ground),
+            ),
+        );
     }
 }

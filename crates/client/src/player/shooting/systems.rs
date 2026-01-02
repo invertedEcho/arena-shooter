@@ -15,8 +15,8 @@ use crate::{
                 Weapon,
             },
             messages::{
-                PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage,
-                PlayerWeaponSlotChangeMessage, ReloadPlayerWeaponMessage,
+                PlayerWeaponFiredMessage, PlayerWeaponSlotChangeMessage,
+                ReloadPlayerWeaponMessage,
             },
             resources::{ChangeWeaponCooldown, WeaponReloadTimer},
         },

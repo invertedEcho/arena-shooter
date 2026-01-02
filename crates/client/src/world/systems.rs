@@ -6,13 +6,16 @@ use bevy::{
     color::palettes::{self},
     prelude::*,
 };
+use shared::{
+    MEDIUM_PLASTIC_MAP_PATH, SelectedMapState, TINY_TOWN_MAP_PATH,
+    collider_rules::get_collider_rules_by_map,
+};
 
 use crate::{
-    game_flow::states::{AppState, SelectedMapState},
+    game_flow::states::AppState,
     world::{
-        MEDIUM_MAP_PATH, SMALL_MAP_PATH,
-        collider_rules::get_collider_rules_by_map, components::DebugPoint,
-        messages::SpawnDebugPointMessage, resources::WorldSceneHandle,
+        components::DebugPoint, messages::SpawnDebugPointMessage,
+        resources::WorldSceneHandle,
     },
 };
 
@@ -23,8 +26,8 @@ pub fn spawn_map(
 ) {
     let selected_map = selected_map_state.get();
     let map_path = match selected_map {
-        SelectedMapState::TinyTown => SMALL_MAP_PATH,
-        SelectedMapState::MediumPlastic => MEDIUM_MAP_PATH,
+        SelectedMapState::TinyTown => TINY_TOWN_MAP_PATH,
+        SelectedMapState::MediumPlastic => MEDIUM_PLASTIC_MAP_PATH,
     };
 
     info!(

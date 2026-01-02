@@ -1,7 +1,6 @@
 ﻿use bevy::prelude::*;
 
 use crate::{
-    client::ConnectToServerMessage,
     game_flow::states::MainMenuState,
     user_interface::{
         DEFAULT_GAME_FONT_PATH, SUB_HEADER_FONT_SIZE, TITLE_FONT_SIZE,

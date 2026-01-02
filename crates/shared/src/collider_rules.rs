@@ -1,6 +1,6 @@
 use avian3d::prelude::ColliderConstructor;
 
-use crate::game_flow::states::SelectedMapState;
+use crate::SelectedMapState;
 
 // TODO: validate the collider rules, e.g. whether these Names actually exist and have a mesh
 // defined
