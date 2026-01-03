@@ -30,10 +30,10 @@ impl Plugin for CharacterControllerPlugin {
         app.add_systems(
             FixedUpdate,
             (
-                // apply_movement_damping,
+                apply_movement_damping,
                 update_on_ground,
                 apply_gravity_over_time,
-                // check_above_head.after(update_on_ground),
+                check_above_head.after(update_on_ground),
             ),
         );
     }
