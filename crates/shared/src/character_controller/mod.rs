@@ -21,6 +21,8 @@ pub const JUMP_VELOCITY: f32 = 3.0;
 
 pub const MAX_SLOPE_ANGLE: f32 = 45.0_f32.to_radians();
 
+pub const GROUND_CASTER_MAX_DISTANCE: f32 = 0.1;
+
 pub struct CharacterControllerPlugin;
 
 impl Plugin for CharacterControllerPlugin {
@@ -28,10 +30,10 @@ impl Plugin for CharacterControllerPlugin {
         app.add_systems(
             FixedUpdate,
             (
-                apply_movement_damping,
+                // apply_movement_damping,
                 update_on_ground,
                 apply_gravity_over_time,
-                check_above_head.after(update_on_ground),
+                // check_above_head.after(update_on_ground),
             ),
         );
     }

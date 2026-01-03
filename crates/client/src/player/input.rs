@@ -48,15 +48,15 @@ pub fn handle_client_input(
 ) {
     for (entity, transform, res, mut velocity) in query {
         info!(
-            "Movement on client, transform {:?} | current velocity {:?}",
-            transform, velocity
+            "Movement on client, position {:?} | current velocity {:?}",
+            transform.translation, velocity
         );
         shared::character_controller::systems::shared_movement(
             &mut velocity,
             res,
             &mut spatial_query,
             transform,
-            entity,
+            [entity].to_vec(),
         );
     }
 }

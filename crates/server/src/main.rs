@@ -137,15 +137,15 @@ fn movement(
 ) {
     for (entity, transform, res, mut velocity) in query {
         info!(
-            "Movement on server, transform {:?} | current velocity {:?}",
-            transform, velocity
+            "Movement on server, position {:?} | current velocity {:?}",
+            transform.translation, velocity
         );
         shared::character_controller::systems::shared_movement(
             &mut velocity,
             res,
             &mut spatial_query,
             transform,
-            entity,
+            [entity].to_vec(),
         );
     }
 }

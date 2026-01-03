@@ -4,8 +4,8 @@ use bevy::prelude::*;
 use crate::{
     GRAVITY,
     character_controller::{
-        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
-        MAX_SLOPE_ANGLE,
+        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+        GROUND_CASTER_MAX_DISTANCE, JUMP_VELOCITY, MAX_SLOPE_ANGLE,
         components::{CharacterController, Grounded},
     },
     protocol::{Inputs, Movement},
@@ -16,7 +16,7 @@ pub fn shared_movement(
     input: &Inputs,
     spatial_query: &mut SpatialQuery,
     transform: &Transform,
-    origin_entity: Entity,
+    excluded_entities: Vec<Entity>,
 ) {
     match input {
         Inputs::Jump => {
@@ -38,11 +38,10 @@ pub fn shared_movement(
             // origin entity is player, this needs to exist as on server, the shape cast will hit
             // the player. but why not on the client btw?
             let spatial_query_filter = &SpatialQueryFilter::default()
-                .with_excluded_entities([origin_entity]);
+                .with_excluded_entities(excluded_entities);
             let desired_velocity =
                 convert_movement_to_desired_velocity(movement);
 
-            info!("origin entity: {}", origin_entity);
             apply_collide_and_slide(
                 velocity,
                 desired_velocity,
@@ -59,16 +58,16 @@ pub fn shared_movement(
 fn convert_movement_to_desired_velocity(movement: &Movement) -> Vec3 {
     let mut desired_velocity: Vec3 = vec3(0.0, 0.0, 0.0);
     if movement.backwards {
-        desired_velocity.z += 4.0;
+        desired_velocity.z += 1.0;
     }
     if movement.forward {
-        desired_velocity.z -= 4.0;
+        desired_velocity.z -= 1.0;
     }
     if movement.left {
-        desired_velocity.x -= 4.0;
+        desired_velocity.x -= 1.0;
     }
     if movement.right {
-        desired_velocity.x += 4.0;
+        desired_velocity.x += 1.0;
     }
 
     desired_velocity
@@ -191,20 +190,40 @@ fn apply_collide_and_slide(
 /// Updates the [`Grounded`] status for character controllers.
 pub fn update_on_ground(
     mut query: Query<
-        (&ShapeHits, &mut Grounded, &mut LinearVelocity),
+        (Entity, &mut Grounded, &mut LinearVelocity, &Transform),
         With<CharacterController>,
     >,
+    spatial_query: SpatialQuery,
 ) {
-    for (hits, mut grounded, mut velocity) in &mut query {
-        info!("Currently grounded: {}", grounded.0);
-        info!("any shape hits?: {}", hits.0.len());
-        let on_ground = !hits.0.is_empty();
+    for (character_controller_entity, mut grounded, mut velocity, transform) in
+        &mut query
+    {
+        let Some(_) = spatial_query.cast_shape(
+            &Collider::capsule(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ),
+            transform.translation,
+            transform.rotation,
+            Dir3::NEG_Y,
+            &ShapeCastConfig {
+                max_distance: GROUND_CASTER_MAX_DISTANCE,
+                ..default()
+            },
+            &SpatialQueryFilter::default()
+                .with_excluded_entities([character_controller_entity]),
+        ) else {
+            info!("not grounded");
+            grounded.0 = false;
+            continue;
+        };
+        info!("We are grounded!");
 
-        if grounded.0 != on_ground {
-            grounded.0 = on_ground;
+        if !grounded.0 {
+            grounded.0 = true;
         }
 
-        if on_ground && velocity.y < 0.0 {
+        if grounded.0 && velocity.y < 0.0 {
             velocity.y = 0.0
         }
     }

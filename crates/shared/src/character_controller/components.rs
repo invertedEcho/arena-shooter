@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+    GROUND_CASTER_MAX_DISTANCE,
 };
 
 /// A marker component indicating that an entity is using a character controller
@@ -43,7 +44,7 @@ impl Default for CharacterControllerBundle {
                 Quaternion::IDENTITY,
                 Dir3::NEG_Y,
             )
-            .with_max_distance(0.1),
+            .with_max_distance(GROUND_CASTER_MAX_DISTANCE),
         }
     }
 }
