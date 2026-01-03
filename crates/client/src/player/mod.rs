@@ -5,13 +5,13 @@ use shared::player::{Player, PlayerReady};
 use crate::player::{
     camera::PlayerCameraPlugin,
     hud::PlayerHudPlugin,
-    input::{buffer_input, handle_client_input},
+    movement::{buffer_input, handle_client_movement},
     shooting::{PlayerShootingPlugin, components::PlayerWeapons},
 };
 
 pub mod camera;
 mod hud;
-pub mod input;
+pub mod movement;
 pub mod shooting;
 
 #[derive(Message)]
@@ -25,7 +25,7 @@ impl Plugin for PlayerPlugin {
             FixedPreUpdate,
             buffer_input.in_set(InputSystems::WriteClientInputs),
         )
-        .add_systems(FixedUpdate, handle_client_input)
+        .add_systems(FixedUpdate, handle_client_movement)
         .add_systems(Update, (mark_players_as_ready,))
         .add_plugins(PlayerCameraPlugin)
         .add_plugins(PlayerShootingPlugin)

@@ -14,7 +14,7 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use crate::{
     character_controller::CharacterControllerPlugin,
-    protocol::{Inputs, ProtocolPlugin},
+    protocol::{PlayerInputs, ProtocolPlugin},
 };
 
 pub mod character_controller;
@@ -56,7 +56,7 @@ impl Plugin for SharedPlugin {
         .add_plugins(PhysicsDebugPlugin)
         .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
 
-        app.add_plugins(InputPlugin::<Inputs>::default());
+        app.add_plugins(InputPlugin::<PlayerInputs>::default());
 
         // own plugins
         app.add_plugins(CharacterControllerPlugin);

@@ -1,8 +1,12 @@
 use bevy::prelude::*;
+use lightyear::prelude::input::native::ActionState;
 
-use crate::character_controller::systems::{
-    apply_gravity_over_time, apply_movement_damping, check_above_head,
-    update_on_ground,
+use crate::{
+    character_controller::systems::{
+        apply_gravity_over_time, apply_movement_damping, check_above_head,
+        update_on_ground,
+    },
+    protocol::PlayerInputs,
 };
 
 pub mod components;
@@ -23,6 +27,8 @@ pub const MAX_SLOPE_ANGLE: f32 = 45.0_f32.to_radians();
 
 pub const GROUND_CASTER_MAX_DISTANCE: f32 = 0.1;
 
+pub const MAX_DISTANCE_SHAPE_CAST_MOVEMENT: f32 = 0.3;
+
 pub struct CharacterControllerPlugin;
 
 impl Plugin for CharacterControllerPlugin {
@@ -37,4 +43,41 @@ impl Plugin for CharacterControllerPlugin {
             ),
         );
     }
+}
+
+pub fn convert_action_state_input_to_desired_velocity(
+    action_state_input: &ActionState<PlayerInputs>,
+) -> Vec3 {
+    let speed = if action_state_input.run {
+        RUN_VELOCITY
+    } else {
+        WALK_VELOCITY
+    };
+
+    let yaw = action_state_input.camera_yaw;
+    let pitch = action_state_input.camera_pitch;
+    info!("yaw {} | pitch {}", yaw, pitch);
+
+    let forward =
+        Vec3::new(yaw.sin() * pitch.cos(), 0.0, yaw.cos() * pitch.cos())
+            .normalize();
+
+    let right = Vec3::new(yaw.cos(), 0.0, -yaw.sin()).normalize();
+
+    let mut desired_velocity = Vec3::ZERO;
+
+    if action_state_input.direction.forward {
+        desired_velocity += forward * speed;
+    }
+    if action_state_input.direction.left {
+        desired_velocity -= right * speed;
+    }
+    if action_state_input.direction.right {
+        desired_velocity += right * speed;
+    }
+    if action_state_input.direction.backwards {
+        desired_velocity -= forward * speed;
+    }
+
+    desired_velocity
 }

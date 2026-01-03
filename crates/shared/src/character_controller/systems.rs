@@ -8,69 +8,44 @@ use crate::{
         GROUND_CASTER_MAX_DISTANCE, JUMP_VELOCITY, MAX_SLOPE_ANGLE,
         components::{CharacterController, Grounded},
     },
-    protocol::{Inputs, Movement},
 };
 
 pub fn shared_movement(
-    velocity: &mut LinearVelocity,
-    input: &Inputs,
+    current_velocity: &mut LinearVelocity,
+    desired_velocity: Vec3,
     spatial_query: &mut SpatialQuery,
     transform: &Transform,
     excluded_entities: Vec<Entity>,
+    grounded: bool,
 ) {
-    match input {
-        Inputs::Jump => {
-            velocity.y = JUMP_VELOCITY;
-            // if grounded.0 {
-            //     velocity.y = JUMP_VELOCITY;
-            // }
-        }
-        Inputs::Movement(movement) => {
-            // exclude medkits because we want to be able to walk through medkits
-            // let excluded_entities: Vec<Entity> = medkit_query
-            //     .iter()
-            //     .chain(std::iter::once(character_controller_entity))
-            //     .collect();
-
-            // let spatial_query_filter = &SpatialQueryFilter::default()
-            //     .with_excluded_entities(excluded_entities.clone());
-
-            // origin entity is player, this needs to exist as on server, the shape cast will hit
-            // the player. but why not on the client btw?
-            let spatial_query_filter = &SpatialQueryFilter::default()
-                .with_excluded_entities(excluded_entities);
-            let desired_velocity =
-                convert_movement_to_desired_velocity(movement);
-
-            apply_collide_and_slide(
-                velocity,
-                desired_velocity,
-                transform,
-                spatial_query,
-                spatial_query_filter,
-                1.0 / 60.0,
-                0,
-            );
-        }
-    }
-}
-
-fn convert_movement_to_desired_velocity(movement: &Movement) -> Vec3 {
-    let mut desired_velocity: Vec3 = vec3(0.0, 0.0, 0.0);
-    if movement.backwards {
-        desired_velocity.z += 1.0;
-    }
-    if movement.forward {
-        desired_velocity.z -= 1.0;
-    }
-    if movement.left {
-        desired_velocity.x -= 1.0;
-    }
-    if movement.right {
-        desired_velocity.x += 1.0;
+    info!("shared movement call in shared character_controller");
+    if desired_velocity.y > 0.0 && grounded {
+        current_velocity.y = JUMP_VELOCITY;
     }
 
-    desired_velocity
+    // origin entity is player, this needs to exist as on server, the shape cast will hit
+    // the player. but why not on the client btw?
+    let spatial_query_filter = &SpatialQueryFilter::default()
+        .with_excluded_entities(excluded_entities);
+
+    apply_collide_and_slide(
+        current_velocity,
+        desired_velocity,
+        transform,
+        spatial_query,
+        spatial_query_filter,
+        1.0 / 60.0,
+        0,
+    );
+
+    // exclude medkits because we want to be able to walk through medkits
+    // let excluded_entities: Vec<Entity> = medkit_query
+    //     .iter()
+    //     .chain(std::iter::once(character_controller_entity))
+    //     .collect();
+
+    // let spatial_query_filter = &SpatialQueryFilter::default()
+    //     .with_excluded_entities(excluded_entities.clone());
 }
 
 const MAX_DISTANCE_SHAPE_CAST_MOVEMENT: f32 = 0.3;

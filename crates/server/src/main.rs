@@ -12,13 +12,16 @@ use lightyear::prelude::input::native::ActionState;
 use lightyear::prelude::server::*;
 use lightyear::prelude::*;
 use shared::SharedPlugin;
-use shared::character_controller::components::CharacterControllerBundle;
+use shared::character_controller::components::{
+    CharacterControllerBundle, Grounded,
+};
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+    convert_action_state_input_to_desired_velocity,
 };
 use shared::collider_rules::get_collider_rules_by_map;
 use shared::player::PlayerBundle;
-use shared::protocol::Inputs;
+use shared::protocol::PlayerInputs;
 use shared::{MEDIUM_PLASTIC_MAP_PATH, SERVER_ADDRESS};
 
 fn main() {
@@ -112,8 +115,9 @@ fn handle_new_client(
                 owner: trigger.entity,
                 lifetime: Lifetime::default(),
             },
-            ActionState::<Inputs>::default(),
+            ActionState::<PlayerInputs>::default(),
         ));
+        // FIXME: still needed?
         commands
             .entity(trigger.entity)
             .insert(InputTimeline(Timeline::from(
@@ -128,24 +132,33 @@ fn movement(
         (
             Entity,
             &Transform,
-            &ActionState<Inputs>,
+            &ActionState<PlayerInputs>,
             &mut LinearVelocity,
+            &Grounded,
         ),
         Without<Predicted>,
     >,
     mut spatial_query: SpatialQuery,
 ) {
-    for (entity, transform, res, mut velocity) in query {
+    for (entity, transform, player_input, mut velocity, grounded) in query {
         info!(
             "Movement on server, position {:?} | current velocity {:?}",
             transform.translation, velocity
         );
+        let desired_velocity =
+            convert_action_state_input_to_desired_velocity(player_input);
+
+        info!(
+            "Calling shared movement on server with desired_velocity: {}",
+            desired_velocity
+        );
         shared::character_controller::systems::shared_movement(
             &mut velocity,
-            res,
+            desired_velocity,
             &mut spatial_query,
             transform,
             [entity].to_vec(),
+            grounded.0,
         );
     }
 }

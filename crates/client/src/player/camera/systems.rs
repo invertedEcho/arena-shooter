@@ -4,8 +4,12 @@ use bevy::{
     prelude::*,
 };
 use bevy_inspector_egui::bevy_egui;
-use shared::player::{
-    AimType, FreeCam, InterpolateWeapon, MuzzleFlash, PlayerWeaponModel,
+use lightyear::prelude::input::native::{ActionState, InputMarker};
+use shared::{
+    player::{
+        AimType, FreeCam, InterpolateWeapon, MuzzleFlash, PlayerWeaponModel,
+    },
+    protocol::PlayerInputs,
 };
 
 use crate::{
@@ -123,6 +127,10 @@ type AnyCamera = Or<(With<WorldCamera>, With<ViewModelCamera>)>;
 pub fn update_yaw_pitch_on_mouse_motion(
     mouse_motion: Res<AccumulatedMouseMotion>,
     camera_transforms: Query<&mut Transform, AnyCamera>,
+    mut action_state_input: Single<
+        &mut ActionState<PlayerInputs>,
+        With<InputMarker<PlayerInputs>>,
+    >,
 ) {
     let delta = mouse_motion.delta;
     if delta == Vec2::ZERO {
@@ -147,6 +155,8 @@ pub fn update_yaw_pitch_on_mouse_motion(
             new_pitch_camera,
             current_roll_camera,
         );
+        action_state_input.0.camera_yaw = new_yaw_camera;
+        action_state_input.0.camera_pitch = new_pitch_camera;
     }
 }
 

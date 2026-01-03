@@ -8,28 +8,28 @@ use crate::{
     player::Player,
 };
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Reflect)]
-pub enum Inputs {
-    Movement(Movement),
-    Jump,
-}
-
-impl Default for Inputs {
-    fn default() -> Self {
-        Self::Movement(Movement::default())
-    }
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Reflect, Default)]
+pub struct PlayerInputs {
+    pub direction: Direction,
+    pub run: bool,
+    pub jump: bool,
+    // We need the cameras rotation on the server too to apply it in movement, but we can't just
+    // replicate Camera component as the camera can and must only live on the client
+    pub camera_yaw: f32,
+    pub camera_pitch: f32,
 }
 
 // this ensures that entities are referenced correctly on server and client as entities will have
 // different entity ids on client and server
-impl MapEntities for Inputs {
+impl MapEntities for PlayerInputs {
     fn map_entities<M: EntityMapper>(&mut self, _entity_mapper: &mut M) {}
 }
 
 #[derive(
     Serialize, Deserialize, Debug, Default, PartialEq, Eq, Clone, Reflect,
 )]
-pub struct Movement {
+pub struct Direction {
+    pub sprint: bool,
     pub forward: bool,
     pub backwards: bool,
     pub left: bool,
@@ -64,8 +64,6 @@ impl Plugin for ProtocolPlugin {
             .add_linear_interpolation();
 
         app.register_component::<Grounded>();
-        // app.register_component::<ShapeCaster>();
-        app.register_component::<ShapeHits>();
 
         app.register_component::<RigidBody>();
     }
