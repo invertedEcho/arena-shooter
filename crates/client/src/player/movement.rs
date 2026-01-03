@@ -23,26 +23,14 @@ pub fn buffer_input(
 ) {
     let direction = &mut action_state_input.0.direction;
 
-    if keyboard_input.pressed(KeyCode::KeyW) {
-        direction.forward = true;
-    }
-    if keyboard_input.pressed(KeyCode::KeyA) {
-        direction.left = true;
-    }
-    if keyboard_input.pressed(KeyCode::KeyS) {
-        direction.backwards = true;
-    }
-    if keyboard_input.pressed(KeyCode::KeyD) {
-        direction.right = true;
-    }
+    direction.forward = keyboard_input.pressed(KeyCode::KeyW);
+    direction.left = keyboard_input.pressed(KeyCode::KeyA);
+    direction.backwards = keyboard_input.pressed(KeyCode::KeyS);
+    direction.right = keyboard_input.pressed(KeyCode::KeyD);
 
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        action_state_input.0.jump = true;
-    }
+    action_state_input.0.jump = keyboard_input.just_pressed(KeyCode::Space);
 
-    if keyboard_input.pressed(KeyCode::ShiftLeft) {
-        action_state_input.0.run = true;
-    }
+    action_state_input.0.run = keyboard_input.pressed(KeyCode::ShiftLeft);
 }
 
 /// This system reads the input from the player, converts it into a desired_velocty and calls shared_movement with it

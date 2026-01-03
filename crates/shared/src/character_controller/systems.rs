@@ -18,7 +18,11 @@ pub fn shared_movement(
     excluded_entities: Vec<Entity>,
     grounded: bool,
 ) {
-    info!("shared movement call in shared character_controller");
+    info!(
+        "SHARED: shared_movement desired velocity: {}",
+        desired_velocity
+    );
+
     if desired_velocity.y > 0.0 && grounded {
         current_velocity.y = JUMP_VELOCITY;
     }
@@ -65,12 +69,14 @@ fn apply_collide_and_slide(
     };
 
     if desired_velocity.length_squared() < 0.0001 {
-        *current_velocity = Vec3::splat(0.0);
+        *current_velocity = Vec3::ZERO;
+        info!("desired velocity too small, zeroing current velocity");
         return;
     }
 
     if current_hit_count > MAX_HITS {
-        *current_velocity = Vec3::splat(0.);
+        *current_velocity = Vec3::ZERO;
+        info!("reached max hits, zeroing current velocity");
         return;
     }
 
@@ -88,7 +94,7 @@ fn apply_collide_and_slide(
         },
         spatial_query_filter,
     ) {
-        info!(
+        debug!(
             "Got shape cast hit, entity that was hit: {}",
             hit_ahead.entity
         );
@@ -99,7 +105,7 @@ fn apply_collide_and_slide(
         let slope_climable = slope_angle < MAX_SLOPE_ANGLE;
 
         if slope_climable {
-            info!("MOVEMENT: Climable slope!");
+            debug!("MOVEMENT: Climable slope!");
             // this is the most important part to make the slope climbing possible.
             // instead of trying to go straight, we slide along the ground
             *current_velocity = desired_velocity.reject_from_normalized(normal);
@@ -127,7 +133,7 @@ fn apply_collide_and_slide(
                 }
             }
         } else {
-            info!("MOVEMENT: Obstacle in the way, sliding along wall");
+            debug!("MOVEMENT: Obstacle in the way, sliding along wall");
             // not climable, e.g. a wall. we want to slide along the wall,
             // similar to the collide and slide algorithm
             // the main difference is that we ignore the Y part,
@@ -155,7 +161,7 @@ fn apply_collide_and_slide(
             );
         }
     } else {
-        info!("MOVEMENT: No obstacle ahead, free movement");
+        debug!("MOVEMENT: No obstacle ahead, free movement");
         // no obstacle ahead, free movement
         current_velocity.x = desired_velocity.x;
         current_velocity.z = desired_velocity.z;

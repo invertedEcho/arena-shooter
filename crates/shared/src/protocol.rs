@@ -29,7 +29,6 @@ impl MapEntities for PlayerInputs {
     Serialize, Deserialize, Debug, Default, PartialEq, Eq, Clone, Reflect,
 )]
 pub struct Direction {
-    pub sprint: bool,
     pub forward: bool,
     pub backwards: bool,
     pub left: bool,

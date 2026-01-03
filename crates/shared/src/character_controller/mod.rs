@@ -56,7 +56,11 @@ pub fn convert_action_state_input_to_desired_velocity(
 
     let yaw = action_state_input.camera_yaw;
     let pitch = action_state_input.camera_pitch;
-    info!("yaw {} | pitch {}", yaw, pitch);
+    // info!("\n");
+    // info!("convert_action_state_input_to_desired_velocity;");
+    // info!("direction: {:?}", action_state_input.direction);
+    // info!("yaw {} | pitch {}", yaw, pitch);
+    // info!("\n");
 
     let forward =
         Vec3::new(yaw.sin() * pitch.cos(), 0.0, yaw.cos() * pitch.cos())
@@ -64,10 +68,13 @@ pub fn convert_action_state_input_to_desired_velocity(
 
     let right = Vec3::new(yaw.cos(), 0.0, -yaw.sin()).normalize();
 
+    info!("forward camera: {}", forward);
+    info!("right camera: {}", right);
+
     let mut desired_velocity = Vec3::ZERO;
 
     if action_state_input.direction.forward {
-        desired_velocity += forward * speed;
+        desired_velocity -= forward * speed;
     }
     if action_state_input.direction.left {
         desired_velocity -= right * speed;
@@ -76,7 +83,7 @@ pub fn convert_action_state_input_to_desired_velocity(
         desired_velocity += right * speed;
     }
     if action_state_input.direction.backwards {
-        desired_velocity -= forward * speed;
+        desired_velocity += forward * speed;
     }
 
     desired_velocity
