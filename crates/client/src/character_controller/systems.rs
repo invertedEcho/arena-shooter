@@ -1,58 +1,142 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use shared::GRAVITY;
 
 use crate::{
-    GRAVITY,
     character_controller::{
-        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
-        GROUND_CASTER_MAX_DISTANCE, JUMP_VELOCITY, MAX_SLOPE_ANGLE,
+        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
+        MAX_SLOPE_ANGLE, RUN_VELOCITY, WALK_VELOCITY,
         components::{CharacterController, Grounded},
+        messages::{MovementAction, MovementDirection},
     },
+    player::{
+        camera::components::{PlayerCameraState, WorldCamera},
+        shooting::components::PlayerWeapons,
+    },
+    world::world_objects::medkit::Medkit,
 };
 
-pub fn shared_movement(
-    current_velocity: &mut LinearVelocity,
-    desired_velocity: Vec3,
-    spatial_query: &mut SpatialQuery,
-    transform: &Transform,
-    excluded_entities: Vec<Entity>,
-    grounded: bool,
+pub fn handle_keyboard_input_for_player(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut movement_action_writer: MessageWriter<MovementAction>,
+    player_query: Single<(Entity, &PlayerWeapons, &PlayerCameraState)>,
+    camera_transform: Single<&Transform, With<WorldCamera>>,
 ) {
-    info!(
-        "SHARED: shared_movement desired velocity: {}",
-        desired_velocity
-    );
+    let (player_entity, player_weapons, player_camera_state) =
+        player_query.into_inner();
 
-    if desired_velocity.y > 0.0 && grounded {
-        current_velocity.y = JUMP_VELOCITY;
+    if *player_camera_state == PlayerCameraState::FreeCam {
+        return;
     }
 
-    // origin entity is player, this needs to exist as on server, the shape cast will hit
-    // the player. but why not on the client btw?
-    let spatial_query_filter = &SpatialQueryFilter::default()
-        .with_excluded_entities(excluded_entities);
+    let shift_pressed = keyboard_input.pressed(KeyCode::ShiftLeft);
+    let reloading = player_weapons.reloading;
 
-    apply_collide_and_slide(
-        current_velocity,
-        desired_velocity,
-        transform,
-        spatial_query,
-        spatial_query_filter,
-        1.0 / 60.0,
-        0,
-    );
+    let speed = if shift_pressed && !reloading {
+        RUN_VELOCITY
+    } else {
+        WALK_VELOCITY
+    };
 
-    // exclude medkits because we want to be able to walk through medkits
-    // let excluded_entities: Vec<Entity> = medkit_query
-    //     .iter()
-    //     .chain(std::iter::once(character_controller_entity))
-    //     .collect();
+    let forward_camera = camera_transform.forward();
+    let right = camera_transform.right();
 
-    // let spatial_query_filter = &SpatialQueryFilter::default()
-    //     .with_excluded_entities(excluded_entities.clone());
+    let Ok(forward_camera) =
+        Dir3::from_xyz(forward_camera.x, 0.0, forward_camera.z)
+    else {
+        return;
+    };
+    let Ok(right) = Dir3::from_xyz(right.x, 0.0, right.z) else {
+        return;
+    };
+
+    let mut velocity = Vec3::ZERO;
+
+    if keyboard_input.pressed(KeyCode::KeyW) {
+        velocity += forward_camera * speed;
+    }
+    if keyboard_input.pressed(KeyCode::KeyA) {
+        velocity -= right * speed;
+    }
+    if keyboard_input.pressed(KeyCode::KeyD) {
+        velocity += right * speed;
+    }
+    if keyboard_input.pressed(KeyCode::KeyS) {
+        velocity -= forward_camera * speed;
+    }
+
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        movement_action_writer.write(MovementAction {
+            direction: MovementDirection::Jump,
+            character_controller_entity: player_entity,
+        });
+    }
+
+    if velocity == Vec3::ZERO {
+        return;
+    }
+
+    movement_action_writer.write(MovementAction {
+        direction: MovementDirection::Move(velocity),
+        character_controller_entity: player_entity,
+    });
 }
 
 const MAX_DISTANCE_SHAPE_CAST_MOVEMENT: f32 = 0.3;
+pub fn handle_movement_actions_for_character_controllers(
+    mut movement_action_reader: MessageReader<MovementAction>,
+    mut character_controller_query: Query<
+        (&mut LinearVelocity, &Grounded, &Transform),
+        With<CharacterController>,
+    >,
+    mut spatial_query: SpatialQuery,
+    time: Res<Time>,
+    medkit_query: Query<Entity, With<Medkit>>,
+) {
+    for movement_action in movement_action_reader.read() {
+        info!("Got movement action!");
+        let direction = &movement_action.direction;
+        let character_controller_entity =
+            movement_action.character_controller_entity;
+        let Ok((mut velocity, grounded, transform)) =
+            character_controller_query.get_mut(character_controller_entity)
+        else {
+            warn!(
+                "Failed to find Character Controller by Entity {}",
+                character_controller_entity
+            );
+            continue;
+        };
+
+        match *direction {
+            MovementDirection::Jump => {
+                if grounded.0 {
+                    velocity.y = JUMP_VELOCITY;
+                }
+            }
+            MovementDirection::Move(world_velocity) => {
+                // exclude medkits because we want to be able to walk through medkits
+                let excluded_entities: Vec<Entity> = medkit_query
+                    .iter()
+                    .chain(std::iter::once(character_controller_entity))
+                    .collect();
+
+                let spatial_query_filter = &SpatialQueryFilter::default()
+                    .with_excluded_entities(excluded_entities.clone());
+
+                apply_collide_and_slide(
+                    &mut velocity,
+                    world_velocity,
+                    transform,
+                    &mut spatial_query,
+                    spatial_query_filter,
+                    time.delta_secs(),
+                    0,
+                );
+            }
+        }
+    }
+}
 
 fn apply_collide_and_slide(
     current_velocity: &mut Vec3,
@@ -60,7 +144,7 @@ fn apply_collide_and_slide(
     origin_transform: &Transform,
     spatial_query: &mut SpatialQuery,
     spatial_query_filter: &SpatialQueryFilter,
-    fixed_dt: f32,
+    time_delta_secs: f32,
     current_hit_count: usize,
 ) {
     const MAX_HITS: usize = 5;
@@ -69,14 +153,12 @@ fn apply_collide_and_slide(
     };
 
     if desired_velocity.length_squared() < 0.0001 {
-        *current_velocity = Vec3::ZERO;
-        info!("desired velocity too small, zeroing current velocity");
+        *current_velocity = Vec3::splat(0.0);
         return;
     }
 
     if current_hit_count > MAX_HITS {
-        *current_velocity = Vec3::ZERO;
-        info!("reached max hits, zeroing current velocity");
+        *current_velocity = Vec3::splat(0.);
         return;
     }
 
@@ -94,10 +176,6 @@ fn apply_collide_and_slide(
         },
         spatial_query_filter,
     ) {
-        debug!(
-            "Got shape cast hit, entity that was hit: {}",
-            hit_ahead.entity
-        );
         // obstacle in the way, check if we can slimb it
         // a normal is just a direction something is facing
         let normal = hit_ahead.normal1;
@@ -128,8 +206,8 @@ fn apply_collide_and_slide(
                 let player_y = origin_transform.translation.y;
                 let difference_y = hit_down_y - player_y;
                 if difference_y.abs() < 0.3 {
-                    info!("Snapping character controller to slope");
-                    current_velocity.y = difference_y / fixed_dt;
+                    debug!("Snapping character controller to slope");
+                    current_velocity.y = difference_y / time_delta_secs;
                 }
             }
         } else {
@@ -145,7 +223,7 @@ fn apply_collide_and_slide(
             // update our transform so shape cast origin is correct
             let new_transform = Transform {
                 translation: origin_transform.translation
-                    + desired_velocity * fixed_dt,
+                    + desired_velocity * time_delta_secs,
                 rotation: origin_transform.rotation,
                 scale: origin_transform.scale,
             };
@@ -156,7 +234,7 @@ fn apply_collide_and_slide(
                 &new_transform,
                 spatial_query,
                 spatial_query_filter,
-                fixed_dt,
+                time_delta_secs,
                 current_hit_count + 1,
             );
         }
@@ -168,43 +246,21 @@ fn apply_collide_and_slide(
     }
 }
 
-/// Updates the [`Grounded`] status for character controllers.
-pub fn update_on_ground(
+/// Updates the [`Grounded`] component for character controllers.
+pub fn update_grounded(
     mut query: Query<
-        (Entity, &mut Grounded, &mut LinearVelocity, &Transform),
+        (&ShapeHits, &mut Grounded, &mut LinearVelocity),
         With<CharacterController>,
     >,
-    spatial_query: SpatialQuery,
 ) {
-    for (character_controller_entity, mut grounded, mut velocity, transform) in
-        &mut query
-    {
-        let Some(_) = spatial_query.cast_shape(
-            &Collider::capsule(
-                CHARACTER_CAPSULE_RADIUS,
-                CHARACTER_CAPSULE_LENGTH,
-            ),
-            transform.translation,
-            transform.rotation,
-            Dir3::NEG_Y,
-            &ShapeCastConfig {
-                max_distance: GROUND_CASTER_MAX_DISTANCE,
-                ..default()
-            },
-            &SpatialQueryFilter::default()
-                .with_excluded_entities([character_controller_entity]),
-        ) else {
-            info!("not grounded");
-            grounded.0 = false;
-            continue;
-        };
-        info!("We are grounded!");
+    for (hits, mut grounded, mut velocity) in &mut query {
+        let on_ground = !hits.0.is_empty();
 
-        if !grounded.0 {
-            grounded.0 = true;
+        if grounded.0 != on_ground {
+            grounded.0 = on_ground;
         }
 
-        if grounded.0 && velocity.y < 0.0 {
+        if on_ground && velocity.y < 0.0 {
             velocity.y = 0.0
         }
     }
@@ -212,10 +268,11 @@ pub fn update_on_ground(
 
 pub fn apply_gravity_over_time(
     query: Query<(&Grounded, &mut LinearVelocity), With<CharacterController>>,
+    time: Res<Time>,
 ) {
     for (grounded, mut velocity) in query {
         if !grounded.0 {
-            velocity.y -= GRAVITY * 1.0 / 60.0;
+            velocity.y -= GRAVITY * time.delta_secs();
         }
     }
 }

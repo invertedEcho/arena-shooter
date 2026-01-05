@@ -7418,6 +7418,7 @@ dependencies = [
  "bevy-inspector-egui 0.35.0",
  "lightyear",
  "lightyear_avian3d",
+ "lightyear_replication",
  "shared",
 ]
 

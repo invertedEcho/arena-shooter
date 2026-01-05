@@ -10,11 +10,12 @@ use bevy_inspector_egui::{
     bevy_egui::{self, EguiPlugin},
     quick::WorldInspectorPlugin,
 };
-use lightyear::prelude::{client::ClientPlugins, *};
+use lightyear::prelude::client::ClientPlugins;
 
 use crate::{
     audio::AudioPlugin,
-    client::ClientPlugin,
+    character_controller::CharacterControllerPlugin,
+    client::NetworkPlugin,
     game_flow::GameFlowPlugin,
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
@@ -24,9 +25,9 @@ use crate::{
     world::WorldPlugin,
 };
 
-// TODO: reintroduce all commented out plugins
+// FIXME: reintroduce all commented out plugins
 mod audio;
-// mod character_controller;
+mod character_controller;
 mod client;
 // mod enemy;
 mod game_flow;
@@ -111,7 +112,7 @@ fn main() {
 
     // FIXME: reintroduce all commented plugins again
     // own plugins
-    app.add_plugins(ClientPlugin)
+    app.add_plugins(NetworkPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(WorldPlugin)
         .add_plugins(GameFlowPlugin)
@@ -119,6 +120,7 @@ fn main() {
         // .add_plugins(EnemyPlugin)
         .add_plugins(UserInterfacePlugin)
         // .add_plugins(ParticlesPlugin)
+        .add_plugins(CharacterControllerPlugin)
         .add_plugins(AudioPlugin);
     // .add_plugins(NavMeshPathfindingPlugin);
 

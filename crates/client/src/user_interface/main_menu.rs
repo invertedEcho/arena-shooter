@@ -1,7 +1,10 @@
 ﻿use bevy::prelude::*;
 
 use crate::{
-    game_flow::states::MainMenuState,
+    game_flow::{
+        game_mode::{GameModeState, StartGameModeMessage},
+        states::MainMenuState,
+    },
     user_interface::{
         DEFAULT_GAME_FONT_PATH, SUB_HEADER_FONT_SIZE, TITLE_FONT_SIZE,
     },
@@ -131,12 +134,16 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
 }
 
 fn handle_main_menu_button_pressed(
+    mut commands: Commands,
     main_menu_button_interactions: Query<
         (&Interaction, &MainMenuButton),
         Changed<Interaction>,
     >,
     mut app_exit_message_writer: MessageWriter<AppExit>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
+    mut start_game_mode_message_writer: MessageWriter<StartGameModeMessage>,
+    mut next_game_mode_state: ResMut<NextState<GameModeState>>,
+    main_menu_camera: Query<Entity, With<MainMenuCamera>>,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
         let Interaction::Pressed = interaction else {
@@ -147,7 +154,12 @@ fn handle_main_menu_button_pressed(
                 next_main_menu_state.set(MainMenuState::MapSelection);
             }
             MainMenuButtonType::Multiplayer => {
-                next_main_menu_state.set(MainMenuState::MapSelection);
+                next_game_mode_state.set(GameModeState::Multiplayer);
+                start_game_mode_message_writer.write(StartGameModeMessage);
+                // despawn main menu camera
+                for entity in main_menu_camera {
+                    commands.entity(entity).despawn();
+                }
             }
             MainMenuButtonType::SettingsMainMenu => {
                 next_main_menu_state.set(MainMenuState::Settings);

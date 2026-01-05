@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::client::ConnectToServerMessage;
+use crate::{
+    client::ConnectToServerMessage, game_flow::states::AppState,
+    world::messages::SpawnMapMessage,
+};
 
 pub struct GameModePlugin;
 
@@ -28,6 +31,7 @@ pub enum GameModeState {
     #[default]
     FreeRoam,
     Waves,
+    Multiplayer,
 }
 
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
@@ -38,6 +42,7 @@ pub struct GameStateWave {
     pub enemies_left_from_current_wave: usize,
 }
 
+// FIXME: enemies need to be spawned on server and replicated to client
 fn handle_start_game_mode_message(
     mut message_reader: MessageReader<StartGameModeMessage>,
     // mut spawn_enemies_message_writer: MessageWriter<SpawnEnemiesMessage>,
@@ -45,26 +50,37 @@ fn handle_start_game_mode_message(
     // existing_enemies: Query<Entity, With<Enemy>>,
     current_game_mode: Res<State<GameModeState>>,
     mut connect_to_server_message_writer: MessageWriter<ConnectToServerMessage>,
+    mut app_state: ResMut<NextState<AppState>>,
+    mut spawn_map_message_writer: MessageWriter<SpawnMapMessage>,
 ) {
     for _ in message_reader.read() {
-        info!("Got game mode start message");
+        info!(
+            "Got game mode start message, game mode: {:?}",
+            current_game_mode.get()
+        );
+        app_state.set(AppState::InGame);
+        spawn_map_message_writer.write(SpawnMapMessage);
         connect_to_server_message_writer.write(ConnectToServerMessage);
 
-        // for existing_enemy in existing_enemies {
-        //     commands.entity(existing_enemy).despawn();
-        // }
+        if *current_game_mode.get() != GameModeState::Multiplayer {
+            // for existing_enemy in existing_enemies {
+            //     commands.entity(existing_enemy).despawn();
+            // }
 
-        if *current_game_mode.get() == GameModeState::Waves {
-            let enemy_count = get_enemy_count_per_wave(1);
-            next_game_state_wave.set(GameStateWave {
-                current_wave: 1,
-                enemies_left_from_current_wave: enemy_count,
-                enemies_killed: 0,
-            });
-            // spawn_enemies_message_writer.write(SpawnEnemiesMessage {
-            //     enemy_count,
-            //     spawn_strategy: EnemySpawnStrategy::RandomSelection,
-            // });
+            if *current_game_mode.get() == GameModeState::Waves {
+                let enemy_count = get_enemy_count_per_wave(1);
+
+                // this state should exist on the server and be synced to the client
+                next_game_state_wave.set(GameStateWave {
+                    current_wave: 1,
+                    enemies_left_from_current_wave: enemy_count,
+                    enemies_killed: 0,
+                });
+                // spawn_enemies_message_writer.write(SpawnEnemiesMessage {
+                //     enemy_count,
+                //     spawn_strategy: EnemySpawnStrategy::RandomSelection,
+                // });
+            }
         }
     }
 }

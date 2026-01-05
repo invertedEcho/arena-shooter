@@ -1,4 +1,4 @@
-use avian3d::prelude::*;
+use avian3d::{math::Quaternion, prelude::*};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -17,6 +17,7 @@ pub struct CharacterControllerBundle {
     collider: Collider,
     locked_axes: LockedAxes,
     grounded: Grounded,
+    ground_caster: ShapeCaster,
 }
 
 impl Default for CharacterControllerBundle {
@@ -32,13 +33,24 @@ impl Default for CharacterControllerBundle {
                 .lock_rotation_x()
                 .lock_rotation_y()
                 .lock_rotation_z(),
-            // FIXME: should probably start with false
+            // TODO: should this tart with false or true? -> i think it doesnt really matter as it
+            // will be updated by update_grounded system anyways
             grounded: Grounded(true),
+            ground_caster: ShapeCaster::new(
+                Collider::capsule(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ),
+                Vec3::ZERO,
+                Quaternion::IDENTITY,
+                Dir3::NEG_Y,
+            )
+            .with_max_distance(0.1),
         }
     }
 }
 
-#[derive(Component, Serialize, Deserialize, PartialEq)]
+#[derive(Component, Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct Grounded(pub bool);
 
 impl Default for Grounded {

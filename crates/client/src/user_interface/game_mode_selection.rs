@@ -142,14 +142,7 @@ fn handle_game_mode_selection_button_press(
 ) {
     for (interaction, game_mode_selection_button) in query {
         if let Interaction::Pressed = interaction {
-            match game_mode_selection_button.0 {
-                GameModeState::Waves => {
-                    next_game_mode_state.set(GameModeState::Waves);
-                }
-                GameModeState::FreeRoam => {
-                    next_game_mode_state.set(GameModeState::FreeRoam);
-                }
-            }
+            next_game_mode_state.set(game_mode_selection_button.0.clone());
             next_app_state.set(AppState::LoadingGame);
         }
     }

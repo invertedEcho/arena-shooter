@@ -10,6 +10,8 @@ impl Plugin for GameplayDebugPlugin {
             ..Default::default()
         });
 
+        app.add_message::<SpawnDebugPointMessage>();
+
         app.insert_resource(LoadFonts {
             font_paths: vec![
                 "assets/fonts/Exo_2/static/Exo2-Regular.ttf".to_owned(),
@@ -25,11 +27,30 @@ impl Plugin for GameplayDebugPlugin {
                 // add_enemy_state_text,
                 // update_enemy_debug_text,
                 tick_despawn_timer_debug_gizmo_lines,
+                handle_spawn_debug_points_message,
             ),
         );
         // app.add_systems(EguiPrimaryContextPass, player_inspector);
 
         app.insert_resource(DebugGizmos(Vec::new()));
+    }
+}
+
+#[derive(Component)]
+pub struct DebugPoint;
+
+#[derive(Message)]
+pub struct SpawnDebugPointMessage {
+    pub point: Vec3,
+    pub color: Color,
+}
+
+impl SpawnDebugPointMessage {
+    pub fn _new<T: Into<Vec3>, U: Into<Color>>(point: T, color: U) -> Self {
+        Self {
+            point: point.into(),
+            color: color.into(),
+        }
     }
 }
 
@@ -166,3 +187,23 @@ fn tick_despawn_timer_debug_gizmo_lines(
 //         })
 //     });
 // }
+//
+
+pub fn handle_spawn_debug_points_message(
+    mut commands: Commands,
+    mut message_reader: MessageReader<SpawnDebugPointMessage>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for message in message_reader.read() {
+        commands.spawn((
+            Transform::from_translation(message.point),
+            Mesh3d(meshes.add(Sphere::new(0.1))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: message.color,
+                ..Default::default()
+            })),
+            DebugPoint,
+        ));
+    }
+}

@@ -1,17 +1,14 @@
 use bevy::prelude::*;
-use lightyear::input::client::InputSystems;
 use shared::player::{Player, PlayerReady};
 
 use crate::player::{
     camera::PlayerCameraPlugin,
     hud::PlayerHudPlugin,
-    movement::{buffer_input, handle_client_movement},
     shooting::{PlayerShootingPlugin, components::PlayerWeapons},
 };
 
 pub mod camera;
 mod hud;
-pub mod movement;
 pub mod shooting;
 
 #[derive(Message)]
@@ -21,15 +18,10 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            FixedPreUpdate,
-            buffer_input.in_set(InputSystems::WriteClientInputs),
-        )
-        .add_systems(FixedUpdate, handle_client_movement)
-        .add_systems(Update, (mark_players_as_ready,))
-        .add_plugins(PlayerCameraPlugin)
-        .add_plugins(PlayerShootingPlugin)
-        .add_plugins(PlayerHudPlugin);
+        app.add_systems(Update, (mark_players_as_ready,))
+            .add_plugins(PlayerCameraPlugin)
+            .add_plugins(PlayerShootingPlugin)
+            .add_plugins(PlayerHudPlugin);
     }
 }
 

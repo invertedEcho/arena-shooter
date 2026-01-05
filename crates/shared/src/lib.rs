@@ -1,8 +1,8 @@
 use avian3d::{
     PhysicsPlugins,
     prelude::{
-        Gravity, PhysicsDebugPlugin, PhysicsInterpolationPlugin,
-        PhysicsTransformPlugin,
+        Gravity, IslandPlugin, IslandSleepingPlugin, PhysicsDebugPlugin,
+        PhysicsInterpolationPlugin, PhysicsTransformPlugin,
     },
 };
 use bevy::prelude::*;
@@ -12,12 +12,8 @@ use lightyear::{
 };
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
-use crate::{
-    character_controller::CharacterControllerPlugin,
-    protocol::{PlayerInputs, ProtocolPlugin},
-};
+use crate::protocol::ProtocolPlugin;
 
-pub mod character_controller;
 pub mod collider_rules;
 pub mod components;
 pub mod messages;
@@ -28,7 +24,7 @@ const SERVER_PORT: u16 = 5888;
 pub const SERVER_ADDRESS: SocketAddr =
     SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), SERVER_PORT);
 
-const GRAVITY: f32 = 9.81;
+pub const GRAVITY: f32 = 9.81;
 
 pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
 pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
@@ -40,7 +36,6 @@ impl Plugin for SharedPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(ProtocolPlugin);
 
-        // app.add_plugins(PredictionPlugin);
         app.add_plugins(LightyearAvianPlugin {
             replication_mode: AvianReplicationMode::Position,
             ..default()
@@ -51,15 +46,12 @@ impl Plugin for SharedPlugin {
                 .build()
                 // these interfere with lightyear avian plugins
                 .disable::<PhysicsTransformPlugin>()
-                .disable::<PhysicsInterpolationPlugin>(),
+                .disable::<PhysicsInterpolationPlugin>()
+                .disable::<IslandPlugin>()
+                .disable::<IslandSleepingPlugin>(),
         )
         .add_plugins(PhysicsDebugPlugin)
         .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
-
-        app.add_plugins(InputPlugin::<PlayerInputs>::default());
-
-        // own plugins
-        app.add_plugins(CharacterControllerPlugin);
     }
 }
 
