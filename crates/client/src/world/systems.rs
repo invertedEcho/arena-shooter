@@ -6,15 +6,13 @@ use bevy::{
     color::palettes::{self},
     prelude::*,
 };
-use shared::{
-    MEDIUM_PLASTIC_MAP_PATH, SelectedMapState, TINY_TOWN_MAP_PATH,
-    collider_rules::get_collider_rules_by_map,
-};
+use shared::{MEDIUM_PLASTIC_MAP_PATH, SelectedMapState, TINY_TOWN_MAP_PATH};
 
-use crate::{
-    game_flow::states::AppState,
-    world::{messages::SpawnMapMessage, resources::WorldSceneHandle},
+use super::{
+    collider_rules::get_collider_rules_by_map, messages::SpawnMapMessage,
+    resources::WorldSceneHandle,
 };
+use crate::game_flow::states::AppState;
 
 /// Spawns the corresponding map (determined by looking at SelectedMapState) on the client, when
 /// the corresponding message is read.

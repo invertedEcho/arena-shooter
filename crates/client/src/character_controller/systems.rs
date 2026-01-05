@@ -94,7 +94,6 @@ pub fn handle_movement_actions_for_character_controllers(
     medkit_query: Query<Entity, With<Medkit>>,
 ) {
     for movement_action in movement_action_reader.read() {
-        info!("Got movement action!");
         let direction = &movement_action.direction;
         let character_controller_entity =
             movement_action.character_controller_entity;

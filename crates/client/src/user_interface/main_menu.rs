@@ -88,7 +88,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     TextColor::WHITE,
                 ))
                 .with_child((
-                    Text::new("Multiplayer"),
+                    Text::new("Multiplayer (FFA)"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
                         font_size: SUB_HEADER_FONT_SIZE,

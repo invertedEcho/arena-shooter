@@ -133,7 +133,6 @@ pub fn handle_input(
     }
 
     if reload_button_pressed {
-        info!("reload button pressed sending message");
         reload_player_weapon_message_writer.write(ReloadPlayerWeaponMessage);
     }
 }
@@ -292,7 +291,6 @@ pub fn handle_reload_player_weapon_message(
             PARTIAL_RELOAD_TIME
         };
 
-        info!("inserting weaponreloadtimer");
         commands.insert_resource(WeaponReloadTimer(Timer::from_seconds(
             reload_timer_duration,
             TimerMode::Once,

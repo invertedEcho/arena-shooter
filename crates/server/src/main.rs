@@ -1,17 +1,14 @@
+use std::f32::consts::PI;
 use std::time::Duration;
 
-use avian3d::math::PI;
-use avian3d::prelude::*;
 use bevy::color::palettes;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use lightyear::prelude::client::InputDelayConfig;
 use lightyear::prelude::server::*;
 use lightyear::prelude::*;
 use shared::SharedPlugin;
-use shared::collider_rules::get_collider_rules_by_map;
 use shared::player::{Player, PlayerBundle};
 use shared::protocol::ClientUpdatePositionMessage;
 use shared::{MEDIUM_PLASTIC_MAP_PATH, SERVER_ADDRESS};
@@ -104,6 +101,9 @@ fn handle_new_client(
                 owner: trigger.entity,
                 lifetime: Lifetime::default(),
             },
+            // thereotically this isnt needed, as each client inserts the mesh with material when a
+            // new player is added, but i have it so we can see what happens on the server. meshes
+            // are not replicated
             Mesh3d(meshes.add(Capsule3d::new(0.2, 1.3))),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: WHITE.into(),
@@ -184,34 +184,9 @@ pub fn spawn_map(
     let world_scene_handle =
         asset_server.load(GltfAssetLabel::Scene(0).from_asset(map_path));
 
-    // commands.insert_resource(WorldSceneHandle(world_scene_handle.clone()));
-
-    let collider_rules =
-        get_collider_rules_by_map(&shared::SelectedMapState::MediumPlastic);
-
-    let mut collider_hierarchy = ColliderConstructorHierarchy::new(
-        ColliderConstructor::ConvexHullFromMesh,
-    );
-
-    for (name, maybe_constructor) in collider_rules {
-        match maybe_constructor {
-            Some(constructor) => {
-                collider_hierarchy = collider_hierarchy
-                    .with_constructor_for_name(name, constructor);
-            }
-            None => {
-                collider_hierarchy =
-                    collider_hierarchy.without_constructor_for_name(name);
-            }
-        }
-    }
-
     commands.spawn((
-        // DespawnOnExit(AppState::InGame),
         SceneRoot(world_scene_handle),
-        collider_hierarchy,
-        Name::new("World Scene Root"),
+        Name::new("Medium Plastic Map Scene Root"),
         Visibility::Visible,
-        RigidBody::Static,
     ));
 }

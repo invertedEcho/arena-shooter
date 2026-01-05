@@ -1,4 +1,5 @@
-use ::shared::SharedPlugin;
+use ::shared::{GRAVITY, SharedPlugin};
+use avian3d::{PhysicsPlugins, prelude::*};
 use bevy::{
     input_focus::InputDispatchPlugin,
     prelude::*,
@@ -100,6 +101,10 @@ fn main() {
 
     // External plugins
     app.add_plugins(HanabiPlugin);
+
+    app.add_plugins(PhysicsPlugins::default().build())
+        .add_plugins(PhysicsDebugPlugin)
+        .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
 
     if cfg!(debug_assertions) {
         app.add_plugins(EguiPlugin::default())

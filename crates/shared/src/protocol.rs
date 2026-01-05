@@ -1,5 +1,4 @@
-use avian3d::prelude::*;
-use bevy::{ecs::entity::MapEntities, prelude::*};
+use bevy::prelude::*;
 use lightyear::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +8,6 @@ pub struct PositionUpdateChannel;
 
 #[derive(Serialize, Deserialize)]
 pub struct ClientUpdatePositionMessage {
-    // client_id: ClientId,
     pub new_transform: Transform,
 }
 
@@ -28,8 +26,6 @@ impl Plugin for ProtocolPlugin {
 
         app.register_component::<Player>();
 
-        app.register_component::<Position>();
-
-        app.register_component::<Rotation>();
+        app.register_component::<Transform>();
     }
 }
