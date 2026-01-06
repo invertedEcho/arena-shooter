@@ -7,7 +7,7 @@ pub const DEFAULT_PLAYER_HEALTH: f32 = 100.0;
 #[reflect(Component)]
 pub struct Player;
 
-/// This component marks an entity as ready to be used for exterrnal systems that depend on the player, such as the HUD
+/// This component marks an entity as ready to be used for external systems that depend on the player, such as the HUD
 #[derive(Component)]
 pub struct PlayerReady;
 
@@ -28,27 +28,10 @@ impl Default for PlayerBundle {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, PartialEq, Serialize, Deserialize)]
 pub struct Health(pub f32);
 
-// FIXME: camera stuff should not live in shared, move to client
-
-#[derive(Component)]
-pub struct PlayerWeaponModel;
-
-#[derive(Component)]
-pub struct FreeCam;
-
-#[derive(Component)]
-pub struct MuzzleFlash;
-
-// TODO: rename me
-#[derive(Component)]
-pub struct InterpolateWeapon {
-    pub target_position: Vec3,
-}
-
-#[derive(PartialEq, Clone, Component)]
+#[derive(Component, PartialEq, Clone)]
 pub enum AimType {
     Normal,
     Scoped,

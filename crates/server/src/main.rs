@@ -10,7 +10,7 @@ use lightyear::prelude::server::*;
 use lightyear::prelude::*;
 use shared::SharedPlugin;
 use shared::player::{Player, PlayerBundle};
-use shared::protocol::{ClientUpdatePositionMessage, ServerPosition};
+use shared::protocol::{ClientUpdatePositionMessage, PlayerPositionServer};
 use shared::{MEDIUM_PLASTIC_MAP_PATH, SERVER_ADDRESS};
 
 fn main() {
@@ -95,7 +95,7 @@ fn handle_new_client(
         commands.spawn((
             Name::new("Player"),
             PlayerBundle::default(),
-            ServerPosition {
+            PlayerPositionServer {
                 translation: vec3(0.0, 20.0, 0.0),
             },
             Visibility::Visible,
@@ -126,21 +126,17 @@ pub fn receive_client_update_position(
         &mut MessageReceiver<ClientUpdatePositionMessage>,
         Entity,
     )>,
-    mut players: Query<(&mut ServerPosition, &ControlledBy), With<Player>>,
+    mut players: Query<
+        (&mut PlayerPositionServer, &ControlledBy),
+        With<Player>,
+    >,
 ) {
     for (mut message_receiver, remote_id) in receivers.iter_mut() {
-        info!("Found messagereceiver with entity");
         for message in message_receiver.receive() {
-            info!("Received a message!");
             if let Some((mut server_position, _)) = players
                 .iter_mut()
                 .find(|(_, controlled_by)| controlled_by.owner == remote_id)
             {
-                info!(
-                    "Found corresponding player from \
-                     ClientUpdatePositionMessage message!",
-                );
-                info!("Updating transform of player on server");
                 server_position.translation = message.new_translation;
             } else {
                 warn!(
@@ -202,7 +198,7 @@ pub fn spawn_map(
 // only needed so we can updated position on server. we may disable this once we have headless
 // setup
 fn apply_server_position_on_server(
-    mut query: Query<(&ServerPosition, &mut Transform), With<Player>>,
+    mut query: Query<(&PlayerPositionServer, &mut Transform), With<Player>>,
 ) {
     for (server_pos, mut transform) in &mut query {
         transform.translation = server_pos.translation;

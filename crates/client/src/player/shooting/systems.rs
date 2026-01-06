@@ -1,13 +1,14 @@
 use avian3d::prelude::*;
 use bevy::{input::mouse::MouseWheel, prelude::*};
-use shared::player::{AimType, PlayerWeaponModel};
+use shared::player::AimType;
 
 use crate::{
     game_flow::states::InGameState,
     player::{
         Player, PlayerDeathMessage,
         camera::{
-            components::WorldCamera, weapon_positions::get_position_for_weapon,
+            components::{PlayerWeaponModel, WorldCamera},
+            weapon_positions::get_position_for_weapon,
         },
         shooting::{
             components::{

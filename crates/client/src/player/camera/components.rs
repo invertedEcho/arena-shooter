@@ -20,3 +20,18 @@ pub enum PlayerCameraState {
     Normal,
     FreeCam,
 }
+
+#[derive(Component)]
+pub struct PlayerWeaponModel;
+
+#[derive(Component)]
+pub struct FreeCam;
+
+#[derive(Component)]
+pub struct MuzzleFlash;
+
+// TODO: rename me
+#[derive(Component)]
+pub struct InterpolateWeapon {
+    pub target_position: Vec3,
+}

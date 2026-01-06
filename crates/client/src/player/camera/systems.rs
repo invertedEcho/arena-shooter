@@ -4,15 +4,16 @@ use bevy::{
     prelude::*,
 };
 use bevy_inspector_egui::bevy_egui;
-use shared::player::{
-    AimType, FreeCam, InterpolateWeapon, MuzzleFlash, PlayerWeaponModel,
-};
+use shared::player::AimType;
 
 use crate::{
     player::{
         camera::{
             PLAYER_CAMERA_Y_OFFSET,
-            components::{PlayerCameraState, ViewModelCamera, WorldCamera},
+            components::{
+                FreeCam, InterpolateWeapon, MuzzleFlash, PlayerCameraState,
+                PlayerWeaponModel, ViewModelCamera, WorldCamera,
+            },
             messages::SpawnPlayerCamerasMessage,
             weapon_positions::{
                 get_muzzle_flash_position_for_weapon, get_position_for_weapon,

@@ -2,6 +2,7 @@ use bevy::{
     color::palettes::tailwind::{BLUE_500, RED_500},
     prelude::*,
 };
+use lightyear::prelude::Controlled;
 use shared::player::{AimType, Health};
 
 use crate::{
@@ -35,10 +36,19 @@ use crate::{
 pub fn spawn_player_hud(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    player_query: Single<(&Health, &PlayerWeapons), Added<PlayerReady>>,
+    player_query: Query<
+        (&Health, &PlayerWeapons),
+        (Added<PlayerReady>, With<Controlled>),
+    >,
 ) {
-    info!("Spawning player hud because PlayerReady was inserted");
-    let (player_health, player_weapons) = player_query.into_inner();
+    let Ok((player_health, player_weapons)) = player_query.single() else {
+        return;
+    };
+
+    info!(
+        "Spawning player hud because PlayerReady on our own player was \
+         inserted"
+    );
 
     let weapon_state =
         &player_weapons.weapons[player_weapons.active_slot].state;

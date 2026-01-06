@@ -28,11 +28,13 @@ impl Plugin for PlayerPlugin {
 type PlayersWithoutReadyMarker =
     (With<Player>, With<PlayerWeapons>, Without<PlayerReady>);
 
+// hmm should this run on client?
 fn mark_players_as_ready(
     mut commands: Commands,
     query: Query<Entity, PlayersWithoutReadyMarker>,
 ) {
     for entity in query {
+        info!("Marking player entity as ready");
         commands.entity(entity).insert(PlayerReady);
     }
 }

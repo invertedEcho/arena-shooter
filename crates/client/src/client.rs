@@ -6,7 +6,7 @@ use lightyear::prelude::*;
 use shared::SERVER_ADDRESS;
 use shared::player::Player;
 use shared::protocol::{
-    ClientUpdatePositionMessage, PositionUpdateChannel, ServerPosition,
+    ClientUpdatePositionMessage, PlayerPositionServer, PositionUpdateChannel,
 };
 
 use crate::ClientId;
@@ -136,7 +136,7 @@ pub fn apply_server_position(
     mut query: Query<
         (
             &mut Transform,
-            &ServerPosition,
+            &PlayerPositionServer,
             Has<Controlled>, // present only on own player
         ),
         With<Player>,
