@@ -95,6 +95,8 @@ fn handle_new_client(
         commands.spawn((
             Name::new("Player"),
             PlayerBundle::default(),
+            // TODO: think we could override replication behaviour for this component and only
+            // replicate to all other clients than the current client
             PlayerPositionServer {
                 translation: vec3(0.0, 20.0, 0.0),
             },

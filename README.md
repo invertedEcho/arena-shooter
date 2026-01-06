@@ -49,6 +49,18 @@ dependent systems (HUD, camera, input, etc).
 - Systems that depend on fully initialized entities must query
   for the corresponding `*Ready` marker
 
+### Multiplayer Setup
+
+- Players are spawned on the server and replicated to all connected clients
+- A client can then find its own Player
+- Character controller is only run on the client
+  - Client sends its new position to the server
+  - The server validates whether this new position was even feasible by a distance check, comparing new position to old position (to be implemented)
+  - The validated position is stored in `PlayerPositionServer`. This component gets replicated to all other clients
+  - All clients can then update the `Transform` of that corresponding player
+    - This is done via interpolation so it looks smooth. Without the intermediate component `PlayerPositionServer`, we couldn't add interpolation
+
+
 #### Example
 (Identifiers may be abbreviated for documentation clarity.)
 ```rust
@@ -114,7 +126,7 @@ fn spawn_player_hud(
   - [ ] Music volume
 - [ ] Graphics settings menu 
   - [ ] Target FPS
-- [ ] Input menu
+- [ ] Input settings menu
   - [ ] Change keybinds of all inputs in the game
 - and probably more stuff already implemented and coming soon..
 
@@ -126,6 +138,7 @@ this project assumes 1 unit = 1m, e.g. a unit is like `Transform::from_xyz(1.0, 
 uses:
 - bevy for game engine
 - avian3d for physics
+- lightyear for multiplayer
 
 ## Credits
 
