@@ -194,7 +194,7 @@ pub fn update_player_crosshair_visibility(
 }
 
 pub fn update_player_health_text(
-    player_health: Single<&Health, Changed<Health>>,
+    player_health: Single<&Health, (Changed<Health>, With<Controlled>)>,
     mut player_health_text: Single<&mut Text, With<PlayerHealthText>>,
 ) {
     info!("Updated player health text");

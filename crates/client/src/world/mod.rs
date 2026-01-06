@@ -3,7 +3,6 @@ use crate::world::systems::handle_spawn_map_message;
 use crate::world::world_objects::WorldObjectsPlugin;
 use bevy::prelude::*;
 
-pub mod collider_rules;
 pub mod messages;
 pub mod resources;
 mod systems;

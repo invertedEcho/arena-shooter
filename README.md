@@ -50,7 +50,6 @@ dependent systems (HUD, camera, input, etc).
   for the corresponding `*Ready` marker
 
 ### Multiplayer Setup
-
 - Players are spawned on the server and replicated to all connected clients
 - A client can then find its own Player
 - Character controller is only run on the client
@@ -58,7 +57,17 @@ dependent systems (HUD, camera, input, etc).
   - The server validates whether this new position was even feasible by a distance check, comparing new position to old position (to be implemented)
   - The validated position is stored in `PlayerPositionServer`. This component gets replicated to all other clients
   - All clients can then update the `Transform` of that corresponding player
-    - This is done via interpolation so it looks smooth. Without the intermediate component `PlayerPositionServer`, we couldn't add interpolation
+    - This is done via interpolation so it looks smooth. Without the intermediate component `PlayerPositionServer`, we wouldn't be able to add interpolation
+
+
+For shooting:
+- Note that the following below is not yet implemented, just client sends message -> raycast on server
+- Server saves the position history of a player in a `VecDeque<(u32, Vec3)>`
+  - Gets updated each tick and only last ~200ms are saved
+- Clients send a ShootRequest to the server, that contains the necessary information together with a `client_tick`
+- Server looks up the position for the given `client_tick`
+- Server spawns temporary colliders to make the raycast
+- If hit was sucessful, the `Health` component on the corresponding player is updated
 
 
 #### Example

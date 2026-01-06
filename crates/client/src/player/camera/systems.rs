@@ -4,6 +4,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_inspector_egui::bevy_egui;
+use lightyear::prelude::Controlled;
 use shared::player::AimType;
 
 use crate::{
@@ -104,7 +105,7 @@ pub fn setup_player_cameras(
 
 pub fn handle_player_scope_aim(
     mouse_input: Res<ButtonInput<MouseButton>>,
-    player_query: Single<(&mut PlayerWeapons, &mut AimType)>,
+    player_query: Single<(&mut PlayerWeapons, &mut AimType), With<Controlled>>,
 ) {
     let (player_weapons, mut aim_type) = player_query.into_inner();
 

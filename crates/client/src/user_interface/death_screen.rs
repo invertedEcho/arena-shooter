@@ -35,7 +35,7 @@ enum WaveGameModeDeathScreen {
 fn spawn_wave_game_mode_death_screen(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    game_state_wave: Res<State<GameStateWave>>,
+    game_state_wave: Option<Res<State<GameStateWave>>>,
 ) {
     commands
         .spawn((
@@ -71,48 +71,50 @@ fn spawn_wave_game_mode_death_screen(
                         ..default()
                     },
                 ));
-            parent
-                .spawn(Node {
-                    padding: UiRect::new(
-                        Val::ZERO,
-                        Val::ZERO,
-                        Val::ZERO,
-                        Val::Px(16.0),
-                    ),
-                    ..default()
-                })
-                .with_child((
-                    Text::new(format!(
-                        "You survived until wave {}",
-                        game_state_wave.get().current_wave
-                    )),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: SUB_HEADER_FONT_SIZE,
+            if let Some(ref game_state_wave) = game_state_wave {
+                parent
+                    .spawn(Node {
+                        padding: UiRect::new(
+                            Val::ZERO,
+                            Val::ZERO,
+                            Val::ZERO,
+                            Val::Px(16.0),
+                        ),
                         ..default()
-                    },
-                ));
-            parent
-                .spawn(Node {
-                    padding: UiRect::new(
-                        Val::ZERO,
-                        Val::ZERO,
-                        Val::ZERO,
-                        Val::Px(64.0),
-                    ),
-                    ..default()
-                })
-                .with_child((
-                    Text::new(format!(
-                        "Enemies killed: {}",
-                        game_state_wave.get().enemies_killed
-                    )),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: SUB_HEADER_FONT_SIZE,
+                    })
+                    .with_child((
+                        Text::new(format!(
+                            "You survived until wave {}",
+                            game_state_wave.get().current_wave
+                        )),
+                        TextFont {
+                            font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                            font_size: SUB_HEADER_FONT_SIZE,
+                            ..default()
+                        },
+                    ));
+                parent
+                    .spawn(Node {
+                        padding: UiRect::new(
+                            Val::ZERO,
+                            Val::ZERO,
+                            Val::ZERO,
+                            Val::Px(64.0),
+                        ),
                         ..default()
-                    },
-                ));
+                    })
+                    .with_child((
+                        Text::new(format!(
+                            "Enemies killed: {}",
+                            game_state_wave.get().enemies_killed
+                        )),
+                        TextFont {
+                            font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                            font_size: SUB_HEADER_FONT_SIZE,
+                            ..default()
+                        },
+                    ));
+            }
             parent
                 .spawn(Node {
                     row_gap: Val::Px(16.0),
@@ -121,13 +123,19 @@ fn spawn_wave_game_mode_death_screen(
                     ..default()
                 })
                 .with_children(|parent| {
+                    let restart_button_text = if game_state_wave.is_some() {
+                        "Retry"
+                    } else {
+                        "Respawn"
+                    };
+
                     parent
                         .spawn((
                             Button,
                             DeathScreenButton(WaveGameModeDeathScreen::Restart),
                         ))
                         .with_child((
-                            Text::new("Retry"),
+                            Text::new(restart_button_text),
                             TextFont {
                                 font: asset_server.load(DEFAULT_GAME_FONT_PATH),
                                 font_size: SUB_HEADER_FONT_SIZE,

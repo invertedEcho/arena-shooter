@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use shared::{CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS};
 
 use crate::{
     character_controller::{
@@ -16,8 +17,6 @@ pub mod components;
 pub mod messages;
 mod systems;
 
-pub const CHARACTER_CAPSULE_RADIUS: f32 = 0.2;
-pub const CHARACTER_CAPSULE_LENGTH: f32 = 1.3;
 pub const CHARACTER_HEIGHT: f32 =
     CHARACTER_CAPSULE_LENGTH + CHARACTER_CAPSULE_RADIUS * 2.0;
 

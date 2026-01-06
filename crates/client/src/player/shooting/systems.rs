@@ -1,6 +1,9 @@
-use avian3d::prelude::*;
 use bevy::{input::mouse::MouseWheel, prelude::*};
-use shared::player::AimType;
+use lightyear::prelude::*;
+use shared::{
+    player::{AimType, Health},
+    protocol::{ShootRequest, ShootRequestChannel},
+};
 
 use crate::{
     game_flow::states::InGameState,
@@ -42,7 +45,7 @@ type WorldModelCameraQuery<'w, 's> = Single<
 >;
 
 pub fn add_player_weapons_to_new_players(
-    added_players: Query<Entity, Added<Player>>,
+    added_players: Query<Entity, (Added<Player>, With<Controlled>)>,
     mut commands: Commands,
 ) {
     for player_entity in added_players {
@@ -86,7 +89,10 @@ pub fn handle_input(
         ReloadPlayerWeaponMessage,
     >,
     player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
-    mut player_weapons: Single<&mut PlayerWeapons>,
+    mut player_weapons: Single<
+        &mut PlayerWeapons,
+        (With<Player>, With<Controlled>),
+    >,
 ) {
     let current_weapon_secondary = player_weapons.weapons
         [player_weapons.active_slot]
@@ -102,7 +108,7 @@ pub fn handle_input(
 
     let reload_button_pressed = keyboard_input.just_pressed(KeyCode::KeyR);
 
-    if mouse_input.just_pressed(MouseButton::Left) {
+    if shoot_button_pressed {
         player_weapons.shooting = true;
     } else if mouse_input.just_released(MouseButton::Left) {
         player_weapons.shooting = false;
@@ -140,7 +146,6 @@ pub fn handle_input(
 
 pub fn handle_player_weapon_fired_message(
     mut commands: Commands,
-    spatial_query: SpatialQuery,
     mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
     // enemy_entities: Query<Entity, With<Enemy>>,
     // mut player_bullet_hit_enemy_message_writer: MessageWriter<
@@ -150,13 +155,15 @@ pub fn handle_player_weapon_fired_message(
     //     SpawnBulletImpactEffectMessage,
     // >,
     world_model_camera_query: WorldModelCameraQuery,
-    player_query: Single<(Entity, &PlayerWeapons), With<Player>>,
+    player_weapons: Single<&PlayerWeapons, (With<Player>, With<Controlled>)>,
+    mut shoot_request_sender: Single<
+        &mut MessageSender<ShootRequest>,
+        With<Client>,
+    >,
 ) {
-    let (player_entity, player_weapon) = player_query.into_inner();
-
     for _ in message_reader.read() {
         let fire_delay = get_fire_delay_by_weapon_type(
-            &player_weapon.weapons[player_weapon.active_slot]
+            &player_weapons.weapons[player_weapons.active_slot]
                 .stats
                 .weapon_type,
         );
@@ -165,46 +172,12 @@ pub fn handle_player_weapon_fired_message(
             TimerMode::Once,
         )));
 
-        let origin = world_model_camera_query.1.translation();
         let direction = world_model_camera_query.1.forward();
 
-        if let Some(first_hit) = spatial_query.cast_ray(
-            origin,
+        shoot_request_sender.send::<ShootRequestChannel>(ShootRequest {
             direction,
-            500.0,
-            false,
-            &SpatialQueryFilter::default()
-                .with_excluded_entities([player_entity]),
-        ) {
-            let entity_hit = first_hit.entity;
-
-            // let did_hit_enemy =
-            //     enemy_entities.iter().any(|e| e == first_hit.entity);
-
-            // if did_hit_enemy {
-            //     player_bullet_hit_enemy_message_writer.write(
-            //         PlayerBulletHitEnemyMessage {
-            //             enemy_hit: entity_hit,
-            //             damage: DEFAULT_BULLET_DAMAGE,
-            //         },
-            //     );
-            // }
-
-            let hit_point = origin + direction * first_hit.distance;
-
-            // let variant = if did_hit_enemy {
-            //     BulletImpactEffectVariant::Enemy
-            // } else {
-            //     BulletImpactEffectVariant::World
-            // };
-            //
-            // spawn_bullet_impact_effect_message_writer.write(
-            //     SpawnBulletImpactEffectMessage {
-            //         spawn_location: hit_point,
-            //         variant,
-            //     },
-            // );
-        }
+            origin: world_model_camera_query.1.translation(),
+        });
     }
 }
 
@@ -415,4 +388,13 @@ pub fn handle_change_weapon_slot_cooldown(
 
 pub fn reset_aim_type_on_pause(mut aim_type: Single<&mut AimType>) {
     **aim_type = AimType::Normal;
+}
+
+pub fn check_if_player_dead(
+    player_health: Single<&Health, (Changed<Health>, With<Controlled>)>,
+    mut player_death_message_writer: MessageWriter<PlayerDeathMessage>,
+) {
+    if player_health.0 <= 0.0 {
+        player_death_message_writer.write(PlayerDeathMessage);
+    }
 }

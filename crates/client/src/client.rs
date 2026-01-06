@@ -6,7 +6,8 @@ use lightyear::prelude::*;
 use shared::SERVER_ADDRESS;
 use shared::player::Player;
 use shared::protocol::{
-    ClientUpdatePositionMessage, PlayerPositionServer, PositionUpdateChannel,
+    ClientUpdatePositionChannel, ClientUpdatePositionMessage,
+    PlayerPositionServer,
 };
 
 use crate::ClientId;
@@ -23,7 +24,7 @@ impl Plugin for NetworkPlugin {
             Update,
             (
                 handle_connect_to_server_message,
-                send_client_update_position,
+                send_client_update_position.run_if(in_state(AppState::InGame)),
                 apply_server_position,
             ),
         );
@@ -119,7 +120,7 @@ pub fn send_client_update_position(
 ) {
     match player_transform.single() {
         Ok(player_transform) => {
-            message_sender.send::<PositionUpdateChannel>(
+            message_sender.send::<ClientUpdatePositionChannel>(
                 ClientUpdatePositionMessage {
                     new_translation: player_transform.translation,
                 },

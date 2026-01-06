@@ -1,8 +1,13 @@
+use avian3d::{
+    PhysicsPlugins,
+    prelude::{Gravity, PhysicsDebugPlugin},
+};
 use bevy::prelude::*;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use crate::protocol::ProtocolPlugin;
 
+pub mod collider_rules;
 pub mod components;
 pub mod messages;
 pub mod player;
@@ -17,12 +22,19 @@ pub const GRAVITY: f32 = 9.81;
 pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
 pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
 
+pub const CHARACTER_CAPSULE_RADIUS: f32 = 0.2;
+pub const CHARACTER_CAPSULE_LENGTH: f32 = 1.3;
+
 /// Functionality that runs on both client and server
 pub struct SharedPlugin;
 
 impl Plugin for SharedPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(ProtocolPlugin);
+
+        app.add_plugins(PhysicsPlugins::default().build())
+            .add_plugins(PhysicsDebugPlugin)
+            .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
     }
 }
 

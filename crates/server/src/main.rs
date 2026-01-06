@@ -1,6 +1,8 @@
+use std::collections::VecDeque;
 use std::f32::consts::PI;
 use std::time::Duration;
 
+use avian3d::prelude::*;
 use bevy::color::palettes;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
@@ -8,9 +10,14 @@ use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use lightyear::prelude::server::*;
 use lightyear::prelude::*;
-use shared::SharedPlugin;
-use shared::player::{Player, PlayerBundle};
-use shared::protocol::{ClientUpdatePositionMessage, PlayerPositionServer};
+use shared::collider_rules::get_collider_rules_by_map;
+use shared::player::{Health, Player, PlayerBundle};
+use shared::protocol::{
+    ClientUpdatePositionMessage, PlayerPositionServer, ShootRequest,
+};
+use shared::{
+    CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, SharedPlugin,
+};
 use shared::{MEDIUM_PLASTIC_MAP_PATH, SERVER_ADDRESS};
 
 fn main() {
@@ -28,11 +35,18 @@ fn main() {
 
     app.add_systems(Startup, setup_server);
 
+    // app.add_systems(
+    //     PreUpdate,
+    //     .after(MessageSystems::Receive),
+    // );
     app.add_systems(
-        PreUpdate,
-        receive_client_update_position.after(MessageSystems::Receive),
+        Update,
+        (
+            apply_server_position_on_server,
+            receive_shoot_request,
+            receive_client_update_position,
+        ),
     );
-    app.add_systems(Update, apply_server_position_on_server);
 
     app.add_observer(handle_new_connection);
     app.add_observer(handle_new_client);
@@ -92,7 +106,10 @@ fn handle_new_client(
         );
 
         info!("Spawning player");
+        // NOTE: The replicate component gets inserted into the player entity, but only registered
+        // components will be replicated to all other clients
         commands.spawn((
+            Replicate::to_clients(NetworkTarget::All),
             Name::new("Player"),
             PlayerBundle::default(),
             // TODO: think we could override replication behaviour for this component and only
@@ -101,9 +118,6 @@ fn handle_new_client(
                 translation: vec3(0.0, 20.0, 0.0),
             },
             Visibility::Visible,
-            // DebugRender::collider(Color::WHITE),
-            // PredictionTarget::to_clients(NetworkTarget::All),
-            Replicate::to_clients(NetworkTarget::All),
             // we add the ControlledBy on the server, with the client entity as the owner of this
             // player, so on the client we can then filter by players that have the `Controlled`
             // component and those are the players that are actually owned by that client
@@ -114,13 +128,29 @@ fn handle_new_client(
             // thereotically this isnt needed, as each client inserts the mesh with material when a
             // new player is added, but for now we keep it so we can see what happens on the server.
             // meshes are not replicated
-            Mesh3d(meshes.add(Capsule3d::new(0.2, 1.3))),
+            Mesh3d(meshes.add(Capsule3d::new(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ))),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: WHITE.into(),
                 ..Default::default()
             })),
+            PositionHistory {
+                samples: VecDeque::from([]),
+            },
+            Collider::capsule(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ),
+            RigidBody::Kinematic,
         ));
     }
+}
+
+#[derive(Component)]
+struct PositionHistory {
+    samples: VecDeque<(u32, Vec3)>,
 }
 
 pub fn receive_client_update_position(
@@ -150,24 +180,58 @@ pub fn receive_client_update_position(
     }
 }
 
+pub fn receive_shoot_request(
+    mut receivers: Query<(&mut MessageReceiver<ShootRequest>, Entity)>,
+    players: Query<(Entity, &ControlledBy), With<Player>>,
+    mut health_query: Query<&mut Health>,
+    spatial_query: SpatialQuery,
+) {
+    for (mut message_receiver, remote_id) in receivers.iter_mut() {
+        for message in message_receiver.receive() {
+            let Some(shooter_entity) = players
+                .iter()
+                .find(|(_, controlled_by)| controlled_by.owner == remote_id)
+                .map(|(entity, _)| entity)
+            else {
+                info!(
+                    "Received shootrequest but no corresponding player could \
+                     be found"
+                );
+                continue;
+            };
+
+            let Some(first_hit) = spatial_query.cast_ray(
+                message.origin,
+                message.direction,
+                200.,
+                false,
+                &SpatialQueryFilter::default()
+                    .with_excluded_entities([shooter_entity]),
+            ) else {
+                continue;
+            };
+
+            info!(
+                "SERVER: Player shot and hit a collider: {}",
+                first_hit.entity
+            );
+
+            if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
+                info!("A player shot a player, decreasing health");
+                health.0 -= 8.0;
+            }
+        }
+    }
+}
+
 pub fn validate_client_movement() {}
 
 // for now i think i just want to always have a FFA mode on the MediumPlastic map with simple
 // scoreboard
-pub fn spawn_map(
-    asset_server: Res<AssetServer>,
-    mut commands: Commands,
-    // selected_map_state: Res<State<SelectedMapState>>,
-) {
-    // let selected_map = selected_map_state.get();
-    let map_path = MEDIUM_PLASTIC_MAP_PATH;
-
+pub fn spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
     info!("Spawning map on server");
-    // info!(
-    //     "Entered LoadingGameSubState::SpawningMap, spawning map {:?} with \
-    //      path {:?}",
-    //     selected_map, map_path
-    // );
+
+    let map_path = MEDIUM_PLASTIC_MAP_PATH;
 
     // FIXME: thereotically not needed as server doesnt need light but might be useful for debug
     // purposes to see map on server
@@ -187,6 +251,26 @@ pub fn spawn_map(
         },
     ));
 
+    let collider_rules =
+        get_collider_rules_by_map(&shared::SelectedMapState::MediumPlastic);
+
+    let mut collider_hierarchy = ColliderConstructorHierarchy::new(
+        ColliderConstructor::ConvexHullFromMesh,
+    );
+
+    for (name, maybe_constructor) in collider_rules {
+        match maybe_constructor {
+            Some(constructor) => {
+                collider_hierarchy = collider_hierarchy
+                    .with_constructor_for_name(name, constructor);
+            }
+            None => {
+                collider_hierarchy =
+                    collider_hierarchy.without_constructor_for_name(name);
+            }
+        }
+    }
+
     let world_scene_handle =
         asset_server.load(GltfAssetLabel::Scene(0).from_asset(map_path));
 
@@ -194,6 +278,8 @@ pub fn spawn_map(
         SceneRoot(world_scene_handle),
         Name::new("Medium Plastic Map Scene Root"),
         Visibility::Visible,
+        collider_hierarchy,
+        RigidBody::Static,
     ));
 }
 

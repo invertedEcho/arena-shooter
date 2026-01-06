@@ -77,7 +77,6 @@ pub fn enemy_shoot_player(
     )>,
     spatial_query: SpatialQuery,
     player_query: Single<(Entity, &Transform, &mut Health), With<Player>>,
-    mut player_death_message_writer: MessageWriter<PlayerDeathMessage>,
     mut debug_gizmos: Option<ResMut<DebugGizmos>>,
 ) {
     let (player_entity, player_transform, mut player_health) =
@@ -158,9 +157,6 @@ pub fn enemy_shoot_player(
             let random_damage = get_random_number_from_range(10..15);
 
             player_health.0 -= random_damage as f32;
-            if player_health.0 <= 0.0 {
-                player_death_message_writer.write(PlayerDeathMessage);
-            }
         }
     }
 }

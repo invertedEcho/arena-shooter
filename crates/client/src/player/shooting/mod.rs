@@ -8,9 +8,10 @@ use crate::{
             PlayerWeaponSlotChangeMessage, ReloadPlayerWeaponMessage,
         },
         systems::{
-            add_player_weapons_to_new_players, handle_blood_screen_effect,
-            handle_change_weapon_slot_cooldown, handle_input,
-            handle_player_death_event, handle_player_weapon_fired_message,
+            add_player_weapons_to_new_players, check_if_player_dead,
+            handle_blood_screen_effect, handle_change_weapon_slot_cooldown,
+            handle_input, handle_player_death_event,
+            handle_player_weapon_fired_message,
             handle_reload_player_weapon_message, handle_weapon_slot_change,
             reset_aim_type_on_pause, tick_player_weapon_reload_timer,
             tick_player_weapon_shoot_cooldown_timer,
@@ -45,6 +46,7 @@ impl Plugin for PlayerShootingPlugin {
                     handle_player_death_event,
                     handle_weapon_slot_change,
                     handle_change_weapon_slot_cooldown,
+                    check_if_player_dead,
                 )
                     .run_if(in_state(InGameState::Playing)),
             )
