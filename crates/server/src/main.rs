@@ -10,12 +10,14 @@ use lightyear::prelude::server::*;
 use lightyear::prelude::*;
 use shared::SharedPlugin;
 use shared::player::{Player, PlayerBundle};
-use shared::protocol::ClientUpdatePositionMessage;
+use shared::protocol::{ClientUpdatePositionMessage, ServerPosition};
 use shared::{MEDIUM_PLASTIC_MAP_PATH, SERVER_ADDRESS};
 
 fn main() {
     let mut app = App::new();
-    // TODO: use mimimalplugins
+
+    // TODO: use mimimalplugins -> would be nice to be able to either run server in headless mode
+    // or non headless
     app.add_plugins(DefaultPlugins.set(AssetPlugin {
         file_path: "../../assets".to_string(),
         ..default()
@@ -26,7 +28,11 @@ fn main() {
 
     app.add_systems(Startup, setup_server);
 
-    app.add_systems(Update, receive_client_update_position);
+    app.add_systems(
+        PreUpdate,
+        receive_client_update_position.after(MessageSystems::Receive),
+    );
+    app.add_systems(Update, apply_server_position_on_server);
 
     app.add_observer(handle_new_connection);
     app.add_observer(handle_new_client);
@@ -89,21 +95,23 @@ fn handle_new_client(
         commands.spawn((
             Name::new("Player"),
             PlayerBundle::default(),
-            Transform::from_translation(vec3(0.0, 20.0, 0.0)),
+            ServerPosition {
+                translation: vec3(0.0, 20.0, 0.0),
+            },
             Visibility::Visible,
             // DebugRender::collider(Color::WHITE),
             // PredictionTarget::to_clients(NetworkTarget::All),
             Replicate::to_clients(NetworkTarget::All),
             // we add the ControlledBy on the server, with the client entity as the owner of this
-            // player, so on the client we can then filter by players that have `Controlled` and
-            // those are the players that are actually owned by that client
+            // player, so on the client we can then filter by players that have the `Controlled`
+            // component and those are the players that are actually owned by that client
             ControlledBy {
                 owner: trigger.entity,
                 lifetime: Lifetime::default(),
             },
             // thereotically this isnt needed, as each client inserts the mesh with material when a
-            // new player is added, but i have it so we can see what happens on the server. meshes
-            // are not replicated
+            // new player is added, but for now we keep it so we can see what happens on the server.
+            // meshes are not replicated
             Mesh3d(meshes.add(Capsule3d::new(0.2, 1.3))),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: WHITE.into(),
@@ -114,26 +122,26 @@ fn handle_new_client(
 }
 
 pub fn receive_client_update_position(
-    receivers: Query<(
+    mut receivers: Query<(
         &mut MessageReceiver<ClientUpdatePositionMessage>,
         Entity,
     )>,
-    mut players: Query<(&mut Transform, &ControlledBy), With<Player>>,
+    mut players: Query<(&mut ServerPosition, &ControlledBy), With<Player>>,
 ) {
-    for (mut message_receiver, remote_id) in receivers {
+    for (mut message_receiver, remote_id) in receivers.iter_mut() {
+        info!("Found messagereceiver with entity");
         for message in message_receiver.receive() {
-            if let Some((mut transform, _)) = players
+            info!("Received a message!");
+            if let Some((mut server_position, _)) = players
                 .iter_mut()
                 .find(|(_, controlled_by)| controlled_by.owner == remote_id)
             {
                 info!(
                     "Found corresponding player from \
-                     ClientUpdatePositionMessage message!, current transform: \
-                     {:?}",
-                    transform
+                     ClientUpdatePositionMessage message!",
                 );
                 info!("Updating transform of player on server");
-                *transform = message.new_transform;
+                server_position.translation = message.new_translation;
             } else {
                 warn!(
                     "Received a ClientUpdatePositionMessage but couldnt find \
@@ -189,4 +197,14 @@ pub fn spawn_map(
         Name::new("Medium Plastic Map Scene Root"),
         Visibility::Visible,
     ));
+}
+
+// only needed so we can updated position on server. we may disable this once we have headless
+// setup
+fn apply_server_position_on_server(
+    mut query: Query<(&ServerPosition, &mut Transform), With<Player>>,
+) {
+    for (server_pos, mut transform) in &mut query {
+        transform.translation = server_pos.translation;
+    }
 }

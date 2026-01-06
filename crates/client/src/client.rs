@@ -5,7 +5,9 @@ use lightyear::prelude::client::*;
 use lightyear::prelude::*;
 use shared::SERVER_ADDRESS;
 use shared::player::Player;
-use shared::protocol::{ClientUpdatePositionMessage, PositionUpdateChannel};
+use shared::protocol::{
+    ClientUpdatePositionMessage, PositionUpdateChannel, ServerPosition,
+};
 
 use crate::ClientId;
 use crate::character_controller::components::CharacterControllerBundle;
@@ -22,6 +24,7 @@ impl Plugin for NetworkPlugin {
             (
                 handle_connect_to_server_message,
                 send_client_update_position,
+                apply_server_position,
             ),
         );
         app.add_observer(handle_new_player);
@@ -84,6 +87,8 @@ fn handle_new_player(
         commands.entity(trigger.entity).insert((
             CharacterControllerBundle::default(),
             DespawnOnExit(AppState::InGame),
+            Visibility::Visible,
+            Transform::from_translation(vec3(0.0, 20.0, 0.0)),
         ));
         spawn_player_camera_message_writer
             .write(SpawnPlayerCamerasMessage(trigger.entity));
@@ -110,10 +115,43 @@ pub fn send_client_update_position(
         &mut MessageSender<ClientUpdatePositionMessage>,
         With<Client>,
     >,
-    // TODO: only get our own Player
-    player_transform: Single<&Transform, (With<Player>)>,
+    player_transform: Query<&Transform, (With<Player>, With<Controlled>)>,
 ) {
-    message_sender.send::<PositionUpdateChannel>(ClientUpdatePositionMessage {
-        new_transform: **player_transform,
-    });
+    match player_transform.single() {
+        Ok(player_transform) => {
+            message_sender.send::<PositionUpdateChannel>(
+                ClientUpdatePositionMessage {
+                    new_translation: player_transform.translation,
+                },
+            );
+        }
+        Err(error) => {
+            warn!("Failed to get our own transform! {:?}", error)
+        }
+    }
+}
+
+pub fn apply_server_position(
+    time: Res<Time>,
+    mut query: Query<
+        (
+            &mut Transform,
+            &ServerPosition,
+            Has<Controlled>, // present only on own player
+        ),
+        With<Player>,
+    >,
+) {
+    for (mut transform, server_pos, controlled) in &mut query {
+        // Skip our own transform
+        if controlled {
+            continue;
+        }
+
+        let target = server_pos.translation;
+        let current = transform.translation;
+
+        let lerp_factor = 10.0 * time.delta_secs();
+        transform.translation = current.lerp(target, lerp_factor);
+    }
 }

@@ -104,10 +104,10 @@ fn spawn_player_hud(
   - [x] Chasing the player via pathfinding
   - [ ] Going to locations the player made noises
 - [ ] Multiplayer
-- [ ] Weapon animations
+- [x] Weapon animations
   - [x] Weapon sway
-  - [ ] Weapon recoil animation (e.g. when shooting kick back)
-  - [ ] Interpolate translation when switching aiming
+  - [x] Weapon recoil animation (e.g. when shooting kick back)
+  - [x] Interpolate translation when switching aiming
 - [ ] Audio Settings menu
   - [x] Global volume
   - [ ] Audio volume

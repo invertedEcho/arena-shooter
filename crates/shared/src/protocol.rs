@@ -6,9 +6,16 @@ use crate::player::Player;
 
 pub struct PositionUpdateChannel;
 
+// TODO: think about whether we need full transform, maybe just translation would be enough but
+// think we need rotation too
 #[derive(Serialize, Deserialize)]
 pub struct ClientUpdatePositionMessage {
-    pub new_transform: Transform,
+    pub new_translation: Vec3,
+}
+
+#[derive(Component, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct ServerPosition {
+    pub translation: Vec3,
 }
 
 pub struct ProtocolPlugin;
@@ -26,6 +33,6 @@ impl Plugin for ProtocolPlugin {
 
         app.register_component::<Player>();
 
-        app.register_component::<Transform>();
+        app.register_component::<ServerPosition>();
     }
 }
