@@ -128,7 +128,8 @@ pub fn on_game_loading_state_nav_mesh_ready(
          Writing StartGameModeMessage.",
     );
     next_app_state.set(AppState::InGame);
-    start_game_mode_message_writer.write(StartGameModeMessage);
+    start_game_mode_message_writer
+        .write(StartGameModeMessage { restart: false });
 }
 
 pub fn pause_all_animations(animation_players: Query<&mut AnimationPlayer>) {

@@ -155,7 +155,8 @@ fn handle_main_menu_button_pressed(
             }
             MainMenuButtonType::Multiplayer => {
                 next_game_mode_state.set(GameModeState::Multiplayer);
-                start_game_mode_message_writer.write(StartGameModeMessage);
+                start_game_mode_message_writer
+                    .write(StartGameModeMessage { restart: false });
                 // despawn main menu camera
                 for entity in main_menu_camera {
                     commands.entity(entity).despawn();

@@ -24,11 +24,8 @@ impl Plugin for DeathScreenPlugin {
     }
 }
 
-#[derive(Component)]
-struct DeathScreenButton(WaveGameModeDeathScreen);
-
-#[derive(PartialEq)]
-enum WaveGameModeDeathScreen {
+#[derive(Component, PartialEq)]
+enum DeathScreenButton {
     Restart,
 }
 
@@ -130,10 +127,7 @@ fn spawn_wave_game_mode_death_screen(
                     };
 
                     parent
-                        .spawn((
-                            Button,
-                            DeathScreenButton(WaveGameModeDeathScreen::Restart),
-                        ))
+                        .spawn((Button, DeathScreenButton::Restart))
                         .with_child((
                             Text::new(restart_button_text),
                             TextFont {
@@ -165,11 +159,14 @@ fn handle_button_click(
     mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
     for (interaction, button) in query {
-        if interaction == &Interaction::Pressed
-            && button.0 == WaveGameModeDeathScreen::Restart
-        {
-            next_in_game_state.set(InGameState::Playing);
-            start_game_mode.write(StartGameModeMessage);
+        if interaction == &Interaction::Pressed {
+            match button {
+                DeathScreenButton::Restart => {
+                    next_in_game_state.set(InGameState::Playing);
+                    start_game_mode
+                        .write(StartGameModeMessage { restart: true });
+                }
+            }
         }
     }
 }

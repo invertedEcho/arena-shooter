@@ -39,9 +39,17 @@ pub fn handle_connect_to_server_message(
     mut commands: Commands,
     mut message_reader: MessageReader<ConnectToServerMessage>,
     client_id: Res<ClientId>,
+    connected_query: Query<Has<Connected>>,
 ) {
     for _ in message_reader.read() {
-        info!("connecting to server...");
+        for connected in connected_query {
+            if connected {
+                info!("Already connected, skipping ConnectToServerMessage");
+                continue;
+            }
+        }
+
+        info!("Connecting to server...");
 
         let auth = Authentication::Manual {
             server_addr: SERVER_ADDRESS,

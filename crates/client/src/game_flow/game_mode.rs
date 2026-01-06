@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use lightyear::prelude::Controlled;
+use shared::player::{DEFAULT_PLAYER_HEALTH, Health, Player};
 
 use crate::{
     client::ConnectToServerMessage, game_flow::states::AppState,
@@ -24,7 +26,9 @@ impl Plugin for GameModePlugin {
 }
 
 #[derive(Message)]
-pub struct StartGameModeMessage;
+pub struct StartGameModeMessage {
+    pub restart: bool,
+}
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 pub enum GameModeState {
@@ -52,22 +56,30 @@ fn handle_start_game_mode_message(
     mut connect_to_server_message_writer: MessageWriter<ConnectToServerMessage>,
     mut app_state: ResMut<NextState<AppState>>,
     mut spawn_map_message_writer: MessageWriter<SpawnMapMessage>,
+    mut player_query: Query<&mut Health, (With<Player>, With<Controlled>)>,
 ) {
-    for _ in message_reader.read() {
+    for message in message_reader.read() {
         info!(
             "Got game mode start message, game mode: {:?}",
             current_game_mode.get()
         );
         app_state.set(AppState::InGame);
-        spawn_map_message_writer.write(SpawnMapMessage);
-        connect_to_server_message_writer.write(ConnectToServerMessage);
 
-        if *current_game_mode.get() != GameModeState::Multiplayer {
-            // for existing_enemy in existing_enemies {
-            //     commands.entity(existing_enemy).despawn();
-            // }
+        if !message.restart {
+            spawn_map_message_writer.write(SpawnMapMessage);
+            connect_to_server_message_writer.write(ConnectToServerMessage);
+        }
 
-            if *current_game_mode.get() == GameModeState::Waves {
+        match current_game_mode.get() {
+            GameModeState::Multiplayer => {
+                for mut player_health in &mut player_query {
+                    player_health.0 = DEFAULT_PLAYER_HEALTH;
+                }
+            }
+            GameModeState::Waves => {
+                // for existing_enemy in existing_enemies {
+                //     commands.entity(existing_enemy).despawn();
+                // }
                 let enemy_count = get_enemy_count_per_wave(1);
 
                 // this state should exist on the server and be synced to the client
@@ -81,6 +93,7 @@ fn handle_start_game_mode_message(
                 //     spawn_strategy: EnemySpawnStrategy::RandomSelection,
                 // });
             }
+            GameModeState::FreeRoam => {}
         }
     }
 }
