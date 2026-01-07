@@ -6,7 +6,7 @@ use lightyear::prelude::*;
 use shared::SERVER_ADDRESS;
 use shared::player::Player;
 use shared::protocol::{
-    ClientUpdatePositionChannel, ClientUpdatePositionMessage,
+    ClientUpdatePositionMessage, OrderedReliableMessageChannel,
     PlayerPositionServer,
 };
 
@@ -25,7 +25,7 @@ impl Plugin for NetworkPlugin {
             (
                 handle_connect_to_server_message,
                 send_client_update_position.run_if(in_state(AppState::InGame)),
-                apply_server_position,
+                apply_server_position_other_clients,
             ),
         );
         app.add_observer(handle_new_player);
@@ -128,7 +128,7 @@ pub fn send_client_update_position(
 ) {
     match player_transform.single() {
         Ok(player_transform) => {
-            message_sender.send::<ClientUpdatePositionChannel>(
+            message_sender.send::<OrderedReliableMessageChannel>(
                 ClientUpdatePositionMessage {
                     new_translation: player_transform.translation,
                 },
@@ -140,7 +140,7 @@ pub fn send_client_update_position(
     }
 }
 
-pub fn apply_server_position(
+pub fn apply_server_position_other_clients(
     time: Res<Time>,
     mut query: Query<
         (

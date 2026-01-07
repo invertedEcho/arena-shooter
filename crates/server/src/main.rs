@@ -11,12 +11,13 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use lightyear::prelude::server::*;
 use lightyear::prelude::*;
 use shared::collider_rules::get_collider_rules_by_map;
-use shared::player::{Health, Player, PlayerBundle};
+use shared::player::{DEFAULT_PLAYER_HEALTH, Health, Player, PlayerBundle};
 use shared::protocol::{
     ClientUpdatePositionMessage, PlayerPositionServer, ShootRequest,
 };
 use shared::{
-    CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, SharedPlugin,
+    CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+    SPAWN_POINT_MEDIUM_PLASTIC_MAP, SharedPlugin,
 };
 use shared::{MEDIUM_PLASTIC_MAP_PATH, SERVER_ADDRESS};
 
@@ -35,10 +36,6 @@ fn main() {
 
     app.add_systems(Startup, setup_server);
 
-    // app.add_systems(
-    //     PreUpdate,
-    //     .after(MessageSystems::Receive),
-    // );
     app.add_systems(
         Update,
         (
@@ -211,13 +208,7 @@ pub fn receive_shoot_request(
                 continue;
             };
 
-            info!(
-                "SERVER: Player shot and hit a collider: {}",
-                first_hit.entity
-            );
-
             if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
-                info!("A player shot a player, decreasing health");
                 health.0 -= 8.0;
             }
         }

@@ -2,7 +2,7 @@ use bevy::{input::mouse::MouseWheel, prelude::*};
 use lightyear::prelude::*;
 use shared::{
     player::{AimType, Health},
-    protocol::{ShootRequest, ShootRequestChannel},
+    protocol::{OrderedReliableMessageChannel, ShootRequest},
 };
 
 use crate::{
@@ -49,35 +49,38 @@ pub fn add_player_weapons_to_new_players(
     mut commands: Commands,
 ) {
     for player_entity in added_players {
-        commands.entity(player_entity).insert(PlayerWeapons {
-            shooting: false,
-            reloading: false,
-            active_slot: 0,
-            weapons: [
-                Weapon {
-                    stats: WeaponStats {
-                        weapon_type: WeaponType::AssaultRifle,
-                        max_loaded_ammo: 30,
-                        weapon_slot_type: WeaponSlotType::Primary,
+        commands.entity(player_entity).insert((
+            AimType::Normal,
+            PlayerWeapons {
+                shooting: false,
+                reloading: false,
+                active_slot: 0,
+                weapons: [
+                    Weapon {
+                        stats: WeaponStats {
+                            weapon_type: WeaponType::AssaultRifle,
+                            max_loaded_ammo: 30,
+                            weapon_slot_type: WeaponSlotType::Primary,
+                        },
+                        state: WeaponState {
+                            loaded_ammo: 30,
+                            carried_ammo: 120,
+                        },
                     },
-                    state: WeaponState {
-                        loaded_ammo: 30,
-                        carried_ammo: 120,
+                    Weapon {
+                        stats: WeaponStats {
+                            weapon_type: WeaponType::Pistol,
+                            max_loaded_ammo: 15,
+                            weapon_slot_type: WeaponSlotType::Secondary,
+                        },
+                        state: WeaponState {
+                            loaded_ammo: 15,
+                            carried_ammo: 50,
+                        },
                     },
-                },
-                Weapon {
-                    stats: WeaponStats {
-                        weapon_type: WeaponType::Pistol,
-                        max_loaded_ammo: 15,
-                        weapon_slot_type: WeaponSlotType::Secondary,
-                    },
-                    state: WeaponState {
-                        loaded_ammo: 15,
-                        carried_ammo: 50,
-                    },
-                },
-            ],
-        });
+                ],
+            },
+        ));
     }
 }
 
@@ -174,10 +177,12 @@ pub fn handle_player_weapon_fired_message(
 
         let direction = world_model_camera_query.1.forward();
 
-        shoot_request_sender.send::<ShootRequestChannel>(ShootRequest {
-            direction,
-            origin: world_model_camera_query.1.translation(),
-        });
+        shoot_request_sender.send::<OrderedReliableMessageChannel>(
+            ShootRequest {
+                direction,
+                origin: world_model_camera_query.1.translation(),
+            },
+        );
     }
 }
 

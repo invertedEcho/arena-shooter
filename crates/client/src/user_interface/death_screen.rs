@@ -1,4 +1,9 @@
 use bevy::prelude::*;
+use lightyear::prelude::Controlled;
+use shared::{
+    SPAWN_POINT_MEDIUM_PLASTIC_MAP,
+    player::{DEFAULT_PLAYER_HEALTH, Health},
+};
 
 use crate::{
     game_flow::{
@@ -20,7 +25,7 @@ impl Plugin for DeathScreenPlugin {
             OnEnter(InGameState::PlayerDead),
             (spawn_wave_game_mode_death_screen, free_mouse),
         )
-        .add_systems(Update, handle_button_click);
+        .add_systems(Update, handle_button_press);
     }
 }
 
@@ -153,19 +158,23 @@ fn spawn_wave_game_mode_death_screen(
         });
 }
 
-fn handle_button_click(
+fn handle_button_press(
     query: Query<(&Interaction, &DeathScreenButton), Changed<Interaction>>,
     mut start_game_mode: MessageWriter<StartGameModeMessage>,
-    mut next_in_game_state: ResMut<NextState<InGameState>>,
+    player_query: Single<(&mut Health, &mut Transform), With<Controlled>>,
 ) {
+    let (mut player_health, mut player_transform) = player_query.into_inner();
+
     for (interaction, button) in query {
-        if interaction == &Interaction::Pressed {
-            match button {
-                DeathScreenButton::Restart => {
-                    next_in_game_state.set(InGameState::Playing);
-                    start_game_mode
-                        .write(StartGameModeMessage { restart: true });
-                }
+        if interaction != &Interaction::Pressed {
+            continue;
+        }
+        match button {
+            DeathScreenButton::Restart => {
+                start_game_mode.write(StartGameModeMessage { restart: true });
+
+                player_health.0 = DEFAULT_PLAYER_HEALTH;
+                player_transform.translation = SPAWN_POINT_MEDIUM_PLASTIC_MAP;
             }
         }
     }

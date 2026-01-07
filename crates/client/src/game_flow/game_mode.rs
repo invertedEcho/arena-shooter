@@ -1,9 +1,8 @@
 use bevy::prelude::*;
-use lightyear::prelude::Controlled;
-use shared::player::{DEFAULT_PLAYER_HEALTH, Health, Player};
 
 use crate::{
-    client::ConnectToServerMessage, game_flow::states::AppState,
+    client::ConnectToServerMessage,
+    game_flow::states::{AppState, InGameState},
     world::messages::SpawnMapMessage,
 };
 
@@ -56,7 +55,7 @@ fn handle_start_game_mode_message(
     mut connect_to_server_message_writer: MessageWriter<ConnectToServerMessage>,
     mut app_state: ResMut<NextState<AppState>>,
     mut spawn_map_message_writer: MessageWriter<SpawnMapMessage>,
-    mut player_query: Query<&mut Health, (With<Player>, With<Controlled>)>,
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
     for message in message_reader.read() {
         info!(
@@ -64,6 +63,7 @@ fn handle_start_game_mode_message(
             current_game_mode.get()
         );
         app_state.set(AppState::InGame);
+        next_in_game_state.set(InGameState::Playing);
 
         if !message.restart {
             spawn_map_message_writer.write(SpawnMapMessage);
@@ -71,11 +71,6 @@ fn handle_start_game_mode_message(
         }
 
         match current_game_mode.get() {
-            GameModeState::Multiplayer => {
-                for mut player_health in &mut player_query {
-                    player_health.0 = DEFAULT_PLAYER_HEALTH;
-                }
-            }
             GameModeState::Waves => {
                 // for existing_enemy in existing_enemies {
                 //     commands.entity(existing_enemy).despawn();
@@ -94,6 +89,7 @@ fn handle_start_game_mode_message(
                 // });
             }
             GameModeState::FreeRoam => {}
+            GameModeState::Multiplayer => {}
         }
     }
 }

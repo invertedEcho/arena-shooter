@@ -21,6 +21,7 @@ pub const GRAVITY: f32 = 9.81;
 
 pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
 pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
+pub const SPAWN_POINT_MEDIUM_PLASTIC_MAP: Vec3 = vec3(0.0, 15.0, 0.0);
 
 pub const CHARACTER_CAPSULE_RADIUS: f32 = 0.2;
 pub const CHARACTER_CAPSULE_LENGTH: f32 = 1.3;

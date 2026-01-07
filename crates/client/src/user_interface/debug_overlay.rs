@@ -109,7 +109,13 @@ fn spawn_debug_overlay(mut commands: Commands) {
                     ..default()
                 },
             ));
-            parent.spawn(Text::new("Player Grounded"));
+            parent.spawn((
+                Text::new("Player Grounded"),
+                TextFont {
+                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                    ..default()
+                },
+            ));
             parent.spawn((Text::new(""), PlayerGroundedText));
         });
 }

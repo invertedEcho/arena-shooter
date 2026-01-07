@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::player::{Health, Player};
 
-pub struct ClientUpdatePositionChannel;
-pub struct ShootRequestChannel;
+pub struct OrderedReliableMessageChannel;
+pub struct SequencedUnreliableChannel;
 
 #[derive(Serialize, Deserialize)]
 pub struct ClientUpdatePositionMessage {
@@ -28,8 +28,13 @@ pub struct ProtocolPlugin;
 
 impl Plugin for ProtocolPlugin {
     fn build(&self, app: &mut App) {
-        // TODO: maybe update position doesn't need to be reliable
-        app.add_channel::<ClientUpdatePositionChannel>(ChannelSettings {
+        app.add_channel::<SequencedUnreliableChannel>(ChannelSettings {
+            mode: ChannelMode::SequencedUnreliable,
+            ..default()
+        })
+        .add_direction(NetworkDirection::ClientToServer);
+
+        app.add_channel::<OrderedReliableMessageChannel>(ChannelSettings {
             mode: ChannelMode::OrderedReliable(ReliableSettings::default()),
             ..default()
         })
@@ -38,11 +43,6 @@ impl Plugin for ProtocolPlugin {
         app.register_message::<ClientUpdatePositionMessage>()
             .add_direction(NetworkDirection::ClientToServer);
 
-        app.add_channel::<ShootRequestChannel>(ChannelSettings {
-            mode: ChannelMode::OrderedReliable(ReliableSettings::default()),
-            ..default()
-        })
-        .add_direction(NetworkDirection::ClientToServer);
         app.register_message::<ShootRequest>()
             .add_direction(NetworkDirection::ClientToServer);
 
