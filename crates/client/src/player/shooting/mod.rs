@@ -43,12 +43,14 @@ impl Plugin for PlayerShootingPlugin {
                     handle_player_weapon_fired_message,
                     add_player_weapons_to_new_players,
                     tick_player_weapon_reload_timer,
-                    handle_player_death_event,
                     handle_weapon_slot_change,
                     handle_change_weapon_slot_cooldown,
-                    check_if_player_dead,
                 )
                     .run_if(in_state(InGameState::Playing)),
+            )
+            .add_systems(
+                Update,
+                (check_if_player_dead, handle_player_death_event),
             )
             .add_systems(OnEnter(InGameState::Paused), reset_aim_type_on_pause);
     }
