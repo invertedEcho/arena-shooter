@@ -102,7 +102,6 @@ fn handle_new_client(
             trigger.entity, client_id
         );
 
-        info!("Spawning player");
         // NOTE: The replicate component gets inserted into the player entity, but only registered
         // components will be replicated to all other clients
         commands.spawn((

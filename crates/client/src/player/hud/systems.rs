@@ -66,6 +66,7 @@ pub fn spawn_player_hud(
             },
             PlayerHud,
             DespawnOnExit(AppState::InGame),
+            Name::new("PlayerHud"),
         ))
         .with_children(|parent| {
             parent
@@ -164,7 +165,7 @@ pub fn spawn_player_hud(
 pub fn spawn_player_crosshair(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    player_query: Query<Entity, Added<Player>>,
+    player_query: Query<Entity, (Added<Player>, With<Controlled>)>,
 ) {
     for _ in player_query {
         commands
@@ -178,6 +179,7 @@ pub fn spawn_player_crosshair(
                 },
                 PlayerCrosshair,
                 DespawnOnExit(AppState::InGame),
+                Name::new("PlayerCrosshair"),
             ))
             .with_child(ImageNode::new(asset_server.load(MAIN_CROSSHAIR_PATH)));
     }
@@ -254,6 +256,7 @@ pub fn spawn_score_hud(mut commands: Commands, game_score: Res<GameScore>) {
                 ..default()
             },
             DespawnOnExit(InGameState::Playing),
+            Name::new("ScoreHud"),
         ))
         .with_children(|parent| {
             parent.spawn(Node { ..default() }).with_child((
@@ -302,6 +305,7 @@ pub fn spawn_wave_info_hud(mut commands: Commands) {
                 padding: UiRect::all(Val::Px(16.0)),
                 ..default()
             },
+            Name::new("WaveInfoHud"),
         ))
         .with_children(|parent| {
             parent.spawn(Text::new("Current wave:"));
@@ -346,7 +350,6 @@ pub fn hide_player_crosshair(
         With<PlayerCrosshair>,
     >,
 ) {
-    debug!("Hiding player crosshair");
     **player_crosshair_visibility = Visibility::Hidden;
 }
 
