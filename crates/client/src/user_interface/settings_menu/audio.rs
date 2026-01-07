@@ -5,7 +5,9 @@ use bevy::{
 
 use crate::{
     game_settings::GameSettings,
-    user_interface::{DEFAULT_GAME_FONT_PATH, widgets::slider::build_slider},
+    user_interface::{
+        shared::DEFAULT_GAME_FONT_PATH, widgets::slider::build_slider,
+    },
 };
 
 #[derive(Component)]

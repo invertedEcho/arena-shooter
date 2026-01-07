@@ -5,8 +5,8 @@ use crate::{
         game_mode::{GameModeState, StartGameModeMessage},
         states::MainMenuState,
     },
-    user_interface::{
-        DEFAULT_GAME_FONT_PATH, SUB_HEADER_FONT_SIZE, TITLE_FONT_SIZE,
+    user_interface::shared::{
+        DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE, TITLE_FONT_SIZE, UI_BG,
     },
 };
 
@@ -21,6 +21,10 @@ impl Plugin for MainMenuPlugin {
 
 #[derive(Component)]
 pub struct MainMenuCamera;
+
+pub fn get_main_menu_camera_transform() -> Transform {
+    Transform::from_xyz(10.0, 20.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y)
+}
 
 #[derive(Component)]
 struct MainMenuButton(pub MainMenuButtonType);
@@ -45,6 +49,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 ..default()
             },
             DespawnOnExit(MainMenuState::Root),
+            BackgroundColor(UI_BG),
         ))
         .with_children(|parent| {
             parent
@@ -76,7 +81,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Singleplayer"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: SUB_HEADER_FONT_SIZE,
+                        font_size: NORMAL_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -91,7 +96,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Multiplayer (FFA)"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: SUB_HEADER_FONT_SIZE,
+                        font_size: NORMAL_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -105,7 +110,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Settings"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: SUB_HEADER_FONT_SIZE,
+                        font_size: NORMAL_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -126,7 +131,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Quit"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: SUB_HEADER_FONT_SIZE,
+                        font_size: NORMAL_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -134,7 +139,6 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
 }
 
 fn handle_main_menu_button_pressed(
-    mut commands: Commands,
     main_menu_button_interactions: Query<
         (&Interaction, &MainMenuButton),
         Changed<Interaction>,
@@ -143,7 +147,6 @@ fn handle_main_menu_button_pressed(
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     mut start_game_mode_message_writer: MessageWriter<StartGameModeMessage>,
     mut next_game_mode_state: ResMut<NextState<GameModeState>>,
-    main_menu_camera: Query<Entity, With<MainMenuCamera>>,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
         let Interaction::Pressed = interaction else {
@@ -157,10 +160,6 @@ fn handle_main_menu_button_pressed(
                 next_game_mode_state.set(GameModeState::Multiplayer);
                 start_game_mode_message_writer
                     .write(StartGameModeMessage { restart: false });
-                // despawn main menu camera
-                for entity in main_menu_camera {
-                    commands.entity(entity).despawn();
-                }
             }
             MainMenuButtonType::SettingsMainMenu => {
                 next_main_menu_state.set(MainMenuState::Settings);

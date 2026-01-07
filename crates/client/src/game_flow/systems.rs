@@ -5,11 +5,10 @@ use bevy::{
 };
 
 use crate::{
-    game_flow::{
-        game_mode::StartGameModeMessage,
-        states::{AppState, InGameState, LoadingGameSubState},
+    game_flow::states::{AppState, InGameState, LoadingGameState},
+    user_interface::main_menu::{
+        MainMenuCamera, get_main_menu_camera_transform,
     },
-    user_interface::main_menu::MainMenuCamera,
     world::resources::WorldSceneHandle,
 };
 
@@ -50,29 +49,39 @@ pub fn handle_escape_in_game(
             InGameState::Playing => {
                 next_in_game_state.set(InGameState::Paused);
             }
-            InGameState::PlayerDead => {}
             InGameState::Paused => next_in_game_state.set(InGameState::Playing),
+            InGameState::PlayerDead => {}
+            InGameState::Disconnected => {}
         }
     }
 }
 
-pub fn spawn_main_menu_camera(mut commands: Commands) {
+pub fn spawn_main_menu_camera(
+    mut commands: Commands,
+    existing_main_menu_camera: Query<&MainMenuCamera>,
+) {
+    // TODO: optimally this couldnt happen in first place
+    if existing_main_menu_camera.count() != 0 {
+        info!("Not spawning Main Menu Camera, already exists");
+        return;
+    }
     info!("Spawning Main Menu Camera");
     commands.spawn((
         Name::new("Main Menu Camera"),
         Camera::default(),
         Camera3d::default(),
-        Transform::from_xyz(10.0, 20.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
+        get_main_menu_camera_transform(),
         MainMenuCamera,
         bevy_inspector_egui::bevy_egui::PrimaryEguiContext,
-        DespawnOnExit(AppState::MainMenu),
+        // we still need mainmenucamera during loading screen
+        DespawnOnExit(AppState::LoadingGame),
     ));
 }
 
 pub fn check_world_scene_loaded(
     mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
     maybe_world_scene_handle: Option<Res<WorldSceneHandle>>,
-    mut next_game_loading_state: ResMut<NextState<LoadingGameSubState>>,
+    mut next_game_loading_state: ResMut<NextState<LoadingGameState>>,
 ) {
     for asset_event in asset_event_message_reader.read() {
         if let AssetEvent::LoadedWithDependencies { id } = asset_event
@@ -84,19 +93,19 @@ pub fn check_world_scene_loaded(
                  MapLoadedWithDependencies"
             );
             next_game_loading_state
-                .set(LoadingGameSubState::MapLoadedWithDependencies);
+                .set(LoadingGameState::MapLoadedWithDependencies);
         }
     }
 }
 
 pub fn check_collider_constructor_hierarchy_ready(
     _: On<ColliderConstructorHierarchyReady>,
-    mut next_game_loading_state: ResMut<NextState<LoadingGameSubState>>,
+    mut next_game_loading_state: ResMut<NextState<LoadingGameState>>,
 ) {
     info!("Collider_constructor_hierarchy_ready is now!");
     // next_game_loading_state.set(LoadingGameSubState::CollidersReady);
     // FIXME: add navmesh generation again
-    next_game_loading_state.set(LoadingGameSubState::NavMeshReady);
+    next_game_loading_state.set(LoadingGameState::NavMeshReady);
 }
 
 // pub fn check_navmesh_ready(
@@ -118,19 +127,6 @@ pub fn check_collider_constructor_hierarchy_ready(
 //     commands.insert_resource(NavMeshHandle(nav_mesh_handle));
 //     info!("NavMesh Handle stored");
 // }
-
-pub fn on_game_loading_state_nav_mesh_ready(
-    mut next_app_state: ResMut<NextState<AppState>>,
-    mut start_game_mode_message_writer: MessageWriter<StartGameModeMessage>,
-) {
-    info!(
-        "Entered nav_mesh_ready loading state, everything is ready now. \
-         Writing StartGameModeMessage.",
-    );
-    next_app_state.set(AppState::InGame);
-    start_game_mode_message_writer
-        .write(StartGameModeMessage { restart: false });
-}
 
 pub fn pause_all_animations(animation_players: Query<&mut AnimationPlayer>) {
     for mut animation_player in animation_players {

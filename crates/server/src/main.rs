@@ -11,13 +11,12 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use lightyear::prelude::server::*;
 use lightyear::prelude::*;
 use shared::collider_rules::get_collider_rules_by_map;
-use shared::player::{DEFAULT_PLAYER_HEALTH, Health, Player, PlayerBundle};
+use shared::player::{Health, Player, PlayerBundle};
 use shared::protocol::{
     ClientUpdatePositionMessage, PlayerPositionServer, ShootRequest,
 };
 use shared::{
-    CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
-    SPAWN_POINT_MEDIUM_PLASTIC_MAP, SharedPlugin,
+    CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, SharedPlugin,
 };
 use shared::{MEDIUM_PLASTIC_MAP_PATH, SERVER_ADDRESS};
 

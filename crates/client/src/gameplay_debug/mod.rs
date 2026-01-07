@@ -14,9 +14,11 @@ impl Plugin for GameplayDebugPlugin {
 
         app.insert_resource(LoadFonts {
             font_paths: vec![
-                "assets/fonts/Exo_2/static/Exo2-Regular.ttf".to_owned(),
+                "../../assets/fonts/Exo_2/static/Exo2-Regular.ttf".to_owned(),
             ],
-            font_directories: vec!["assets/fonts/Exo_2/static".to_owned()],
+            // font_directories: vec![
+            //     "../../assets/fonts/Exo_2/static".to_owned(),
+            // ],
             ..Default::default()
         });
         app.add_systems(

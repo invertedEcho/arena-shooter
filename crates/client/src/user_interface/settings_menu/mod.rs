@@ -3,14 +3,15 @@ use crate::{
     game_flow::states::MainMenuState,
     game_settings::{GameSettings, update_game_settings_file},
     user_interface::{
-        DEFAULT_GAME_FONT_PATH,
         settings_menu::{
             audio::{
                 build_audio_settings_tab_content, update_volume_slider_value,
             },
             graphics::{GraphicsCheckbox, GraphicsCheckboxType},
         },
-        shared::{PRIMARY_BUTTON_COLOR, PRIMARY_COLOR},
+        shared::{
+            DEFAULT_GAME_FONT_PATH, UI_BORDER, UI_PRIMARY, UI_SELECTED, UI_TEXT,
+        },
         widgets::checkbox::build_checkbox,
     },
 };
@@ -62,6 +63,7 @@ pub enum SelectedTabSettings {
     Controls,
 }
 
+// TODO: no need for extra struct, components can also be enums
 #[derive(Component)]
 struct SettingsMenuButton(pub SettingsButtonType);
 
@@ -132,9 +134,8 @@ fn spawn_settings_menu(
                                     border: UiRect::left(px(4)),
                                     ..default()
                                 },
-                                BorderColor::all(PRIMARY_COLOR),
-                                // per default, audio tab is selected
-                                BackgroundColor(PRIMARY_COLOR.into()),
+                                BorderColor::all(UI_BORDER),
+                                BackgroundColor(UI_PRIMARY),
                                 Button,
                                 SettingsChangeTabButton(
                                     SelectedTabSettings::Audio,
@@ -156,9 +157,9 @@ fn spawn_settings_menu(
                                     border: UiRect::left(px(4)),
                                     ..default()
                                 },
-                                BorderColor::all(PRIMARY_COLOR),
+                                BorderColor::all(UI_SELECTED),
                                 Button,
-                                BackgroundColor(PRIMARY_BUTTON_COLOR.into()),
+                                BackgroundColor(UI_PRIMARY),
                                 SettingsChangeTabButton(
                                     SelectedTabSettings::Graphics,
                                 ),
@@ -179,9 +180,9 @@ fn spawn_settings_menu(
                                     border: UiRect::left(px(4)),
                                     ..default()
                                 },
-                                BorderColor::all(PRIMARY_COLOR),
+                                BorderColor::all(UI_SELECTED),
                                 Button,
-                                BackgroundColor(PRIMARY_BUTTON_COLOR.into()),
+                                BackgroundColor(UI_PRIMARY),
                                 SettingsChangeTabButton(
                                     SelectedTabSettings::Controls,
                                 ),
@@ -212,8 +213,8 @@ fn spawn_settings_menu(
                                     ..default()
                                 },
                                 Button,
-                                BackgroundColor(PRIMARY_BUTTON_COLOR.into()),
-                                BorderColor::all(PRIMARY_COLOR),
+                                BackgroundColor(UI_PRIMARY),
+                                BorderColor::all(UI_BORDER),
                                 SettingsMenuButton(SettingsButtonType::Apply),
                                 children![(
                                     Text::new("Apply"),
@@ -222,6 +223,7 @@ fn spawn_settings_menu(
                                             .load(DEFAULT_GAME_FONT_PATH),
                                         ..default()
                                     },
+                                    TextColor(UI_TEXT)
                                 )],
                             ));
                             parent.spawn((
@@ -233,8 +235,8 @@ fn spawn_settings_menu(
                                     ..default()
                                 },
                                 Button,
-                                BackgroundColor(PRIMARY_BUTTON_COLOR.into()),
-                                BorderColor::all(PRIMARY_COLOR),
+                                BackgroundColor(UI_PRIMARY),
+                                BorderColor::all(UI_BORDER),
                                 SettingsMenuButton(SettingsButtonType::Back),
                                 children![(
                                     Text::new("Back"),
@@ -243,6 +245,7 @@ fn spawn_settings_menu(
                                             .load(DEFAULT_GAME_FONT_PATH),
                                         ..default()
                                     },
+                                    TextColor(UI_TEXT)
                                 )],
                             ));
                         });
@@ -429,9 +432,9 @@ fn update_settings_tab_button_color(
 ) {
     for (button, mut background_color) in query {
         background_color.0 = if button.0 == *settings_tab_state.get() {
-            PRIMARY_COLOR.into()
+            UI_SELECTED
         } else {
-            PRIMARY_BUTTON_COLOR.into()
+            UI_PRIMARY
         };
     }
 }

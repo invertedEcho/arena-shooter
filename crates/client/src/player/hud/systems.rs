@@ -30,7 +30,7 @@ use crate::{
         },
     },
     shared::components::DespawnTimer,
-    user_interface::{ITALIC_GAME_FONT_PATH, shared::PRIMARY_COLOR},
+    user_interface::shared::{ITALIC_GAME_FONT_PATH, UI_SELECTED, UI_TEXT},
 };
 
 pub fn spawn_player_hud(
@@ -104,9 +104,9 @@ pub fn spawn_player_hud(
                     {
                         let text_color = if player_weapons.active_slot == index
                         {
-                            PRIMARY_COLOR
+                            UI_SELECTED
                         } else {
-                            Color::WHITE.to_srgba()
+                            UI_TEXT
                         };
 
                         parent.spawn((
@@ -119,7 +119,7 @@ pub fn spawn_player_hud(
                                 font: asset_server.load(ITALIC_GAME_FONT_PATH),
                                 ..default()
                             },
-                            TextColor(text_color.into()),
+                            TextColor(text_color),
                             PlayerWeaponText(index),
                         ));
                     }
@@ -372,9 +372,9 @@ pub fn update_selected_weapon(
             player_weapon_texts.iter_mut()
         {
             if player_weapon_text.0 == weapon_slot {
-                text_color.0 = PRIMARY_COLOR.into();
+                text_color.0 = UI_SELECTED;
             } else {
-                text_color.0 = Color::WHITE;
+                text_color.0 = UI_TEXT;
             }
         }
     }

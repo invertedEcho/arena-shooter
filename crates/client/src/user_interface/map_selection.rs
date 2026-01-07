@@ -4,9 +4,10 @@ use shared::SelectedMapState;
 use crate::{
     game_flow::states::MainMenuState,
     user_interface::{
-        DEFAULT_GAME_FONT_PATH, SUB_HEADER_FONT_SIZE,
-        common::{CommonUiButton, CommonUiButtonType},
-        shared::PRIMARY_COLOR,
+        common::CommonUiButton,
+        shared::{
+            DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE, UI_SELECTED, UI_TEXT,
+        },
     },
 };
 
@@ -107,7 +108,7 @@ fn spawn_map_selection(
                     Text::new("Select a Map"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: SUB_HEADER_FONT_SIZE,
+                        font_size: NORMAL_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -122,7 +123,7 @@ fn spawn_map_selection(
                     Text::new("Tiny Town"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: SUB_HEADER_FONT_SIZE,
+                        font_size: NORMAL_FONT_SIZE,
                         ..default()
                     },
                     TextColor(get_text_button_color_for_map_selection_button(
@@ -141,7 +142,7 @@ fn spawn_map_selection(
                     Text::new("Medium Plastic"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: SUB_HEADER_FONT_SIZE,
+                        font_size: NORMAL_FONT_SIZE,
                         ..default()
                     },
                     TextColor(get_text_button_color_for_map_selection_button(
@@ -159,14 +160,14 @@ fn spawn_map_selection(
                         ..default()
                     },
                     Button,
-                    CommonUiButton(CommonUiButtonType::ToGameModeSelection),
+                    CommonUiButton::ToGameModeSelection,
                     TextColor::WHITE,
                 ))
                 .with_child((
                     Text::new("Continue to Game Mode Selection"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: SUB_HEADER_FONT_SIZE,
+                        font_size: NORMAL_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -180,14 +181,14 @@ fn spawn_map_selection(
                         ..default()
                     },
                     Button,
-                    CommonUiButton(CommonUiButtonType::BackToMainMenu),
+                    CommonUiButton::BackToMainMenu,
                     TextColor::WHITE,
                 ))
                 .with_child((
                     Text::new("Go back to Main Menu"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: SUB_HEADER_FONT_SIZE,
+                        font_size: NORMAL_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -199,9 +200,9 @@ fn get_text_button_color_for_map_selection_button(
     button: MapSelectionButton,
 ) -> Color {
     if button.0 == *selected_map_state {
-        PRIMARY_COLOR.into()
+        UI_SELECTED
     } else {
-        WHITE.into()
+        UI_TEXT
     }
 }
 
@@ -240,9 +241,9 @@ fn update_selected_map_button_color(
             continue;
         };
         if map_selection_button.0 == *selected_map_state {
-            *text_color = PRIMARY_COLOR.into();
+            **text_color = UI_SELECTED;
         } else {
-            *text_color = WHITE.into();
+            **text_color = UI_TEXT;
         }
     }
 }

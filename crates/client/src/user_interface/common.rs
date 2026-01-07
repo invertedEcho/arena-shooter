@@ -1,11 +1,11 @@
-use bevy::{color::palettes::css::WHITE, prelude::*};
+use bevy::prelude::*;
 
 use crate::{
     game_flow::states::{AppState, MainMenuState},
     user_interface::{
         map_selection::MapSelectionButton,
         settings_menu::SettingsChangeTabButton,
-        shared::PRIMARY_COLOR,
+        shared::{UI_HOVER, UI_TEXT},
         widgets::{
             checkbox::{update_checkbox_style, update_checkbox_style2},
             slider::update_slider_style,
@@ -31,9 +31,7 @@ impl Plugin for CommonUiPlugin {
 }
 
 #[derive(Component)]
-pub struct CommonUiButton(pub CommonUiButtonType);
-
-pub enum CommonUiButtonType {
+pub enum CommonUiButton {
     ToGameModeSelection,
     BackToMainMenu,
     Quit,
@@ -49,15 +47,15 @@ fn handle_common_ui_button_press(
         let Interaction::Pressed = interaction else {
             continue;
         };
-        match common_ui_button.0 {
-            CommonUiButtonType::Quit => {
+        match common_ui_button {
+            CommonUiButton::Quit => {
                 app_exit_message_writer.write(AppExit::Success);
             }
-            CommonUiButtonType::BackToMainMenu => {
+            CommonUiButton::BackToMainMenu => {
                 next_app_state.set(AppState::MainMenu);
                 next_main_menu_state.set(MainMenuState::Root);
             }
-            CommonUiButtonType::ToGameModeSelection => {
+            CommonUiButton::ToGameModeSelection => {
                 next_main_menu_state.set(MainMenuState::GameModeSelection);
             }
         }
@@ -85,8 +83,8 @@ fn handle_any_button_hover(
             continue;
         };
         match interaction {
-            Interaction::Hovered => *text_color = PRIMARY_COLOR.into(),
-            Interaction::None => *text_color = WHITE.into(),
+            Interaction::Hovered => **text_color = UI_HOVER,
+            Interaction::None => **text_color = UI_TEXT,
             _ => {}
         }
     }

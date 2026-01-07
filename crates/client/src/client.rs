@@ -12,7 +12,7 @@ use shared::protocol::{
 
 use crate::ClientId;
 use crate::character_controller::components::CharacterControllerBundle;
-use crate::game_flow::states::AppState;
+use crate::game_flow::states::{AppState, DisconnectedState, InGameState};
 use crate::player::camera::messages::SpawnPlayerCamerasMessage;
 
 pub struct NetworkPlugin;
@@ -29,6 +29,8 @@ impl Plugin for NetworkPlugin {
             ),
         );
         app.add_observer(handle_new_player);
+        app.add_observer(handle_connected);
+        app.add_observer(handle_disconnect);
     }
 }
 
@@ -74,6 +76,14 @@ pub fn handle_connect_to_server_message(
         // Send connect request
         commands.trigger(Connect { entity: client });
     }
+}
+
+fn handle_connected(
+    trigger: On<Add, Connected>,
+    mut next_app_state: ResMut<NextState<AppState>>,
+) {
+    info!("Connected to server, setting AppState to InGame");
+    next_app_state.set(AppState::InGame);
 }
 
 fn handle_new_player(
@@ -134,8 +144,9 @@ pub fn send_client_update_position(
                 },
             );
         }
+        // FIXME: add again
         Err(error) => {
-            warn!("Failed to get our own transform! {:?}", error)
+            // warn!("Failed to get our own transform! {:?}", error)
         }
     }
 }
@@ -162,5 +173,46 @@ pub fn apply_server_position_other_clients(
 
         let lerp_factor = 10.0 * time.delta_secs();
         transform.translation = current.lerp(target, lerp_factor);
+    }
+}
+
+pub fn handle_disconnect(
+    trigger: On<Add, Disconnected>,
+    disconnected: Query<&Disconnected>,
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
+    mut next_disconnected_state: ResMut<NextState<DisconnectedState>>,
+    mut next_app_state: ResMut<NextState<AppState>>,
+) {
+    match disconnected.get(trigger.entity) {
+        // for some reason the Disconnected component gets inserted even if we weren't even
+        // connected in the first place. So, for now, we check if there is a reason, if not, we
+        // weren't actually disconnected.
+        // https://github.com/cBournhonesque/lightyear/discussions/1375
+        Ok(disconnected) => {
+            if let Some(disconnected_reason) = &disconnected.reason {
+                info!(
+                    "Disconnected from server, reason: {:?}",
+                    disconnected_reason
+                );
+
+                // TODO: we also need to set to InGame, in case we are on initial connecting, e.g.
+                // LoadingScreen -> failed to connect -> wouldnt be in ingame, but in
+                // AppState::LoadingGame, so we set InGame here to be safe as InGameState only
+                // exists when AppState is InGame
+                next_app_state.set(AppState::InGame);
+
+                next_in_game_state.set(InGameState::Disconnected);
+                next_disconnected_state.set(DisconnectedState::Reason(
+                    disconnected_reason.to_string(),
+                ));
+            }
+        }
+        Err(error) => {
+            info!(
+                "Disconnected from server, but could not retrieve \
+                 Disconnected component to get reason for disconnect: {}",
+                error
+            );
+        }
     }
 }

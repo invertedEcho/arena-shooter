@@ -6,10 +6,9 @@ use bevy::{
     ui_widgets::Checkbox,
 };
 
-use crate::user_interface::DEFAULT_GAME_FONT_PATH;
-
-const ELEMENT_OUTLINE: Color = Color::srgb(0.45, 0.45, 0.45);
-const ELEMENT_FILL: Color = Color::srgb(0.35, 0.75, 0.35);
+use crate::user_interface::shared::{
+    DEFAULT_GAME_FONT_PATH, ELEMENT_FILL, ELEMENT_OUTLINE,
+};
 
 /// Create a demo checkbox
 pub fn build_checkbox<T: Component>(

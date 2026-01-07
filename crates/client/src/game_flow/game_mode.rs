@@ -55,15 +55,13 @@ fn handle_start_game_mode_message(
     mut connect_to_server_message_writer: MessageWriter<ConnectToServerMessage>,
     mut app_state: ResMut<NextState<AppState>>,
     mut spawn_map_message_writer: MessageWriter<SpawnMapMessage>,
-    mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
     for message in message_reader.read() {
         info!(
             "Got game mode start message, game mode: {:?}",
             current_game_mode.get()
         );
-        app_state.set(AppState::InGame);
-        next_in_game_state.set(InGameState::Playing);
+        app_state.set(AppState::LoadingGame);
 
         if !message.restart {
             spawn_map_message_writer.write(SpawnMapMessage);

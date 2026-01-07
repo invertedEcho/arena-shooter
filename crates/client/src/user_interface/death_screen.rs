@@ -12,8 +12,8 @@ use crate::{
         systems::free_mouse,
     },
     user_interface::{
-        DEFAULT_GAME_FONT_PATH, SUB_HEADER_FONT_SIZE,
-        common::{CommonUiButton, CommonUiButtonType},
+        common::CommonUiButton,
+        shared::{DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE},
     },
 };
 
@@ -69,7 +69,7 @@ fn spawn_wave_game_mode_death_screen(
                     Text::new("You are dead"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: SUB_HEADER_FONT_SIZE,
+                        font_size: NORMAL_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -91,7 +91,7 @@ fn spawn_wave_game_mode_death_screen(
                         )),
                         TextFont {
                             font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                            font_size: SUB_HEADER_FONT_SIZE,
+                            font_size: NORMAL_FONT_SIZE,
                             ..default()
                         },
                     ));
@@ -112,7 +112,7 @@ fn spawn_wave_game_mode_death_screen(
                         )),
                         TextFont {
                             font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                            font_size: SUB_HEADER_FONT_SIZE,
+                            font_size: NORMAL_FONT_SIZE,
                             ..default()
                         },
                     ));
@@ -137,20 +137,17 @@ fn spawn_wave_game_mode_death_screen(
                             Text::new(restart_button_text),
                             TextFont {
                                 font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                                font_size: SUB_HEADER_FONT_SIZE,
+                                font_size: NORMAL_FONT_SIZE,
                                 ..default()
                             },
                         ));
                     parent
-                        .spawn((
-                            Button,
-                            CommonUiButton(CommonUiButtonType::BackToMainMenu),
-                        ))
+                        .spawn((Button, CommonUiButton::BackToMainMenu))
                         .with_child((
                             Text::new("Exit to Main Menu"),
                             TextFont {
                                 font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                                font_size: SUB_HEADER_FONT_SIZE,
+                                font_size: NORMAL_FONT_SIZE,
                                 ..default()
                             },
                         ));

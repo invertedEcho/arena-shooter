@@ -1,7 +1,4 @@
-use avian3d::{
-    PhysicsPlugins,
-    prelude::{Gravity, PhysicsDebugPlugin},
-};
+use avian3d::{PhysicsPlugins, prelude::*};
 use bevy::prelude::*;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
@@ -34,7 +31,7 @@ impl Plugin for SharedPlugin {
         app.add_plugins(ProtocolPlugin);
 
         app.add_plugins(PhysicsPlugins::default().build())
-            .add_plugins(PhysicsDebugPlugin)
+            // .add_plugins(PhysicsDebugPlugin)
             .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
     }
 }

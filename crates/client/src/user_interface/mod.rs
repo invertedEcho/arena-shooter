@@ -3,7 +3,9 @@ use bevy::prelude::*;
 use crate::user_interface::{
     common::CommonUiPlugin, death_screen::DeathScreenPlugin,
     debug_overlay::DebugOverlayPlugin,
-    game_mode_selection::GameModeSelectionUIPlugin, main_menu::MainMenuPlugin,
+    disconnect_screen::DisconnectScreenPlugin,
+    game_mode_selection::GameModeSelectionUIPlugin,
+    loading_screen::LoadingScreenPlugin, main_menu::MainMenuPlugin,
     map_selection::MapSelectionPlugin, pause_menu::PauseMenuPlugin,
     settings_menu::SettingsMenuPlugin,
 };
@@ -11,19 +13,15 @@ use crate::user_interface::{
 mod common;
 mod death_screen;
 mod debug_overlay;
+mod disconnect_screen;
 mod game_mode_selection;
+mod loading_screen;
 pub mod main_menu;
 mod map_selection;
 mod pause_menu;
 mod settings_menu;
 pub mod shared;
 mod widgets;
-
-const DEFAULT_GAME_FONT_PATH: &str = "fonts/Exo_2/static/Exo2-Regular.ttf";
-pub const ITALIC_GAME_FONT_PATH: &str = "fonts/Exo_2/static/Exo2-Italic.ttf";
-const TITLE_FONT_SIZE: f32 = 64.0;
-// TODO: give different name
-const SUB_HEADER_FONT_SIZE: f32 = 32.0;
 
 pub struct UserInterfacePlugin;
 
@@ -36,6 +34,8 @@ impl Plugin for UserInterfacePlugin {
             .add_plugins(MainMenuPlugin)
             .add_plugins(GameModeSelectionUIPlugin)
             .add_plugins(DebugOverlayPlugin)
-            .add_plugins(MapSelectionPlugin);
+            .add_plugins(MapSelectionPlugin)
+            .add_plugins(DisconnectScreenPlugin)
+            .add_plugins(LoadingScreenPlugin);
     }
 }
