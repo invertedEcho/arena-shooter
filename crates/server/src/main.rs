@@ -6,6 +6,8 @@ use avian3d::prelude::*;
 use bevy::color::palettes;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
+use bevy::render::RenderPlugin;
+use bevy::render::settings::WgpuSettings;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use lightyear::prelude::server::*;
@@ -20,15 +22,72 @@ use shared::{
 };
 use shared::{MEDIUM_PLASTIC_MAP_PATH, SERVER_ADDRESS};
 
+#[derive(Resource, PartialEq)]
+pub enum ServerRunMode {
+    Headless,
+    Headful,
+}
+
+fn get_run_mode(run_mode_str: Option<&String>) -> ServerRunMode {
+    if let Some(run_mode) = run_mode_str {
+        if run_mode == "headful" {
+            return ServerRunMode::Headful;
+        } else if run_mode == "headless" {
+            return ServerRunMode::Headless;
+        } else {
+            warn!(
+                "Your given run_mode: {} could not be interpreted. Must \
+                 either be 'headless' or 'headful'.",
+                run_mode
+            );
+        }
+    }
+
+    ServerRunMode::Headless
+}
+
 fn main() {
     let mut app = App::new();
 
-    // TODO: use mimimalplugins -> would be nice to be able to either run server in headless mode
-    // or non headless
-    app.add_plugins(DefaultPlugins.set(AssetPlugin {
-        file_path: "../../assets".to_string(),
-        ..default()
-    }));
+    let run_mode_str = std::env::args().nth(1);
+    let run_mode = get_run_mode(run_mode_str.as_ref());
+    match run_mode {
+        ServerRunMode::Headless => {
+            app.add_plugins(
+                DefaultPlugins
+                    .set(AssetPlugin {
+                        file_path: "../../assets".to_string(),
+                        ..default()
+                    })
+                    .set(RenderPlugin {
+                        synchronous_pipeline_compilation: true,
+                        render_creation:
+                            bevy::render::settings::RenderCreation::Automatic(
+                                WgpuSettings {
+                                    backends: None,
+                                    ..default()
+                                },
+                            ),
+                        ..default()
+                    }),
+            );
+            info!("Running server in headless mode!");
+        }
+        ServerRunMode::Headful => {
+            app.add_plugins(DefaultPlugins.set(AssetPlugin {
+                file_path: "../../assets".to_string(),
+                ..default()
+            }));
+
+            app.add_plugins(EguiPlugin::default())
+                .add_plugins(WorldInspectorPlugin::new());
+            app.insert_resource(bevy_egui::EguiGlobalSettings::default());
+            info!("Running server in headful mode!");
+        }
+    }
+
+    app.insert_resource(run_mode);
+
     app.add_plugins(ServerPlugins::default());
 
     app.add_plugins(SharedPlugin);
@@ -47,18 +106,15 @@ fn main() {
     app.add_observer(handle_new_connection);
     app.add_observer(handle_new_client);
 
-    if cfg!(debug_assertions) {
-        app.add_plugins(EguiPlugin::default())
-            .add_plugins(WorldInspectorPlugin::new());
-        app.insert_resource(bevy_egui::EguiGlobalSettings::default());
-    }
-
     app.add_systems(Startup, spawn_map);
 
     app.run();
 }
 
-pub fn setup_server(mut commands: Commands) {
+pub fn setup_server(
+    mut commands: Commands,
+    server_run_mode: Res<ServerRunMode>,
+) {
     let server = commands
         .spawn((
             NetcodeServer::new(NetcodeConfig::default()),
@@ -68,11 +124,14 @@ pub fn setup_server(mut commands: Commands) {
         .id();
 
     commands.trigger(Start { entity: server });
-    commands.spawn((
-        Camera3d::default(),
-        Transform::from_xyz(10.0, 30.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
-    ));
-    commands.spawn((Node { ..default() }, Text::new("Server")));
+    if *server_run_mode == ServerRunMode::Headful {
+        commands.spawn((
+            Camera3d::default(),
+            Transform::from_xyz(10.0, 30.0, 10.0)
+                .looking_at(Vec3::ZERO, Vec3::Y),
+        ));
+        commands.spawn((Node { ..default() }, Text::new("Server")));
+    }
 }
 
 fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {

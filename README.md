@@ -9,8 +9,14 @@
 2. This repository uses Git LFS. Follow the installation instructions [here](https://packagecloud.io/github/git-lfs/install). Afterwards, run `git lfs pull` to get all assets
 3. Bevy itself also needs a couple of dependency. You can find installation instructions for Linux, Windows and MacOS [here](https://bevy.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
 4. Install alternative codegen backend: `rustup component add rustc-codegen-cranelift-preview --toolchain-nightly`
-5. Run the app
-  - `cargo run`
+
+## Running the server/client
+- To run the server:
+    - `cargo run -p server <headless|headful>`
+    - You can specify either headless or headful. Headless is useful for running where a window cant be created, e.g. servers. Headful will spawn a window, which may be useful to see the map and the spawned players
+    - You can also emit the argument, and the server will be started in headless mode.
+- To run the client:
+    - `cargo run -p client`
 
 > [!IMPORTANT]
 > Some game assets are not included in this repository and are not covered by the GPL. These assets are proprietary and were obtained under separate licenses.

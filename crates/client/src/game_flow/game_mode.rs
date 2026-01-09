@@ -61,11 +61,11 @@ fn handle_start_game_mode_message(
             "Got game mode start message, game mode: {:?}",
             current_game_mode.get()
         );
-        app_state.set(AppState::LoadingGame);
 
         if !message.restart {
             spawn_map_message_writer.write(SpawnMapMessage);
             connect_to_server_message_writer.write(ConnectToServerMessage);
+            app_state.set(AppState::LoadingGame);
         }
 
         match current_game_mode.get() {
