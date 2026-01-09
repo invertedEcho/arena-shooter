@@ -9,6 +9,7 @@ use shared::protocol::{
     ClientUpdatePositionMessage, OrderedReliableMessageChannel,
     PlayerPositionServer,
 };
+use shared::utils::{DisconnectReason, parse_lightyear_disconnect_reason};
 
 use crate::ClientId;
 use crate::character_controller::components::CharacterControllerBundle;
@@ -195,16 +196,26 @@ pub fn handle_disconnect(
                     disconnected_reason
                 );
 
-                // TODO: we also need to set to InGame, in case we are on initial connecting, e.g.
-                // LoadingScreen -> failed to connect -> wouldnt be in ingame, but in
-                // AppState::LoadingGame, so we set InGame here to be safe as InGameState only
-                // exists when AppState is InGame
-                next_app_state.set(AppState::InGame);
+                let parsed_reason =
+                    parse_lightyear_disconnect_reason(disconnected_reason);
 
-                next_in_game_state.set(InGameState::Disconnected);
-                next_disconnected_state.set(DisconnectedState::Reason(
-                    disconnected_reason.to_string(),
-                ));
+                match parsed_reason {
+                    DisconnectReason::ClientTriggered => {
+                        next_app_state.set(AppState::MainMenu);
+                    }
+                    DisconnectReason::Unknown => {
+                        // TODO: we also need to set to InGame, in case we are on initial connecting, e.g.
+                        // LoadingScreen -> failed to connect -> wouldnt be in ingame, but in
+                        // AppState::LoadingGame, so we set InGame here to be safe as InGameState only
+                        // exists when AppState is InGame
+                        next_app_state.set(AppState::InGame);
+
+                        next_in_game_state.set(InGameState::Disconnected);
+                        next_disconnected_state.set(DisconnectedState::Reason(
+                            disconnected_reason.to_string(),
+                        ));
+                    }
+                }
             }
         }
         Err(error) => {

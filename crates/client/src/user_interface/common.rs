@@ -1,7 +1,11 @@
 use bevy::prelude::*;
+use lightyear::prelude::*;
 
 use crate::{
-    game_flow::states::{AppState, MainMenuState},
+    game_flow::{
+        game_mode::GameModeState,
+        states::{AppState, MainMenuState},
+    },
     user_interface::{
         map_selection::MapSelectionButton,
         settings_menu::SettingsChangeTabButton,
@@ -38,10 +42,12 @@ pub enum CommonUiButton {
 }
 
 fn handle_common_ui_button_press(
+    mut commands: Commands,
     query: Query<(&Interaction, &CommonUiButton), Changed<Interaction>>,
     mut app_exit_message_writer: MessageWriter<AppExit>,
     mut next_app_state: ResMut<NextState<AppState>>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
+    own_client: Query<Entity, With<Client>>,
 ) {
     for (interaction, common_ui_button) in query {
         let Interaction::Pressed = interaction else {
@@ -54,6 +60,13 @@ fn handle_common_ui_button_press(
             CommonUiButton::BackToMainMenu => {
                 next_app_state.set(AppState::MainMenu);
                 next_main_menu_state.set(MainMenuState::Root);
+
+                let Ok(own_client) = own_client.single() else {
+                    continue;
+                };
+
+                info!("Triggering disconnect");
+                commands.trigger(Disconnect { entity: own_client })
             }
             CommonUiButton::ToGameModeSelection => {
                 next_main_menu_state.set(MainMenuState::GameModeSelection);

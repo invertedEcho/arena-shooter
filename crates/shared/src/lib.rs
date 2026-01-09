@@ -9,6 +9,7 @@ pub mod components;
 pub mod messages;
 pub mod player;
 pub mod protocol;
+pub mod utils;
 
 const SERVER_PORT: u16 = 5888;
 pub const SERVER_ADDRESS: SocketAddr =
