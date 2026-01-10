@@ -1,17 +1,16 @@
 # fun-shooter
 
-## Setup
-
+## Compiling from source
 1. If you're on linux, install `mold`, a linker, for faster iterative compile times
-  - Ubuntu/Debian: `sudo apt-get install mold clang`
+  - Ubuntu/Debian: `sudo apt install mold clang`
   - Fedora: `sudo dnf install mold clang`
   - Arch: `sudo pacman -S mold clang`
 2. This repository uses Git LFS. Follow the installation instructions [here](https://packagecloud.io/github/git-lfs/install). Afterwards, run `git lfs pull` to get all assets
-3. Bevy itself also needs a couple of dependency. You can find installation instructions for Linux, Windows and MacOS [here](https://bevy.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
-4. Install alternative codegen backend: `rustup component add rustc-codegen-cranelift-preview --toolchain-nightly`
+3. Bevy itself also needs a couple of dependency. You can find OS-specific installation instructions [here](https://bevy.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
 
 ## Running the server/client
 - To run the server:
+    - Note that future releases will automatically connect to the main server (using custom servers may be added in the future)
     - `cargo run -p server <headless|headful>`
     - You can specify either headless or headful. Headless is useful for running where a window cant be created, e.g. servers. Headful will spawn a window, which may be useful to see the map and the spawned players
     - You can also emit the argument, and the server will be started in headless mode.

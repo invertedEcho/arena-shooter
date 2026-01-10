@@ -418,6 +418,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-compat"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1ba85bc55464dcbf728b56d97e119d673f4cf9062be330a9a26f3acf504a590"
+dependencies = [
+ "futures-core",
+ "futures-io",
+ "once_cell",
+ "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
 name = "async-executor"
 version = "1.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2553,6 +2566,7 @@ dependencies = [
 name = "client"
 version = "0.1.0"
 dependencies = [
+ "async-compat",
  "avian3d",
  "avian_rerecast",
  "bevy",
@@ -2570,6 +2584,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shared",
+ "tokio",
 ]
 
 [[package]]
@@ -3094,6 +3109,12 @@ dependencies = [
  "glam 0.29.3",
  "rand",
 ]
+
+[[package]]
+name = "dotenvy"
+version = "0.15.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "downcast-rs"
@@ -4186,6 +4207,12 @@ name = "hermit-abi"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc0fef456e4baa96da950455cd02c081ca953b141298e41db3fc7e36b1da849c"
+
+[[package]]
+name = "hex"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hexasphere"
@@ -7413,12 +7440,17 @@ dependencies = [
 name = "server"
 version = "0.1.0"
 dependencies = [
+ "async-compat",
  "avian3d",
  "bevy",
  "bevy-inspector-egui 0.35.0",
+ "dotenvy",
+ "hex",
  "lightyear",
  "lightyear_replication",
+ "rand",
  "shared",
+ "tokio",
 ]
 
 [[package]]
@@ -7986,9 +8018,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.48.0"
+version = "1.49.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff360e02eab121e0bc37a2d3b4d4dc622e6eda3a8e5253d5435ecf5bd4c68408"
+checksum = "72a2903cd7736441aac9df9d7688bd0ce48edccaadf181c3b90be801e81d3d86"
 dependencies = [
  "bytes",
  "libc",

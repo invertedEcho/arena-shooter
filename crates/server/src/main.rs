@@ -1,10 +1,12 @@
 use std::collections::VecDeque;
 use std::f32::consts::PI;
+use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 use avian3d::prelude::*;
 use bevy::color::palettes;
 use bevy::color::palettes::css::WHITE;
+use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy::render::RenderPlugin;
 use bevy::render::settings::WgpuSettings;
@@ -12,15 +14,23 @@ use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use lightyear::prelude::server::*;
 use lightyear::prelude::*;
+use lightyear::utils::collections::HashSet;
 use shared::collider_rules::get_collider_rules_by_map;
 use shared::player::{Health, Player, PlayerBundle};
 use shared::protocol::{
     ClientUpdatePositionMessage, PlayerPositionServer, ShootRequest,
 };
 use shared::{
-    CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, SharedPlugin,
+    AUTH_BACKEND_ADDRESS, CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+    NETCODE_PROTOCOL_VERSION, SharedPlugin,
 };
 use shared::{MEDIUM_PLASTIC_MAP_PATH, SERVER_ADDRESS};
+
+use crate::auth::{
+    ClientIds, load_private_key, start_netcode_authentication_task,
+};
+
+mod auth;
 
 #[derive(Resource, PartialEq)]
 pub enum ServerRunMode {
@@ -47,6 +57,7 @@ fn get_run_mode(run_mode_str: Option<&String>) -> ServerRunMode {
 }
 
 fn main() {
+    dotenvy::dotenv().ok();
     let mut app = App::new();
 
     let run_mode_str = std::env::args().nth(1);
@@ -108,6 +119,16 @@ fn main() {
 
     app.add_systems(Startup, spawn_map);
 
+    // authentication
+    let client_ids = Arc::new(RwLock::new(HashSet::default()));
+    start_netcode_authentication_task(
+        SERVER_ADDRESS,
+        AUTH_BACKEND_ADDRESS,
+        client_ids.clone(),
+        load_private_key().expect("Failed to load server private key"),
+    );
+    app.insert_resource(ClientIds(client_ids));
+
     app.run();
 }
 
@@ -117,7 +138,12 @@ pub fn setup_server(
 ) {
     let server = commands
         .spawn((
-            NetcodeServer::new(NetcodeConfig::default()),
+            NetcodeServer::new(NetcodeConfig {
+                protocol_id: NETCODE_PROTOCOL_VERSION,
+                private_key: load_private_key()
+                    .expect("Failed to load server private key"),
+                ..default()
+            }),
             LocalAddr(SERVER_ADDRESS),
             ServerUdpIo::default(),
         ))

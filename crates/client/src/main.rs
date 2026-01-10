@@ -1,5 +1,6 @@
-use ::shared::SharedPlugin;
+use ::shared::{AUTH_BACKEND_ADDRESS, SharedPlugin};
 use bevy::{
+    // diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     input_focus::InputDispatchPlugin,
     prelude::*,
     ui_widgets::UiWidgetsPlugins,
@@ -14,6 +15,7 @@ use lightyear::prelude::client::ClientPlugins;
 
 use crate::{
     audio::AudioPlugin,
+    auth::{ConnectTokenRequestTask, fetch_connect_token},
     character_controller::CharacterControllerPlugin,
     client::NetworkPlugin,
     game_flow::GameFlowPlugin,
@@ -27,6 +29,7 @@ use crate::{
 
 // FIXME: reintroduce all commented out plugins
 mod audio;
+mod auth;
 mod character_controller;
 mod client;
 // mod enemy;
@@ -41,21 +44,16 @@ mod user_interface;
 mod utils;
 mod world;
 
-#[derive(Resource)]
-pub struct ClientId(pub u64);
-
 fn main() {
     let mut app = App::new();
     let game_settings = get_or_create_game_settings();
 
-    let client_id = std::env::args()
-        .nth(1)
-        .expect("A client id must be specified");
-    app.insert_resource(ClientId(
-        client_id.parse().expect("A number must be used"),
-    ));
-
     app.insert_resource(game_settings.clone());
+
+    app.insert_resource(ConnectTokenRequestTask {
+        auth_backend_addr: AUTH_BACKEND_ADDRESS,
+        task: None,
+    });
 
     let window_mode = if game_settings.fullscreen {
         WindowMode::BorderlessFullscreen(MonitorSelection::Current)
@@ -128,6 +126,7 @@ fn main() {
         app.add_plugins(GameplayDebugPlugin);
     }
     app.add_observer(apply_render_layers_to_children);
+    app.add_systems(Update, fetch_connect_token);
 
     app.run();
 }

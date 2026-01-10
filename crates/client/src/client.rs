@@ -1,17 +1,22 @@
+use std::net::{Ipv4Addr, SocketAddr};
+
+use async_compat::Compat;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
-use lightyear::netcode::Key;
+use bevy::tasks::IoTaskPool;
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
-use shared::SERVER_ADDRESS;
 use shared::player::Player;
 use shared::protocol::{
     ClientUpdatePositionMessage, OrderedReliableMessageChannel,
     PlayerPositionServer,
 };
 use shared::utils::{DisconnectReason, parse_lightyear_disconnect_reason};
+use shared::{CLIENT_PORT, SERVER_ADDRESS};
 
-use crate::ClientId;
+use crate::auth::{
+    ConnectTokenRequestTask, get_connect_token_from_auth_backend,
+};
 use crate::character_controller::components::CharacterControllerBundle;
 use crate::game_flow::states::{AppState, DisconnectedState, InGameState};
 use crate::player::camera::messages::SpawnPlayerCamerasMessage;
@@ -41,10 +46,11 @@ pub struct ConnectToServerMessage;
 pub fn handle_connect_to_server_message(
     mut commands: Commands,
     mut message_reader: MessageReader<ConnectToServerMessage>,
-    client_id: Res<ClientId>,
     connected_query: Query<Has<Connected>>,
+    mut task_state: ResMut<ConnectTokenRequestTask>,
 ) {
     for _ in message_reader.read() {
+        // Connected component only present on our own client
         for connected in connected_query {
             if connected {
                 info!("Already connected, skipping ConnectToServerMessage");
@@ -54,33 +60,31 @@ pub fn handle_connect_to_server_message(
 
         info!("Connecting to server...");
 
-        let auth = Authentication::Manual {
-            server_addr: SERVER_ADDRESS,
-            client_id: client_id.0,
-            private_key: Key::default(),
-            protocol_id: 0,
-        };
+        info!("Starting task to get ConnectToken");
 
-        let client = commands
-            .spawn((
-                Name::new("Client"),
-                Client::default(),
-                LocalAddr("127.0.0.1:0".parse().unwrap()),
-                PeerAddr(SERVER_ADDRESS),
-                Link::new(None),
-                ReplicationReceiver::default(),
-                NetcodeClient::new(auth, NetcodeConfig::default()).unwrap(),
-                UdpIo::default(),
-            ))
-            .id();
+        let auth_backend_addr = task_state.auth_backend_addr;
+        let task = IoTaskPool::get().spawn_local(Compat::new(async move {
+            get_connect_token_from_auth_backend(auth_backend_addr).await
+        }));
+        task_state.task = Some(task);
 
-        // Send connect request
-        commands.trigger(Connect { entity: client });
+        commands.spawn((
+            Name::new("Client"),
+            Client::default(),
+            LocalAddr(SocketAddr::new(
+                Ipv4Addr::UNSPECIFIED.into(),
+                CLIENT_PORT,
+            )),
+            PeerAddr(SERVER_ADDRESS),
+            Link::new(None),
+            ReplicationReceiver::default(),
+            UdpIo::default(),
+        ));
     }
 }
 
 fn handle_connected(
-    trigger: On<Add, Connected>,
+    _trigger: On<Add, Connected>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     info!("Connected to server, setting AppState to InGame");

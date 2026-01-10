@@ -9,3 +9,13 @@ opt-level = 1
 # Enable a large amount of optimization in the dev profile for dependencies.
 [profile.dev.package."*"]
 opt-level = 3
+
+# [patch.crates-io]
+# lightyear = { path = "../lightyear/lightyear/" }
+
+# Shared dependencies, used in both client and server crate
+[workspace.dependencies]
+async-compat = "0.2.5"
+rand = "0.9.2"
+tokio = { version = "1.49.0", features = ["net", "io-util"] }
+shared = { version = "0.1.0", path = "./crates/shared" }
