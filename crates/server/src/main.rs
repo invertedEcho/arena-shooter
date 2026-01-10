@@ -70,15 +70,9 @@ fn main() {
                         file_path: "../../assets".to_string(),
                         ..default()
                     })
-                    .set(RenderPlugin {
-                        synchronous_pipeline_compilation: true,
-                        render_creation:
-                            bevy::render::settings::RenderCreation::Automatic(
-                                WgpuSettings {
-                                    backends: None,
-                                    ..default()
-                                },
-                            ),
+                    .set(WindowPlugin {
+                        primary_window: None,
+                        exit_condition: bevy::window::ExitCondition::DontExit,
                         ..default()
                     }),
             );
