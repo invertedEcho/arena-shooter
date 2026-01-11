@@ -21,10 +21,14 @@ use shared::protocol::{
     ClientUpdatePositionMessage, PlayerPositionServer, ShootRequest,
 };
 use shared::{
-    AUTH_BACKEND_ADDRESS, CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+    AUTH_BACKEND_ADDRESS_SERVER_SIDE, MEDIUM_PLASTIC_MAP_PATH,
+    SERVER_ADDRESS_CLIENT_SIDE, SERVER_SOCKET_ADDR_CLIENT_SIDE,
+    SERVER_SOCKET_ADDR_SERVER_SIDE,
+};
+use shared::{
+    CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     NETCODE_PROTOCOL_VERSION, SharedPlugin,
 };
-use shared::{MEDIUM_PLASTIC_MAP_PATH, SERVER_SOCKET_ADDR};
 
 use crate::auth::{
     ClientIds, load_private_key, start_netcode_authentication_task,
@@ -117,8 +121,10 @@ fn main() {
     // authentication
     let client_ids = Arc::new(RwLock::new(HashSet::default()));
     start_netcode_authentication_task(
-        SERVER_SOCKET_ADDR,
-        AUTH_BACKEND_ADDRESS,
+        // this must be client side because it will be contained in the token that the client
+        // receives and uses to connect
+        SERVER_SOCKET_ADDR_CLIENT_SIDE,
+        AUTH_BACKEND_ADDRESS_SERVER_SIDE,
         client_ids.clone(),
         load_private_key().expect("Failed to load server private key"),
     );
@@ -139,7 +145,7 @@ pub fn setup_server(
                     .expect("Failed to load server private key"),
                 ..default()
             }),
-            LocalAddr(SERVER_SOCKET_ADDR),
+            LocalAddr(SERVER_SOCKET_ADDR_SERVER_SIDE),
             ServerUdpIo::default(),
         ))
         .id();

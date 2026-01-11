@@ -6,7 +6,7 @@ use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
-use shared::SERVER_SOCKET_ADDR;
+use shared::SERVER_SOCKET_ADDR_SERVER_SIDE;
 use shared::player::Player;
 use shared::protocol::{
     ClientUpdatePositionMessage, OrderedReliableMessageChannel,
@@ -77,7 +77,7 @@ pub fn handle_connect_to_server_message(
                 Ipv4Addr::UNSPECIFIED.into(),
                 CLIENT_PORT,
             )),
-            PeerAddr(SERVER_SOCKET_ADDR),
+            PeerAddr(SERVER_SOCKET_ADDR_SERVER_SIDE),
             Link::new(None),
             ReplicationReceiver::default(),
             UdpIo::default(),

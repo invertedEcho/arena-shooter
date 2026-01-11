@@ -1,6 +1,6 @@
 use avian3d::{PhysicsPlugins, prelude::*};
 use bevy::prelude::*;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use crate::protocol::ProtocolPlugin;
 
@@ -11,14 +11,23 @@ pub mod player;
 pub mod protocol;
 pub mod utils;
 
-pub const SERVER_ADDRESS: IpAddr = IpAddr::V4(Ipv4Addr::new(192, 168, 178, 88));
-const SERVER_PORT: u16 = 5888;
-pub const SERVER_SOCKET_ADDR: SocketAddr =
-    SocketAddr::new(SERVER_ADDRESS, SERVER_PORT);
-
+pub const SERVER_PORT: u16 = 5888;
 pub const AUTH_BACKEND_PORT: u16 = 4000;
-pub const AUTH_BACKEND_ADDRESS: SocketAddr =
-    SocketAddr::new(SERVER_ADDRESS, AUTH_BACKEND_PORT);
+
+pub const SERVER_ADDRESS_SERVER_SIDE: IpAddr =
+    IpAddr::V4(Ipv4Addr::UNSPECIFIED);
+pub const SERVER_ADDRESS_CLIENT_SIDE: IpAddr =
+    IpAddr::V4(Ipv4Addr::new(192, 168, 178, 88));
+
+pub const SERVER_SOCKET_ADDR_CLIENT_SIDE: SocketAddr =
+    SocketAddr::new(SERVER_ADDRESS_CLIENT_SIDE, SERVER_PORT);
+pub const SERVER_SOCKET_ADDR_SERVER_SIDE: SocketAddr =
+    SocketAddr::new(SERVER_ADDRESS_SERVER_SIDE, SERVER_PORT);
+
+pub const AUTH_BACKEND_ADDRESS_CLIENT_SIDE: SocketAddr =
+    SocketAddr::new(SERVER_ADDRESS_CLIENT_SIDE, AUTH_BACKEND_PORT);
+pub const AUTH_BACKEND_ADDRESS_SERVER_SIDE: SocketAddr =
+    SocketAddr::new(SERVER_ADDRESS_SERVER_SIDE, AUTH_BACKEND_PORT);
 
 pub const NETCODE_PROTOCOL_VERSION: u64 = 0;
 

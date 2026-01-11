@@ -1,4 +1,4 @@
-use ::shared::{AUTH_BACKEND_ADDRESS, SharedPlugin};
+use ::shared::{AUTH_BACKEND_ADDRESS_CLIENT_SIDE, SharedPlugin};
 use bevy::{
     // diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     input_focus::InputDispatchPlugin,
@@ -51,7 +51,7 @@ fn main() {
     app.insert_resource(game_settings.clone());
 
     app.insert_resource(ConnectTokenRequestTask {
-        auth_backend_addr: AUTH_BACKEND_ADDRESS,
+        auth_backend_addr: AUTH_BACKEND_ADDRESS_CLIENT_SIDE,
         task: None,
     });
 
