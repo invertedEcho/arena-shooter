@@ -6,13 +6,13 @@ use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
+use shared::SERVER_SOCKET_ADDR;
 use shared::player::Player;
 use shared::protocol::{
     ClientUpdatePositionMessage, OrderedReliableMessageChannel,
     PlayerPositionServer,
 };
 use shared::utils::{DisconnectReason, parse_lightyear_disconnect_reason};
-use shared::{CLIENT_PORT, SERVER_ADDRESS};
 
 use crate::auth::{
     ConnectTokenRequestTask, get_connect_token_from_auth_backend,
@@ -20,6 +20,8 @@ use crate::auth::{
 use crate::character_controller::components::CharacterControllerBundle;
 use crate::game_flow::states::{AppState, DisconnectedState, InGameState};
 use crate::player::camera::messages::SpawnPlayerCamerasMessage;
+
+const CLIENT_PORT: u16 = 0;
 
 pub struct NetworkPlugin;
 
@@ -75,7 +77,7 @@ pub fn handle_connect_to_server_message(
                 Ipv4Addr::UNSPECIFIED.into(),
                 CLIENT_PORT,
             )),
-            PeerAddr(SERVER_ADDRESS),
+            PeerAddr(SERVER_SOCKET_ADDR),
             Link::new(None),
             ReplicationReceiver::default(),
             UdpIo::default(),

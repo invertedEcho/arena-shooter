@@ -24,7 +24,7 @@ use shared::{
     AUTH_BACKEND_ADDRESS, CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     NETCODE_PROTOCOL_VERSION, SharedPlugin,
 };
-use shared::{MEDIUM_PLASTIC_MAP_PATH, SERVER_ADDRESS};
+use shared::{MEDIUM_PLASTIC_MAP_PATH, SERVER_SOCKET_ADDR};
 
 use crate::auth::{
     ClientIds, load_private_key, start_netcode_authentication_task,
@@ -88,6 +88,7 @@ fn main() {
             info!("Running server in headful mode!");
         }
     }
+    app.add_systems(Startup, spawn_map_colliders);
 
     if run_mode == ServerRunMode::Headful {
         app.add_systems(Startup, spawn_map);
@@ -116,7 +117,7 @@ fn main() {
     // authentication
     let client_ids = Arc::new(RwLock::new(HashSet::default()));
     start_netcode_authentication_task(
-        SERVER_ADDRESS,
+        SERVER_SOCKET_ADDR,
         AUTH_BACKEND_ADDRESS,
         client_ids.clone(),
         load_private_key().expect("Failed to load server private key"),
@@ -138,7 +139,7 @@ pub fn setup_server(
                     .expect("Failed to load server private key"),
                 ..default()
             }),
-            LocalAddr(SERVER_ADDRESS),
+            LocalAddr(SERVER_SOCKET_ADDR),
             ServerUdpIo::default(),
         ))
         .id();
@@ -336,6 +337,7 @@ pub fn spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
 
 fn spawn_map_colliders(mut commands: Commands) {
     let mut file_buffer = String::from("");
+    // FIXME: This will break
     let mut collider_file = File::open(
         "../../../assets/maps/medium_plastic/medium_plastic_colliders.json",
     )

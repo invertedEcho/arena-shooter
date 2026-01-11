@@ -11,19 +11,18 @@ pub mod player;
 pub mod protocol;
 pub mod utils;
 
+pub const SERVER_ADDRESS: IpAddr = IpAddr::V4(Ipv4Addr::new(192, 168, 178, 88));
 const SERVER_PORT: u16 = 5888;
-pub const SERVER_ADDRESS: SocketAddr =
-    SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), SERVER_PORT);
-pub const CLIENT_PORT: u16 = 0;
+pub const SERVER_SOCKET_ADDR: SocketAddr =
+    SocketAddr::new(SERVER_ADDRESS, SERVER_PORT);
 
 pub const AUTH_BACKEND_PORT: u16 = 4000;
-
 pub const AUTH_BACKEND_ADDRESS: SocketAddr =
-    SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, AUTH_BACKEND_PORT));
-
-pub const GRAVITY: f32 = 9.81;
+    SocketAddr::new(SERVER_ADDRESS, AUTH_BACKEND_PORT);
 
 pub const NETCODE_PROTOCOL_VERSION: u64 = 0;
+
+pub const GRAVITY: f32 = 9.81;
 
 pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
 pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
