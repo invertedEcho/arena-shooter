@@ -339,7 +339,7 @@ fn spawn_map_colliders(mut commands: Commands) {
     let mut file_buffer = String::from("");
     // FIXME: This will break
     let mut collider_file = File::open(
-        "../../../assets/maps/medium_plastic/medium_plastic_colliders.json",
+        "../../assets/maps/medium_plastic/medium_plastic_colliders.json",
     )
     .expect("Can open medium_plastic_colliders.json");
     collider_file.read_to_string(&mut file_buffer).unwrap();
