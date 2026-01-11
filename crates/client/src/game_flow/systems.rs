@@ -1,4 +1,4 @@
-use avian3d::prelude::ColliderConstructorHierarchyReady;
+use avian3d::prelude::*;
 use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
@@ -99,10 +99,9 @@ pub fn check_world_scene_loaded(
 }
 
 pub fn check_collider_constructor_hierarchy_ready(
-    _: On<ColliderConstructorHierarchyReady>,
+    _trigger: On<ColliderConstructorHierarchyReady>,
     mut next_game_loading_state: ResMut<NextState<LoadingGameState>>,
 ) {
-    info!("Collider_constructor_hierarchy_ready is now!");
     // next_game_loading_state.set(LoadingGameSubState::CollidersReady);
     // FIXME: add navmesh generation again
     next_game_loading_state.set(LoadingGameState::NavMeshReady);

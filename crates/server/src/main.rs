@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
 use std::f32::consts::PI;
+use std::fs::File;
+use std::io::Read;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
@@ -7,15 +9,13 @@ use avian3d::prelude::*;
 use bevy::color::palettes;
 use bevy::color::palettes::css::WHITE;
 use bevy::log::LogPlugin;
+use bevy::mesh::MeshPlugin;
 use bevy::prelude::*;
-use bevy::render::RenderPlugin;
-use bevy::render::settings::WgpuSettings;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use lightyear::prelude::server::*;
 use lightyear::prelude::*;
 use lightyear::utils::collections::HashSet;
-use shared::collider_rules::get_collider_rules_by_map;
 use shared::player::{Health, Player, PlayerBundle};
 use shared::protocol::{
     ClientUpdatePositionMessage, PlayerPositionServer, ShootRequest,
@@ -62,20 +62,18 @@ fn main() {
 
     let run_mode_str = std::env::args().nth(1);
     let run_mode = get_run_mode(run_mode_str.as_ref());
+
     match run_mode {
         ServerRunMode::Headless => {
-            app.add_plugins(
-                DefaultPlugins
-                    .set(AssetPlugin {
-                        file_path: "../../assets".to_string(),
-                        ..default()
-                    })
-                    .set(WindowPlugin {
-                        primary_window: None,
-                        exit_condition: bevy::window::ExitCondition::DontExit,
-                        ..default()
-                    }),
-            );
+            app.add_plugins(MinimalPlugins);
+            app.add_plugins(AssetPlugin {
+                file_path: "../../assets".to_string(),
+                ..default()
+            });
+            app.add_plugins(MeshPlugin);
+            app.add_plugins((TransformPlugin, bevy::scene::ScenePlugin))
+                .init_resource::<Assets<Mesh>>();
+            app.add_plugins(LogPlugin::default());
             info!("Running server in headless mode!");
         }
         ServerRunMode::Headful => {
@@ -89,6 +87,10 @@ fn main() {
             app.insert_resource(bevy_egui::EguiGlobalSettings::default());
             info!("Running server in headful mode!");
         }
+    }
+
+    if run_mode == ServerRunMode::Headful {
+        app.add_systems(Startup, spawn_map);
     }
 
     app.insert_resource(run_mode);
@@ -110,8 +112,6 @@ fn main() {
 
     app.add_observer(handle_new_connection);
     app.add_observer(handle_new_client);
-
-    app.add_systems(Startup, spawn_map);
 
     // authentication
     let client_ids = Arc::new(RwLock::new(HashSet::default()));
@@ -169,7 +169,7 @@ fn handle_new_client(
     trigger: On<Add, Connected>,
     query: Query<&RemoteId, With<ClientOf>>,
     mut commands: Commands,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
     if let Ok(remote_id) = query.get(trigger.entity) {
@@ -182,43 +182,51 @@ fn handle_new_client(
 
         // NOTE: The replicate component gets inserted into the player entity, but only registered
         // components will be replicated to all other clients
-        commands.spawn((
-            Replicate::to_clients(NetworkTarget::All),
-            Name::new("Player"),
-            PlayerBundle::default(),
-            // TODO: think we could override replication behaviour for this component and only
-            // replicate to all other clients than the current client
-            PlayerPositionServer {
-                translation: vec3(0.0, 20.0, 0.0),
-            },
-            Visibility::Visible,
-            // we add the ControlledBy on the server, with the client entity as the owner of this
-            // player, so on the client we can then filter by players that have the `Controlled`
-            // component and those are the players that are actually owned by that client
-            ControlledBy {
-                owner: trigger.entity,
-                lifetime: Lifetime::default(),
-            },
-            // thereotically this isnt needed, as each client inserts the mesh with material when a
-            // new player is added, but for now we keep it so we can see what happens on the server.
-            // meshes are not replicated
-            Mesh3d(meshes.add(Capsule3d::new(
-                CHARACTER_CAPSULE_RADIUS,
-                CHARACTER_CAPSULE_LENGTH,
-            ))),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: WHITE.into(),
-                ..Default::default()
-            })),
-            PositionHistory {
-                samples: VecDeque::from([]),
-            },
-            Collider::capsule(
-                CHARACTER_CAPSULE_RADIUS,
-                CHARACTER_CAPSULE_LENGTH,
-            ),
-            RigidBody::Kinematic,
-        ));
+        let client = commands
+            .spawn((
+                Replicate::to_clients(NetworkTarget::All),
+                Name::new("Player"),
+                PlayerBundle::default(),
+                // TODO: think we could override replication behaviour for this component and only
+                // replicate to all other clients than the current client
+                PlayerPositionServer {
+                    translation: vec3(0.0, 20.0, 0.0),
+                },
+                Visibility::Visible,
+                // we add the ControlledBy on the server, with the client entity as the owner of this
+                // player, so on the client we can then filter by players that have the `Controlled`
+                // component and those are the players that are actually owned by that client
+                ControlledBy {
+                    owner: trigger.entity,
+                    lifetime: Lifetime::default(),
+                },
+                PositionHistory {
+                    samples: VecDeque::from([]),
+                },
+                Collider::capsule(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ),
+                RigidBody::Kinematic,
+            ))
+            .id();
+
+        // on headless setup, materials doesnt exist
+        if let Some(mut materials) = materials {
+            commands.entity(client).insert((
+                // thereotically this isnt needed, as each client inserts the mesh with material when a
+                // new player is added, but for now we keep it so we can see what happens on the server.
+                // meshes are not replicated
+                Mesh3d(meshes.add(Capsule3d::new(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: WHITE.into(),
+                    ..Default::default()
+                })),
+            ));
+        }
     }
 }
 
@@ -292,8 +300,6 @@ pub fn receive_shoot_request(
     }
 }
 
-pub fn validate_client_movement() {}
-
 // for now i think i just want to always have a FFA mode on the MediumPlastic map with simple
 // scoreboard
 pub fn spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
@@ -301,8 +307,6 @@ pub fn spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
 
     let map_path = MEDIUM_PLASTIC_MAP_PATH;
 
-    // FIXME: thereotically not needed as server doesnt need light but might be useful for debug
-    // purposes to see map on server
     commands.spawn((
         Name::new("Map Light"),
         // DespawnOnExit(AppState::InGame),
@@ -319,26 +323,6 @@ pub fn spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
         },
     ));
 
-    let collider_rules =
-        get_collider_rules_by_map(&shared::SelectedMapState::MediumPlastic);
-
-    let mut collider_hierarchy = ColliderConstructorHierarchy::new(
-        ColliderConstructor::ConvexHullFromMesh,
-    );
-
-    for (name, maybe_constructor) in collider_rules {
-        match maybe_constructor {
-            Some(constructor) => {
-                collider_hierarchy = collider_hierarchy
-                    .with_constructor_for_name(name, constructor);
-            }
-            None => {
-                collider_hierarchy =
-                    collider_hierarchy.without_constructor_for_name(name);
-            }
-        }
-    }
-
     let world_scene_handle =
         asset_server.load(GltfAssetLabel::Scene(0).from_asset(map_path));
 
@@ -346,13 +330,42 @@ pub fn spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
         SceneRoot(world_scene_handle),
         Name::new("Medium Plastic Map Scene Root"),
         Visibility::Visible,
-        collider_hierarchy,
         RigidBody::Static,
     ));
 }
 
-// only needed so we can updated position on server. we may disable this once we have headless
-// setup
+fn spawn_map_colliders(mut commands: Commands) {
+    let mut file_buffer = String::from("");
+    let mut collider_file = File::open(
+        "../../../assets/maps/medium_plastic/medium_plastic_colliders.json",
+    )
+    .expect("Can open medium_plastic_colliders.json");
+    collider_file.read_to_string(&mut file_buffer).unwrap();
+
+    let colliders: Result<
+        Vec<(Collider, GlobalTransform)>,
+        serde_json::error::Error,
+    > = serde_json::from_str(&file_buffer);
+
+    match colliders {
+        Ok(colliders_ok) => {
+            info!(
+                "Loaded colliders and their transform from json, spawning \
+                 them."
+            );
+            for collider in colliders_ok {
+                commands.spawn(collider);
+            }
+        }
+        Err(error) => {
+            panic!(
+                "Failed to load colliders and their transform from json: {}",
+                error
+            );
+        }
+    }
+}
+
 fn apply_server_position_on_server(
     mut query: Query<(&PlayerPositionServer, &mut Transform), With<Player>>,
 ) {

@@ -15,3 +15,4 @@ shared = { workspace = true }
 tokio = {workspace = true}
 async-compat = {workspace = true}
 rand = {workspace = true}
+serde_json = {workspace = true}
