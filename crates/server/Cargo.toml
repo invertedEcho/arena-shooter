@@ -7,7 +7,6 @@ edition = "2024"
 avian3d = "0.4.1"
 bevy = "0.17.3"
 bevy-inspector-egui = "0.35.0"
-dotenvy = "0.15.7"
 hex = "0.4.3"
 lightyear = {version = "0.25.5", features = ["server", "netcode", "replication", "udp", "trace", "std"]}
 lightyear_replication = "0.25.5"
@@ -16,3 +15,4 @@ tokio = {workspace = true}
 async-compat = {workspace = true}
 rand = {workspace = true}
 serde_json = {workspace = true}
+dotenvy = {workspace=true}

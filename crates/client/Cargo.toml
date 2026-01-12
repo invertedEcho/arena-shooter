@@ -24,3 +24,4 @@ async-compat = {workspace = true}
 serde = "1.0.228"
 serde_json = {workspace = true}
 bincode = "2.0.1"
+dotenvy = {workspace=true}

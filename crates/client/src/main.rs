@@ -1,4 +1,4 @@
-use ::shared::{AUTH_BACKEND_ADDRESS_CLIENT_SIDE, SharedPlugin};
+use ::shared::{SharedPlugin, get_auth_backend_socket_addr_client_side};
 use bevy::{
     // diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     input_focus::InputDispatchPlugin,
@@ -45,13 +45,14 @@ mod utils;
 mod world;
 
 fn main() {
+    dotenvy::dotenv().ok();
     let mut app = App::new();
     let game_settings = get_or_create_game_settings();
 
     app.insert_resource(game_settings.clone());
 
     app.insert_resource(ConnectTokenRequestTask {
-        auth_backend_addr: AUTH_BACKEND_ADDRESS_CLIENT_SIDE,
+        auth_backend_addr: get_auth_backend_socket_addr_client_side(),
         task: None,
     });
 
@@ -67,7 +68,7 @@ fn main() {
             .set(bevy::log::LogPlugin {
                 // stupid audio library bevy uses which uses info level for debug level messages.. smh
                 filter: "symphonia_core=off,symphonia_bundle=off,wgpu=error,\
-                         naga=warn"
+                         naga=warn,lightyear=debug"
                     .to_string(),
                 ..default()
             })

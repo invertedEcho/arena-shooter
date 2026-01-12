@@ -1,6 +1,9 @@
 use avian3d::{PhysicsPlugins, prelude::*};
 use bevy::prelude::*;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::{
+    env::{self, VarError},
+    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
+};
 
 use crate::protocol::ProtocolPlugin;
 
@@ -15,17 +18,32 @@ pub const SERVER_PORT: u16 = 5888;
 pub const AUTH_BACKEND_PORT: u16 = 4000;
 
 pub const SERVER_ADDRESS_SERVER_SIDE: IpAddr =
-    IpAddr::V4(Ipv4Addr::UNSPECIFIED);
-pub const SERVER_ADDRESS_CLIENT_SIDE: IpAddr =
-    IpAddr::V4(Ipv4Addr::new(192, 168, 178, 88));
+    IpAddr::V6(Ipv6Addr::UNSPECIFIED);
 
-pub const SERVER_SOCKET_ADDR_CLIENT_SIDE: SocketAddr =
-    SocketAddr::new(SERVER_ADDRESS_CLIENT_SIDE, SERVER_PORT);
+pub fn load_public_ipv6_address() -> Result<String, VarError> {
+    env::var("PUBLIC_IPV6_ADDRESS")
+}
+
+pub fn get_server_socket_addr_client_side() -> SocketAddr {
+    format!(
+        "[{}]:5888",
+        load_public_ipv6_address().expect("PUBLIC_IPV6_ADDRESS must be set")
+    )
+    .parse()
+    .unwrap()
+}
+pub fn get_auth_backend_socket_addr_client_side() -> SocketAddr {
+    format!(
+        "[{}]:4000",
+        load_public_ipv6_address().expect("PUBLIC_IPV6_ADDRESS must be set")
+    )
+    .parse()
+    .unwrap()
+}
+
 pub const SERVER_SOCKET_ADDR_SERVER_SIDE: SocketAddr =
     SocketAddr::new(SERVER_ADDRESS_SERVER_SIDE, SERVER_PORT);
 
-pub const AUTH_BACKEND_ADDRESS_CLIENT_SIDE: SocketAddr =
-    SocketAddr::new(SERVER_ADDRESS_CLIENT_SIDE, AUTH_BACKEND_PORT);
 pub const AUTH_BACKEND_ADDRESS_SERVER_SIDE: SocketAddr =
     SocketAddr::new(SERVER_ADDRESS_SERVER_SIDE, AUTH_BACKEND_PORT);
 

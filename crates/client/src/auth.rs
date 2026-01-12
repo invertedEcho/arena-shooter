@@ -54,6 +54,7 @@ pub async fn get_connect_token_from_auth_backend(
             )
             .as_str(),
         );
+    info!("auth backend tcp stream address: {:?}", stream.peer_addr());
     // wait for the socket to be readable
     stream.readable().await.unwrap();
     let mut buffer = [0u8; CONNECT_TOKEN_BYTES];
@@ -67,8 +68,11 @@ pub async fn get_connect_token_from_auth_backend(
             ConnectToken::try_from_bytes(&buffer)
                 .expect("Failed to parse token from authentication server")
         }
-        _ => {
-            panic!("Failed to read token from authentication server")
+        Err(error) => {
+            panic!("Failed to read from auth backend stream: {}", error);
+        }
+        Ok(stream) => {
+            panic!("Stream?: {}", stream);
         }
     }
 }

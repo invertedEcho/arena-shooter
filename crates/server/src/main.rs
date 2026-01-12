@@ -22,8 +22,7 @@ use shared::protocol::{
 };
 use shared::{
     AUTH_BACKEND_ADDRESS_SERVER_SIDE, MEDIUM_PLASTIC_MAP_PATH,
-    SERVER_ADDRESS_CLIENT_SIDE, SERVER_SOCKET_ADDR_CLIENT_SIDE,
-    SERVER_SOCKET_ADDR_SERVER_SIDE,
+    SERVER_SOCKET_ADDR_SERVER_SIDE, get_server_socket_addr_client_side,
 };
 use shared::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
@@ -123,7 +122,7 @@ fn main() {
     start_netcode_authentication_task(
         // this must be client side because it will be contained in the token that the client
         // receives and uses to connect
-        SERVER_SOCKET_ADDR_CLIENT_SIDE,
+        get_server_socket_addr_client_side(),
         AUTH_BACKEND_ADDRESS_SERVER_SIDE,
         client_ids.clone(),
         load_private_key().expect("Failed to load server private key"),

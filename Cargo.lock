@@ -2587,6 +2587,7 @@ dependencies = [
  "bevy_rich_text3d",
  "bincode",
  "dirs",
+ "dotenvy",
  "landmass_rerecast",
  "lightyear",
  "lightyear_avian3d",
