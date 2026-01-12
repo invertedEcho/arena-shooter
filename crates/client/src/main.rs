@@ -45,7 +45,6 @@ mod utils;
 mod world;
 
 fn main() {
-    dotenvy::dotenv().ok();
     let mut app = App::new();
     let game_settings = get_or_create_game_settings();
 

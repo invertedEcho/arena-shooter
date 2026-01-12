@@ -1,9 +1,6 @@
 use avian3d::{PhysicsPlugins, prelude::*};
 use bevy::prelude::*;
-use std::{
-    env::{self, VarError},
-    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
-};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, ToSocketAddrs};
 
 use crate::protocol::ProtocolPlugin;
 
@@ -17,28 +14,22 @@ pub mod utils;
 pub const SERVER_PORT: u16 = 5888;
 pub const AUTH_BACKEND_PORT: u16 = 4000;
 
-pub const SERVER_ADDRESS_SERVER_SIDE: IpAddr =
-    IpAddr::V6(Ipv6Addr::UNSPECIFIED);
-
-pub fn load_public_ipv6_address() -> Result<String, VarError> {
-    env::var("PUBLIC_IPV6_ADDRESS")
-}
+// on the server, we bind to 127.0.0.1, as we have nginx proxy
+pub const SERVER_ADDRESS_SERVER_SIDE: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
 
 pub fn get_server_socket_addr_client_side() -> SocketAddr {
-    format!(
-        "[{}]:5888",
-        load_public_ipv6_address().expect("PUBLIC_IPV6_ADDRESS must be set")
-    )
-    .parse()
-    .unwrap()
+    "game.invertedecho.com:5888"
+        .to_socket_addrs()
+        .expect("DNS resolution failed")
+        .next()
+        .unwrap()
 }
 pub fn get_auth_backend_socket_addr_client_side() -> SocketAddr {
-    format!(
-        "[{}]:4000",
-        load_public_ipv6_address().expect("PUBLIC_IPV6_ADDRESS must be set")
-    )
-    .parse()
-    .unwrap()
+    "game.invertedecho.com:4000"
+        .to_socket_addrs()
+        .expect("DNS resolution failed")
+        .next()
+        .unwrap()
 }
 
 pub const SERVER_SOCKET_ADDR_SERVER_SIDE: SocketAddr =
