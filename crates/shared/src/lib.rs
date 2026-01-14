@@ -1,6 +1,6 @@
 use avian3d::{PhysicsPlugins, prelude::*};
 use bevy::prelude::*;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, ToSocketAddrs};
+use std::net::{IpAddr, Ipv6Addr, SocketAddr, ToSocketAddrs};
 
 use crate::protocol::ProtocolPlugin;
 
@@ -14,8 +14,8 @@ pub mod utils;
 pub const SERVER_PORT: u16 = 5888;
 pub const AUTH_BACKEND_PORT: u16 = 4000;
 
-// on the server, we bind to 127.0.0.1, as we have nginx proxy
-pub const SERVER_ADDRESS_SERVER_SIDE: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
+pub const SERVER_ADDRESS_SERVER_SIDE: IpAddr =
+    IpAddr::V6(Ipv6Addr::UNSPECIFIED);
 
 pub fn get_server_socket_addr_client_side() -> SocketAddr {
     "game.invertedecho.com:5888"

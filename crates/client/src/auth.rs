@@ -59,8 +59,8 @@ pub async fn get_connect_token_from_auth_backend(
     stream.readable().await.unwrap();
     let mut buffer = [0u8; CONNECT_TOKEN_BYTES];
     match stream.try_read(&mut buffer) {
-        Ok(n) if n == CONNECT_TOKEN_BYTES => {
-            trace!(
+        Ok(n) => {
+            info!(
                 "Received token bytes: {:?}. Token len: {:?}",
                 buffer,
                 buffer.len()
@@ -68,11 +68,8 @@ pub async fn get_connect_token_from_auth_backend(
             ConnectToken::try_from_bytes(&buffer)
                 .expect("Failed to parse token from authentication server")
         }
-        Err(error) => {
-            panic!("Failed to read from auth backend stream: {}", error);
-        }
-        Ok(stream) => {
-            panic!("Stream?: {}", stream);
+        _ => {
+            panic!("Failed to read token from authentication server");
         }
     }
 }

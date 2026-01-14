@@ -1,4 +1,4 @@
-use std::net::{Ipv4Addr, SocketAddr};
+use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
 
 use async_compat::Compat;
 use bevy::color::palettes::css::WHITE;
@@ -79,7 +79,7 @@ pub fn handle_connect_to_server_message(
             Name::new("Client"),
             Client::default(),
             LocalAddr(SocketAddr::new(
-                Ipv4Addr::UNSPECIFIED.into(),
+                Ipv6Addr::UNSPECIFIED.into(),
                 CLIENT_PORT,
             )),
             PeerAddr(get_server_socket_addr_client_side()),
