@@ -1,3 +1,4 @@
+use avian3d::prelude::*;
 use bevy::{input::mouse::MouseWheel, prelude::*};
 use lightyear::prelude::*;
 use shared::{
@@ -7,6 +8,7 @@ use shared::{
 
 use crate::{
     game_flow::states::InGameState,
+    particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
     player::{
         Player, PlayerDeathMessage,
         camera::{
@@ -154,16 +156,21 @@ pub fn handle_player_weapon_fired_message(
     // mut player_bullet_hit_enemy_message_writer: MessageWriter<
     //     PlayerBulletHitEnemyMessage,
     // >,
-    // mut spawn_bullet_impact_effect_message_writer: MessageWriter<
-    //     SpawnBulletImpactEffectMessage,
-    // >,
+    mut spawn_bullet_impact_effect_message_writer: MessageWriter<
+        SpawnBulletImpactEffectMessage,
+    >,
     world_model_camera_query: WorldModelCameraQuery,
-    player_weapons: Single<&PlayerWeapons, (With<Player>, With<Controlled>)>,
+    player_query: Single<
+        (&PlayerWeapons, Entity),
+        (With<Player>, With<Controlled>),
+    >,
     mut shoot_request_sender: Single<
         &mut MessageSender<ShootRequest>,
         With<Client>,
     >,
+    spatial_query: SpatialQuery,
 ) {
+    let (player_weapons, player_entity) = player_query.into_inner();
     for _ in message_reader.read() {
         let fire_delay = get_fire_delay_by_weapon_type(
             &player_weapons.weapons[player_weapons.active_slot]
@@ -175,6 +182,7 @@ pub fn handle_player_weapon_fired_message(
             TimerMode::Once,
         )));
 
+        let origin = world_model_camera_query.1.translation();
         let direction = world_model_camera_query.1.forward();
 
         shoot_request_sender.send::<OrderedReliableMessageChannel>(
@@ -183,6 +191,24 @@ pub fn handle_player_weapon_fired_message(
                 origin: world_model_camera_query.1.translation(),
             },
         );
+        if let Some(first_hit) = spatial_query.cast_ray(
+            origin,
+            direction,
+            500.0,
+            false,
+            &SpatialQueryFilter::default()
+                .with_excluded_entities([player_entity]),
+        ) {
+            let spawn_location = origin + direction * first_hit.distance;
+
+            spawn_bullet_impact_effect_message_writer.write(
+                SpawnBulletImpactEffectMessage {
+                    spawn_location,
+                    // FIXME: check whether enemy or world, must first reintroduce enemies though
+                    variant: BulletImpactEffectVariant::World,
+                },
+            );
+        }
     }
 }
 

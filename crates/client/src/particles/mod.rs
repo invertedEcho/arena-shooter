@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
+use lightyear::prelude::Controlled;
+use shared::player::Player;
 
 use crate::{
     shared::components::DespawnTimer,
@@ -118,7 +120,11 @@ fn handle_spawn_bullet_impact_effect(
     bullet_impact_body_effect_resource: Res<
         PlayerBulletHitEnemyImpactEffectHandle,
     >,
-    player_camera_transform_global: Single<&Transform, With<Player>>,
+    // FIXME: why is this called player_camera?
+    player_camera_transform_global: Single<
+        &Transform,
+        (With<Player>, With<Controlled>),
+    >,
 ) {
     for message in message_reader.read() {
         let Some(bullet_impact_effect_handle) = (match message.variant {

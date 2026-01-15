@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    client::ConnectToServerMessage,
-    game_flow::states::{AppState, InGameState},
+    client::ConnectToServerMessage, game_flow::states::AppState,
     world::messages::SpawnMapMessage,
 };
 

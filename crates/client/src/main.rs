@@ -21,6 +21,7 @@ use crate::{
     game_flow::GameFlowPlugin,
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
+    particles::ParticlesPlugin,
     player::PlayerPlugin,
     shared::{CommonPlugin, systems::apply_render_layers_to_children},
     user_interface::UserInterfacePlugin,
@@ -37,7 +38,7 @@ mod game_flow;
 mod game_settings;
 mod gameplay_debug;
 // mod nav_mesh_pathfinding;
-// mod particles;
+mod particles;
 mod player;
 mod shared;
 mod user_interface;
@@ -117,7 +118,7 @@ fn main() {
         .add_plugins(CommonPlugin)
         // .add_plugins(EnemyPlugin)
         .add_plugins(UserInterfacePlugin)
-        // .add_plugins(ParticlesPlugin)
+        .add_plugins(ParticlesPlugin)
         .add_plugins(CharacterControllerPlugin)
         .add_plugins(AudioPlugin);
     // .add_plugins(NavMeshPathfindingPlugin);

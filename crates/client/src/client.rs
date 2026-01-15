@@ -1,4 +1,4 @@
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::net::{Ipv6Addr, SocketAddr};
 
 use async_compat::Compat;
 use bevy::color::palettes::css::WHITE;
@@ -146,21 +146,13 @@ pub fn send_client_update_position(
         &mut MessageSender<ClientUpdatePositionMessage>,
         With<Client>,
     >,
-    player_transform: Query<&Transform, (With<Player>, With<Controlled>)>,
+    player_transform: Single<&Transform, (With<Player>, With<Controlled>)>,
 ) {
-    match player_transform.single() {
-        Ok(player_transform) => {
-            message_sender.send::<OrderedReliableMessageChannel>(
-                ClientUpdatePositionMessage {
-                    new_translation: player_transform.translation,
-                },
-            );
-        }
-        // FIXME: add again
-        Err(error) => {
-            // warn!("Failed to get our own transform! {:?}", error)
-        }
-    }
+    message_sender.send::<OrderedReliableMessageChannel>(
+        ClientUpdatePositionMessage {
+            new_translation: player_transform.translation,
+        },
+    );
 }
 
 pub fn apply_server_position_other_clients(
