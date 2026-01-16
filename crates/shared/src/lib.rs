@@ -2,8 +2,9 @@ use avian3d::{PhysicsPlugins, prelude::*};
 use bevy::prelude::*;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr, ToSocketAddrs};
 
-use crate::protocol::ProtocolPlugin;
+use crate::{components::DespawnTimer, protocol::ProtocolPlugin};
 
+pub mod character_controller;
 pub mod collider_rules;
 pub mod components;
 pub mod messages;
@@ -46,9 +47,6 @@ pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
 pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
 pub const SPAWN_POINT_MEDIUM_PLASTIC_MAP: Vec3 = vec3(0.0, 15.0, 0.0);
 
-pub const CHARACTER_CAPSULE_RADIUS: f32 = 0.2;
-pub const CHARACTER_CAPSULE_LENGTH: f32 = 1.3;
-
 /// Functionality that runs on both client and server
 pub struct SharedPlugin;
 
@@ -68,4 +66,17 @@ pub enum SelectedMapState {
     #[default]
     MediumPlastic,
     TinyTown,
+}
+
+pub fn handle_despawn_timer(
+    despawn_timer_query: Query<(Entity, &mut DespawnTimer)>,
+    mut commands: Commands,
+    time: Res<Time>,
+) {
+    for (entity, mut timer) in despawn_timer_query {
+        timer.0.tick(time.delta());
+        if timer.0.just_finished() {
+            commands.entity(entity).despawn();
+        }
+    }
 }

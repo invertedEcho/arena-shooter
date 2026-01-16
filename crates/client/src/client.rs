@@ -12,7 +12,9 @@ use shared::protocol::{
     ClientUpdatePositionMessage, OrderedReliableMessageChannel,
     PlayerPositionServer,
 };
-use shared::utils::{DisconnectReason, parse_lightyear_disconnect_reason};
+use shared::utils::lightyear::{
+    DisconnectReason, parse_lightyear_disconnect_reason,
+};
 
 use crate::auth::{
     ConnectTokenRequestTask, get_connect_token_from_auth_backend,
@@ -188,9 +190,10 @@ pub fn handle_disconnect(
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     match disconnected.get(trigger.entity) {
-        // for some reason the Disconnected component gets inserted even if we weren't even
-        // connected in the first place. So, for now, we check if there is a reason, if not, we
-        // weren't actually disconnected.
+        // TODO: they may be a better reason, we could inspect the libraries components flow
+        // The library inserts Disconnected component per default, as that is the default state,
+        // even if we weren't even connected in the first place. So, for now,
+        // we check if there is a reason, if not, we weren't actually disconnected.
         // https://github.com/cBournhonesque/lightyear/discussions/1375
         Ok(disconnected) => {
             if let Some(disconnected_reason) = &disconnected.reason {

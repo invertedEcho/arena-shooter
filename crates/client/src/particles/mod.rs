@@ -1,12 +1,9 @@
 use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
 use lightyear::prelude::Controlled;
-use shared::player::Player;
+use shared::{player::Player, utils::random::get_random_number_from_range};
 
-use crate::{
-    shared::components::DespawnTimer,
-    utils::random::get_random_number_from_range,
-};
+use crate::shared::components::DespawnTimer;
 
 const BULLET_IMPACT_PARTICLE_LIFETIME: f32 = 0.1;
 const BULLET_IMPACT_PARTICLE_VELOCITY: f32 = 3.0;

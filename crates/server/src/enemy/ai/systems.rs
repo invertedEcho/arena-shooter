@@ -3,18 +3,14 @@ use bevy::prelude::*;
 use bevy_landmass::{
     AgentDesiredVelocity3d, AgentState, AgentTarget3d, Velocity3d,
 };
-use shared::player::Player;
+use shared::{player::Player, utils::transform::is_facing_target_without_y};
 
-use crate::{
-    enemy::{
-        Enemy, EnemyState,
-        ai::{
-            ENEMY_FOV, ENEMY_VISION_RANGE,
-            messages::UpdateEnemyAgentTargetMessage,
-        },
-        spawn::AgentEnemyEntityPointer,
+use crate::enemy::{
+    Enemy, EnemyState,
+    ai::{
+        ENEMY_FOV, ENEMY_VISION_RANGE, messages::UpdateEnemyAgentTargetMessage,
     },
-    utils::transform::is_facing_target_without_y,
+    spawn::AgentEnemyEntityPointer,
 };
 
 /// This system is the only system allowed to change the enemy state

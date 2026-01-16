@@ -11,6 +11,10 @@ dotenvy = "0.15.7"
 hex = "0.4.3"
 lightyear = {version = "0.25.5", features = ["server", "netcode", "replication", "udp", "trace", "std"]}
 lightyear_replication = "0.25.5"
+avian_rerecast = "0.3.0"
+bevy_landmass = "0.10.0"
+bevy_rerecast = "0.3.0"
+landmass_rerecast = "0.1.0"
 shared = { workspace = true }
 tokio = {workspace = true}
 async-compat = {workspace = true}

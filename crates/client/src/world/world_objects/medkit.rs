@@ -2,7 +2,10 @@ use std::time::Duration;
 
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use shared::player::{DEFAULT_PLAYER_HEALTH, Health, Player};
+use shared::{
+    components::Health,
+    player::{DEFAULT_PLAYER_HEALTH, Player},
+};
 
 use crate::game_flow::states::AppState;
 

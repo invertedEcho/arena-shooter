@@ -17,6 +17,13 @@ use bevy::prelude::*;
 use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
 };
+use shared::{
+    character_controller::{
+        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+    },
+    components::Health,
+    player::Health,
+};
 
 use crate::enemy::Enemy;
 
@@ -158,7 +165,6 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             )
                             .with_max_distance(0.2),
                             CharacterController,
-                            DespawnOnExit(AppState::InGame),
                         ))
                         .with_child((
                             Transform {

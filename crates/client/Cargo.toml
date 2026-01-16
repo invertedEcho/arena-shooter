@@ -5,15 +5,11 @@ edition = "2024"
 
 [dependencies]
 avian3d = {version = "0.4.1", features = ["serialize"]}
-avian_rerecast = "0.3.0"
 bevy = { version = "0.17.2", features = ["mp3", "file_watcher", "wayland", "dynamic_linking", "experimental_bevy_ui_widgets", "track_location"] }
 bevy-inspector-egui = "0.34"
 bevy_hanabi = "0.17"
-bevy_landmass = "0.10.0"
-bevy_rerecast = "0.3.0"
 bevy_rich_text3d = "0.5.1"
 dirs = "6.0.0"
-landmass_rerecast = "0.1.0"
 lightyear = {version = "0.25.5", features = ["client", "netcode", "replication", "udp", "avian3d", "trace", "interpolation", "prediction", "std"]}
 lightyear_avian3d = "0.25.5"
 lightyear_sync = {version = "0.25.5", features = ["client"]}

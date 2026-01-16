@@ -1,0 +1,9 @@
+use bevy::prelude::*;
+
+pub const CHARACTER_CAPSULE_RADIUS: f32 = 0.2;
+pub const CHARACTER_CAPSULE_LENGTH: f32 = 1.3;
+
+pub const CHARACTER_HEIGHT: f32 =
+    CHARACTER_CAPSULE_LENGTH + CHARACTER_CAPSULE_RADIUS * 2.0;
+
+pub const LOCAL_FEET_CHARACTER: f32 = -1.0;

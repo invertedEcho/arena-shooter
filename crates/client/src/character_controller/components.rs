@@ -1,8 +1,7 @@
 use avian3d::{math::Quaternion, prelude::*};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-
-use crate::character_controller::{
+use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
 

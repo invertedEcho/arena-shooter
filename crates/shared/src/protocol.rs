@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use lightyear::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::player::{Health, Player};
+use crate::{components::Health, player::Player};
 
 pub struct OrderedReliableMessageChannel;
 pub struct SequencedUnreliableChannel;

@@ -5,21 +5,6 @@ use bevy::{
     scene::SceneInstanceReady,
 };
 
-use super::components::DespawnTimer;
-
-pub fn handle_despawn_timer(
-    despawn_timer_query: Query<(Entity, &mut DespawnTimer)>,
-    mut commands: Commands,
-    time: Res<Time>,
-) {
-    for (entity, mut timer) in despawn_timer_query {
-        timer.0.tick(time.delta());
-        if timer.0.just_finished() {
-            commands.entity(entity).despawn();
-        }
-    }
-}
-
 /// Currently [`RenderLayers`] are not applied to children of a scene.
 /// This [`SceneInstanceReady`] observer applies the [`RenderLayers`]
 /// of a [`SceneRoot`] to all children with a [`Transform`] and without a [`RenderLayers`].

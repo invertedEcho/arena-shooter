@@ -1,19 +1,17 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
+use shared::components::AnimationPlayerEntityPointer;
 
-use crate::{
-    enemy::{
-        Enemy, EnemyState,
-        animate::{
-            ENEMY_MODEL_NAME, ENEMY_MODEL_PATH, EnemyAnimationType,
-            TOTAL_ENEMY_MODEL_ANIMATIONS,
-            get_animation_index_for_enemy_animation_type,
-            get_animation_type_for_enemy_state,
-            messages::PlayEnemyAnimationMessage, resources::EnemyAnimations,
-        },
+use crate::enemy::{
+    Enemy, EnemyState,
+    animate::{
+        ENEMY_MODEL_NAME, ENEMY_MODEL_PATH, EnemyAnimationType,
+        TOTAL_ENEMY_MODEL_ANIMATIONS,
+        get_animation_index_for_enemy_animation_type,
+        get_animation_type_for_enemy_state,
+        messages::PlayEnemyAnimationMessage, resources::EnemyAnimations,
     },
-    shared::components::AnimationPlayerEntityPointer,
 };
 
 pub fn load_enemy_animations(

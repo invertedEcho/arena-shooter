@@ -28,21 +28,17 @@ use crate::{
     world::WorldPlugin,
 };
 
-// FIXME: reintroduce all commented out plugins
 mod audio;
 mod auth;
 mod character_controller;
 mod client;
-// mod enemy;
 mod game_flow;
 mod game_settings;
 mod gameplay_debug;
-// mod nav_mesh_pathfinding;
 mod particles;
 mod player;
 mod shared;
 mod user_interface;
-mod utils;
 mod world;
 
 fn main() {

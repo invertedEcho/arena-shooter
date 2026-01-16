@@ -1,25 +1,13 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use shared::{components::Health, player::Player};
 
-use crate::{
-    enemy::{
-        Enemy, EnemyState,
-        animate::{EnemyAnimationType, messages::PlayEnemyAnimationMessage},
-        shooting::{
-            components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
-        },
+use crate::enemy::{
+    Enemy, EnemyState,
+    animate::{EnemyAnimationType, messages::PlayEnemyAnimationMessage},
+    shooting::{
+        components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
     },
-    game_flow::states::InGameState,
-    gameplay_debug::{DebugGizmoLine, DebugGizmos},
-    player::{
-        Player, PlayerDeathMessage,
-        shooting::{
-            components::BloodScreenEffect,
-            messages::PlayerBulletHitEnemyMessage,
-        },
-    },
-    shared::components::{DespawnTimer, Health},
-    utils::random::get_random_number_from_range,
 };
 
 pub fn handle_player_bullet_hit_enemy_message(
@@ -196,9 +184,6 @@ pub fn handle_enemy_killed_message(
         enemy_state.update_state(EnemyState::Dead);
         commands
             .entity(enemy_entity)
-            .remove::<RigidBody>()
-            .remove::<Collider>()
-            .remove::<CollidingEntities>()
             .insert(DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)));
     }
 }

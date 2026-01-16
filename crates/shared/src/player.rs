@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::components::Health;
+
 pub const DEFAULT_PLAYER_HEALTH: f32 = 100.0;
 
 #[derive(Component, Debug, Reflect, Serialize, PartialEq, Deserialize)]
@@ -27,9 +29,6 @@ impl Default for PlayerBundle {
         }
     }
 }
-
-#[derive(Component, PartialEq, Serialize, Deserialize)]
-pub struct Health(pub f32);
 
 #[derive(Component, PartialEq, Clone)]
 pub enum AimType {

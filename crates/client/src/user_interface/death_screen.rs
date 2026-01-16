@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use lightyear::prelude::Controlled;
 use shared::{
-    SPAWN_POINT_MEDIUM_PLASTIC_MAP,
-    player::{DEFAULT_PLAYER_HEALTH, Health},
+    SPAWN_POINT_MEDIUM_PLASTIC_MAP, components::Health,
+    player::DEFAULT_PLAYER_HEALTH,
 };
 
 use crate::{

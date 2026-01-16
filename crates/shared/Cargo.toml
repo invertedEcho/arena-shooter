@@ -8,3 +8,4 @@ avian3d = {version = "0.4.1", features = ["serialize"]}
 bevy = "0.17.3"
 lightyear = {version = "0.25.5", features = ["trace", "client", "server"]}
 serde = "1.0.228"
+rand = {workspace=true}

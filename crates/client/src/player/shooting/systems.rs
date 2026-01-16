@@ -2,7 +2,8 @@ use avian3d::prelude::*;
 use bevy::{input::mouse::MouseWheel, prelude::*};
 use lightyear::prelude::*;
 use shared::{
-    player::{AimType, Health},
+    components::Health,
+    player::AimType,
     protocol::{OrderedReliableMessageChannel, ShootRequest},
 };
 

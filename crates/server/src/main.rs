@@ -32,8 +32,10 @@ use shared::{
 use crate::auth::{
     ClientIds, load_private_key, start_netcode_authentication_task,
 };
+use crate::enemy::EnemyPlugin;
 
 mod auth;
+mod enemy;
 
 #[derive(Resource, PartialEq)]
 pub enum ServerRunMode {
@@ -91,6 +93,7 @@ fn main() {
             info!("Running server in headful mode!");
         }
     }
+    app.add_plugins(EnemyPlugin);
     app.add_systems(Startup, spawn_map_colliders);
 
     if run_mode == ServerRunMode::Headful {

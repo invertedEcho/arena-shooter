@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
 };
 use lightyear::prelude::Controlled;
-use shared::player::{AimType, Health};
+use shared::{components::Health, player::AimType};
 
 use crate::{
     game_flow::{
