@@ -6,7 +6,6 @@ use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
-use shared::get_server_socket_addr_client_side;
 use shared::player::Player;
 use shared::protocol::{
     ClientUpdatePositionMessage, OrderedReliableMessageChannel,
@@ -15,12 +14,17 @@ use shared::protocol::{
 use shared::utils::lightyear::{
     DisconnectReason, parse_lightyear_disconnect_reason,
 };
+use shared::{
+    NETCODE_PROTOCOL_VERSION, SERVER_PORT, ServerMode, get_private_key,
+    get_server_socket_addr_client_side,
+};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,
     get_connect_token_from_auth_backend,
 };
 use crate::character_controller::components::CharacterControllerBundle;
+use crate::game_flow::game_mode::GameModeState;
 use crate::game_flow::states::{
     AppState, DisconnectedState, InGameState, LoadingGameState,
 };
@@ -54,6 +58,7 @@ pub fn on_enter_connecting_to_server(
     mut commands: Commands,
     connected_query: Query<Has<Connected>>,
     mut task_state: ResMut<ConnectTokenRequestTask>,
+    game_mode: Res<State<GameModeState>>,
 ) {
     // Connected component only present on our own client
     for connected in connected_query {
@@ -63,30 +68,58 @@ pub fn on_enter_connecting_to_server(
         }
     }
 
-    info!(
-        "Connecting to server via {}",
-        get_server_socket_addr_client_side()
-    );
+    if *game_mode.get() == GameModeState::Multiplayer {
+        let auth_backend_addr = task_state.auth_backend_addr;
+        info!(
+            "Starting task to get auth ConnectToken, using {}",
+            auth_backend_addr
+        );
+        let task = IoTaskPool::get().spawn_local(Compat::new(async move {
+            get_connect_token_from_auth_backend(auth_backend_addr).await
+        }));
+        task_state.task = Some(task);
+    }
 
-    let auth_backend_addr = task_state.auth_backend_addr;
-    info!(
-        "Starting task to get ConnectToken, using {}",
-        auth_backend_addr
-    );
-    let task = IoTaskPool::get().spawn_local(Compat::new(async move {
-        get_connect_token_from_auth_backend(auth_backend_addr).await
-    }));
-    task_state.task = Some(task);
+    let server_address = match *game_mode.get() {
+        GameModeState::Multiplayer => get_server_socket_addr_client_side(),
+        _ => SocketAddr::new(
+            std::net::IpAddr::V6(Ipv6Addr::LOCALHOST),
+            SERVER_PORT,
+        ),
+    };
 
-    commands.spawn((
-        Name::new("Client"),
-        Client::default(),
-        LocalAddr(SocketAddr::new(Ipv6Addr::UNSPECIFIED.into(), CLIENT_PORT)),
-        PeerAddr(get_server_socket_addr_client_side()),
-        Link::new(None),
-        ReplicationReceiver::default(),
-        UdpIo::default(),
-    ));
+    info!("Connecting to server via {}", server_address);
+
+    let client = commands
+        .spawn((
+            Name::new("Client"),
+            Client::default(),
+            LocalAddr(SocketAddr::new(
+                Ipv6Addr::UNSPECIFIED.into(),
+                CLIENT_PORT,
+            )),
+            PeerAddr(server_address),
+            Link::new(None),
+            ReplicationReceiver::default(),
+            UdpIo::default(),
+        ))
+        .id();
+
+    let private_key = get_private_key(&ServerMode::LocalServerSinglePlayer);
+    commands.entity(client).insert(
+        NetcodeClient::new(
+            Authentication::Manual {
+                server_addr: server_address,
+                client_id: 0,
+                protocol_id: NETCODE_PROTOCOL_VERSION,
+                private_key,
+            },
+            NetcodeConfig::default(),
+        )
+        .unwrap(),
+    );
+    info!("TRIGGERING CONNECT");
+    commands.trigger(Connect { entity: client });
 }
 
 fn handle_connected(

@@ -1,7 +1,7 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use shared::{
-    GRAVITY,
+    GRAVITY, Medkit,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
         MAX_SLOPE_ANGLE, RUN_VELOCITY, WALK_VELOCITY,
@@ -10,12 +10,9 @@ use shared::{
     },
 };
 
-use crate::{
-    player::{
-        camera::components::{PlayerCameraState, WorldCamera},
-        shooting::components::PlayerWeapons,
-    },
-    world::world_objects::medkit::Medkit,
+use crate::player::{
+    camera::components::{PlayerCameraState, WorldCamera},
+    shooting::components::PlayerWeapons,
 };
 
 pub fn handle_keyboard_input_for_player(

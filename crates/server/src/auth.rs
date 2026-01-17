@@ -1,4 +1,3 @@
-use std::env;
 use std::net::SocketAddr;
 use std::sync::{Arc, RwLock};
 
@@ -14,25 +13,6 @@ use tokio::io::AsyncWriteExt;
 /// we don't have multiple clients with the same id
 #[derive(Resource, Default)]
 pub struct ClientIds(pub Arc<RwLock<HashSet<u64>>>);
-
-pub fn load_private_key() -> Result<[u8; 32], String> {
-    let value = env::var("SERVER_PRIVATE_KEY")
-        .map_err(|_| "SERVER_PRIVATE_KEY not set".to_string())?;
-
-    let bytes = hex::decode(&value)
-        .map_err(|e| format!("Invalid hex in SERVER_PRIVATE_KEY: {e}"))?;
-
-    if bytes.len() != 32 {
-        return Err(format!(
-            "SERVER_PRIVATE_KEY must be 32 bytes (got {})",
-            bytes.len()
-        ));
-    }
-
-    let mut key = [0u8; 32];
-    key.copy_from_slice(&bytes);
-    Ok(key)
-}
 
 /// Start a detached task that listens for incoming TCP connections and sends `ConnectToken`s to clients
 pub fn start_netcode_authentication_task(

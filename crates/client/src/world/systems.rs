@@ -15,7 +15,7 @@ use super::resources::WorldSceneHandle;
 use crate::game_flow::states::AppState;
 
 /// Spawns the corresponding map (determined by looking at SelectedMapState) on the client, when
-/// the corresponding message is read.
+/// we enter LoadingGameState::SpawningMap
 pub fn on_enter_spawn_map(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
@@ -28,7 +28,8 @@ pub fn on_enter_spawn_map(
     };
 
     info!(
-        "Received SpawnMapMessage, spawning map {:?} with path {:?}",
+        "Entered LoadingGameState::SpawningMap, spawning map {:?} with path \
+         {:?}",
         selected_map, map_path
     );
 

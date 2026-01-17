@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 
 use crate::enemy::ai::{
-    components::EnemyHotspot,
     messages::UpdateEnemyAgentTargetMessage,
     systems::{
         check_if_enemy_agent_reached_target, enemy_state_decision_system,

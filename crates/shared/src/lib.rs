@@ -1,6 +1,9 @@
 use avian3d::{PhysicsPlugins, prelude::*};
 use bevy::prelude::*;
-use std::net::{IpAddr, Ipv6Addr, SocketAddr, ToSocketAddrs};
+use std::{
+    env,
+    net::{IpAddr, Ipv6Addr, SocketAddr, ToSocketAddrs},
+};
 
 use crate::{
     character_controller::messages::MovementAction, components::DespawnTimer,
@@ -16,6 +19,65 @@ pub mod player;
 pub mod protocol;
 pub mod utils;
 
+// FIXME: Not sure if it should belong here, check later
+#[derive(Resource, PartialEq)]
+pub enum ServerRunMode {
+    Headless,
+    Headful,
+}
+
+#[derive(Resource)]
+pub enum ServerMode {
+    ServerBinary,
+    LocalServerSinglePlayer,
+}
+
+#[derive(Component)]
+pub struct Medkit {
+    pub active: bool,
+    pub health_to_give: f32,
+    pub float_direction: FloatDirection,
+    pub respawn_timer: Timer,
+}
+
+pub enum FloatDirection {
+    Up,
+    Down,
+}
+
+pub fn load_private_key_from_env() -> Result<[u8; 32], String> {
+    let value = env::var("SERVER_PRIVATE_KEY")
+        .map_err(|_| "SERVER_PRIVATE_KEY not set".to_string())?;
+
+    let bytes = hex::decode(&value)
+        .map_err(|e| format!("Invalid hex in SERVER_PRIVATE_KEY: {e}"))?;
+
+    if bytes.len() != 32 {
+        return Err(format!(
+            "SERVER_PRIVATE_KEY must be 32 bytes (got {})",
+            bytes.len()
+        ));
+    }
+
+    let mut key = [0u8; 32];
+    key.copy_from_slice(&bytes);
+    Ok(key)
+}
+
+// Dependin whether this is for server binary or server locally for single player, it will either:
+// - return private key from .env file (server binary)
+// - return static private key, just zeroes (local server for singleplayer on the client)
+pub fn get_private_key(server_mode: &ServerMode) -> [u8; 32] {
+    const LOCAL_SERVER_PRIVATE_KEY: [u8; 32] = [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    match server_mode {
+        ServerMode::ServerBinary => load_private_key_from_env().unwrap(),
+        ServerMode::LocalServerSinglePlayer => LOCAL_SERVER_PRIVATE_KEY,
+    }
+}
+
 pub const SERVER_PORT: u16 = 5888;
 pub const AUTH_BACKEND_PORT: u16 = 4000;
 
@@ -23,14 +85,14 @@ pub const SERVER_ADDRESS_SERVER_SIDE: IpAddr =
     IpAddr::V6(Ipv6Addr::UNSPECIFIED);
 
 pub fn get_server_socket_addr_client_side() -> SocketAddr {
-    "game.invertedecho.com:5888"
+    "localhost:5888"
         .to_socket_addrs()
         .expect("DNS resolution failed")
         .next()
         .unwrap()
 }
 pub fn get_auth_backend_socket_addr_client_side() -> SocketAddr {
-    "game.invertedecho.com:4000"
+    "localhost:4000"
         .to_socket_addrs()
         .expect("DNS resolution failed")
         .next()

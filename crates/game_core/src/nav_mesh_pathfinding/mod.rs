@@ -6,7 +6,10 @@ use landmass_rerecast::{
     Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
 };
 
-use shared::character_controller::{CHARACTER_HEIGHT, MAX_SLOPE_ANGLE};
+use shared::{
+    Medkit,
+    character_controller::{CHARACTER_HEIGHT, MAX_SLOPE_ANGLE},
+};
 
 pub const ENEMY_AGENT_RADIUS: f32 = 0.4;
 
@@ -39,7 +42,7 @@ fn generate_navmesh_on_map_colliders_ready(
     mut commands: Commands,
     mut generator: NavmeshGenerator,
     maybe_existing_nav_mesh: Option<Res<NavMeshHandle>>,
-    // all_entities_except_medkits: Query<Entity, Without<Medkit>>,
+    all_entities_except_medkits: Query<Entity, Without<Medkit>>,
 ) {
     let nav_mesh_settings = NavmeshSettings {
         // TODO: document why this radius is smaller than ENEMY_AGENT_RADIUS
@@ -50,8 +53,7 @@ fn generate_navmesh_on_map_colliders_ready(
         cell_size_fraction: 2.0,
         cell_height_fraction: 4.0,
         agent_height: CHARACTER_HEIGHT,
-        // FIXME: reintroduce
-        // filter: Some(HashSet::from_iter(all_entities_except_medkits)),
+        filter: Some(HashSet::from_iter(all_entities_except_medkits)),
         ..default()
     };
 

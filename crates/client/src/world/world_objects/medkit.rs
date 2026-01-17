@@ -3,6 +3,7 @@ use std::time::Duration;
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use shared::{
+    FloatDirection, Medkit,
     components::Health,
     player::{DEFAULT_PLAYER_HEALTH, Player},
 };
@@ -16,19 +17,6 @@ const MEDKIT_MODEL_PATH: &str = "models/world_objects/medkit.gltf";
 pub struct MedkitSpawnLocation;
 
 const DEFAULT_HEALTH_TO_GIVE_MEDKIT: f32 = 25.0;
-
-#[derive(Component)]
-pub struct Medkit {
-    active: bool,
-    health_to_give: f32,
-    float_direction: FloatDirection,
-    respawn_timer: Timer,
-}
-
-enum FloatDirection {
-    Up,
-    Down,
-}
 
 pub fn spawn_medkits(
     asset_server: Res<AssetServer>,

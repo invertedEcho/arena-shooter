@@ -45,7 +45,6 @@ pub enum EnemySpawnStrategy {
 
 fn handle_spawn_enemies_at_enemy_spawn_locations_message(
     mut message_reader: MessageReader<SpawnEnemiesMessage>,
-    asset_server: Res<AssetServer>,
     mut commands: Commands,
     enemy_spawn_locations: Query<
         (Entity, &Transform),

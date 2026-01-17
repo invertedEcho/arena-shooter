@@ -1,4 +1,7 @@
-use ::shared::{SharedPlugin, get_auth_backend_socket_addr_client_side};
+use ::shared::{
+    ServerMode, ServerRunMode, SharedPlugin,
+    get_auth_backend_socket_addr_client_side,
+};
 use bevy::{
     input_focus::InputDispatchPlugin,
     prelude::*,
@@ -10,7 +13,6 @@ use bevy_inspector_egui::{
     bevy_egui::{self, EguiPlugin},
     quick::WorldInspectorPlugin,
 };
-use lightyear::prelude::client::ClientPlugins;
 
 use crate::{
     audio::AudioPlugin,
@@ -87,7 +89,7 @@ fn main() {
     );
 
     // lightyear plugins
-    app.add_plugins(ClientPlugins::default());
+    app.add_plugins(lightyear::prelude::client::ClientPlugins::default());
 
     app.add_plugins(SharedPlugin);
 
@@ -107,6 +109,9 @@ fn main() {
         });
     }
 
+    app.insert_resource(ServerRunMode::Headless);
+    app.insert_resource(ServerMode::LocalServerSinglePlayer);
+    app.add_plugins(game_core::ServerPlugin);
     app.add_plugins(NetworkPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(WorldPlugin)
