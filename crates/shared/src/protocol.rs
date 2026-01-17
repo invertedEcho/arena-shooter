@@ -2,7 +2,11 @@ use bevy::prelude::*;
 use lightyear::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::{components::Health, player::Player};
+use crate::{
+    components::Health,
+    enemy::components::{Enemy, EnemyState},
+    player::Player,
+};
 
 pub struct OrderedReliableMessageChannel;
 pub struct SequencedUnreliableChannel;
@@ -51,5 +55,8 @@ impl Plugin for ProtocolPlugin {
         app.register_component::<PlayerPositionServer>();
 
         app.register_component::<Health>();
+
+        app.register_component::<Enemy>();
+        app.register_component::<EnemyState>();
     }
 }

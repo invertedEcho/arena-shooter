@@ -17,10 +17,13 @@ use shared::utils::lightyear::{
 };
 
 use crate::auth::{
-    ConnectTokenRequestTask, get_connect_token_from_auth_backend,
+    ConnectTokenRequestTask, fetch_connect_token,
+    get_connect_token_from_auth_backend,
 };
 use crate::character_controller::components::CharacterControllerBundle;
-use crate::game_flow::states::{AppState, DisconnectedState, InGameState};
+use crate::game_flow::states::{
+    AppState, DisconnectedState, InGameState, LoadingGameState,
+};
 use crate::player::camera::messages::SpawnPlayerCamerasMessage;
 
 const CLIENT_PORT: u16 = 0;
@@ -29,13 +32,16 @@ pub struct NetworkPlugin;
 
 impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<ConnectToServerMessage>();
+        app.add_systems(
+            OnEnter(LoadingGameState::ConnectingToServer),
+            on_enter_connecting_to_server,
+        );
         app.add_systems(
             Update,
             (
-                handle_connect_to_server_message,
                 send_client_update_position.run_if(in_state(AppState::InGame)),
                 apply_server_position_other_clients,
+                fetch_connect_token,
             ),
         );
         app.add_observer(handle_new_player);
@@ -44,52 +50,43 @@ impl Plugin for NetworkPlugin {
     }
 }
 
-#[derive(Message)]
-pub struct ConnectToServerMessage;
-
-pub fn handle_connect_to_server_message(
+pub fn on_enter_connecting_to_server(
     mut commands: Commands,
-    mut message_reader: MessageReader<ConnectToServerMessage>,
     connected_query: Query<Has<Connected>>,
     mut task_state: ResMut<ConnectTokenRequestTask>,
 ) {
-    for _ in message_reader.read() {
-        // Connected component only present on our own client
-        for connected in connected_query {
-            if connected {
-                info!("Already connected, skipping ConnectToServerMessage");
-                continue;
-            }
+    // Connected component only present on our own client
+    for connected in connected_query {
+        if connected {
+            info!("Already connected, skipping ConnectToServerMessage");
+            continue;
         }
-
-        info!(
-            "Connecting to server via {}",
-            get_server_socket_addr_client_side()
-        );
-
-        let auth_backend_addr = task_state.auth_backend_addr;
-        info!(
-            "Starting task to get ConnectToken, using {}",
-            auth_backend_addr
-        );
-        let task = IoTaskPool::get().spawn_local(Compat::new(async move {
-            get_connect_token_from_auth_backend(auth_backend_addr).await
-        }));
-        task_state.task = Some(task);
-
-        commands.spawn((
-            Name::new("Client"),
-            Client::default(),
-            LocalAddr(SocketAddr::new(
-                Ipv6Addr::UNSPECIFIED.into(),
-                CLIENT_PORT,
-            )),
-            PeerAddr(get_server_socket_addr_client_side()),
-            Link::new(None),
-            ReplicationReceiver::default(),
-            UdpIo::default(),
-        ));
     }
+
+    info!(
+        "Connecting to server via {}",
+        get_server_socket_addr_client_side()
+    );
+
+    let auth_backend_addr = task_state.auth_backend_addr;
+    info!(
+        "Starting task to get ConnectToken, using {}",
+        auth_backend_addr
+    );
+    let task = IoTaskPool::get().spawn_local(Compat::new(async move {
+        get_connect_token_from_auth_backend(auth_backend_addr).await
+    }));
+    task_state.task = Some(task);
+
+    commands.spawn((
+        Name::new("Client"),
+        Client::default(),
+        LocalAddr(SocketAddr::new(Ipv6Addr::UNSPECIFIED.into(), CLIENT_PORT)),
+        PeerAddr(get_server_socket_addr_client_side()),
+        Link::new(None),
+        ReplicationReceiver::default(),
+        UdpIo::default(),
+    ));
 }
 
 fn handle_connected(

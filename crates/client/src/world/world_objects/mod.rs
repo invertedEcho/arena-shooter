@@ -1,7 +1,5 @@
 use bevy::prelude::*;
 
-use medkit::MedkitSpawnLocation;
-
 use crate::{
     game_flow::states::{InGameState, LoadingGameState},
     world::world_objects::medkit::{
@@ -16,20 +14,19 @@ pub struct WorldObjectsPlugin;
 
 impl Plugin for WorldObjectsPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<MedkitSpawnLocation>()
-            .add_systems(
-                OnEnter(LoadingGameState::MapLoadedWithDependencies),
-                spawn_medkits,
+        app.add_systems(
+            OnEnter(LoadingGameState::SpawningColliders),
+            spawn_medkits,
+        )
+        .add_systems(
+            Update,
+            (
+                rotate_and_float_medkits,
+                detect_collision_medkit_with_player,
+                activate_medkits_over_time,
+                tick_respawn_timer_medkits,
             )
-            .add_systems(
-                Update,
-                (
-                    rotate_and_float_medkits,
-                    detect_collision_medkit_with_player,
-                    activate_medkits_over_time,
-                    tick_respawn_timer_medkits,
-                )
-                    .run_if(in_state(InGameState::Playing)),
-            );
+                .run_if(in_state(InGameState::Playing)),
+        );
     }
 }

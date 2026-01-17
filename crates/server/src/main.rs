@@ -16,7 +16,12 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use lightyear::prelude::server::*;
 use lightyear::prelude::*;
 use lightyear::utils::collections::HashSet;
-use shared::player::{Health, Player, PlayerBundle};
+use shared::character_controller::{
+    CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+};
+use shared::components::Health;
+use shared::enemy::components::Enemy;
+use shared::player::{Player, PlayerBundle};
 use shared::protocol::{
     ClientUpdatePositionMessage, PlayerPositionServer, ShootRequest,
 };
@@ -24,10 +29,7 @@ use shared::{
     AUTH_BACKEND_ADDRESS_SERVER_SIDE, MEDIUM_PLASTIC_MAP_PATH,
     SERVER_SOCKET_ADDR_SERVER_SIDE, get_server_socket_addr_client_side,
 };
-use shared::{
-    CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
-    NETCODE_PROTOCOL_VERSION, SharedPlugin,
-};
+use shared::{NETCODE_PROTOCOL_VERSION, SharedPlugin};
 
 use crate::auth::{
     ClientIds, load_private_key, start_netcode_authentication_task,
@@ -36,6 +38,7 @@ use crate::enemy::EnemyPlugin;
 
 mod auth;
 mod enemy;
+mod nav_mesh_pathfinding;
 
 #[derive(Resource, PartialEq)]
 pub enum ServerRunMode {
@@ -273,20 +276,25 @@ pub fn receive_client_update_position(
 
 pub fn receive_shoot_request(
     mut receivers: Query<(&mut MessageReceiver<ShootRequest>, Entity)>,
-    players: Query<(Entity, &ControlledBy), With<Player>>,
+    // TODO: make this more generic, just have a marker component that is like `ShooterEntity` or
+    // something?
+    player_or_enemies: Query<
+        (Entity, &ControlledBy),
+        Or<(With<Player>, With<Enemy>)>,
+    >,
     mut health_query: Query<&mut Health>,
     spatial_query: SpatialQuery,
 ) {
     for (mut message_receiver, remote_id) in receivers.iter_mut() {
         for message in message_receiver.receive() {
-            let Some(shooter_entity) = players
+            let Some(shooter_entity) = player_or_enemies
                 .iter()
                 .find(|(_, controlled_by)| controlled_by.owner == remote_id)
                 .map(|(entity, _)| entity)
             else {
                 info!(
-                    "Received shootrequest but no corresponding player could \
-                     be found"
+                    "Received shootrequest but no corresponding player or \
+                     enemy could be found"
                 );
                 continue;
             };

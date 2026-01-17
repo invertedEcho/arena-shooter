@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use std::fmt::Display;
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[states(scoped_entities)]
@@ -17,12 +18,22 @@ pub enum AppState {
 pub enum LoadingGameState {
     #[default]
     SpawningMap,
-    MapLoadedWithDependencies,
-    /// Avian generated all colliders for the map
-    CollidersReady,
-    /// Navmesh generation succeeded and the navmesh is ready
-    NavMeshReady,
+    /// The map has spawned, so now we spawn the collides
+    SpawningColliders,
+    /// Everything is ready, so now we can connect to the server
     ConnectingToServer,
+}
+
+impl Display for LoadingGameState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::SpawningMap => f.write_str("Spawning the map"),
+            Self::SpawningColliders => f.write_str("Setting up collisions"),
+            Self::ConnectingToServer => {
+                f.write_str("Connecting to the game server")
+            }
+        }
+    }
 }
 
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]

@@ -3,7 +3,7 @@ use bevy_hanabi::prelude::*;
 use lightyear::prelude::Controlled;
 use shared::{player::Player, utils::random::get_random_number_from_range};
 
-use crate::shared::components::DespawnTimer;
+use ::shared::components::DespawnTimer;
 
 const BULLET_IMPACT_PARTICLE_LIFETIME: f32 = 0.1;
 const BULLET_IMPACT_PARTICLE_VELOCITY: f32 = 3.0;
@@ -117,11 +117,7 @@ fn handle_spawn_bullet_impact_effect(
     bullet_impact_body_effect_resource: Res<
         PlayerBulletHitEnemyImpactEffectHandle,
     >,
-    // FIXME: why is this called player_camera?
-    player_camera_transform_global: Single<
-        &Transform,
-        (With<Player>, With<Controlled>),
-    >,
+    player_transform: Single<&Transform, (With<Player>, With<Controlled>)>,
 ) {
     for message in message_reader.read() {
         let Some(bullet_impact_effect_handle) = (match message.variant {
@@ -139,10 +135,7 @@ fn handle_spawn_bullet_impact_effect(
 
         let rotation_z = Quat::from_rotation_z(random_z_rotation);
         let rotation_towards_player_perpendicular =
-            player_camera_transform_global
-                .forward()
-                .cross(Vec3::Y)
-                .normalize();
+            player_transform.forward().cross(Vec3::Y).normalize();
 
         let transform = Transform {
             translation: Vec3 {

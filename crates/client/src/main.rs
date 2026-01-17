@@ -1,6 +1,5 @@
 use ::shared::{SharedPlugin, get_auth_backend_socket_addr_client_side};
 use bevy::{
-    // diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     input_focus::InputDispatchPlugin,
     prelude::*,
     ui_widgets::UiWidgetsPlugins,
@@ -15,7 +14,7 @@ use lightyear::prelude::client::ClientPlugins;
 
 use crate::{
     audio::AudioPlugin,
-    auth::{ConnectTokenRequestTask, fetch_connect_token},
+    auth::ConnectTokenRequestTask,
     character_controller::CharacterControllerPlugin,
     client::NetworkPlugin,
     game_flow::GameFlowPlugin,
@@ -28,10 +27,13 @@ use crate::{
     world::WorldPlugin,
 };
 
+use enemy::animate::AnimateEnemyPlugin;
+
 mod audio;
 mod auth;
 mod character_controller;
 mod client;
+mod enemy;
 mod game_flow;
 mod game_settings;
 mod gameplay_debug;
@@ -64,7 +66,7 @@ fn main() {
             .set(bevy::log::LogPlugin {
                 // stupid audio library bevy uses which uses info level for debug level messages.. smh
                 filter: "symphonia_core=off,symphonia_bundle=off,wgpu=error,\
-                         naga=warn,lightyear=debug"
+                         naga=warn"
                     .to_string(),
                 ..default()
             })
@@ -105,25 +107,22 @@ fn main() {
         });
     }
 
-    // FIXME: reintroduce all commented plugins again
-    // own plugins
     app.add_plugins(NetworkPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(WorldPlugin)
         .add_plugins(GameFlowPlugin)
         .add_plugins(CommonPlugin)
-        // .add_plugins(EnemyPlugin)
         .add_plugins(UserInterfacePlugin)
         .add_plugins(ParticlesPlugin)
         .add_plugins(CharacterControllerPlugin)
-        .add_plugins(AudioPlugin);
-    // .add_plugins(NavMeshPathfindingPlugin);
+        .add_plugins(AudioPlugin)
+        .add_plugins(AnimateEnemyPlugin);
 
     if cfg!(debug_assertions) {
         app.add_plugins(GameplayDebugPlugin);
     }
+
     app.add_observer(apply_render_layers_to_children);
-    app.add_systems(Update, fetch_connect_token);
 
     app.run();
 }

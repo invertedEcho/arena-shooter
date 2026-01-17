@@ -45,8 +45,7 @@ pub struct EnemyAiPlugin;
 
 impl Plugin for EnemyAiPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<EnemyHotspot>()
-            .add_message::<UpdateEnemyAgentTargetMessage>()
+        app.add_message::<UpdateEnemyAgentTargetMessage>()
             .add_systems(
                 Update,
                 (

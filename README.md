@@ -10,7 +10,6 @@
 
 ## Running the server/client
 - To run the server:
-    - Note that future releases will automatically connect to the main server (using custom servers may be added in the future)
     - `cargo run -p server <headless|headful>`
     - You can specify either headless or headful. Headless is useful for running where a window cant be created, e.g. servers. Headful will spawn a window, which may be useful to see the map and the spawned players
     - You can also emit the argument, and the server will be started in headless mode.

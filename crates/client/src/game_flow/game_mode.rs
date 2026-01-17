@@ -1,9 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{
-    client::ConnectToServerMessage, game_flow::states::AppState,
-    world::messages::SpawnMapMessage,
-};
+use crate::game_flow::states::AppState;
 
 pub struct GameModePlugin;
 
@@ -51,9 +48,7 @@ fn handle_start_game_mode_message(
     mut next_game_state_wave: ResMut<NextState<GameStateWave>>,
     // existing_enemies: Query<Entity, With<Enemy>>,
     current_game_mode: Res<State<GameModeState>>,
-    mut connect_to_server_message_writer: MessageWriter<ConnectToServerMessage>,
     mut app_state: ResMut<NextState<AppState>>,
-    mut spawn_map_message_writer: MessageWriter<SpawnMapMessage>,
 ) {
     for message in message_reader.read() {
         info!(
@@ -62,8 +57,6 @@ fn handle_start_game_mode_message(
         );
 
         if !message.restart {
-            spawn_map_message_writer.write(SpawnMapMessage);
-            connect_to_server_message_writer.write(ConnectToServerMessage);
             app_state.set(AppState::LoadingGame);
         }
 

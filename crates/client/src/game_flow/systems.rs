@@ -90,10 +90,9 @@ pub fn check_world_scene_loaded(
         {
             info!(
                 "Map assets loaded!, setting LoadingGameSubState to \
-                 MapLoadedWithDependencies"
+                 SpawningColliders"
             );
-            next_game_loading_state
-                .set(LoadingGameState::MapLoadedWithDependencies);
+            next_game_loading_state.set(LoadingGameState::SpawningColliders);
         }
     }
 }
@@ -102,30 +101,8 @@ pub fn check_collider_constructor_hierarchy_ready(
     _trigger: On<ColliderConstructorHierarchyReady>,
     mut next_game_loading_state: ResMut<NextState<LoadingGameState>>,
 ) {
-    // next_game_loading_state.set(LoadingGameSubState::CollidersReady);
-    // FIXME: add navmesh generation again
-    next_game_loading_state.set(LoadingGameState::NavMeshReady);
+    next_game_loading_state.set(LoadingGameState::ConnectingToServer);
 }
-
-// pub fn check_navmesh_ready(
-//     trigger: On<NavmeshReady>,
-//     mut commands: Commands,
-//     mut next_game_loading_state: ResMut<NextState<LoadingGameSubState>>,
-//     mut nav_meshes: ResMut<Assets<Navmesh>>,
-// ) {
-//     let Some(nav_mesh_handle) = nav_meshes.get_strong_handle(trigger.0) else {
-//         panic!(
-//             "Got navmeshready event but the Handle could not be found using \
-//              the asset id from the trigger"
-//         );
-//     };
-//
-//     info!("Navmesh is now ready!");
-//     next_game_loading_state.set(LoadingGameSubState::NavMeshReady);
-//
-//     commands.insert_resource(NavMeshHandle(nav_mesh_handle));
-//     info!("NavMesh Handle stored");
-// }
 
 pub fn pause_all_animations(animation_players: Query<&mut AnimationPlayer>) {
     for mut animation_player in animation_players {

@@ -1,13 +1,12 @@
 use bevy::prelude::*;
+use shared::enemy::components::EnemyState;
 
-use crate::enemy::{
-    ai::components::EnemyState,
-    animate::{
-        messages::PlayEnemyAnimationMessage,
-        systems::{
-            link_enemy_animation, load_enemy_animations, play_enemy_animation,
-            setup_enemy_animation, update_animation_on_enemy_state_change,
-        },
+use crate::enemy::animate::{
+    messages::PlayEnemyAnimationMessage,
+    systems::{
+        link_enemy_animation, load_enemy_animations,
+        play_animation_on_changed_health, play_enemy_animation,
+        setup_enemy_animation, update_animation_on_enemy_state_change,
     },
 };
 
@@ -34,6 +33,7 @@ impl Plugin for AnimateEnemyPlugin {
                     link_enemy_animation,
                     play_enemy_animation,
                     update_animation_on_enemy_state_change,
+                    play_animation_on_changed_health,
                 ),
             )
             .add_message::<PlayEnemyAnimationMessage>();

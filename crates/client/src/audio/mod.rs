@@ -1,9 +1,9 @@
 use bevy::{audio::Volume, prelude::*};
+use shared::components::DespawnTimer;
 
 use crate::{
     game_flow::states::AppState, game_settings::GameSettings,
     player::shooting::messages::PlayerWeaponFiredMessage,
-    shared::components::DespawnTimer,
 };
 
 pub struct AudioPlugin;

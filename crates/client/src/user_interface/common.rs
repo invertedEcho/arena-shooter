@@ -2,10 +2,7 @@ use bevy::prelude::*;
 use lightyear::prelude::*;
 
 use crate::{
-    game_flow::{
-        game_mode::GameModeState,
-        states::{AppState, MainMenuState},
-    },
+    game_flow::states::{AppState, MainMenuState},
     user_interface::{
         map_selection::MapSelectionButton,
         settings_menu::SettingsChangeTabButton,

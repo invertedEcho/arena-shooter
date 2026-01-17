@@ -1,17 +1,16 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
-use shared::components::AnimationPlayerEntityPointer;
+use shared::{
+    components::{AnimationPlayerEntityPointer, Health},
+    enemy::components::{Enemy, EnemyState},
+};
 
-use crate::enemy::{
-    Enemy, EnemyState,
-    animate::{
-        ENEMY_MODEL_NAME, ENEMY_MODEL_PATH, EnemyAnimationType,
-        TOTAL_ENEMY_MODEL_ANIMATIONS,
-        get_animation_index_for_enemy_animation_type,
-        get_animation_type_for_enemy_state,
-        messages::PlayEnemyAnimationMessage, resources::EnemyAnimations,
-    },
+use crate::enemy::animate::{
+    ENEMY_MODEL_NAME, ENEMY_MODEL_PATH, EnemyAnimationType,
+    TOTAL_ENEMY_MODEL_ANIMATIONS, get_animation_index_for_enemy_animation_type,
+    get_animation_type_for_enemy_state, messages::PlayEnemyAnimationMessage,
+    resources::EnemyAnimations,
 };
 
 pub fn load_enemy_animations(
@@ -167,5 +166,34 @@ pub fn update_animation_on_enemy_state_change(
             animaton_type: animation_type,
             repeat,
         });
+    }
+}
+
+pub fn play_animation_on_changed_health(
+    enemy_query: Query<(Entity, &Health), (Changed<Health>, With<Enemy>)>,
+    mut play_enemy_animation_message_writer: MessageWriter<
+        PlayEnemyAnimationMessage,
+    >,
+) {
+    for (enemy_entity, changed_enemy_health) in enemy_query {
+        if changed_enemy_health.0 > 0.0 {
+            play_enemy_animation_message_writer.write(
+                PlayEnemyAnimationMessage {
+                    enemy: enemy_entity,
+                    animaton_type: EnemyAnimationType::HitReceive,
+                    repeat: false,
+                },
+            );
+        } else {
+            // FIXME: reintroduce
+            // enemy_killed_event_writer.write(EnemyKilledMessage(enemy_entity));
+            play_enemy_animation_message_writer.write(
+                PlayEnemyAnimationMessage {
+                    enemy: enemy_entity,
+                    animaton_type: EnemyAnimationType::Death,
+                    repeat: false,
+                },
+            );
+        }
     }
 }

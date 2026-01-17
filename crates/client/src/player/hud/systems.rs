@@ -3,7 +3,10 @@ use bevy::{
     prelude::*,
 };
 use lightyear::prelude::Controlled;
-use shared::{components::Health, player::AimType};
+use shared::{
+    components::{DespawnTimer, Health},
+    player::AimType,
+};
 
 use crate::{
     game_flow::{
@@ -29,7 +32,6 @@ use crate::{
             },
         },
     },
-    shared::components::DespawnTimer,
     user_interface::shared::{ITALIC_GAME_FONT_PATH, UI_SELECTED, UI_TEXT},
 };
 

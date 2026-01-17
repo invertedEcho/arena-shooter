@@ -1,26 +1,17 @@
 use bevy::prelude::*;
+use shared::character_controller::messages::MovementAction;
 
 use crate::{
-    character_controller::{
-        messages::MovementAction,
-        systems::{
-            apply_gravity_over_time, apply_movement_damping, check_above_head,
-            handle_keyboard_input_for_player,
-            handle_movement_actions_for_character_controllers, update_grounded,
-        },
+    character_controller::systems::{
+        apply_gravity_over_time, apply_movement_damping, check_above_head,
+        handle_keyboard_input_for_player,
+        handle_movement_actions_for_character_controllers, update_grounded,
     },
     game_flow::states::{AppState, InGameState},
 };
 
 pub mod components;
-pub mod messages;
 mod systems;
-
-pub const WALK_VELOCITY: f32 = 2.0;
-pub const RUN_VELOCITY: f32 = 5.0;
-pub const JUMP_VELOCITY: f32 = 3.0;
-
-pub const MAX_SLOPE_ANGLE: f32 = 45.0_f32.to_radians();
 
 pub struct CharacterControllerPlugin;
 

@@ -2,11 +2,15 @@ use avian3d::{PhysicsPlugins, prelude::*};
 use bevy::prelude::*;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr, ToSocketAddrs};
 
-use crate::{components::DespawnTimer, protocol::ProtocolPlugin};
+use crate::{
+    character_controller::messages::MovementAction, components::DespawnTimer,
+    protocol::ProtocolPlugin,
+};
 
 pub mod character_controller;
 pub mod collider_rules;
 pub mod components;
+pub mod enemy;
 pub mod messages;
 pub mod player;
 pub mod protocol;
@@ -43,6 +47,8 @@ pub const NETCODE_PROTOCOL_VERSION: u64 = 0;
 
 pub const GRAVITY: f32 = 9.81;
 
+pub const DEFAULT_BULLET_DAMAGE: f32 = 7.5;
+
 pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
 pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
 pub const SPAWN_POINT_MEDIUM_PLASTIC_MAP: Vec3 = vec3(0.0, 15.0, 0.0);
@@ -54,9 +60,12 @@ impl Plugin for SharedPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(ProtocolPlugin);
 
+        app.add_message::<MovementAction>();
+
         app.add_plugins(PhysicsPlugins::default().build())
             // .add_plugins(PhysicsDebugPlugin)
             .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
+        app.add_systems(Update, handle_despawn_timer);
     }
 }
 

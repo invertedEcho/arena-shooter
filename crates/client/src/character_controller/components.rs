@@ -1,13 +1,9 @@
 use avian3d::{math::Quaternion, prelude::*};
 use bevy::prelude::*;
-use serde::{Deserialize, Serialize};
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+    components::{CharacterController, Grounded},
 };
-
-/// A marker component indicating that an entity is using a character controller
-#[derive(Component, Serialize, Deserialize, PartialEq)]
-pub struct CharacterController;
 
 #[derive(Bundle)]
 pub struct CharacterControllerBundle {
@@ -32,9 +28,7 @@ impl Default for CharacterControllerBundle {
                 .lock_rotation_x()
                 .lock_rotation_y()
                 .lock_rotation_z(),
-            // TODO: should this tart with false or true? -> i think it doesnt really matter as it
-            // will be updated by update_grounded system anyways
-            grounded: Grounded(true),
+            grounded: Grounded(false),
             ground_caster: ShapeCaster::new(
                 Collider::capsule(
                     CHARACTER_CAPSULE_RADIUS,
@@ -46,14 +40,5 @@ impl Default for CharacterControllerBundle {
             )
             .with_max_distance(0.1),
         }
-    }
-}
-
-#[derive(Component, Serialize, Deserialize, PartialEq, Clone, Debug)]
-pub struct Grounded(pub bool);
-
-impl Default for Grounded {
-    fn default() -> Self {
-        Self(true)
     }
 }

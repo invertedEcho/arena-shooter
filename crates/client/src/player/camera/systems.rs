@@ -5,7 +5,7 @@ use bevy::{
 };
 use bevy_inspector_egui::bevy_egui;
 use lightyear::prelude::Controlled;
-use shared::player::AimType;
+use shared::{components::DespawnTimer, player::AimType};
 
 use crate::{
     player::{
@@ -28,7 +28,7 @@ use crate::{
             },
         },
     },
-    shared::{WeaponType, components::DespawnTimer},
+    shared::WeaponType,
 };
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;

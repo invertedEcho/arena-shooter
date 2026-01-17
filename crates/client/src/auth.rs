@@ -47,13 +47,13 @@ pub async fn get_connect_token_from_auth_backend(
 ) -> ConnectToken {
     let stream = tokio::net::TcpStream::connect(auth_backend_address)
         .await
-        .expect(
-            format!(
+        .unwrap_or_else(|_| {
+            panic!(
                 "Failed to connect to authentication server on {:?}",
                 auth_backend_address
             )
-            .as_str(),
-        );
+        });
+
     info!("auth backend tcp stream address: {:?}", stream.peer_addr());
     // wait for the socket to be readable
     stream.readable().await.unwrap();

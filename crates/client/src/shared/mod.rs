@@ -1,14 +1,9 @@
 use bevy::prelude::*;
 use std::fmt::Display;
 
-use crate::shared::systems::{
-    disable_culling_for_skinned_meshes, handle_despawn_timer,
-};
+use crate::shared::systems::disable_culling_for_skinned_meshes;
 
-pub mod components;
 pub mod systems;
-
-pub const DEFAULT_BULLET_DAMAGE: f32 = 7.5;
 
 pub struct CommonPlugin;
 
@@ -29,10 +24,7 @@ impl Display for WeaponType {
 
 impl Plugin for CommonPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (handle_despawn_timer, disable_culling_for_skinned_meshes),
-        );
+        app.add_systems(Update, disable_culling_for_skinned_meshes);
     }
 }
 

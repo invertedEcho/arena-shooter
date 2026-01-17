@@ -1,4 +1,4 @@
-use std::env::{self, VarError};
+use std::env;
 use std::net::SocketAddr;
 use std::sync::{Arc, RwLock};
 
