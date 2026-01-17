@@ -50,6 +50,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
             },
             DespawnOnExit(MainMenuState::Root),
             BackgroundColor(UI_BG),
+            Name::new("Main Menu UI Root"),
         ))
         .with_children(|parent| {
             parent

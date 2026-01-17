@@ -61,6 +61,11 @@ pub fn start_server(
     server_run_mode: Res<ServerRunMode>,
     server_mode: Res<ServerMode>,
 ) {
+    let debug_name = match *server_mode {
+        ServerMode::LocalServerSinglePlayer => "Local Server for singleplayer",
+        ServerMode::ServerBinary => "Server from server Binary",
+    };
+
     let server = commands
         .spawn((
             NetcodeServer::new(NetcodeConfig {
@@ -70,6 +75,7 @@ pub fn start_server(
             }),
             LocalAddr(SERVER_SOCKET_ADDR_SERVER_SIDE),
             ServerUdpIo::default(),
+            Name::new(debug_name),
         ))
         .id();
 
@@ -101,6 +107,7 @@ fn handle_new_client(
     mut commands: Commands,
     materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,
+    server_mode: Res<ServerMode>,
 ) {
     if let Ok(remote_id) = query.get(trigger.entity) {
         let client_id = remote_id.0;
@@ -138,21 +145,23 @@ fn handle_new_client(
             ))
             .id();
 
-        // on headless setup, materials doesnt exist
-        if let Some(mut materials) = materials {
-            commands.entity(client).insert((
-                // thereotically this isnt needed, as each client inserts the mesh with material when a
-                // new player is added, but for now we keep it so we can see what happens on the server.
-                // meshes are not replicated
-                Mesh3d(meshes.add(Capsule3d::new(
-                    CHARACTER_CAPSULE_RADIUS,
-                    CHARACTER_CAPSULE_LENGTH,
-                ))),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: WHITE.into(),
-                    ..Default::default()
-                })),
-            ));
+        if *server_mode == ServerMode::ServerBinary {
+            // on headless setup, materials doesnt exist
+            if let Some(mut materials) = materials {
+                commands.entity(client).insert((
+                    // thereotically this isnt needed, as each client inserts the mesh with material when a
+                    // new player is added, but for now we keep it so we can see what happens on the server.
+                    // meshes are not replicated
+                    Mesh3d(meshes.add(Capsule3d::new(
+                        CHARACTER_CAPSULE_RADIUS,
+                        CHARACTER_CAPSULE_LENGTH,
+                    ))),
+                    MeshMaterial3d(materials.add(StandardMaterial {
+                        base_color: WHITE.into(),
+                        ..Default::default()
+                    })),
+                ));
+            }
         }
     }
 }

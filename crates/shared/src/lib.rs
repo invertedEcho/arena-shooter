@@ -26,7 +26,7 @@ pub enum ServerRunMode {
     Headful,
 }
 
-#[derive(Resource)]
+#[derive(Resource, PartialEq)]
 pub enum ServerMode {
     ServerBinary,
     LocalServerSinglePlayer,
@@ -125,7 +125,7 @@ impl Plugin for SharedPlugin {
         app.add_message::<MovementAction>();
 
         app.add_plugins(PhysicsPlugins::default().build())
-            // .add_plugins(PhysicsDebugPlugin)
+            .add_plugins(PhysicsDebugPlugin)
             .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
         app.add_systems(Update, handle_despawn_timer);
     }

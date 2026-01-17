@@ -62,7 +62,7 @@ fn stop_music_audio(
 #[derive(Component)]
 pub struct AudioPlayerContainer;
 fn spawn_audio_player_container(mut commands: Commands) {
-    commands.spawn(AudioPlayerContainer);
+    commands.spawn((AudioPlayerContainer, Name::new("AudioPlayerContainer")));
 }
 
 pub fn play_shooting_sound_on_player_weapon_fired(

@@ -53,6 +53,7 @@ fn spawn_wave_game_mode_death_screen(
             ImageNode::new(
                 asset_server.load("hud/blood_screen_effects/Effect_3.png"),
             ),
+            Name::new("Death Screen Root"),
         ))
         .with_children(|parent| {
             parent

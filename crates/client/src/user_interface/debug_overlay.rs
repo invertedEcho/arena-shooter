@@ -55,6 +55,7 @@ fn spawn_debug_overlay(mut commands: Commands) {
                 ..default()
             },
             DespawnOnExit(AppDebugState::DebugVisible),
+            Name::new("Debug Overlay UI Root"),
         ))
         .with_children(|parent| {
             parent.spawn((

@@ -139,6 +139,7 @@ fn handle_new_player(
     >,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
+    server_mode: Res<ServerMode>,
 ) {
     if let Ok(is_controlled) = player_query.get(trigger.entity)
         && is_controlled
@@ -155,7 +156,8 @@ fn handle_new_player(
         ));
         spawn_player_camera_message_writer
             .write(SpawnPlayerCamerasMessage(trigger.entity));
-    } else {
+        // FIXME:
+    } else if *server_mode != ServerMode::LocalServerSinglePlayer {
         info!(
             "A player was added, but it doesn't have Controlled Component, \
              e.g. its not our player! Inserting visuals so we can see that \
@@ -220,8 +222,7 @@ pub fn handle_disconnect(
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     match disconnected.get(trigger.entity) {
-        // TODO: they may be a better reason, we could inspect the libraries components flow
-        // The library inserts Disconnected component per default, as that is the default state,
+        // NOTE: The library inserts Disconnected component per default, as that is the default state,
         // even if we weren't even connected in the first place. So, for now,
         // we check if there is a reason, if not, we weren't actually disconnected.
         // https://github.com/cBournhonesque/lightyear/discussions/1375
