@@ -3,6 +3,7 @@ use std::time::Duration;
 use avian3d::prelude::*;
 use bevy::{color::palettes::css::WHITE, prelude::*};
 use lightyear::{
+    connection::host::HostClient,
     netcode::NetcodeServer,
     prelude::{
         server::{ClientOf, NetcodeConfig, ServerUdpIo, Start},
@@ -103,13 +104,34 @@ fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
 
 fn handle_new_client(
     trigger: On<Add, Connected>,
-    query: Query<&RemoteId, With<ClientOf>>,
+    clients_query: Query<(Entity, &RemoteId), With<ClientOf>>,
     mut commands: Commands,
     materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,
     server_mode: Res<ServerMode>,
+    host_client_query: Query<Entity, With<HostClient>>,
 ) {
-    if let Ok(remote_id) = query.get(trigger.entity) {
+    if let Ok((entity_from_query, remote_id)) =
+        clients_query.get(trigger.entity)
+    {
+        info!(
+            "Do we even have host clients?: {}",
+            host_client_query.count()
+        );
+        for host_client_query2 in host_client_query {
+            info!("HEREEE: {}", host_client_query2);
+        }
+
+        // info!(
+        //     "So trigger, e.g. the entity that got Connected inserted, is: {}",
+        //     trigger.entity
+        // );
+        // info!(
+        //     "And the one that matched our clients with remote_id and \
+        //      client_of: {}",
+        //     entity_from_query
+        // );
+
         let client_id = remote_id.0;
         info!(
             "Spawning player for fully connected Client entity: {} | \
@@ -149,9 +171,6 @@ fn handle_new_client(
             // on headless setup, materials doesnt exist
             if let Some(mut materials) = materials {
                 commands.entity(client).insert((
-                    // thereotically this isnt needed, as each client inserts the mesh with material when a
-                    // new player is added, but for now we keep it so we can see what happens on the server.
-                    // meshes are not replicated
                     Mesh3d(meshes.add(Capsule3d::new(
                         CHARACTER_CAPSULE_RADIUS,
                         CHARACTER_CAPSULE_LENGTH,

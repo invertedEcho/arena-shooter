@@ -16,3 +16,4 @@ tokio = {workspace = true}
 async-compat = {workspace = true}
 rand = {workspace = true}
 serde_json = {workspace = true}
+bevy_common_assets = {version = "0.15.0", features = ["json"]}

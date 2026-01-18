@@ -13,6 +13,7 @@ use bevy_inspector_egui::{
     bevy_egui::{self, EguiPlugin},
     quick::WorldInspectorPlugin,
 };
+use lightyear::connection::host::HostPlugin;
 
 use crate::{
     audio::AudioPlugin,
@@ -68,7 +69,7 @@ fn main() {
             .set(bevy::log::LogPlugin {
                 // stupid audio library bevy uses which uses info level for debug level messages.. smh
                 filter: "symphonia_core=off,symphonia_bundle=off,wgpu=error,\
-                         naga=warn"
+                         naga=warn,lightyear=debug"
                     .to_string(),
                 ..default()
             })
@@ -87,6 +88,8 @@ fn main() {
                 ..default()
             }),
     );
+
+    app.add_plugins(game_core::ServerPlugin);
 
     // lightyear plugins
     app.add_plugins(lightyear::prelude::client::ClientPlugins::default());
@@ -111,7 +114,6 @@ fn main() {
 
     app.insert_resource(ServerRunMode::Headless);
     app.insert_resource(ServerMode::LocalServerSinglePlayer);
-    app.add_plugins(game_core::ServerPlugin);
     app.add_plugins(NetworkPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(WorldPlugin)

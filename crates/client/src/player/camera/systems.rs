@@ -39,15 +39,15 @@ pub fn setup_player_cameras(
     mut message_reader: MessageReader<SpawnPlayerCamerasMessage>,
 ) {
     for message in message_reader.read() {
-        info!(
+        debug!(
             "Received SpawnPlayerCamerasMessage, spawning weapon model and \
              player cameras"
         );
 
-        info!("Inserting PlayerCameraState into player");
+        debug!("Inserting PlayerCameraState into player");
         commands.entity(message.0).insert(PlayerCameraState::Normal);
 
-        info!("Inserting player cameras into player entity");
+        debug!("Inserting player cameras into player entity");
         commands.entity(message.0).with_children(|parent| {
             parent.spawn((
                 Name::new("WorldCamera"),

@@ -34,7 +34,7 @@ fn mark_players_as_ready(
     query: Query<Entity, PlayersWithoutReadyMarker>,
 ) {
     for entity in query {
-        info!("Marking player entity as ready");
+        debug!("Marking player entity as ready");
         commands.entity(entity).insert(PlayerReady);
     }
 }

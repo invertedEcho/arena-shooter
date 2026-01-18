@@ -133,7 +133,7 @@ fn handle_connected(
 fn handle_new_player(
     trigger: On<Add, Player>,
     mut commands: Commands,
-    player_query: Query<Has<Controlled>, With<Player>>,
+    players_with_controlled: Query<Entity, (With<Player>, With<Controlled>)>,
     mut spawn_player_camera_message_writer: MessageWriter<
         SpawnPlayerCamerasMessage,
     >,
@@ -141,18 +141,17 @@ fn handle_new_player(
     mut meshes: ResMut<Assets<Mesh>>,
     server_mode: Res<ServerMode>,
 ) {
-    if let Ok(is_controlled) = player_query.get(trigger.entity)
-        && is_controlled
-    {
+    if let Ok(our_player_entity) = players_with_controlled.get(trigger.entity) {
         info!("We found our player!");
 
         // we insert the character controller locally on our client, as it should only run on the
         // client. as it is not registered in our protocol, it wont be replicated.
-        commands.entity(trigger.entity).insert((
+        commands.entity(our_player_entity).insert((
             CharacterControllerBundle::default(),
             DespawnOnExit(AppState::InGame),
             Visibility::Visible,
             Transform::from_translation(vec3(0.0, 20.0, 0.0)),
+            Name::new("Our Player"),
         ));
         spawn_player_camera_message_writer
             .write(SpawnPlayerCamerasMessage(trigger.entity));
@@ -169,6 +168,7 @@ fn handle_new_player(
                 base_color: WHITE.into(),
                 ..Default::default()
             })),
+            Name::new("Not our Player"),
         ));
     }
 }

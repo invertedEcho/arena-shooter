@@ -39,24 +39,10 @@
   - Note that a submodule may have its own plugin.
     - If the submodule doesnt have lots of logic, all code may be located in its `mod.rs` and then be used in the root plugin of given module
 
-### Entity Initialization & Readiness
-
-Entities in this project are initialized incrementally.
-The presence of an entity does **not** mean it is fully ready.
-
-We use marker components (e.g. `PlayerReady`) to explicitly signal
-when an entity has all required components and can be used by
-dependent systems (HUD, camera, input, etc).
-
-- Systems must **not** assume ordering between other systems
-- Game states gate *systems*, not entity readiness
-- Systems that depend on fully initialized entities must query
-  for the corresponding `*Ready` marker
-
 ### Multiplayer Setup
 - Players are spawned on the server and replicated to all connected clients
 - A client can then find its own Player
-- Character controller is only run on the client
+- Character controller is only running on the client
   - Client sends its new position to the server
   - The server validates whether this new position was even feasible by a distance check, comparing new position to old position (to be implemented)
   - The validated position is stored in `PlayerPositionServer`. This component gets replicated to all other clients
@@ -72,42 +58,6 @@ For shooting:
 - Server looks up the position for the given `client_tick`
 - Server spawns temporary colliders to make the raycast
 - If hit was sucessful, the `Health` component on the corresponding player is updated
-
-
-#### Example
-(Identifiers may be abbreviated for documentation clarity.)
-```rust
-// Attach equipment
-fn add_player_weapon(
-    mut commands: Commands,
-    q: Query<Entity, Added<Player>>,
-) {
-    for e in &q {
-        commands.entity(e).insert(PlayerWeapon);
-    }
-}
-
-// Mark readiness once all requirements are present
-fn mark_player_ready(
-    mut commands: Commands,
-    q: Query<Entity, (With<Player>, With<PlayerWeapon>), Without<PlayerReady>>,
-) {
-    for e in &q {
-        commands.entity(e).insert(PlayerReady);
-    }
-}
-
-// Spawn HUD only for ready players
-fn spawn_player_hud(
-    mut commands: Commands,
-    q: Query<Entity, Added<PlayerReady>>,
-) {
-    for player in &q {
-        commands.spawn(PlayerHud { player });
-    }
-}
-```
-
 
 ## Todo and feature list
 - [x] User interface

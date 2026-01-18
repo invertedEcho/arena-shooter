@@ -132,7 +132,6 @@ pub fn spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
 
     commands.spawn((
         Name::new("Map Light"),
-        // DespawnOnExit(AppState::InGame),
         DirectionalLight {
             illuminance: 4000.,
             shadows_enabled: true,

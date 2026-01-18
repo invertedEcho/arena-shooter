@@ -47,7 +47,7 @@ pub fn spawn_player_hud(
         return;
     };
 
-    info!(
+    debug!(
         "Spawning player hud because PlayerReady on our own player was \
          inserted"
     );
@@ -201,7 +201,7 @@ pub fn update_player_health_text(
     player_health: Single<&Health, (Changed<Health>, With<Controlled>)>,
     mut player_health_text: Single<&mut Text, With<PlayerHealthText>>,
 ) {
-    info!("Updated player health text");
+    debug!("Updated player health text");
     player_health_text.0 = player_health.0.to_string();
 }
 

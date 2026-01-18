@@ -10,8 +10,8 @@ opt-level = 1
 [profile.dev.package."*"]
 opt-level = 3
 
-# [patch.crates-io]
-# lightyear = { path = "../lightyear/lightyear/" }
+[patch.crates-io]
+lightyear = { path = "../lightyear/lightyear/" }
 
 # Shared dependencies, used in both client and server crate
 [workspace.dependencies]

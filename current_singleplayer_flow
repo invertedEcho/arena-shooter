@@ -1,0 +1,8 @@
+So for singleplayer, we
+
+- Trigger `Start` server just with local address
+- Have our system that handle new `LinkOf`, that adds ReplicationSender
+- Have our system that handles new `Connected`, which are just clients
+- On singleplayer button, we trigger `Connect` with localhost as peeraddr
+- Now we end up with two clients and players.
+this must mean hostclient detection doesnt work for some reason
