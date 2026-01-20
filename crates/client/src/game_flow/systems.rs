@@ -62,10 +62,11 @@ pub fn spawn_main_menu_camera(
 ) {
     // TODO: optimally this couldnt happen in first place
     if existing_main_menu_camera.count() != 0 {
-        info!("Not spawning Main Menu Camera, already exists");
+        debug!("Not spawning Main Menu Camera, already exists");
         return;
     }
-    info!("Spawning Main Menu Camera");
+
+    debug!("Spawning Main Menu Camera");
     commands.spawn((
         Name::new("Main Menu Camera"),
         Camera::default(),

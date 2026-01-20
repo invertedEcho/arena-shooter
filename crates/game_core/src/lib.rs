@@ -64,7 +64,7 @@ pub fn start_server(
 ) {
     let debug_name = match *server_mode {
         ServerMode::LocalServerSinglePlayer => "Local Server for singleplayer",
-        ServerMode::ServerBinary => "Server from server Binary",
+        ServerMode::RemoteServer => "Server from server Binary",
     };
 
     let server = commands
@@ -91,50 +91,35 @@ pub fn start_server(
     }
 }
 
-fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
-    commands.entity(trigger.entity).insert((
-        ReplicationSender::new(
-            Duration::from_millis(100),
-            SendUpdatesMode::SinceLastAck,
-            false,
-        ),
-        Name::from("Client"),
-    ));
+fn handle_new_connection(
+    trigger: On<Add, LinkOf>,
+    mut commands: Commands,
+    query: Query<(), Without<HostClient>>,
+) {
+    if query.get(trigger.entity).is_ok() {
+        commands.entity(trigger.entity).insert((
+            ReplicationSender::new(
+                Duration::from_millis(100),
+                SendUpdatesMode::SinceLastAck,
+                false,
+            ),
+            Name::from("Client"),
+        ));
+    }
 }
 
 fn handle_new_client(
     trigger: On<Add, Connected>,
-    clients_query: Query<(Entity, &RemoteId), With<ClientOf>>,
+    clients_query: Query<&RemoteId, With<ClientOf>>,
     mut commands: Commands,
     materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,
     server_mode: Res<ServerMode>,
-    host_client_query: Query<Entity, With<HostClient>>,
 ) {
-    if let Ok((entity_from_query, remote_id)) =
-        clients_query.get(trigger.entity)
-    {
-        info!(
-            "Do we even have host clients?: {}",
-            host_client_query.count()
-        );
-        for host_client_query2 in host_client_query {
-            info!("HEREEE: {}", host_client_query2);
-        }
-
-        // info!(
-        //     "So trigger, e.g. the entity that got Connected inserted, is: {}",
-        //     trigger.entity
-        // );
-        // info!(
-        //     "And the one that matched our clients with remote_id and \
-        //      client_of: {}",
-        //     entity_from_query
-        // );
-
+    if let Ok(remote_id) = clients_query.get(trigger.entity) {
         let client_id = remote_id.0;
         info!(
-            "Spawning player for fully connected Client entity: {} | \
+            "Spawning a player for fully connected Client entity: {} | \
              client_id: {}",
             trigger.entity, client_id
         );
@@ -167,7 +152,7 @@ fn handle_new_client(
             ))
             .id();
 
-        if *server_mode == ServerMode::ServerBinary {
+        if *server_mode == ServerMode::RemoteServer {
             // on headless setup, materials doesnt exist
             if let Some(mut materials) = materials {
                 commands.entity(client).insert((

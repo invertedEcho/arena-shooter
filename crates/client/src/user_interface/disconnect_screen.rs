@@ -38,7 +38,7 @@ fn spawn_disconnected_screen(
         ));
     }
 
-    info!("Spawning Disconnected screen");
+    debug!("Spawning Disconnected screen");
     commands
         .spawn((
             Node {

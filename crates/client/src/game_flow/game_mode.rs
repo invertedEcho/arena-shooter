@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game_flow::states::AppState;
+use crate::game_flow::states::{AppState, InGameState};
 
 pub struct GameModePlugin;
 
@@ -49,12 +49,15 @@ fn handle_start_game_mode_message(
     // existing_enemies: Query<Entity, With<Enemy>>,
     current_game_mode: Res<State<GameModeState>>,
     mut app_state: ResMut<NextState<AppState>>,
+    mut current_in_game_state: ResMut<NextState<InGameState>>,
 ) {
     for message in message_reader.read() {
         info!(
             "Got game mode start message, game mode: {:?}",
             current_game_mode.get()
         );
+
+        current_in_game_state.set(InGameState::Playing);
 
         if !message.restart {
             app_state.set(AppState::LoadingGame);

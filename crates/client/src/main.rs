@@ -13,7 +13,6 @@ use bevy_inspector_egui::{
     bevy_egui::{self, EguiPlugin},
     quick::WorldInspectorPlugin,
 };
-use lightyear::connection::host::HostPlugin;
 
 use crate::{
     audio::AudioPlugin,
@@ -69,7 +68,7 @@ fn main() {
             .set(bevy::log::LogPlugin {
                 // stupid audio library bevy uses which uses info level for debug level messages.. smh
                 filter: "symphonia_core=off,symphonia_bundle=off,wgpu=error,\
-                         naga=warn,lightyear=debug"
+                         naga=warn"
                     .to_string(),
                 ..default()
             })

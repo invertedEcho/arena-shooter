@@ -26,9 +26,11 @@ pub enum ServerRunMode {
     Headful,
 }
 
+/// A resource existing to know whether we are using a remote server to connect to,
+/// or a local server is started, e.g. for singleplayer
 #[derive(Resource, PartialEq)]
 pub enum ServerMode {
-    ServerBinary,
+    RemoteServer,
     LocalServerSinglePlayer,
 }
 
@@ -73,7 +75,7 @@ pub fn get_private_key(server_mode: &ServerMode) -> [u8; 32] {
         0, 0, 0, 0, 0, 0, 0, 0,
     ];
     match server_mode {
-        ServerMode::ServerBinary => load_private_key_from_env().unwrap(),
+        ServerMode::RemoteServer => load_private_key_from_env().unwrap(),
         ServerMode::LocalServerSinglePlayer => LOCAL_SERVER_PRIVATE_KEY,
     }
 }
@@ -85,14 +87,14 @@ pub const SERVER_ADDRESS_SERVER_SIDE: IpAddr =
     IpAddr::V6(Ipv6Addr::UNSPECIFIED);
 
 pub fn get_server_socket_addr_client_side() -> SocketAddr {
-    "localhost:5888"
+    "game.invertedecho.com:5888"
         .to_socket_addrs()
         .expect("DNS resolution failed")
         .next()
         .unwrap()
 }
 pub fn get_auth_backend_socket_addr_client_side() -> SocketAddr {
-    "localhost:4000"
+    "game.invertedecho.com:4000"
         .to_socket_addrs()
         .expect("DNS resolution failed")
         .next()

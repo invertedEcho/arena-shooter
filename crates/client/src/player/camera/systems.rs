@@ -83,7 +83,7 @@ pub fn setup_player_cameras(
                     },
                     // needed so our inspector is shown again when we enter game, as we despawn
                     // `WorldUiCamera` and spawn player camera
-                    bevy_egui::PrimaryEguiContext,
+                    // bevy_egui::PrimaryEguiContext,
                     RenderLayers::layer(1),
                     Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
                 ))

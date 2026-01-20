@@ -116,7 +116,7 @@ fn main() {
         get_server_socket_addr_client_side(),
         AUTH_BACKEND_ADDRESS_SERVER_SIDE,
         client_ids.clone(),
-        get_private_key(&ServerMode::ServerBinary),
+        get_private_key(&ServerMode::RemoteServer),
     );
     app.insert_resource(ClientIds(client_ids));
 

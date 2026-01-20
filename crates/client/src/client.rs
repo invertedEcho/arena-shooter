@@ -5,6 +5,7 @@ use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use lightyear::prelude::client::*;
+use lightyear::prelude::server::ClientOf;
 use lightyear::prelude::*;
 use shared::player::Player;
 use shared::protocol::{
@@ -59,6 +60,8 @@ pub fn on_enter_connecting_to_server(
     connected_query: Query<Has<Connected>>,
     mut task_state: ResMut<ConnectTokenRequestTask>,
     game_mode: Res<State<GameModeState>>,
+    server_entity: Query<Entity, With<Server>>,
+    server_mode: Res<ServerMode>,
 ) {
     // Connected component only present on our own client
     for connected in connected_query {
@@ -68,10 +71,12 @@ pub fn on_enter_connecting_to_server(
         }
     }
 
-    if *game_mode.get() == GameModeState::Multiplayer {
+    let is_multiplayer = *game_mode.get() == GameModeState::Multiplayer;
+
+    if is_multiplayer {
         let auth_backend_addr = task_state.auth_backend_addr;
-        info!(
-            "Starting task to get auth ConnectToken, using {}",
+        debug!(
+            "Starting task to get auth ConnectToken via AuthBackend at {}",
             auth_backend_addr
         );
         let task = IoTaskPool::get().spawn_local(Compat::new(async move {
@@ -88,38 +93,51 @@ pub fn on_enter_connecting_to_server(
         ),
     };
 
-    info!("Connecting to server via {}", server_address);
+    let private_key = get_private_key(&server_mode);
 
-    let client = commands
-        .spawn((
-            Name::new("Client"),
-            Client::default(),
-            LocalAddr(SocketAddr::new(
-                Ipv6Addr::UNSPECIFIED.into(),
-                CLIENT_PORT,
-            )),
-            PeerAddr(server_address),
-            Link::new(None),
-            ReplicationReceiver::default(),
-            UdpIo::default(),
-        ))
-        .id();
+    if let Ok(server_entity) = server_entity.single()
+        && !is_multiplayer
+    {
+        let client = commands
+            .spawn((
+                Name::new("Host Client"),
+                LinkOf {
+                    server: server_entity,
+                },
+            ))
+            .id();
 
-    let private_key = get_private_key(&ServerMode::LocalServerSinglePlayer);
-    commands.entity(client).insert(
-        NetcodeClient::new(
-            Authentication::Manual {
-                server_addr: server_address,
-                client_id: 0,
-                protocol_id: NETCODE_PROTOCOL_VERSION,
-                private_key,
-            },
-            NetcodeConfig::default(),
-        )
-        .unwrap(),
-    );
-    info!("TRIGGERING CONNECT");
-    commands.trigger(Connect { entity: client });
+        commands.entity(client).insert(
+            NetcodeClient::new(
+                Authentication::Manual {
+                    server_addr: server_address,
+                    client_id: 0,
+                    protocol_id: NETCODE_PROTOCOL_VERSION,
+                    private_key,
+                },
+                NetcodeConfig::default(),
+            )
+            .unwrap(),
+        );
+
+        commands.trigger(Connect { entity: client });
+    } else {
+        let client = commands
+            .spawn((
+                Name::new("Client"),
+                Client::default(),
+                LocalAddr(SocketAddr::new(
+                    Ipv6Addr::UNSPECIFIED.into(),
+                    CLIENT_PORT,
+                )),
+                PeerAddr(server_address),
+                Link::new(None),
+                ReplicationReceiver::default(),
+                UdpIo::default(),
+            ))
+            .id();
+        commands.trigger(Connect { entity: client });
+    }
 }
 
 fn handle_connected(
@@ -133,7 +151,7 @@ fn handle_connected(
 fn handle_new_player(
     trigger: On<Add, Player>,
     mut commands: Commands,
-    players_with_controlled: Query<Entity, (With<Player>, With<Controlled>)>,
+    player_query: Query<(Entity, Has<Controlled>), With<Player>>,
     mut spawn_player_camera_message_writer: MessageWriter<
         SpawnPlayerCamerasMessage,
     >,
@@ -141,9 +159,17 @@ fn handle_new_player(
     mut meshes: ResMut<Assets<Mesh>>,
     server_mode: Res<ServerMode>,
 ) {
-    if let Ok(our_player_entity) = players_with_controlled.get(trigger.entity) {
-        info!("We found our player!");
+    let Ok((our_player_entity, has_controlled)) =
+        player_query.get(trigger.entity)
+    else {
+        return;
+    };
 
+    let remote_server_and_our_player =
+        *server_mode == ServerMode::RemoteServer && has_controlled;
+    if remote_server_and_our_player
+        || *server_mode == ServerMode::LocalServerSinglePlayer
+    {
         // we insert the character controller locally on our client, as it should only run on the
         // client. as it is not registered in our protocol, it wont be replicated.
         commands.entity(our_player_entity).insert((
@@ -153,22 +179,17 @@ fn handle_new_player(
             Transform::from_translation(vec3(0.0, 20.0, 0.0)),
             Name::new("Our Player"),
         ));
+
         spawn_player_camera_message_writer
             .write(SpawnPlayerCamerasMessage(trigger.entity));
-        // FIXME:
-    } else if *server_mode != ServerMode::LocalServerSinglePlayer {
-        info!(
-            "A player was added, but it doesn't have Controlled Component, \
-             e.g. its not our player! Inserting visuals so we can see that \
-             other player"
-        );
+    } else if *server_mode == ServerMode::RemoteServer && !has_controlled {
         commands.entity(trigger.entity).insert((
             Mesh3d(meshes.add(Capsule3d::new(0.2, 1.3))),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: WHITE.into(),
                 ..Default::default()
             })),
-            Name::new("Not our Player"),
+            Name::new("Remote Player"),
         ));
     }
 }
