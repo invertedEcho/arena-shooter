@@ -55,14 +55,12 @@ impl Plugin for ServerPlugin {
     }
 }
 
-// TODO: add Resource to get/set LocalAddr for NetcodeServer
-// and also private key
 pub fn start_server(
     mut commands: Commands,
     server_run_mode: Res<ServerRunMode>,
     server_mode: Res<ServerMode>,
 ) {
-    let debug_name = match *server_mode {
+    let entity_name = match *server_mode {
         ServerMode::LocalServerSinglePlayer => "Local Server for singleplayer",
         ServerMode::RemoteServer => "Server from server Binary",
     };
@@ -76,7 +74,7 @@ pub fn start_server(
             }),
             LocalAddr(SERVER_SOCKET_ADDR_SERVER_SIDE),
             ServerUdpIo::default(),
-            Name::new(debug_name),
+            Name::new(entity_name),
         ))
         .id();
 

@@ -18,18 +18,14 @@ pub struct ConnectTokenRequestTask {
 /// then we retrieve the token and update the ClientConfig.
 pub fn fetch_connect_token(
     mut connect_token_request: ResMut<ConnectTokenRequestTask>,
-    client: Single<(Entity, Has<NetcodeClient>), With<Client>>,
+    client: Single<Entity, With<Client>>,
     mut commands: Commands,
 ) -> Result {
     if let Some(task) = &mut connect_token_request.task {
         if let Some(connect_token) = block_on(future::poll_once(task)) {
             info!("Received ConnectToken, starting connection!");
-            info!(
-                "Inserting netcode client with our connect token. our client \
-                 already has NetcodeClient?: {}",
-                client.1
-            );
-            let client = client.into_inner().0;
+            info!("Inserting netcode client with our connect token",);
+            let client = client.into_inner();
             commands.entity(client).insert(NetcodeClient::new(
                 Authentication::Token(connect_token),
                 NetcodeConfig::default(),
