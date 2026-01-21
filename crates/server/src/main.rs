@@ -78,14 +78,15 @@ fn main() {
     match run_mode {
         ServerRunMode::Headless => {
             app.add_plugins(HeadlessServerPlugin);
-            info!("Running server in headless mode!");
+            info!("Starting server in headless mode...");
         }
         ServerRunMode::Headful => {
             app.add_plugins(HeadfulServerPlugin);
-            info!("Running server in headful mode!");
+            info!("Starting server in headful mode...");
         }
     }
 
+    app.add_plugins(game_core::ServerPlugin);
     app.add_plugins(MultiPlayerServerOnlyPlugin);
 
     app.add_systems(Startup, spawn_map_colliders);
@@ -96,8 +97,6 @@ fn main() {
 
     app.insert_resource(ServerMode::RemoteServer);
     app.insert_resource(run_mode);
-
-    app.add_plugins(game_core::ServerPlugin);
 
     // authentication
     let client_ids = Arc::new(RwLock::new(HashSet::default()));
