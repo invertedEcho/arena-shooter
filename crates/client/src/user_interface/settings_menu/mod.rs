@@ -10,14 +10,13 @@ use crate::{
             graphics::{GraphicsCheckbox, GraphicsCheckboxType},
         },
         shared::{
-            DEFAULT_GAME_FONT_PATH, UI_BORDER, UI_PRIMARY, UI_SELECTED, UI_TEXT,
+            DEFAULT_GAME_FONT_PATH, UI_BORDER, UI_PANEL, UI_SELECTED, UI_TEXT,
         },
         widgets::checkbox::build_checkbox,
     },
 };
 use bevy::{
     audio::Volume,
-    color::palettes::tailwind::SLATE_600,
     prelude::*,
     ui::Checked,
     ui_widgets::{ValueChange, observe},
@@ -135,7 +134,8 @@ fn spawn_settings_menu(
                                     ..default()
                                 },
                                 BorderColor::all(UI_BORDER),
-                                BackgroundColor(UI_PRIMARY),
+                                // per default, audio tab is selected
+                                BackgroundColor(UI_SELECTED),
                                 Button,
                                 SettingsChangeTabButton(
                                     SelectedTabSettings::Audio,
@@ -157,9 +157,9 @@ fn spawn_settings_menu(
                                     border: UiRect::left(px(4)),
                                     ..default()
                                 },
-                                BorderColor::all(UI_SELECTED),
+                                BorderColor::all(UI_BORDER),
                                 Button,
-                                BackgroundColor(UI_PRIMARY),
+                                BackgroundColor(UI_PANEL),
                                 SettingsChangeTabButton(
                                     SelectedTabSettings::Graphics,
                                 ),
@@ -180,9 +180,9 @@ fn spawn_settings_menu(
                                     border: UiRect::left(px(4)),
                                     ..default()
                                 },
-                                BorderColor::all(UI_SELECTED),
+                                BorderColor::all(UI_BORDER),
                                 Button,
-                                BackgroundColor(UI_PRIMARY),
+                                BackgroundColor(UI_PANEL),
                                 SettingsChangeTabButton(
                                     SelectedTabSettings::Controls,
                                 ),
@@ -213,7 +213,7 @@ fn spawn_settings_menu(
                                     ..default()
                                 },
                                 Button,
-                                BackgroundColor(UI_PRIMARY),
+                                BackgroundColor(UI_PANEL),
                                 BorderColor::all(UI_BORDER),
                                 SettingsMenuButton(SettingsButtonType::Apply),
                                 children![(
@@ -235,7 +235,7 @@ fn spawn_settings_menu(
                                     ..default()
                                 },
                                 Button,
-                                BackgroundColor(UI_PRIMARY),
+                                BackgroundColor(UI_PANEL),
                                 BorderColor::all(UI_BORDER),
                                 SettingsMenuButton(SettingsButtonType::Back),
                                 children![(
@@ -258,7 +258,7 @@ fn spawn_settings_menu(
                         height: percent(100.0),
                         ..default()
                     },
-                    BackgroundColor(SLATE_600.into()),
+                    BackgroundColor(UI_PANEL),
                 ))
                 .with_child((
                     Node {
@@ -318,7 +318,7 @@ fn handle_settings_tab_changed(
                                         font: asset_server
                                             .load(DEFAULT_GAME_FONT_PATH),
                                         ..default()
-                                    },
+                                    }
                                 ],
                             ));
                             parent
@@ -434,7 +434,7 @@ fn update_settings_tab_button_color(
         background_color.0 = if button.0 == *settings_tab_state.get() {
             UI_SELECTED
         } else {
-            UI_PRIMARY
+            UI_PANEL
         };
     }
 }
