@@ -32,6 +32,7 @@ use crate::{
             },
         },
     },
+    shared::components::HideOnPause,
     user_interface::shared::{ITALIC_GAME_FONT_PATH, UI_SELECTED, UI_TEXT},
 };
 
@@ -69,6 +70,7 @@ pub fn spawn_player_hud(
             PlayerHud,
             DespawnOnExit(AppState::InGame),
             Name::new("PlayerHud"),
+            HideOnPause,
         ))
         .with_children(|parent| {
             parent
@@ -182,6 +184,7 @@ pub fn spawn_player_crosshair(
                 PlayerCrosshair,
                 DespawnOnExit(AppState::InGame),
                 Name::new("PlayerCrosshair"),
+                HideOnPause,
             ))
             .with_child(ImageNode::new(asset_server.load(MAIN_CROSSHAIR_PATH)));
     }
@@ -257,23 +260,27 @@ pub fn spawn_score_hud(mut commands: Commands, game_score: Res<GameScore>) {
                 padding: UiRect::all(Val::Px(16.0)),
                 ..default()
             },
-            DespawnOnExit(InGameState::Playing),
+            DespawnOnExit(AppState::InGame),
             Name::new("ScoreHud"),
         ))
         .with_children(|parent| {
-            parent.spawn(Node { ..default() }).with_child((
-                Text::new(game_score.player.to_string()),
-                TextColor(BLUE_500.into()),
-                PlayerScoreText,
-            ));
             parent
-                .spawn(Node { ..default() })
+                .spawn((Node { ..default() }, HideOnPause))
+                .with_child((
+                    Text::new(game_score.player.to_string()),
+                    TextColor(BLUE_500.into()),
+                    PlayerScoreText,
+                ));
+            parent
+                .spawn((Node { ..default() }, HideOnPause))
                 .with_child(Text::new("Score"));
-            parent.spawn(Node { ..default() }).with_child((
-                Text::new(game_score.enemy.to_string()),
-                TextColor(RED_500.into()),
-                EnemyScoreText,
-            ));
+            parent
+                .spawn((Node { ..default() }, HideOnPause))
+                .with_child((
+                    Text::new(game_score.enemy.to_string()),
+                    TextColor(RED_500.into()),
+                    EnemyScoreText,
+                ));
         });
 }
 
@@ -332,36 +339,6 @@ pub fn update_wave_info_hud(
             game_state_wave.enemies_left_from_current_wave.to_string(),
         );
     }
-}
-
-pub fn hide_player_hud(
-    mut player_hud_visibility: Single<&mut Visibility, With<PlayerHud>>,
-) {
-    **player_hud_visibility = Visibility::Hidden;
-}
-
-pub fn show_player_hud(
-    mut player_hud_visibility: Single<&mut Visibility, With<PlayerHud>>,
-) {
-    **player_hud_visibility = Visibility::Visible;
-}
-
-pub fn hide_player_crosshair(
-    mut player_crosshair_visibility: Single<
-        &mut Visibility,
-        With<PlayerCrosshair>,
-    >,
-) {
-    **player_crosshair_visibility = Visibility::Hidden;
-}
-
-pub fn show_player_crosshair(
-    mut player_crosshair_visibility: Single<
-        &mut Visibility,
-        With<PlayerCrosshair>,
-    >,
-) {
-    **player_crosshair_visibility = Visibility::Visible;
 }
 
 pub fn update_selected_weapon(

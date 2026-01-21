@@ -5,6 +5,8 @@ use bevy::{
     scene::SceneInstanceReady,
 };
 
+use crate::shared::components::HideOnPause;
+
 /// Currently [`RenderLayers`] are not applied to children of a scene.
 /// This [`SceneInstanceReady`] observer applies the [`RenderLayers`]
 /// of a [`SceneRoot`] to all children with a [`Transform`] and without a [`RenderLayers`].
@@ -36,5 +38,17 @@ pub fn disable_culling_for_skinned_meshes(
 ) {
     for entity in &skinned {
         commands.entity(entity).insert(NoFrustumCulling);
+    }
+}
+
+pub fn hide_on_pause(query: Query<&mut Visibility, With<HideOnPause>>) {
+    for mut visibility in query {
+        *visibility = Visibility::Hidden;
+    }
+}
+
+pub fn show_on_resume(query: Query<&mut Visibility, With<HideOnPause>>) {
+    for mut visibility in query {
+        *visibility = Visibility::Visible;
     }
 }

@@ -1,15 +1,11 @@
 use std::net::{Ipv6Addr, SocketAddr};
 
 use async_compat::Compat;
-use avian3d::math::PI;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use lightyear::prelude::client::*;
-use lightyear::prelude::server::ClientOf;
 use lightyear::prelude::*;
-use shared::character_controller::LOCAL_FEET_CHARACTER;
-use shared::enemy::components::Enemy;
 use shared::player::Player;
 use shared::protocol::{
     ClientUpdatePositionMessage, OrderedReliableMessageChannel,
@@ -28,7 +24,6 @@ use crate::auth::{
     get_connect_token_from_auth_backend,
 };
 use crate::character_controller::components::CharacterControllerBundle;
-use crate::enemy::animate::ENEMY_MODEL_PATH;
 use crate::game_flow::game_mode::GameModeState;
 use crate::game_flow::states::{
     AppState, DisconnectedState, InGameState, LoadingGameState,

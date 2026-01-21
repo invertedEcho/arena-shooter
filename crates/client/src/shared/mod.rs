@@ -1,8 +1,14 @@
 use bevy::prelude::*;
 use std::fmt::Display;
 
-use crate::shared::systems::disable_culling_for_skinned_meshes;
+use crate::{
+    game_flow::states::InGameState,
+    shared::systems::{
+        disable_culling_for_skinned_meshes, hide_on_pause, show_on_resume,
+    },
+};
 
+pub mod components;
 pub mod systems;
 
 pub struct CommonPlugin;
@@ -25,6 +31,8 @@ impl Display for WeaponType {
 impl Plugin for CommonPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, disable_culling_for_skinned_meshes);
+        app.add_systems(OnEnter(InGameState::Paused), hide_on_pause);
+        app.add_systems(OnExit(InGameState::Paused), show_on_resume);
     }
 }
 

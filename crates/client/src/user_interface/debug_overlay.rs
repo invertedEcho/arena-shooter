@@ -20,9 +20,7 @@ impl Plugin for DebugOverlayPlugin {
                 update_current_app_state_text,
                 update_current_in_game_state_text,
                 toggle_debug,
-                // update_player_info_text,
                 update_current_main_menu_state,
-                // update_grounded_player,
             ),
         );
     }
@@ -36,12 +34,6 @@ struct CurrentInGameStateText;
 
 #[derive(Component)]
 struct CurrentMainMenuStateText;
-
-#[derive(Component)]
-struct PlayerInfoText;
-
-#[derive(Component)]
-struct PlayerGroundedText;
 
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
@@ -58,66 +50,70 @@ fn spawn_debug_overlay(mut commands: Commands) {
             Name::new("Debug Overlay UI Root"),
         ))
         .with_children(|parent| {
-            parent.spawn((
-                Text::new(""),
-                PlayerInfoText,
-                TextFont {
-                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+            // App State Text
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
                     ..default()
-                },
-            ));
-            parent.spawn((
-                Text::new("Current AppState:"),
-                TextFont {
-                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                })
+                .with_child((
+                    Text::new("Current AppState: "),
+                    TextFont {
+                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                        ..default()
+                    },
+                ))
+                .with_child((
+                    Text::new(""),
+                    CurrentAppStateText,
+                    TextFont {
+                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                        ..default()
+                    },
+                ));
+
+            // InGame State Text
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
                     ..default()
-                },
-            ));
-            parent.spawn((
-                Text::new(""),
-                CurrentAppStateText,
-                TextFont {
-                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                })
+                .with_child((
+                    Text::new("Current InGameState: "),
+                    TextFont {
+                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                        ..default()
+                    },
+                ))
+                .with_child((
+                    Text::new(""),
+                    CurrentInGameStateText,
+                    TextFont {
+                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                        ..default()
+                    },
+                ));
+
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
                     ..default()
-                },
-            ));
-            parent.spawn((
-                Text::new("Current InGameState:"),
-                TextFont {
-                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                    ..default()
-                },
-            ));
-            parent.spawn((
-                (Text::new(""), CurrentInGameStateText),
-                TextFont {
-                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                    ..default()
-                },
-            ));
-            parent.spawn((
-                Text::new("Current MainMenuState:"),
-                TextFont {
-                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                    ..default()
-                },
-            ));
-            parent.spawn((
-                Text::new(""),
-                CurrentMainMenuStateText,
-                TextFont {
-                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                    ..default()
-                },
-            ));
-            parent.spawn((
-                Text::new("Player Grounded"),
-                TextFont {
-                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                    ..default()
-                },
-            ));
-            parent.spawn((Text::new(""), PlayerGroundedText));
+                })
+                .with_child((
+                    Text::new("Current MainMenuState: "),
+                    TextFont {
+                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                        ..default()
+                    },
+                ))
+                .with_child((
+                    Text::new(""),
+                    CurrentMainMenuStateText,
+                    TextFont {
+                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                        ..default()
+                    },
+                ));
         });
 }
 
@@ -181,19 +177,3 @@ fn toggle_debug(
         }
     }
 }
-
-// fn update_player_info_text(
-//     changed_player: Single<&Player, Changed<Player>>,
-//     player_text: Query<&mut Text, With<PlayerInfoText>>,
-// ) {
-//     for mut player_info_text in player_text {
-//         **player_info_text = format!("{:?}", *changed_player);
-//     }
-// }
-//
-// fn update_grounded_player(
-//     query: Single<&Grounded, (Changed<Grounded>, With<Player>)>,
-//     mut text_query: Single<&mut Text, With<PlayerGroundedText>>,
-// ) {
-//     text_query.0 = query.0.to_string();
-// }
