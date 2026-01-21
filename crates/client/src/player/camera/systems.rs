@@ -3,6 +3,7 @@ use bevy::{
     camera::visibility::RenderLayers, input::mouse::AccumulatedMouseMotion,
     prelude::*,
 };
+use bevy_inspector_egui::bevy_egui;
 use lightyear::prelude::Controlled;
 use shared::{components::DespawnTimer, player::AimType};
 
@@ -36,8 +37,14 @@ pub fn setup_player_cameras(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut message_reader: MessageReader<SpawnPlayerCamerasMessage>,
+    any_cam_query: Query<Entity, With<Camera>>,
 ) {
     for message in message_reader.read() {
+        // despawn any existing cameras before spawning new one
+        for any_cam in any_cam_query {
+            commands.entity(any_cam).despawn();
+        }
+
         debug!(
             "Received SpawnPlayerCamerasMessage, spawning weapon model and \
              player cameras"
@@ -82,7 +89,7 @@ pub fn setup_player_cameras(
                     },
                     // needed so our inspector is shown again when we enter game, as we despawn
                     // `WorldUiCamera` and spawn player camera
-                    // bevy_egui::PrimaryEguiContext,
+                    bevy_egui::PrimaryEguiContext,
                     RenderLayers::layer(1),
                     Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
                 ))
@@ -151,6 +158,7 @@ pub fn update_yaw_pitch_on_mouse_motion(
     }
 }
 
+// TODO: is this even needed? cant we just query for With<Camera>?
 // 'w -> the world borrow lifetime, e.g. how long this query can read/write world data
 // 'a -> the system lifetime, e.g. how long this query is valid inside a system function
 type AnyCamEntityQuery<'w, 's> = Query<
