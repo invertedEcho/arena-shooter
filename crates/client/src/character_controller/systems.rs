@@ -181,7 +181,6 @@ fn apply_collide_and_slide(
         let slope_climable = slope_angle < MAX_SLOPE_ANGLE;
 
         if slope_climable {
-            debug!("MOVEMENT: Climable slope!");
             // this is the most important part to make the slope climbing possible.
             // instead of trying to go straight, we slide along the ground
             *current_velocity = desired_velocity.reject_from_normalized(normal);
@@ -209,7 +208,6 @@ fn apply_collide_and_slide(
                 }
             }
         } else {
-            debug!("MOVEMENT: Obstacle in the way, sliding along wall");
             // not climable, e.g. a wall. we want to slide along the wall,
             // similar to the collide and slide algorithm
             // the main difference is that we ignore the Y part,
@@ -237,7 +235,6 @@ fn apply_collide_and_slide(
             );
         }
     } else {
-        debug!("MOVEMENT: No obstacle ahead, free movement");
         // no obstacle ahead, free movement
         current_velocity.x = desired_velocity.x;
         current_velocity.z = desired_velocity.z;

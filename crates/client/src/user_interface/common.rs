@@ -62,7 +62,7 @@ fn handle_common_ui_button_press(
                     continue;
                 };
 
-                info!("Triggering disconnect");
+                debug!("Triggering disconnect");
                 commands.trigger(Disconnect { entity: own_client })
             }
             CommonUiButton::ToGameModeSelection => {

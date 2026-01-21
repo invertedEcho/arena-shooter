@@ -143,7 +143,7 @@ fn handle_connected(
     _trigger: On<Add, Connected>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
-    info!("Connected to server, setting AppState to InGame");
+    debug!("Connected to server, setting AppState to InGame");
     next_app_state.set(AppState::InGame);
 }
 
@@ -276,7 +276,7 @@ pub fn handle_disconnect(
             }
         }
         Err(error) => {
-            info!(
+            warn!(
                 "Disconnected from server, but could not retrieve \
                  Disconnected component to get reason for disconnect: {}",
                 error

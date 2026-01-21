@@ -177,6 +177,8 @@ fn spawn_map_colliders(mut commands: Commands) {
     }
 }
 
+// The server can be started from workspace root via `cargo run -p server` or from server workspace,
+// so we need to ensure we use the correct path
 fn get_path_to_collider_json() -> String {
     const BASE_PATH: &str =
         "assets/maps/medium_plastic/medium_plastic_colliders.json";

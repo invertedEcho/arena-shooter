@@ -112,13 +112,16 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                     let spawn_location_translation =
                         chosen_spawn_location.1.translation;
 
+                    debug!(
+                        "Spawning an enemy at {}",
+                        spawn_location_translation
+                    );
+
                     let enemy_entity = commands
                         .spawn((
                             Name::new("Enemy"),
-                            Transform::from_xyz(
-                                spawn_location_translation.x,
-                                spawn_location_translation.y,
-                                spawn_location_translation.z,
+                            Transform::from_translation(
+                                spawn_location_translation,
                             ),
                             Enemy,
                             Health(100.0),

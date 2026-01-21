@@ -88,6 +88,7 @@ pub fn add_player_weapons_to_new_players(
 }
 
 pub fn handle_input(
+    mut commands: Commands,
     mouse_input: Res<ButtonInput<MouseButton>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_shot_messsage_writer: MessageWriter<PlayerWeaponFiredMessage>,
@@ -125,17 +126,13 @@ pub fn handle_input(
             return;
         }
 
-        info!(
-            "No player wewapon shoot cooldown timer alive, allowing!: {}",
-            player_weapon_shoot_cooldown_timer_query.count()
-        );
-
         // TODO: play a sound which indicates empty magazine
         let active_weapon_empty = player_weapons.weapons
             [player_weapons.active_slot]
             .state
             .loaded_ammo
             == 0;
+
         if active_weapon_empty {
             return;
         }
@@ -148,6 +145,14 @@ pub fn handle_input(
         player_weapons.weapons[active_slot].state.loaded_ammo -= 1;
 
         player_shot_messsage_writer.write(PlayerWeaponFiredMessage);
+
+        let fire_delay = get_fire_delay_by_weapon_type(
+            &player_weapons.weapons[active_slot].stats.weapon_type,
+        );
+        commands.spawn(PlayerShootCooldownTimer(Timer::from_seconds(
+            fire_delay,
+            TimerMode::Once,
+        )));
     }
 
     if reload_button_pressed {
@@ -155,51 +160,38 @@ pub fn handle_input(
     }
 }
 
-pub fn handle_player_weapon_fired_message(
-    mut commands: Commands,
+pub fn send_shoot_request_on_weapon_fired(
     mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
-    // enemy_entities: Query<Entity, With<Enemy>>,
-    // mut player_bullet_hit_enemy_message_writer: MessageWriter<
-    //     PlayerBulletHitEnemyMessage,
-    // >,
-    mut spawn_bullet_impact_effect_message_writer: MessageWriter<
-        SpawnBulletImpactEffectMessage,
-    >,
-    world_model_camera_query: WorldModelCameraQuery,
-    player_query: Single<
-        (&PlayerWeapons, Entity),
-        (With<Player>, With<Controlled>),
-    >,
     mut shoot_request_sender: Single<
         &mut MessageSender<ShootRequest>,
         With<Client>,
     >,
-    spatial_query: SpatialQuery,
+    world_model_camera_query: WorldModelCameraQuery,
 ) {
-    let (player_weapons, player_entity) = player_query.into_inner();
     for _ in message_reader.read() {
-        info!("SHOOTINGGGG");
-        let fire_delay = get_fire_delay_by_weapon_type(
-            &player_weapons.weapons[player_weapons.active_slot]
-                .stats
-                .weapon_type,
-        );
-
-        info!("Spawning player shoot cooldown timer!");
-        commands.spawn(PlayerShootCooldownTimer(Timer::from_seconds(
-            fire_delay,
-            TimerMode::Once,
-        )));
-
         let origin = world_model_camera_query.1.translation();
         let direction = world_model_camera_query.1.forward();
 
         shoot_request_sender.send::<OrderedReliableMessageChannel>(
-            ShootRequest {
-                direction,
-                origin: world_model_camera_query.1.translation(),
-            },
+            ShootRequest { direction, origin },
         );
+    }
+}
+
+pub fn spawn_bullet_impact_particle_on_weapon_fired(
+    mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
+    mut spawn_bullet_impact_effect_message_writer: MessageWriter<
+        SpawnBulletImpactEffectMessage,
+    >,
+    world_model_camera_query: WorldModelCameraQuery,
+    player_query: Single<Entity, (With<Player>, With<Controlled>)>,
+    spatial_query: SpatialQuery,
+) {
+    let player_entity = player_query.into_inner();
+    for _ in message_reader.read() {
+        let origin = world_model_camera_query.1.translation();
+        let direction = world_model_camera_query.1.forward();
+
         if let Some(first_hit) = spatial_query.cast_ray(
             origin,
             direction,
@@ -322,7 +314,7 @@ pub fn handle_reload_player_weapon_message(
     }
 }
 
-pub fn tick_player_weapon_reload_timer(
+pub fn handle_player_weapon_reload_timer(
     mut player_weapons: Single<&mut PlayerWeapons>,
     reload_timer: Option<ResMut<WeaponReloadTimer>>,
     time: Res<Time>,

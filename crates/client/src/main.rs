@@ -69,13 +69,6 @@ fn main() {
     // bevy-builtin plugins
     app.add_plugins(
         DefaultPlugins
-            .set(bevy::log::LogPlugin {
-                // stupid audio library bevy uses which uses info level for debug level messages.. smh
-                filter: "symphonia_core=off,symphonia_bundle=off,wgpu=error,\
-                         naga=warn"
-                    .to_string(),
-                ..default()
-            })
             .set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "Fun Shooter".into(),

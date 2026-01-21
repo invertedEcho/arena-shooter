@@ -37,7 +37,7 @@ enum MainMenuButtonType {
 }
 
 fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
-    info!("Spawning Main Menu");
+    debug!("Spawning Main Menu");
     commands
         .spawn((
             Node {
