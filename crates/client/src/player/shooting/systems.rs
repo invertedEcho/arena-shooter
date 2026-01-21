@@ -121,9 +121,14 @@ pub fn handle_input(
     }
 
     if shoot_button_pressed {
-        if player_weapon_shoot_cooldown_timer_query.iter().len() != 0 {
+        if player_weapon_shoot_cooldown_timer_query.count() != 0 {
             return;
         }
+
+        info!(
+            "No player wewapon shoot cooldown timer alive, allowing!: {}",
+            player_weapon_shoot_cooldown_timer_query.count()
+        );
 
         // TODO: play a sound which indicates empty magazine
         let active_weapon_empty = player_weapons.weapons
@@ -173,11 +178,14 @@ pub fn handle_player_weapon_fired_message(
 ) {
     let (player_weapons, player_entity) = player_query.into_inner();
     for _ in message_reader.read() {
+        info!("SHOOTINGGGG");
         let fire_delay = get_fire_delay_by_weapon_type(
             &player_weapons.weapons[player_weapons.active_slot]
                 .stats
                 .weapon_type,
         );
+
+        info!("Spawning player shoot cooldown timer!");
         commands.spawn(PlayerShootCooldownTimer(Timer::from_seconds(
             fire_delay,
             TimerMode::Once,

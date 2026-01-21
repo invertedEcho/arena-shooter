@@ -40,7 +40,7 @@ impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
-        app.add_plugins(EnemyPlugin);
+        // app.add_plugins(EnemyPlugin);
         app.add_plugins(NavMeshPathfindingPlugin);
 
         app.add_systems(Startup, start_server);

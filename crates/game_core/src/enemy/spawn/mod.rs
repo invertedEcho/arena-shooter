@@ -109,10 +109,6 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                         [chosen_spawn_location_index];
                     already_used_spawn_locations.push(chosen_spawn_location.0);
 
-                    // let enemy_model = asset_server.load(
-                    //     GltfAssetLabel::Scene(0).from_asset(ENEMY_MODEL_PATH),
-                    // );
-                    //
                     let spawn_location_translation =
                         chosen_spawn_location.1.translation;
 
@@ -152,23 +148,6 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             .with_max_distance(0.2),
                             CharacterController,
                         ))
-                        //  FIXME: reintroduce, do this for any added enemies on the client
-                        // .with_child((
-                        //     Transform {
-                        //         translation: Vec3::new(
-                        //             0.0,
-                        //             // center enemy model -> in blender, feet are at bottom, so in
-                        //             // bevy model feet are at center of collider, 0.0
-                        //             LOCAL_FEET_CHARACTER,
-                        //             0.0,
-                        //         ),
-                        //         // enemy model needs to be rotated 180 degrees
-                        //         rotation: Quat::from_rotation_y(PI),
-                        //         ..default()
-                        //     },
-                        //     SceneRoot(enemy_model),
-                        //     Visibility::Visible,
-                        // ))
                         .id();
                     commands.entity(enemy_entity).with_child((
                         Name::new("Enemy Pathfinding Agent"),

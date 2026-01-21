@@ -1955,28 +1955,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_remote"
-version = "0.17.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5e053684d1735e62d8e491cb68f5d9f7219edcb6528d1ac5fe179f24e5fe497"
-dependencies = [
- "anyhow",
- "async-channel",
- "bevy_app 0.17.3",
- "bevy_derive 0.17.3",
- "bevy_ecs 0.17.3",
- "bevy_log",
- "bevy_platform 0.17.3",
- "bevy_reflect 0.17.3",
- "bevy_tasks 0.17.3",
- "bevy_utils 0.17.3",
- "http-body-util",
- "hyper",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "bevy_render"
 version = "0.17.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2046,7 +2024,6 @@ dependencies = [
  "bevy_app 0.17.3",
  "bevy_math",
  "bevy_rerecast_core",
- "bevy_rerecast_editor_integration",
 ]
 
 [[package]]
@@ -2062,14 +2039,10 @@ dependencies = [
  "bevy_color",
  "bevy_derive 0.17.3",
  "bevy_ecs 0.17.3",
- "bevy_gizmos",
  "bevy_light",
  "bevy_math",
- "bevy_mesh",
- "bevy_pbr",
  "bevy_platform 0.17.3",
  "bevy_reflect 0.17.3",
- "bevy_render",
  "bevy_tasks 0.17.3",
  "bevy_transform",
  "bevy_utils 0.17.3",
@@ -2079,41 +2052,6 @@ dependencies = [
  "serde",
  "thiserror 2.0.17",
  "tracing",
-]
-
-[[package]]
-name = "bevy_rerecast_editor_integration"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "895d4328efe2de84d213229b3c664fc89d0ea3cc8881a8501e71f0b21eee856e"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "bevy_app 0.17.3",
- "bevy_asset 0.17.3",
- "bevy_camera",
- "bevy_color",
- "bevy_derive 0.17.3",
- "bevy_ecs 0.17.3",
- "bevy_image",
- "bevy_math",
- "bevy_mesh",
- "bevy_pbr",
- "bevy_platform 0.17.3",
- "bevy_reflect 0.17.3",
- "bevy_remote",
- "bevy_render",
- "bevy_rerecast_core",
- "bevy_tasks 0.17.3",
- "bevy_transform",
- "bincode",
- "flate2",
- "rerecast",
- "serde",
- "serde_json",
- "thiserror 2.0.17",
- "tracing",
- "wgpu-types",
 ]
 
 [[package]]
@@ -4567,60 +4505,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "http-body"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1efedce1fb8e6913f23e0c92de8e62cd5b772a67e7b3946df930a62566c93184"
-dependencies = [
- "bytes",
- "http",
-]
-
-[[package]]
-name = "http-body-util"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b021d93e26becf5dc7e1b75b1bed1fd93124b374ceb73f43d4d4eafec896a64a"
-dependencies = [
- "bytes",
- "futures-core",
- "http",
- "http-body",
- "pin-project-lite",
-]
-
-[[package]]
 name = "httparse"
 version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87"
-
-[[package]]
-name = "httpdate"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
-
-[[package]]
-name = "hyper"
-version = "1.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ab2d4f250c3d7b1c9fcdff1cece94ea4e2dfbec68614f7b87cb205f24ca9d11"
-dependencies = [
- "atomic-waker",
- "bytes",
- "futures-channel",
- "futures-core",
- "http",
- "http-body",
- "httparse",
- "httpdate",
- "itoa",
- "pin-project-lite",
- "pin-utils",
- "smallvec",
- "tokio",
-]
 
 [[package]]
 name = "i_float"
@@ -7778,6 +7666,7 @@ dependencies = [
  "bevy-inspector-egui 0.35.0",
  "bevy_common_assets",
  "dotenvy",
+ "game_core",
  "hex",
  "lightyear",
  "lightyear_replication",

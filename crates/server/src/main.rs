@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 use std::fs::File;
 use std::io::Read;
+use std::path::Path;
 use std::sync::{Arc, RwLock};
 
 use avian3d::prelude::*;
@@ -18,26 +19,10 @@ use shared::{
 use shared::{SharedPlugin, get_private_key};
 
 use crate::auth::{ClientIds, start_netcode_authentication_task};
+use crate::utils::get_run_mode;
 
 mod auth;
-
-fn get_run_mode(run_mode_str: Option<&String>) -> ServerRunMode {
-    if let Some(run_mode) = run_mode_str {
-        if run_mode == "headful" {
-            return ServerRunMode::Headful;
-        } else if run_mode == "headless" {
-            return ServerRunMode::Headless;
-        } else {
-            warn!(
-                "Your given run_mode: {} could not be interpreted. Must \
-                 either be 'headless' or 'headful'. Defaulting to headless.",
-                run_mode
-            );
-        }
-    }
-
-    ServerRunMode::Headless
-}
+mod utils;
 
 /// This plugin adds all plugins from bevy necessary to start a headless server
 pub struct HeadlessServerPlugin;
@@ -100,13 +85,19 @@ fn main() {
             info!("Running server in headful mode!");
         }
     }
+
+    app.add_plugins(MultiPlayerServerOnlyPlugin);
+
     app.add_systems(Startup, spawn_map_colliders);
 
     if run_mode == ServerRunMode::Headful {
         app.add_systems(Startup, spawn_map);
     }
 
+    app.insert_resource(ServerMode::RemoteServer);
     app.insert_resource(run_mode);
+
+    app.add_plugins(game_core::ServerPlugin);
 
     // authentication
     let client_ids = Arc::new(RwLock::new(HashSet::default()));
@@ -157,12 +148,12 @@ pub fn spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
 }
 
 fn spawn_map_colliders(mut commands: Commands) {
+    let file_path = get_path_to_collider_json();
+
     let mut file_buffer = String::from("");
-    // FIXME: This will break
-    let mut collider_file = File::open(
-        "../../assets/maps/medium_plastic/medium_plastic_colliders.json",
-    )
-    .expect("Can open medium_plastic_colliders.json");
+    let mut collider_file =
+        File::open(file_path).expect("Can open medium_plastic_colliders.json");
+
     collider_file.read_to_string(&mut file_buffer).unwrap();
 
     let colliders: Result<
@@ -176,9 +167,7 @@ fn spawn_map_colliders(mut commands: Commands) {
                 "Loaded colliders and their transform from json, spawning \
                  them."
             );
-            for collider in colliders_ok {
-                commands.spawn(collider);
-            }
+            commands.spawn_batch(colliders_ok);
         }
         Err(error) => {
             panic!(
@@ -186,5 +175,16 @@ fn spawn_map_colliders(mut commands: Commands) {
                 error
             );
         }
+    }
+}
+
+fn get_path_to_collider_json() -> String {
+    const BASE_PATH: &str =
+        "assets/maps/medium_plastic/medium_plastic_colliders.json";
+    let path = Path::new(BASE_PATH);
+    if path.exists() {
+        BASE_PATH.to_string()
+    } else {
+        "../../".to_owned() + BASE_PATH
     }
 }

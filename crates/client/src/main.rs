@@ -1,5 +1,8 @@
+use std::f32::consts::PI;
+
 use ::shared::{
     ServerMode, ServerRunMode, SharedPlugin,
+    character_controller::LOCAL_FEET_CHARACTER, enemy::components::Enemy,
     get_auth_backend_socket_addr_client_side,
 };
 use bevy::{
@@ -19,6 +22,7 @@ use crate::{
     auth::ConnectTokenRequestTask,
     character_controller::CharacterControllerPlugin,
     client::NetworkPlugin,
+    enemy::animate::ENEMY_MODEL_PATH,
     game_flow::GameFlowPlugin,
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
@@ -130,5 +134,36 @@ fn main() {
 
     app.add_observer(apply_render_layers_to_children);
 
+    app.add_systems(Update, detect_new_enemies);
+
     app.run();
+}
+
+pub fn detect_new_enemies(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    enemy_query: Query<Entity, Added<Enemy>>,
+) {
+    for added_enemy in enemy_query {
+        info!("YOOO WE GOT NEW ENEMY SHEESH SPAWNING VISUALS LETS GOO");
+        let enemy_model = asset_server
+            .load(GltfAssetLabel::Scene(0).from_asset(ENEMY_MODEL_PATH));
+
+        commands.entity(added_enemy).with_child((
+            Transform {
+                translation: Vec3::new(
+                    0.0,
+                    // center enemy model -> in blender, feet are at bottom, so in
+                    // bevy model feet are at center of collider, 0.0
+                    LOCAL_FEET_CHARACTER,
+                    0.0,
+                ),
+                // enemy model needs to be rotated 180 degrees
+                rotation: Quat::from_rotation_y(PI),
+                ..default()
+            },
+            SceneRoot(enemy_model),
+            Visibility::Visible,
+        ));
+    }
 }

@@ -48,8 +48,9 @@ pub enum FloatDirection {
 }
 
 pub fn load_private_key_from_env() -> Result<[u8; 32], String> {
-    let value = env::var("SERVER_PRIVATE_KEY")
-        .map_err(|_| "SERVER_PRIVATE_KEY not set".to_string())?;
+    let Ok(value) = env::var("SERVER_PRIVATE_KEY") else {
+        panic!("Please create a .env file containing a SERVER_PRIVATE_KEY.");
+    };
 
     let bytes = hex::decode(&value)
         .map_err(|e| format!("Invalid hex in SERVER_PRIVATE_KEY: {e}"))?;
@@ -127,7 +128,6 @@ impl Plugin for SharedPlugin {
         app.add_message::<MovementAction>();
 
         app.add_plugins(PhysicsPlugins::default().build())
-            .add_plugins(PhysicsDebugPlugin)
             .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
         app.add_systems(Update, handle_despawn_timer);
     }
