@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use game_core::ServerLoadingState;
 
 use crate::{
     game_flow::states::{InGameState, LoadingGameState},
@@ -15,7 +16,7 @@ pub struct WorldObjectsPlugin;
 impl Plugin for WorldObjectsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            OnEnter(LoadingGameState::SpawningColliders),
+            OnEnter(ServerLoadingState::SpawnLocationsProcessed),
             spawn_medkits,
         )
         .add_systems(

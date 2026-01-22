@@ -16,21 +16,43 @@ use shared::{
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
-    components::Health,
+    components::{Health, MedkitSpawnLocation},
     enemy::components::Enemy,
     get_private_key,
     player::{Player, PlayerBundle},
     protocol::{
-        ClientUpdatePositionMessage, PlayerPositionServer, ShootRequest,
+        ClientUpdatePositionMessage, EntityPositionServer, ShootRequest,
     },
 };
 
 use crate::{
-    enemy::EnemyPlugin, nav_mesh_pathfinding::NavMeshPathfindingPlugin,
+    enemy::{
+        EnemyPlugin,
+        spawn::{EnemySpawnLocation, spawn_enemies},
+    },
+    nav_mesh_pathfinding::NavMeshPathfindingPlugin,
 };
 
 mod enemy;
 mod nav_mesh_pathfinding;
+
+/// The game mode that is running on the server
+#[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
+enum ServerGameMode {
+    #[default]
+    Waves,
+    Ffa,
+}
+
+#[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
+pub enum ServerLoadingState {
+    #[default]
+    SpawningMap,
+    MapSpawned,
+    SpawnLocationsProcessed,
+    CollidersSpawned,
+    NavMeshReady,
+}
 
 /// This plugin adds all plugins & systems that need to run on the server, regardless if its for
 /// the server binary or the local server that gets started for Singleplayer.
@@ -38,6 +60,9 @@ pub struct ServerPlugin;
 
 impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
+        app.init_state::<ServerLoadingState>();
+        app.init_state::<ServerGameMode>();
+
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
         app.add_plugins(EnemyPlugin);
@@ -52,6 +77,14 @@ impl Plugin for ServerPlugin {
 
         app.add_observer(handle_new_connection);
         app.add_observer(handle_new_client);
+        app.add_systems(
+            OnEnter(ServerLoadingState::NavMeshReady),
+            spawn_enemies,
+        );
+        app.add_systems(
+            OnEnter(ServerLoadingState::MapSpawned),
+            process_spawn_locations,
+        );
     }
 }
 
@@ -131,7 +164,7 @@ fn handle_new_client(
                 PlayerBundle::default(),
                 // TODO: think we could override replication behaviour for this component and only
                 // replicate to all other clients than the current client
-                PlayerPositionServer {
+                EntityPositionServer {
                     translation: vec3(0.0, 20.0, 0.0),
                 },
                 Visibility::Visible,
@@ -178,7 +211,7 @@ pub fn receive_client_update_position(
         Entity,
     )>,
     mut players: Query<
-        (&mut PlayerPositionServer, &mut Transform, &ControlledBy),
+        (&mut EntityPositionServer, &mut Transform, &ControlledBy),
         With<Player>,
     >,
 ) {
@@ -241,4 +274,19 @@ pub fn receive_shoot_request(
             }
         }
     }
+}
+
+pub fn process_spawn_locations(
+    mut commands: Commands,
+    query: Query<(Entity, &Name)>,
+    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
+) {
+    for (entity, name) in query {
+        if name.contains("EnemySpawnLocation") {
+            commands.entity(entity).insert(EnemySpawnLocation);
+        } else if name.contains("MedkitSpawnLocation") {
+            commands.entity(entity).insert(MedkitSpawnLocation);
+        }
+    }
+    next_server_loading_state.set(ServerLoadingState::SpawnLocationsProcessed);
 }

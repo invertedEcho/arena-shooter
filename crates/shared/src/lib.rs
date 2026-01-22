@@ -1,5 +1,6 @@
 use avian3d::{PhysicsPlugins, prelude::*};
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::{
     env,
     net::{IpAddr, Ipv6Addr, SocketAddr, ToSocketAddrs},

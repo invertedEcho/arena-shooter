@@ -12,6 +12,7 @@ use shared::{
     },
     components::Health,
     enemy::components::{Enemy, EnemyState},
+    protocol::EntityPositionServer,
 };
 
 pub struct EnemySpawnPlugin;
@@ -41,6 +42,13 @@ pub struct AgentEnemyEntityPointer(pub Entity);
 pub enum EnemySpawnStrategy {
     /// Enemies will be spawned at randomly picked EnemySpawnLocations
     RandomSelection,
+}
+
+pub fn spawn_enemies(mut message_writer: MessageWriter<SpawnEnemiesMessage>) {
+    message_writer.write(SpawnEnemiesMessage {
+        enemy_count: 3,
+        spawn_strategy: EnemySpawnStrategy::RandomSelection,
+    });
 }
 
 fn handle_spawn_enemies_at_enemy_spawn_locations_message(
@@ -89,6 +97,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                 }
 
                 let mut already_used_spawn_locations: Vec<Entity> = Vec::new();
+                // i kinda dont like while loops as its very easy to cause infinite loops with them
                 while already_used_spawn_locations.len() != spawn_enemy_count {
                     let chosen_spawn_location_index = rand::random_range(
                         0..enemy_spawn_locations.iter().len(),
@@ -127,6 +136,9 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             Health(100.0),
                             EnemyState::default(),
                             Grounded::default(),
+                            EntityPositionServer {
+                                translation: spawn_location_translation,
+                            },
                             // LockedAxes::new()
                             //     .lock_rotation_x()
                             //     .lock_rotation_y()

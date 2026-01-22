@@ -8,8 +8,8 @@ use lightyear::prelude::client::*;
 use lightyear::prelude::*;
 use shared::player::Player;
 use shared::protocol::{
-    ClientUpdatePositionMessage, OrderedReliableMessageChannel,
-    PlayerPositionServer,
+    ClientUpdatePositionMessage, EntityPositionServer,
+    OrderedReliableMessageChannel,
 };
 use shared::utils::lightyear::{
     DisconnectReason, parse_lightyear_disconnect_reason,
@@ -211,14 +211,11 @@ pub fn send_client_update_position(
 
 pub fn apply_server_position_other_clients(
     time: Res<Time>,
-    mut query: Query<
-        (
-            &mut Transform,
-            &PlayerPositionServer,
-            Has<Controlled>, // present only on own player
-        ),
-        With<Player>,
-    >,
+    mut query: Query<(
+        &mut Transform,
+        &EntityPositionServer,
+        Has<Controlled>, // present only on own player
+    )>,
 ) {
     for (mut transform, server_pos, controlled) in &mut query {
         // Skip our own transform

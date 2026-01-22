@@ -4,17 +4,13 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 use shared::{
     FloatDirection, Medkit,
-    components::Health,
+    components::{Health, MedkitSpawnLocation},
     player::{DEFAULT_PLAYER_HEALTH, Player},
 };
 
 use crate::game_flow::states::AppState;
 
 const MEDKIT_MODEL_PATH: &str = "models/world_objects/medkit.gltf";
-
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-pub struct MedkitSpawnLocation;
 
 const DEFAULT_HEALTH_TO_GIVE_MEDKIT: f32 = 25.0;
 

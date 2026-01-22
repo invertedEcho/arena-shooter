@@ -3,6 +3,9 @@ use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
+use game_core::ServerLoadingState;
+use lightyear::netcode::Server;
+use shared::ServerMode;
 
 use crate::{
     game_flow::states::{AppState, InGameState, LoadingGameState},
@@ -83,6 +86,7 @@ pub fn check_world_scene_loaded(
     mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
     maybe_world_scene_handle: Option<Res<WorldSceneHandle>>,
     mut next_game_loading_state: ResMut<NextState<LoadingGameState>>,
+    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
 ) {
     for asset_event in asset_event_message_reader.read() {
         if let AssetEvent::LoadedWithDependencies { id } = asset_event
@@ -94,6 +98,7 @@ pub fn check_world_scene_loaded(
                  SpawningColliders"
             );
             next_game_loading_state.set(LoadingGameState::SpawningColliders);
+            next_server_loading_state.set(ServerLoadingState::MapSpawned);
         }
     }
 }
@@ -101,8 +106,14 @@ pub fn check_world_scene_loaded(
 pub fn check_collider_constructor_hierarchy_ready(
     _trigger: On<ColliderConstructorHierarchyReady>,
     mut next_game_loading_state: ResMut<NextState<LoadingGameState>>,
+    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
+    server_mode: Res<ServerMode>,
 ) {
     next_game_loading_state.set(LoadingGameState::ConnectingToServer);
+
+    if *server_mode == ServerMode::LocalServerSinglePlayer {
+        next_server_loading_state.set(ServerLoadingState::CollidersSpawned);
+    }
 }
 
 pub fn pause_all_animations(animation_players: Query<&mut AnimationPlayer>) {

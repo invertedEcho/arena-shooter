@@ -16,8 +16,10 @@ pub struct ClientUpdatePositionMessage {
     pub new_translation: Vec3,
 }
 
+/// This component indicates the current location of an entity on the server. It is replicated to
+/// all clients. All clients interpolate the local transform of this entity to this component
 #[derive(Component, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub struct PlayerPositionServer {
+pub struct EntityPositionServer {
     pub translation: Vec3,
 }
 
@@ -52,11 +54,13 @@ impl Plugin for ProtocolPlugin {
 
         app.register_component::<Player>();
 
-        app.register_component::<PlayerPositionServer>();
+        app.register_component::<EntityPositionServer>();
 
         app.register_component::<Health>();
 
         app.register_component::<Enemy>();
         app.register_component::<EnemyState>();
+
+        // app.register_component::<Medkit>();
     }
 }

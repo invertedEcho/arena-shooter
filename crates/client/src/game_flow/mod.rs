@@ -40,11 +40,6 @@ impl Plugin for GameFlowPlugin {
             .add_plugins(GameScorePlugin)
             .add_plugins(GameModePlugin)
             .add_observer(check_collider_constructor_hierarchy_ready)
-            // .add_observer(check_navmesh_ready)
-            // .add_systems(
-            //     OnEnter(LoadingGameState::NavMeshReady),
-            //     on_game_loading_state_nav_mesh_ready,
-            // )
             .add_systems(
                 OnEnter(InGameState::Playing),
                 (grab_mouse, resume_all_animations),
