@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use game_core::ServerLoadingState;
 
 use crate::{
-    game_flow::states::{InGameState, LoadingGameState},
+    game_flow::states::InGameState,
     world::world_objects::medkit::{
         activate_medkits_over_time, detect_collision_medkit_with_player,
         rotate_and_float_medkits, spawn_medkits, tick_respawn_timer_medkits,

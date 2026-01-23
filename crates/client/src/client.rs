@@ -40,13 +40,14 @@ impl Plugin for NetworkPlugin {
             OnEnter(LoadingGameState::ConnectingToServer),
             on_enter_connecting_to_server,
         );
+        app.add_systems(Update, (fetch_connect_token,));
         app.add_systems(
             Update,
             (
-                send_client_update_position.run_if(in_state(AppState::InGame)),
+                send_client_update_position,
                 apply_server_position_other_clients,
-                fetch_connect_token,
-            ),
+            )
+                .run_if(in_state(ServerMode::RemoteServer)),
         );
         app.add_observer(handle_new_player);
         app.add_observer(handle_connected);
@@ -60,7 +61,7 @@ pub fn on_enter_connecting_to_server(
     mut task_state: ResMut<ConnectTokenRequestTask>,
     game_mode: Res<State<GameModeState>>,
     server_entity: Query<Entity, With<Server>>,
-    server_mode: Res<ServerMode>,
+    server_mode: Res<State<ServerMode>>,
 ) {
     // Connected component only present on our own client
     for connected in connected_query {
@@ -156,7 +157,7 @@ fn handle_new_player(
     >,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    server_mode: Res<ServerMode>,
+    server_mode: Res<State<ServerMode>>,
 ) {
     let Ok((our_player_entity, has_controlled)) =
         player_query.get(trigger.entity)

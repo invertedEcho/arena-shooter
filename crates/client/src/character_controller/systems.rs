@@ -272,6 +272,7 @@ pub fn apply_gravity_over_time(
     }
 }
 
+// FIXME: this needs to use time.delta
 // Apply damping in the XZ Plane, basically this is deceleration over time
 pub fn apply_movement_damping(
     query: Query<&mut LinearVelocity, With<CharacterController>>,

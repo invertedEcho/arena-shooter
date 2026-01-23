@@ -1,5 +1,23 @@
-use bevy::{color::palettes::css::RED, prelude::*};
-use bevy_rich_text3d::{LoadFonts, Text3dPlugin};
+use std::num::NonZero;
+
+use bevy::{
+    color::palettes::{css::RED, tailwind::BLUE_700},
+    prelude::*,
+};
+use bevy_inspector_egui::{
+    bevy_egui::{EguiContext, PrimaryEguiContext},
+    egui,
+};
+use bevy_rich_text3d::{
+    LoadFonts, Text3d, Text3dPlugin, Text3dStyling, TextAtlas,
+};
+use shared::{
+    enemy::{
+        ENEMY_FOV, ENEMY_VISION_RANGE,
+        components::{Enemy, EnemyState},
+    },
+    player::Player,
+};
 
 pub struct GameplayDebugPlugin;
 
@@ -25,9 +43,9 @@ impl Plugin for GameplayDebugPlugin {
             Update,
             (
                 draw_gizmos,
-                // draw_enemy_fov,
-                // add_enemy_state_text,
-                // update_enemy_debug_text,
+                draw_enemy_fov,
+                add_enemy_state_text,
+                update_enemy_debug_text,
                 tick_despawn_timer_debug_gizmo_lines,
                 handle_spawn_debug_points_message,
             ),
@@ -84,112 +102,111 @@ fn tick_despawn_timer_debug_gizmo_lines(
     });
 }
 
-// pub fn draw_enemy_fov(
-//     enemy_transforms: Query<&Transform, With<Enemy>>,
-//     mut gizmos: Gizmos,
-// ) {
-//     for transform in enemy_transforms {
-//         let pos = transform.translation;
-//         let forward = transform.forward();
-//         let range = ENEMY_VISION_RANGE;
-//
-//         // Cone edges
-//         let half_angle = ENEMY_FOV.to_radians() / 2.0;
-//         let left_dir: Vec3 =
-//             (Quat::from_rotation_y(half_angle) * forward).normalize();
-//         let right_dir: Vec3 =
-//             (Quat::from_rotation_y(-half_angle) * forward).normalize();
-//
-//         gizmos.ray(pos, left_dir * range, BLUE_700.with_alpha(0.5));
-//         gizmos.ray(pos, right_dir * range, BLUE_700.with_alpha(0.5));
-//     }
-// }
-//
-// fn update_enemy_debug_text(
-//     mut query: Query<(&mut Text3d, &EnemyDebugText)>,
-//     changed_enemies: Query<(Entity, &EnemyState), Changed<EnemyState>>,
-// ) {
-//     for (enemy_entity, enemy_state) in changed_enemies {
-//         let Some((mut text, _)) =
-//             query.iter_mut().find(|e| e.1.0 == enemy_entity)
-//         else {
-//             continue;
-//         };
-//         *text = Text3d::new(format!("{} | {:?}", enemy_entity, enemy_state));
-//     }
-// }
-//
-// #[derive(Component)]
-// struct EnemyDebugText(pub Entity);
-//
-// fn add_enemy_state_text(
-//     mut commands: Commands,
-//     enemy_query: Query<(Entity, &EnemyState), Added<EnemyState>>,
-//     mut materials: ResMut<Assets<StandardMaterial>>,
-// ) {
-//     for (entity, enemy_state) in enemy_query {
-//         let mat = materials.add(StandardMaterial {
-//             base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
-//             alpha_mode: AlphaMode::Mask(0.5),
-//             unlit: true,
-//             cull_mode: None,
-//             ..Default::default()
-//         });
-//
-//         commands.entity(entity).with_child((
-//             Text3d::new(format!(" | {:?}", enemy_state)),
-//             Text3dStyling {
-//                 size: 64.,
-//                 stroke: NonZero::new(10),
-//                 color: Srgba::new(1., 0., 0., 1.),
-//                 stroke_color: Srgba::BLACK,
-//                 world_scale: Some(Vec2::splat(0.25)),
-//                 layer_offset: 0.001,
-//                 ..Default::default()
-//             },
-//             Mesh3d::default(),
-//             MeshMaterial3d(mat.clone()),
-//             Transform {
-//                 translation: Vec3::new(0.0, 1.0, 0.0),
-//                 rotation: Quat::from_euler(
-//                     EulerRot::XYZ,
-//                     180_f32.to_radians(),
-//                     0.0,
-//                     180_f32.to_radians(),
-//                 ),
-//                 scale: Vec3::ONE,
-//             },
-//             EnemyDebugText(entity),
-//         ));
-//     }
-// }
+pub fn draw_enemy_fov(
+    enemy_transforms: Query<&Transform, With<Enemy>>,
+    mut gizmos: Gizmos,
+) {
+    for transform in enemy_transforms {
+        let pos = transform.translation;
+        let forward = transform.forward();
+        let range = ENEMY_VISION_RANGE;
 
-// fn player_inspector(world: &mut World) {
-//     let mut ui_ctx = match world
-//         .query_filtered::<&mut EguiContext, With<PrimaryEguiContext>>()
-//         .single_mut(world)
-//     {
-//         Ok(ctx) => ctx.clone(),
-//         _ => return,
-//     };
-//
-//     egui::Window::new("Player Inspector").show(ui_ctx.get_mut(), |ui| {
-//         egui::ScrollArea::vertical().show(ui, |ui| {
-//             if let Ok(player_entity) =
-//                 world.query_filtered::<Entity, With<Player>>().single(world)
-//             {
-//                 ui.label(format!("Player Entity ID: {:?}", player_entity));
-//
-//                 bevy_inspector_egui::bevy_inspector::ui_for_entity(
-//                     world,
-//                     player_entity,
-//                     ui,
-//                 );
-//             }
-//         })
-//     });
-// }
-//
+        // Cone edges
+        let half_angle = ENEMY_FOV.to_radians() / 2.0;
+        let left_dir: Vec3 =
+            (Quat::from_rotation_y(half_angle) * forward).normalize();
+        let right_dir: Vec3 =
+            (Quat::from_rotation_y(-half_angle) * forward).normalize();
+
+        gizmos.ray(pos, left_dir * range, BLUE_700.with_alpha(0.5));
+        gizmos.ray(pos, right_dir * range, BLUE_700.with_alpha(0.5));
+    }
+}
+
+fn update_enemy_debug_text(
+    mut query: Query<(&mut Text3d, &EnemyDebugText)>,
+    changed_enemies: Query<(Entity, &EnemyState), Changed<EnemyState>>,
+) {
+    for (enemy_entity, enemy_state) in changed_enemies {
+        let Some((mut text, _)) =
+            query.iter_mut().find(|e| e.1.0 == enemy_entity)
+        else {
+            continue;
+        };
+        *text = Text3d::new(format!("{} | {:?}", enemy_entity, enemy_state));
+    }
+}
+
+#[derive(Component)]
+struct EnemyDebugText(pub Entity);
+
+fn add_enemy_state_text(
+    mut commands: Commands,
+    enemy_query: Query<(Entity, &EnemyState), Added<EnemyState>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for (entity, enemy_state) in enemy_query {
+        let mat = materials.add(StandardMaterial {
+            base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
+            alpha_mode: AlphaMode::Mask(0.5),
+            unlit: true,
+            cull_mode: None,
+            ..Default::default()
+        });
+
+        commands.entity(entity).with_child((
+            Text3d::new(format!(" | {:?}", enemy_state)),
+            Text3dStyling {
+                size: 64.,
+                stroke: NonZero::new(10),
+                color: Srgba::new(1., 0., 0., 1.),
+                stroke_color: Srgba::BLACK,
+                world_scale: Some(Vec2::splat(0.25)),
+                layer_offset: 0.001,
+                ..Default::default()
+            },
+            Mesh3d::default(),
+            MeshMaterial3d(mat.clone()),
+            Transform {
+                translation: Vec3::new(0.0, 1.0, 0.0),
+                rotation: Quat::from_euler(
+                    EulerRot::XYZ,
+                    180_f32.to_radians(),
+                    0.0,
+                    180_f32.to_radians(),
+                ),
+                scale: Vec3::ONE,
+            },
+            EnemyDebugText(entity),
+        ));
+    }
+}
+
+fn player_inspector(world: &mut World) {
+    let mut ui_ctx = match world
+        .query_filtered::<&mut EguiContext, With<PrimaryEguiContext>>()
+        .single_mut(world)
+    {
+        Ok(ctx) => ctx.clone(),
+        _ => return,
+    };
+
+    egui::Window::new("Player Inspector").show(ui_ctx.get_mut(), |ui| {
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            if let Ok(player_entity) =
+                world.query_filtered::<Entity, With<Player>>().single(world)
+            {
+                ui.label(format!("Player Entity ID: {:?}", player_entity));
+
+                bevy_inspector_egui::bevy_inspector::ui_for_entity(
+                    world,
+                    player_entity,
+                    ui,
+                );
+            }
+        })
+    });
+}
 
 pub fn handle_spawn_debug_points_message(
     mut commands: Commands,

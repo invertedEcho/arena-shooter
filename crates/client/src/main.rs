@@ -6,6 +6,8 @@ use ::shared::{
     get_auth_backend_socket_addr_client_side,
 };
 use bevy::{
+    dev_tools::fps_overlay::FpsOverlayPlugin,
+    diagnostic::FrameTimeDiagnosticsPlugin,
     input_focus::InputDispatchPlugin,
     prelude::*,
     ui_widgets::UiWidgetsPlugins,
@@ -73,7 +75,7 @@ fn main() {
                 primary_window: Some(Window {
                     title: "Fun Shooter".into(),
                     name: Some("fun-shooter".into()),
-                    present_mode: PresentMode::AutoNoVsync,
+                    present_mode: PresentMode::AutoVsync,
                     mode: window_mode,
                     ..default()
                 }),
@@ -93,8 +95,8 @@ fn main() {
     app.add_plugins(SharedPlugin);
 
     app.add_plugins((UiWidgetsPlugins, InputDispatchPlugin));
-    // app.add_plugins(FrameTimeDiagnosticsPlugin::default());
-    // app.add_plugins(LogDiagnosticsPlugin::default());
+    app.add_plugins(FrameTimeDiagnosticsPlugin::default());
+    app.add_plugins(FpsOverlayPlugin::default());
 
     // External plugins
     app.add_plugins(HanabiPlugin);
@@ -109,7 +111,7 @@ fn main() {
     }
 
     app.insert_resource(ServerRunMode::Headless);
-    app.insert_resource(ServerMode::LocalServerSinglePlayer);
+    app.insert_state(ServerMode::LocalServerSinglePlayer);
     app.add_plugins(NetworkPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(WorldPlugin)
@@ -127,18 +129,17 @@ fn main() {
 
     app.add_observer(apply_render_layers_to_children);
 
-    app.add_systems(Update, detect_new_enemies);
+    app.add_systems(Update, spawn_enemy_model_for_new_enemies);
 
     app.run();
 }
 
-pub fn detect_new_enemies(
+pub fn spawn_enemy_model_for_new_enemies(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     enemy_query: Query<Entity, Added<Enemy>>,
 ) {
     for added_enemy in enemy_query {
-        info!("YOOO WE GOT NEW ENEMY SHEESH SPAWNING VISUALS LETS GOO");
         let enemy_model = asset_server
             .load(GltfAssetLabel::Scene(0).from_asset(ENEMY_MODEL_PATH));
 

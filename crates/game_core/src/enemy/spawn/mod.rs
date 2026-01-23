@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use crate::nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS};
 use avian3d::{math::Quaternion, prelude::*};
 use bevy::prelude::*;
@@ -11,7 +13,7 @@ use shared::{
         components::{CharacterController, Grounded},
     },
     components::Health,
-    enemy::components::{Enemy, EnemyState},
+    enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
     protocol::EntityPositionServer,
 };
 
@@ -46,7 +48,7 @@ pub enum EnemySpawnStrategy {
 
 pub fn spawn_enemies(mut message_writer: MessageWriter<SpawnEnemiesMessage>) {
     message_writer.write(SpawnEnemiesMessage {
-        enemy_count: 3,
+        enemy_count: 1,
         spawn_strategy: EnemySpawnStrategy::RandomSelection,
     });
 }
@@ -133,6 +135,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 spawn_location_translation,
                             ),
                             Enemy,
+                            EnemyLastStateUpdate(Instant::now()),
                             Health(100.0),
                             EnemyState::default(),
                             Grounded::default(),

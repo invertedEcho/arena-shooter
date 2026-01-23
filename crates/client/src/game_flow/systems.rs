@@ -4,7 +4,6 @@ use bevy::{
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use game_core::ServerLoadingState;
-use lightyear::netcode::Server;
 use shared::ServerMode;
 
 use crate::{
@@ -70,16 +69,23 @@ pub fn spawn_main_menu_camera(
     }
 
     debug!("Spawning Main Menu Camera");
-    commands.spawn((
-        Name::new("Main Menu Camera"),
-        Camera::default(),
-        Camera3d::default(),
-        get_main_menu_camera_transform(),
-        MainMenuCamera,
-        bevy_inspector_egui::bevy_egui::PrimaryEguiContext,
-        // we still need mainmenucamera during loading screen
-        DespawnOnExit(AppState::LoadingGame),
-    ));
+    let main_menu_camera = commands
+        .spawn((
+            Name::new("Main Menu Camera"),
+            Camera::default(),
+            Camera3d::default(),
+            get_main_menu_camera_transform(),
+            MainMenuCamera,
+            // we still need main menu camera during loading screen
+            DespawnOnExit(AppState::LoadingGame),
+        ))
+        .id();
+
+    if cfg!(debug_assertions) {
+        commands
+            .entity(main_menu_camera)
+            .insert(bevy_inspector_egui::bevy_egui::PrimaryEguiContext);
+    }
 }
 
 pub fn check_world_scene_loaded(
@@ -107,7 +113,7 @@ pub fn check_collider_constructor_hierarchy_ready(
     _trigger: On<ColliderConstructorHierarchyReady>,
     mut next_game_loading_state: ResMut<NextState<LoadingGameState>>,
     mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
-    server_mode: Res<ServerMode>,
+    server_mode: Res<State<ServerMode>>,
 ) {
     next_game_loading_state.set(LoadingGameState::ConnectingToServer);
 

@@ -1,8 +1,11 @@
 use bevy::prelude::*;
 use lightyear::prelude::{MessageSender, ReliableSettings};
 use shared::{
-    components::DespawnTimer, enemy::components::EnemyState, player::Player,
-    protocol::ShootRequest, utils::random::get_random_number_from_range,
+    components::DespawnTimer,
+    enemy::components::{EnemyLastStateUpdate, EnemyState},
+    player::Player,
+    protocol::ShootRequest,
+    utils::random::get_random_number_from_range,
 };
 
 use crate::enemy::shooting::{
@@ -121,12 +124,17 @@ pub fn tick_enemy_shoot_player_cooldown_timer(
 pub fn handle_enemy_killed_message(
     mut commands: Commands,
     mut message_reader: MessageReader<EnemyKilledMessage>,
-    mut enemy_query: Query<(Entity, &mut EnemyState)>,
+    mut enemy_query: Query<(
+        Entity,
+        &mut EnemyState,
+        &mut EnemyLastStateUpdate,
+    )>,
 ) {
     for message in message_reader.read() {
-        let Some((enemy_entity, mut enemy_state)) = enemy_query
-            .iter_mut()
-            .find(|(entity, _)| *entity == message.0)
+        let Some((enemy_entity, mut enemy_state, mut enemy_last_state_update)) =
+            enemy_query
+                .iter_mut()
+                .find(|(entity, _, _)| *entity == message.0)
         else {
             warn!(
                 "An EnemyKilledMessage was read, but the containing enemy \
@@ -136,7 +144,8 @@ pub fn handle_enemy_killed_message(
             continue;
         };
 
-        enemy_state.update_state(EnemyState::Dead);
+        enemy_state
+            .update_state(EnemyState::Dead, &mut enemy_last_state_update);
         commands
             .entity(enemy_entity)
             .insert(DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)));

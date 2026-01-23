@@ -1,6 +1,5 @@
 use avian3d::{PhysicsPlugins, prelude::*};
 use bevy::prelude::*;
-use serde::{Deserialize, Serialize};
 use std::{
     env,
     net::{IpAddr, Ipv6Addr, SocketAddr, ToSocketAddrs},
@@ -29,8 +28,10 @@ pub enum ServerRunMode {
 
 /// A resource existing to know whether we are using a remote server to connect to,
 /// or a local server is started, e.g. for singleplayer
-#[derive(Resource, PartialEq)]
+#[derive(States, PartialEq, Default, Debug, Hash, Clone, Eq)]
 pub enum ServerMode {
+    #[default]
+    None,
     RemoteServer,
     LocalServerSinglePlayer,
 }
@@ -79,6 +80,7 @@ pub fn get_private_key(server_mode: &ServerMode) -> [u8; 32] {
     match server_mode {
         ServerMode::RemoteServer => load_private_key_from_env().unwrap(),
         ServerMode::LocalServerSinglePlayer => LOCAL_SERVER_PRIVATE_KEY,
+        ServerMode::None => LOCAL_SERVER_PRIVATE_KEY,
     }
 }
 

@@ -91,11 +91,12 @@ impl Plugin for ServerPlugin {
 pub fn start_server(
     mut commands: Commands,
     server_run_mode: Res<ServerRunMode>,
-    server_mode: Res<ServerMode>,
+    server_mode: Res<State<ServerMode>>,
 ) {
-    let entity_name = match *server_mode {
+    let entity_name = match server_mode.get() {
         ServerMode::LocalServerSinglePlayer => "Local Server for singleplayer",
         ServerMode::RemoteServer => "Server from server Binary",
+        ServerMode::None => "Server None",
     };
 
     let server = commands
@@ -145,7 +146,7 @@ fn handle_new_client(
     mut commands: Commands,
     materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    server_mode: Res<ServerMode>,
+    server_mode: Res<State<ServerMode>>,
 ) {
     if let Ok(remote_id) = clients_query.get(trigger.entity) {
         let client_id = remote_id.0;

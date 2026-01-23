@@ -11,6 +11,7 @@ use bevy::mesh::MeshPlugin;
 use bevy::prelude::*;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use lightyear::netcode::Server;
 use lightyear::utils::collections::HashSet;
 use shared::{
     AUTH_BACKEND_ADDRESS_SERVER_SIDE, MEDIUM_PLASTIC_MAP_PATH, ServerMode,
@@ -95,7 +96,7 @@ fn main() {
         app.add_systems(Startup, spawn_map);
     }
 
-    app.insert_resource(ServerMode::RemoteServer);
+    app.insert_state(ServerMode::RemoteServer);
     app.insert_resource(run_mode);
 
     // authentication

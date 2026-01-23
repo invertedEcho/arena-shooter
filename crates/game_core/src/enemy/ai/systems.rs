@@ -5,23 +5,28 @@ use bevy_landmass::{
 };
 use shared::{
     character_controller::messages::{MovementAction, MovementDirection},
-    enemy::components::{Enemy, EnemyState},
+    enemy::{
+        ENEMY_FOV, ENEMY_VISION_RANGE,
+        components::{Enemy, EnemyLastStateUpdate, EnemyState},
+    },
     player::Player,
     utils::transform::is_facing_target_without_y,
 };
 
 use crate::enemy::{
-    ai::{
-        ENEMY_FOV, ENEMY_VISION_RANGE, messages::UpdateEnemyAgentTargetMessage,
-    },
-    spawn::AgentEnemyEntityPointer,
+    ai::messages::UpdateEnemyAgentTargetMessage, spawn::AgentEnemyEntityPointer,
 };
 
 /// This system is the only system allowed to change the enemy state
 /// Depending on the EnemyState, different systems will be run.
 pub fn enemy_state_decision_system(
     enemy_query: Query<
-        (Entity, &Transform, &mut EnemyState),
+        (
+            Entity,
+            &Transform,
+            &mut EnemyState,
+            &mut EnemyLastStateUpdate,
+        ),
         (With<Enemy>, Without<Player>),
     >,
     player_query: Single<(Entity, &Transform), With<Player>>,
@@ -30,7 +35,17 @@ pub fn enemy_state_decision_system(
         UpdateEnemyAgentTargetMessage,
     >,
 ) {
-    for (enemy_entity, enemy_transform, mut enemy_state) in enemy_query {
+    for (
+        enemy_entity,
+        enemy_transform,
+        mut enemy_state,
+        mut enemy_last_state_update,
+    ) in enemy_query
+    {
+        if enemy_last_state_update.0.elapsed().as_millis() < 1000 {
+            continue;
+        }
+
         if *enemy_state == EnemyState::Dead {
             continue;
         }
@@ -79,10 +94,15 @@ pub fn enemy_state_decision_system(
                             enemy_transform,
                             player_transform,
                         ) {
-                            enemy_state.update_state(EnemyState::AttackPlayer);
+                            enemy_state.update_state(
+                                EnemyState::AttackPlayer,
+                                &mut enemy_last_state_update,
+                            );
                         } else {
-                            enemy_state
-                                .update_state(EnemyState::RotateTowardsPlayer);
+                            enemy_state.update_state(
+                                EnemyState::RotateTowardsPlayer,
+                                &mut enemy_last_state_update,
+                            );
                         }
                     } else if *enemy_state != EnemyState::GoToAgentTarget {
                         // the player is in range of the enemy, also in the fov cone of the enemy, but
@@ -90,16 +110,25 @@ pub fn enemy_state_decision_system(
                         // location to go to
                         set_new_enemy_agent_message_writer
                             .write(UpdateEnemyAgentTargetMessage(enemy_entity));
-                        enemy_state.update_state(EnemyState::GoToAgentTarget);
+                        enemy_state.update_state(
+                            EnemyState::GoToAgentTarget,
+                            &mut enemy_last_state_update,
+                        );
                     }
                 }
             } else {
                 info!("player is not in enemy FOV");
-                enemy_state.update_state(EnemyState::RotateTowardsPlayer);
+                enemy_state.update_state(
+                    EnemyState::RotateTowardsPlayer,
+                    &mut enemy_last_state_update,
+                );
             }
         } else if *enemy_state != EnemyState::GoToAgentTarget {
             info!("Player is not in range of enemy, > 30m");
-            enemy_state.update_state(EnemyState::GoToAgentTarget);
+            enemy_state.update_state(
+                EnemyState::GoToAgentTarget,
+                &mut enemy_last_state_update,
+            );
             set_new_enemy_agent_message_writer
                 .write(UpdateEnemyAgentTargetMessage(enemy_entity));
             continue;
@@ -161,7 +190,7 @@ pub fn handle_set_new_enemy_agent_target_message(
 }
 
 pub fn check_if_enemy_agent_reached_target(
-    mut enemy_query: Query<&mut EnemyState>,
+    mut enemy_query: Query<(&mut EnemyState, &mut EnemyLastStateUpdate)>,
     enemy_agents_query: Query<(&AgentEnemyEntityPointer, &AgentState)>,
 ) {
     for (agent_enemy_entity_pointer, agent_state) in enemy_agents_query {
@@ -169,7 +198,7 @@ pub fn check_if_enemy_agent_reached_target(
             continue;
         }
 
-        let Ok(mut enemy_state) =
+        let Ok((mut enemy_state, mut enemy_last_state_update)) =
             enemy_query.get_mut(agent_enemy_entity_pointer.0)
         else {
             warn!(
@@ -184,7 +213,10 @@ pub fn check_if_enemy_agent_reached_target(
             "Enemy has reached agent target! Now checking whether the player \
              is seeable"
         );
-        enemy_state.update_state(EnemyState::EnemyAgentReachedTarget);
+        enemy_state.update_state(
+            EnemyState::EnemyAgentReachedTarget,
+            &mut enemy_last_state_update,
+        );
     }
 }
 

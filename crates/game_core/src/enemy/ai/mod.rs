@@ -14,9 +14,6 @@ pub mod components;
 mod messages;
 mod systems;
 
-pub const ENEMY_VISION_RANGE: f32 = 30.0;
-pub const ENEMY_FOV: f32 = 70.0;
-
 // OUTDATED
 // Enemy AI:
 // 1. Enemy gets spawned (State idle)

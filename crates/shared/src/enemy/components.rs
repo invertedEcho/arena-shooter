@@ -1,9 +1,29 @@
+use std::time::Instant;
+
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 /// A marker component for an enemy
 #[derive(Component, Default, Serialize, Deserialize, PartialEq)]
 pub struct Enemy;
+
+#[derive(Component)]
+pub struct EnemyLastStateUpdate(pub Instant);
+
+impl EnemyState {
+    // TODO: save last state update. if not older than 0.5s, ignore, so its not possible that rapid state updates
+    pub fn update_state(
+        &mut self,
+        new_state: EnemyState,
+        last_state_update: &mut EnemyLastStateUpdate,
+    ) {
+        if *self != new_state {
+            info!("Enemy State change: {:?} -> {:?}", self, new_state);
+            *self = new_state;
+            last_state_update.0 = Instant::now();
+        }
+    }
+}
 
 #[derive(Default, PartialEq, Debug, Component, Serialize, Deserialize)]
 pub enum EnemyState {
@@ -21,13 +41,4 @@ pub enum EnemyState {
     Dead,
     /// This state is set when the enemies should rotate towards the player direction over time
     RotateTowardsPlayer,
-}
-
-impl EnemyState {
-    pub fn update_state(&mut self, new_state: EnemyState) {
-        if *self != new_state {
-            info!("Enemy State change: {:?} -> {:?}", *self, new_state);
-            *self = new_state;
-        }
-    }
 }

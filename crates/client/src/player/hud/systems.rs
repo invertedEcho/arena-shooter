@@ -1,5 +1,6 @@
 use bevy::{
     color::palettes::tailwind::{BLUE_500, RED_500},
+    diagnostic::{Diagnostic, DiagnosticsStore},
     prelude::*,
 };
 use lightyear::prelude::Controlled;
