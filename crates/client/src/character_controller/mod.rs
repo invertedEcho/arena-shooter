@@ -19,7 +19,7 @@ impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<MovementAction>()
             .add_systems(
-                Update,
+                FixedUpdate,
                 (
                     apply_movement_damping,
                     update_grounded,

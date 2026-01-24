@@ -25,7 +25,7 @@ pub struct StartGameModeMessage {
     pub restart: bool,
 }
 
-#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
+#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default, Copy)]
 pub enum GameModeState {
     #[default]
     FreeRoam,
@@ -65,9 +65,6 @@ fn handle_start_game_mode_message(
 
         match current_game_mode.get() {
             GameModeState::Waves => {
-                // for existing_enemy in existing_enemies {
-                //     commands.entity(existing_enemy).despawn();
-                // }
                 let enemy_count = get_enemy_count_per_wave(1);
 
                 // this state should exist on the server and be synced to the client

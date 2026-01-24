@@ -139,11 +139,30 @@ fn handle_game_mode_selection_button_press(
     >,
     mut next_game_mode_state: ResMut<NextState<GameModeState>>,
     mut next_app_state: ResMut<NextState<AppState>>,
+    // mut server_game_mode_message_sender: Single<
+    //     &mut MessageSender<UpdateGameModeRequest>,
+    // >,
 ) {
     for (interaction, game_mode_selection_button) in query {
         if let Interaction::Pressed = interaction {
-            next_game_mode_state.set(game_mode_selection_button.0.clone());
+            let pressed_game_mode = game_mode_selection_button.0;
+            next_game_mode_state.set(pressed_game_mode);
             next_app_state.set(AppState::LoadingGame);
+            // match pressed_game_mode {
+            //     GameModeState::FreeRoam => {
+            //         server_game_mode_message_sender
+            //             .send::<OrderedReliableMessageChannel>(
+            //             UpdateGameModeRequest(shared::ServerGameMode::FreeRoam),
+            //         );
+            //     }
+            //     GameModeState::Waves => {
+            //         server_game_mode_message_sender
+            //             .send::<OrderedReliableMessageChannel>(
+            //             UpdateGameModeRequest(shared::ServerGameMode::Waves),
+            //         );
+            //     }
+            //     _ => {}
+            // }
         }
     }
 }

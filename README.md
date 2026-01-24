@@ -68,6 +68,7 @@ For shooting:
     - [x] slide along walls when going into walls instead of zeroeing velocity
 - [x] Different maps to play on
 - [X] Game modes
+  - [x] Free for all
   - [x] Wave mode (the game gets more difficult each round, e.g. more enemies are spawned)
   - [ ] Capture the flag
   - [ ] Deathmatch
@@ -78,7 +79,7 @@ For shooting:
   - [x] Enemies check if they can see the player and shoot them
   - [x] Chasing the player via pathfinding
   - [ ] Going to locations the player made noises
-- [ ] Multiplayer
+- [x] Multiplayer
 - [x] Weapon animations
   - [x] Weapon sway
   - [x] Weapon recoil animation (e.g. when shooting kick back)
@@ -101,6 +102,7 @@ this project assumes 1 unit = 1m, e.g. a unit is like `Transform::from_xyz(1.0, 
 uses:
 - bevy for game engine
 - avian3d for physics
+- skein for bevy <-> blender integration (work with bevy components in blender)
 - lightyear for multiplayer
 
 ## Credits

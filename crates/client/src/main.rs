@@ -18,6 +18,7 @@ use bevy_inspector_egui::{
     bevy_egui::{self, EguiPlugin},
     quick::WorldInspectorPlugin,
 };
+use bevy_skein::SkeinPlugin;
 
 use crate::{
     audio::AudioPlugin,
@@ -99,7 +100,8 @@ fn main() {
     app.add_plugins(FpsOverlayPlugin::default());
 
     // External plugins
-    app.add_plugins(HanabiPlugin);
+    app.add_plugins(HanabiPlugin); // particles
+    app.add_plugins(SkeinPlugin::default()); // use bevy components in blender and have them spawned in the world
 
     if cfg!(debug_assertions) {
         app.add_plugins(EguiPlugin::default())
@@ -112,6 +114,7 @@ fn main() {
 
     app.insert_resource(ServerRunMode::Headless);
     app.insert_state(ServerMode::LocalServerSinglePlayer);
+
     app.add_plugins(NetworkPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(WorldPlugin)

@@ -6,10 +6,7 @@ use bevy::{
     color::palettes::{self},
     prelude::*,
 };
-use shared::{
-    MEDIUM_PLASTIC_MAP_PATH, SelectedMapState, TINY_TOWN_MAP_PATH,
-    collider_rules::get_collider_rules_by_map,
-};
+use shared::{MEDIUM_PLASTIC_MAP_PATH, SelectedMapState, TINY_TOWN_MAP_PATH};
 
 use super::resources::WorldSceneHandle;
 use crate::game_flow::states::AppState;
@@ -55,30 +52,10 @@ pub fn on_enter_spawn_map(
 
     commands.insert_resource(WorldSceneHandle(world_scene_handle.clone()));
 
-    let collider_rules = get_collider_rules_by_map(selected_map);
-
-    let mut collider_hierarchy = ColliderConstructorHierarchy::new(
-        ColliderConstructor::ConvexHullFromMesh,
-    );
-
-    for (name, maybe_constructor) in collider_rules {
-        match maybe_constructor {
-            Some(constructor) => {
-                collider_hierarchy = collider_hierarchy
-                    .with_constructor_for_name(name, constructor);
-            }
-            None => {
-                collider_hierarchy =
-                    collider_hierarchy.without_constructor_for_name(name);
-            }
-        }
-    }
-
     commands.spawn((
         DespawnOnExit(AppState::InGame),
         SceneRoot(world_scene_handle),
-        collider_hierarchy,
-        Name::new("World Scene Root"),
+        Name::new("Scene Root (Map)"),
         Visibility::Visible,
         RigidBody::Static,
     ));

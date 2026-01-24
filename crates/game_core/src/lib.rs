@@ -11,24 +11,25 @@ use lightyear::{
     },
 };
 use shared::{
-    NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_SERVER_SIDE, ServerMode,
-    ServerRunMode,
+    NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_SERVER_SIDE, ServerGameMode,
+    ServerMode, ServerRunMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
-    components::{Health, MedkitSpawnLocation},
+    components::Health,
     enemy::components::Enemy,
     get_private_key,
     player::{Player, PlayerBundle},
     protocol::{
         ClientUpdatePositionMessage, EntityPositionServer, ShootRequest,
+        UpdateGameModeRequest,
     },
 };
 
 use crate::{
     enemy::{
         EnemyPlugin,
-        spawn::{EnemySpawnLocation, spawn_enemies},
+        spawn::{EnemySpawnStrategy, SpawnEnemiesMessage, spawn_enemies},
     },
     nav_mesh_pathfinding::NavMeshPathfindingPlugin,
 };
@@ -36,20 +37,11 @@ use crate::{
 mod enemy;
 mod nav_mesh_pathfinding;
 
-/// The game mode that is running on the server
-#[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
-enum ServerGameMode {
-    #[default]
-    Waves,
-    Ffa,
-}
-
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
 pub enum ServerLoadingState {
     #[default]
     SpawningMap,
     MapSpawned,
-    SpawnLocationsProcessed,
     CollidersSpawned,
     NavMeshReady,
 }
@@ -61,7 +53,6 @@ pub struct ServerPlugin;
 impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<ServerLoadingState>();
-        app.init_state::<ServerGameMode>();
 
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
@@ -80,10 +71,6 @@ impl Plugin for ServerPlugin {
         app.add_systems(
             OnEnter(ServerLoadingState::NavMeshReady),
             spawn_enemies,
-        );
-        app.add_systems(
-            OnEnter(ServerLoadingState::MapSpawned),
-            process_spawn_locations,
         );
     }
 }
@@ -109,6 +96,7 @@ pub fn start_server(
             LocalAddr(SERVER_SOCKET_ADDR_SERVER_SIDE),
             ServerUdpIo::default(),
             Name::new(entity_name),
+            ServerGameMode::FreeForAll,
         ))
         .id();
 
@@ -277,17 +265,51 @@ pub fn receive_shoot_request(
     }
 }
 
-pub fn process_spawn_locations(
-    mut commands: Commands,
-    query: Query<(Entity, &Name)>,
-    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
+pub fn receive_update_game_mode_request(
+    mut message_receiver: Single<&mut MessageReceiver<UpdateGameModeRequest>>,
+    server_mode: Res<State<ServerMode>>,
+    mut server_game_mode: Single<&mut ServerGameMode>,
 ) {
-    for (entity, name) in query {
-        if name.contains("EnemySpawnLocation") {
-            commands.entity(entity).insert(EnemySpawnLocation);
-        } else if name.contains("MedkitSpawnLocation") {
-            commands.entity(entity).insert(MedkitSpawnLocation);
+    for message in message_receiver.receive() {
+        info!("Received UpdateGameModeRequest");
+        if *server_mode == ServerMode::RemoteServer {
+            info!("Ignoring UpdateGameModeRequest as this is a RemoteServer");
+            continue;
         }
+        info!("Updating current ServerGameMode from UpdateGameModeRequest");
+        **server_game_mode = message.0;
     }
-    next_server_loading_state.set(ServerLoadingState::SpawnLocationsProcessed);
+}
+
+pub fn handle_server_game_mode_update(
+    mut commands: Commands,
+    query: Query<&ServerGameMode, Changed<ServerGameMode>>,
+    mut spawn_enemies: MessageWriter<SpawnEnemiesMessage>,
+    enemy_query: Query<Entity, With<Enemy>>,
+) {
+    for changed_server_game_mode in query {
+        info!(
+            "ServerGameMode has changed to: {:?}",
+            changed_server_game_mode
+        );
+
+        match *changed_server_game_mode {
+            ServerGameMode::Waves => {
+                spawn_enemies.write(SpawnEnemiesMessage {
+                    enemy_count: 3,
+                    spawn_strategy: EnemySpawnStrategy::RandomSelection,
+                });
+            }
+            ServerGameMode::FreeForAll => {
+                for enemy in enemy_query {
+                    commands.entity(enemy).despawn();
+                }
+            }
+            ServerGameMode::FreeRoam => {
+                for enemy in enemy_query {
+                    commands.entity(enemy).despawn();
+                }
+            }
+        };
+    }
 }

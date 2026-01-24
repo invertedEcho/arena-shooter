@@ -4,7 +4,7 @@ use bevy::{
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use game_core::ServerLoadingState;
-use shared::ServerMode;
+use shared::{SelectedMapState, ServerMode};
 
 use crate::{
     game_flow::states::{AppState, InGameState, LoadingGameState},
@@ -109,6 +109,8 @@ pub fn check_world_scene_loaded(
     }
 }
 
+// TODO: we now have multiple colliderconstructor hierarchies. we need to compare count of ready
+// events with expected
 pub fn check_collider_constructor_hierarchy_ready(
     _trigger: On<ColliderConstructorHierarchyReady>,
     mut next_game_loading_state: ResMut<NextState<LoadingGameState>>,

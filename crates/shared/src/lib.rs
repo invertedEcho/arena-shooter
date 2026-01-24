@@ -1,5 +1,6 @@
 use avian3d::{PhysicsPlugins, prelude::*};
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::{
     env,
     net::{IpAddr, Ipv6Addr, SocketAddr, ToSocketAddrs},
@@ -11,7 +12,6 @@ use crate::{
 };
 
 pub mod character_controller;
-pub mod collider_rules;
 pub mod components;
 pub mod enemy;
 pub mod messages;
@@ -34,6 +34,16 @@ pub enum ServerMode {
     None,
     RemoteServer,
     LocalServerSinglePlayer,
+}
+
+/// The game mode that is running on the server. Must be a component as we can only replicate
+/// components with lightyear.
+/// (We could use a component and on component change on the client, update local state)
+#[derive(Component, Serialize, Deserialize, PartialEq, Debug)]
+pub enum ServerGameMode {
+    Waves,
+    FreeForAll,
+    FreeRoam,
 }
 
 #[derive(Component)]
@@ -131,6 +141,7 @@ impl Plugin for SharedPlugin {
         app.add_message::<MovementAction>();
 
         app.add_plugins(PhysicsPlugins::default().build())
+            .add_plugins(PhysicsDebugPlugin)
             .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
         app.add_systems(Update, handle_despawn_timer);
     }
