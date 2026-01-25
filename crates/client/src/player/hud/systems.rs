@@ -2,6 +2,7 @@ use bevy::{
     color::palettes::tailwind::{BLUE_500, RED_500},
     prelude::*,
 };
+use game_core::GameStateWave;
 use lightyear::prelude::Controlled;
 use shared::{
     components::{DespawnTimer, Health},
@@ -300,10 +301,10 @@ pub fn update_score_hud(
     }
 }
 
-pub fn spawn_wave_info_hud(mut commands: Commands) {
+pub fn spawn_wave_hud(mut commands: Commands) {
     commands
         .spawn((
-            DespawnOnExit(InGameState::Playing),
+            DespawnOnExit(AppState::InGame),
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
@@ -313,7 +314,8 @@ pub fn spawn_wave_info_hud(mut commands: Commands) {
                 padding: UiRect::all(Val::Px(16.0)),
                 ..default()
             },
-            Name::new("WaveInfoHud"),
+            Name::new("WaveHud"),
+            HideOnPause,
         ))
         .with_children(|parent| {
             parent.spawn(Text::new("Current wave:"));
@@ -323,22 +325,18 @@ pub fn spawn_wave_info_hud(mut commands: Commands) {
         });
 }
 
-// pub fn update_wave_info_hud(
-//     game_state_wave: Res<State<GameStateWave>>,
-//     mut current_wave_text: Single<
-//         &mut Text,
-//         (With<CurrentWaveText>, Without<EnemiesLeftText>),
-//     >,
-//     mut enemies_left_text: Single<&mut Text, With<EnemiesLeftText>>,
-// ) {
-//     if game_state_wave.is_changed() {
-//         **current_wave_text =
-//             Text::new((game_state_wave.current_wave).to_string());
-//         **enemies_left_text = Text::new(
-//             game_state_wave.enemies_left_from_current_wave.to_string(),
-//         );
-//     }
-// }
+pub fn update_wave_hud(
+    game_state_wave: Res<GameStateWave>,
+    mut current_wave_text: Single<
+        &mut Text,
+        (With<CurrentWaveText>, Without<EnemiesLeftText>),
+    >,
+    mut enemies_left_text: Single<&mut Text, With<EnemiesLeftText>>,
+) {
+    **current_wave_text = Text::new((game_state_wave.current_wave).to_string());
+    **enemies_left_text =
+        Text::new(game_state_wave.enemies_left_from_current_wave.to_string());
+}
 
 pub fn update_selected_weapon(
     mut message_reader: MessageReader<PlayerWeaponSlotChangeMessage>,

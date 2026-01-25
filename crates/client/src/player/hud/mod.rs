@@ -1,12 +1,13 @@
 use bevy::prelude::*;
+use game_core::GameStateWave;
 
 use crate::{
     game_flow::{game_mode::GameModeClient, states::InGameState},
     player::hud::systems::{
         spawn_bullet_hit_crosshair, spawn_player_crosshair, spawn_player_hud,
-        spawn_score_hud, spawn_wave_info_hud, update_player_ammo_text,
+        spawn_score_hud, spawn_wave_hud, update_player_ammo_text,
         update_player_crosshair_visibility, update_player_health_text,
-        update_score_hud, update_selected_weapon,
+        update_score_hud, update_selected_weapon, update_wave_hud,
     },
 };
 
@@ -39,12 +40,12 @@ impl Plugin for PlayerHudPlugin {
         .add_systems(Update, spawn_player_hud)
         .add_systems(
             OnEnter(GameModeClient::Waves),
-            (spawn_wave_info_hud, spawn_score_hud),
+            (spawn_wave_hud, spawn_score_hud),
+        )
+        .add_systems(
+            Update,
+            (update_wave_hud)
+                .run_if(resource_exists_and_changed::<GameStateWave>),
         );
-        // FIXME: reintroduce
-        // .add_systems(
-        //     Update,
-        //     (update_wave_info_hud).run_if(in_state(GameModeClient::Waves)),
-        // );
     }
 }

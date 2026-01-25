@@ -4,7 +4,7 @@ use bevy::{
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use game_core::ServerLoadingState;
-use shared::{SelectedMapState, ServerMode};
+use shared::ServerMode;
 
 use crate::{
     game_flow::states::{AppState, InGameState, LoadingGameState},

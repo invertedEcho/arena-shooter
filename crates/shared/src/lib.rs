@@ -19,7 +19,6 @@ pub mod player;
 pub mod protocol;
 pub mod utils;
 
-// FIXME: Not sure if it should belong here, check later
 #[derive(Resource, PartialEq)]
 pub enum ServerRunMode {
     Headless,
@@ -38,7 +37,6 @@ pub enum ServerMode {
 
 /// The game mode that is running on the server. Must be a component as we can only replicate
 /// components with lightyear.
-/// (We could use a component and on component change on the client, update local state)
 #[derive(Component, Serialize, Deserialize, PartialEq, Debug)]
 pub enum GameModeServer {
     Waves,

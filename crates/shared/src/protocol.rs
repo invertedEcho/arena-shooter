@@ -64,6 +64,8 @@ impl Plugin for ProtocolPlugin {
 
         app.register_component::<GameModeServer>();
 
+        // FIXME: medkit should be spawned on server, replicated to clients, and only clients
+        // visually rotate them
         // app.register_component::<Medkit>();
     }
 }

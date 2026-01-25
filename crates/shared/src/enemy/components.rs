@@ -11,14 +11,13 @@ pub struct Enemy;
 pub struct EnemyLastStateUpdate(pub Instant);
 
 impl EnemyState {
-    // TODO: save last state update. if not older than 0.5s, ignore, so its not possible that rapid state updates
     pub fn update_state(
         &mut self,
         new_state: EnemyState,
         last_state_update: &mut EnemyLastStateUpdate,
     ) {
         if *self != new_state {
-            info!("Enemy State change: {:?} -> {:?}", self, new_state);
+            debug!("Enemy State change: {:?} -> {:?}", self, new_state);
             *self = new_state;
             last_state_update.0 = Instant::now();
         }

@@ -3,7 +3,6 @@ use bevy::{
     camera::visibility::RenderLayers, input::mouse::AccumulatedMouseMotion,
     prelude::*,
 };
-use bevy_inspector_egui::bevy_egui;
 use lightyear::prelude::Controlled;
 use shared::{
     components::DespawnTimer,

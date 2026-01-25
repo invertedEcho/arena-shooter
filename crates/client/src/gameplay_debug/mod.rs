@@ -8,9 +8,7 @@ use bevy_inspector_egui::{
     bevy_egui::{EguiContext, PrimaryEguiContext},
     egui,
 };
-use bevy_rich_text3d::{
-    LoadFonts, Text3d, Text3dPlugin, Text3dStyling, TextAtlas,
-};
+use bevy_rich_text3d::{Text3d, Text3dPlugin, Text3dStyling, TextAtlas};
 use shared::{
     enemy::{
         ENEMY_FOV, ENEMY_VISION_RANGE,
@@ -173,7 +171,7 @@ fn add_enemy_state_text(
     }
 }
 
-fn player_inspector(world: &mut World) {
+fn _player_inspector(world: &mut World) {
     let mut ui_ctx = match world
         .query_filtered::<&mut EguiContext, With<PrimaryEguiContext>>()
         .single_mut(world)

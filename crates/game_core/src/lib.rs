@@ -45,6 +45,13 @@ pub enum ServerLoadingState {
     NavMeshReady,
 }
 
+#[derive(Resource)]
+pub struct GameStateWave {
+    pub current_wave: usize,
+    pub enemies_killed: usize,
+    pub enemies_left_from_current_wave: usize,
+}
+
 /// This plugin adds all plugins & systems that need to run on the server, regardless if its for
 /// the server binary or the local server that gets started for Singleplayer.
 pub struct ServerPlugin;
@@ -71,6 +78,7 @@ impl Plugin for ServerPlugin {
 
         app.add_observer(handle_new_connection);
         app.add_observer(handle_new_client);
+        app.add_observer(handle_disconnect);
         app.add_systems(Update, spawn_enemies);
     }
 }
@@ -282,21 +290,27 @@ fn handle_server_game_mode_update(
 
         match *changed_server_game_mode {
             GameModeServer::Waves => {
+                commands.insert_resource(GameStateWave {
+                    current_wave: 1,
+                    enemies_killed: 0,
+                    enemies_left_from_current_wave: 3,
+                });
                 spawn_enemies.write(SpawnEnemiesMessage {
                     enemy_count: 3,
                     spawn_strategy: EnemySpawnStrategy::RandomSelection,
                 });
             }
-            GameModeServer::FreeForAll => {
-                for enemy in enemy_query {
-                    commands.entity(enemy).despawn();
-                }
-            }
-            GameModeServer::FreeRoam => {
+            GameModeServer::FreeForAll | GameModeServer::FreeRoam => {
+                commands.remove_resource::<GameStateWave>();
                 for enemy in enemy_query {
                     commands.entity(enemy).despawn();
                 }
             }
         };
     }
+}
+
+fn handle_disconnect(trigger: On<Add, Disconnected>, mut commands: Commands) {
+    info!("Despawning client entity, Disconnected was inserted");
+    commands.entity(trigger.entity).despawn();
 }
