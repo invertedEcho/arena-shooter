@@ -3,7 +3,7 @@ use lightyear::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ServerGameMode,
+    GameModeServer,
     components::Health,
     enemy::components::{Enemy, EnemyState},
     player::Player,
@@ -30,11 +30,6 @@ pub struct ShootRequest {
     pub direction: Dir3,
     // pub client_tick: u32,
 }
-
-/// The client can send this to the server to request that the game mode is changed on the server.
-/// Right now, we only use this for singleplayer purposes, but in the future we may have an "admin" client on the server, that can also use this for multiplayer servers
-#[derive(Serialize, Deserialize)]
-pub struct UpdateGameModeRequest(pub ServerGameMode);
 
 pub struct ProtocolPlugin;
 
@@ -67,7 +62,7 @@ impl Plugin for ProtocolPlugin {
         app.register_component::<Enemy>();
         app.register_component::<EnemyState>();
 
-        app.register_component::<ServerGameMode>();
+        app.register_component::<GameModeServer>();
 
         // app.register_component::<Medkit>();
     }

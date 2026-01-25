@@ -11,7 +11,7 @@ use lightyear::{
     },
 };
 use shared::{
-    NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_SERVER_SIDE, ServerGameMode,
+    GameModeServer, NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_SERVER_SIDE,
     ServerMode, ServerRunMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
@@ -22,7 +22,6 @@ use shared::{
     player::{Player, PlayerBundle},
     protocol::{
         ClientUpdatePositionMessage, EntityPositionServer, ShootRequest,
-        UpdateGameModeRequest,
     },
 };
 
@@ -63,15 +62,16 @@ impl Plugin for ServerPlugin {
 
         app.add_systems(
             Update,
-            (receive_shoot_request, receive_client_update_position),
+            (
+                receive_shoot_request,
+                receive_client_update_position,
+                handle_server_game_mode_update,
+            ),
         );
 
         app.add_observer(handle_new_connection);
         app.add_observer(handle_new_client);
-        app.add_systems(
-            OnEnter(ServerLoadingState::NavMeshReady),
-            spawn_enemies,
-        );
+        app.add_systems(Update, spawn_enemies);
     }
 }
 
@@ -96,7 +96,7 @@ pub fn start_server(
             LocalAddr(SERVER_SOCKET_ADDR_SERVER_SIDE),
             ServerUdpIo::default(),
             Name::new(entity_name),
-            ServerGameMode::FreeForAll,
+            GameModeServer::FreeForAll,
         ))
         .id();
 
@@ -194,7 +194,7 @@ fn handle_new_client(
 /// The server will then apply it to the `PlayerPositionServer` component, which then gets
 /// replicated to all clients. All clients receive the updates from `PlayerPositionServer`, and
 /// update the Transform locally.
-pub fn receive_client_update_position(
+fn receive_client_update_position(
     mut receivers: Query<(
         &mut MessageReceiver<ClientUpdatePositionMessage>,
         Entity,
@@ -222,7 +222,7 @@ pub fn receive_client_update_position(
     }
 }
 
-pub fn receive_shoot_request(
+fn receive_shoot_request(
     mut receivers: Query<(&mut MessageReceiver<ShootRequest>, Entity)>,
     // TODO: make this more generic, just have a marker component that is like `ShooterEntity` or
     // something?
@@ -265,25 +265,9 @@ pub fn receive_shoot_request(
     }
 }
 
-pub fn receive_update_game_mode_request(
-    mut message_receiver: Single<&mut MessageReceiver<UpdateGameModeRequest>>,
-    server_mode: Res<State<ServerMode>>,
-    mut server_game_mode: Single<&mut ServerGameMode>,
-) {
-    for message in message_receiver.receive() {
-        info!("Received UpdateGameModeRequest");
-        if *server_mode == ServerMode::RemoteServer {
-            info!("Ignoring UpdateGameModeRequest as this is a RemoteServer");
-            continue;
-        }
-        info!("Updating current ServerGameMode from UpdateGameModeRequest");
-        **server_game_mode = message.0;
-    }
-}
-
-pub fn handle_server_game_mode_update(
+fn handle_server_game_mode_update(
     mut commands: Commands,
-    query: Query<&ServerGameMode, Changed<ServerGameMode>>,
+    query: Query<&GameModeServer, Changed<GameModeServer>>,
     mut spawn_enemies: MessageWriter<SpawnEnemiesMessage>,
     enemy_query: Query<Entity, With<Enemy>>,
 ) {
@@ -294,18 +278,18 @@ pub fn handle_server_game_mode_update(
         );
 
         match *changed_server_game_mode {
-            ServerGameMode::Waves => {
+            GameModeServer::Waves => {
                 spawn_enemies.write(SpawnEnemiesMessage {
                     enemy_count: 3,
                     spawn_strategy: EnemySpawnStrategy::RandomSelection,
                 });
             }
-            ServerGameMode::FreeForAll => {
+            GameModeServer::FreeForAll => {
                 for enemy in enemy_query {
                     commands.entity(enemy).despawn();
                 }
             }
-            ServerGameMode::FreeRoam => {
+            GameModeServer::FreeRoam => {
                 for enemy in enemy_query {
                     commands.entity(enemy).despawn();
                 }

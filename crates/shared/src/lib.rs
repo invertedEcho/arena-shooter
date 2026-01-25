@@ -40,7 +40,7 @@ pub enum ServerMode {
 /// components with lightyear.
 /// (We could use a component and on component change on the client, update local state)
 #[derive(Component, Serialize, Deserialize, PartialEq, Debug)]
-pub enum ServerGameMode {
+pub enum GameModeServer {
     Waves,
     FreeForAll,
     FreeRoam,
@@ -141,7 +141,7 @@ impl Plugin for SharedPlugin {
         app.add_message::<MovementAction>();
 
         app.add_plugins(PhysicsPlugins::default().build())
-            .add_plugins(PhysicsDebugPlugin)
+            // .add_plugins(PhysicsDebugPlugin)
             .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
         app.add_systems(Update, handle_despawn_timer);
     }

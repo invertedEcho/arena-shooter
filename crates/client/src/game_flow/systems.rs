@@ -100,7 +100,7 @@ pub fn check_world_scene_loaded(
             && *id == world_scene_handle.0.id()
         {
             info!(
-                "Map assets loaded!, setting LoadingGameSubState to \
+                "Map fully spawned, setting LoadingGameSubState to \
                  SpawningColliders"
             );
             next_game_loading_state.set(LoadingGameState::SpawningColliders);

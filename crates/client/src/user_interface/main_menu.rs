@@ -2,7 +2,7 @@
 
 use crate::{
     game_flow::{
-        game_mode::{GameModeState, StartGameModeMessage},
+        game_mode::{GameModeClient, StartGameModeMessage},
         states::MainMenuState,
     },
     user_interface::shared::{
@@ -147,7 +147,7 @@ fn handle_main_menu_button_pressed(
     mut app_exit_message_writer: MessageWriter<AppExit>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     mut start_game_mode_message_writer: MessageWriter<StartGameModeMessage>,
-    mut next_game_mode_state: ResMut<NextState<GameModeState>>,
+    mut next_game_mode_state: ResMut<NextState<GameModeClient>>,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
         let Interaction::Pressed = interaction else {
@@ -158,7 +158,7 @@ fn handle_main_menu_button_pressed(
                 next_main_menu_state.set(MainMenuState::MapSelection);
             }
             MainMenuButtonType::Multiplayer => {
-                next_game_mode_state.set(GameModeState::Multiplayer);
+                next_game_mode_state.set(GameModeClient::Multiplayer);
                 start_game_mode_message_writer
                     .write(StartGameModeMessage { restart: false });
             }

@@ -18,9 +18,7 @@ pub enum AppState {
 pub enum LoadingGameState {
     #[default]
     SpawningMap,
-    /// The map has spawned, so now we spawn the collides
     SpawningColliders,
-    /// Everything is ready, so now we can connect to the server
     ConnectingToServer,
 }
 

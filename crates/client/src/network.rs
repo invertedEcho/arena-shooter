@@ -24,7 +24,7 @@ use crate::auth::{
     get_connect_token_from_auth_backend,
 };
 use crate::character_controller::components::CharacterControllerBundle;
-use crate::game_flow::game_mode::GameModeState;
+use crate::game_flow::game_mode::GameModeClient;
 use crate::game_flow::states::{
     AppState, DisconnectedState, InGameState, LoadingGameState,
 };
@@ -59,7 +59,7 @@ pub fn on_enter_connecting_to_server(
     mut commands: Commands,
     connected_query: Query<Has<Connected>>,
     mut task_state: ResMut<ConnectTokenRequestTask>,
-    game_mode: Res<State<GameModeState>>,
+    game_mode: Res<State<GameModeClient>>,
     server_entity: Query<Entity, With<Server>>,
     server_mode: Res<State<ServerMode>>,
 ) {
@@ -71,9 +71,9 @@ pub fn on_enter_connecting_to_server(
         }
     }
 
-    let is_multiplayer = *game_mode.get() == GameModeState::Multiplayer;
+    let is_singleplayer = *game_mode.get() != GameModeClient::Multiplayer;
 
-    if is_multiplayer {
+    if !is_singleplayer {
         let auth_backend_addr = task_state.auth_backend_addr;
         debug!(
             "Starting task to get auth ConnectToken via AuthBackend at {}",
@@ -86,7 +86,7 @@ pub fn on_enter_connecting_to_server(
     }
 
     let server_address = match *game_mode.get() {
-        GameModeState::Multiplayer => get_server_socket_addr_client_side(),
+        GameModeClient::Multiplayer => get_server_socket_addr_client_side(),
         _ => SocketAddr::new(
             std::net::IpAddr::V6(Ipv6Addr::LOCALHOST),
             SERVER_PORT,
@@ -96,8 +96,9 @@ pub fn on_enter_connecting_to_server(
     let private_key = get_private_key(&server_mode);
 
     if let Ok(server_entity) = server_entity.single()
-        && !is_multiplayer
+        && is_singleplayer
     {
+        info!("SPAWNING CLIENT FOR SINGLEPLAYER MODE");
         let client = commands
             .spawn((
                 Name::new("Host Client"),
@@ -122,6 +123,7 @@ pub fn on_enter_connecting_to_server(
 
         commands.trigger(Connect { entity: client });
     } else {
+        info!("SPAWNING CLIENT FOR MULTIPLAYER MODE");
         let client = commands
             .spawn((
                 Name::new("Client"),

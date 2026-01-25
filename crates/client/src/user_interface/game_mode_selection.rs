@@ -1,8 +1,9 @@
 use bevy::prelude::*;
+use shared::{GameModeServer, ServerMode};
 
 use crate::{
     game_flow::{
-        game_mode::GameModeState,
+        game_mode::GameModeClient,
         states::{AppState, MainMenuState},
     },
     user_interface::shared::{DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE},
@@ -30,12 +31,10 @@ impl Plugin for GameModeSelectionUIPlugin {
 struct GameModeSelectionScreen;
 
 #[derive(Component)]
-struct GameModeSelectionButton(GameModeState);
+struct GameModeSelectionButton(GameModeClient);
 
 #[derive(Component)]
-struct GameModeSelectionActionButton(GameModeSelectionActionButtonType);
-
-enum GameModeSelectionActionButtonType {
+enum GameModeSelectionActionButton {
     GoBack,
 }
 
@@ -80,7 +79,7 @@ fn spawn_game_mode_selection_screen(
                 .spawn((
                     Node { ..default() },
                     Button,
-                    GameModeSelectionButton(GameModeState::Waves),
+                    GameModeSelectionButton(GameModeClient::Waves),
                     TextColor::WHITE,
                 ))
                 .with_child((
@@ -95,7 +94,7 @@ fn spawn_game_mode_selection_screen(
                 .spawn((
                     Node { ..default() },
                     Button,
-                    GameModeSelectionButton(GameModeState::FreeRoam),
+                    GameModeSelectionButton(GameModeClient::FreeRoam),
                     TextColor::WHITE,
                 ))
                 .with_child((
@@ -116,9 +115,7 @@ fn spawn_game_mode_selection_screen(
                         ..default()
                     },
                     Button,
-                    GameModeSelectionActionButton(
-                        GameModeSelectionActionButtonType::GoBack,
-                    ),
+                    GameModeSelectionActionButton::GoBack,
                     TextColor::WHITE,
                 ))
                 .with_child((
@@ -137,32 +134,29 @@ fn handle_game_mode_selection_button_press(
         (&Interaction, &GameModeSelectionButton),
         Changed<Interaction>,
     >,
-    mut next_game_mode_state: ResMut<NextState<GameModeState>>,
+    mut next_game_mode_state: ResMut<NextState<GameModeClient>>,
     mut next_app_state: ResMut<NextState<AppState>>,
-    // mut server_game_mode_message_sender: Single<
-    //     &mut MessageSender<UpdateGameModeRequest>,
-    // >,
+    mut game_mode_server: Query<&mut GameModeServer>,
+    server_mode: Res<State<ServerMode>>,
 ) {
     for (interaction, game_mode_selection_button) in query {
         if let Interaction::Pressed = interaction {
             let pressed_game_mode = game_mode_selection_button.0;
             next_game_mode_state.set(pressed_game_mode);
             next_app_state.set(AppState::LoadingGame);
-            // match pressed_game_mode {
-            //     GameModeState::FreeRoam => {
-            //         server_game_mode_message_sender
-            //             .send::<OrderedReliableMessageChannel>(
-            //             UpdateGameModeRequest(shared::ServerGameMode::FreeRoam),
-            //         );
-            //     }
-            //     GameModeState::Waves => {
-            //         server_game_mode_message_sender
-            //             .send::<OrderedReliableMessageChannel>(
-            //             UpdateGameModeRequest(shared::ServerGameMode::Waves),
-            //         );
-            //     }
-            //     _ => {}
-            // }
+            if *server_mode.get() == ServerMode::LocalServerSinglePlayer
+                && let Ok(mut game_mode_server) = game_mode_server.single_mut()
+            {
+                match pressed_game_mode {
+                    GameModeClient::FreeRoam => {
+                        *game_mode_server = GameModeServer::FreeForAll;
+                    }
+                    GameModeClient::Waves => {
+                        *game_mode_server = GameModeServer::Waves;
+                    }
+                    _ => {}
+                }
+            }
         }
     }
 }
@@ -175,9 +169,9 @@ fn handle_game_mode_selection_action_button_press(
 ) {
     for (interaction, game_mode_selection_action_button) in query {
         if let Interaction::Pressed = interaction {
-            match game_mode_selection_action_button.0 {
-                GameModeSelectionActionButtonType::GoBack => {
-                    next_main_menu_state.set(MainMenuState::Root);
+            match game_mode_selection_action_button {
+                GameModeSelectionActionButton::GoBack => {
+                    next_main_menu_state.set(MainMenuState::MapSelection);
                 }
             }
         }

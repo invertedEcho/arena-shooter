@@ -24,11 +24,11 @@ use crate::{
     audio::AudioPlugin,
     auth::ConnectTokenRequestTask,
     character_controller::CharacterControllerPlugin,
-    client::NetworkPlugin,
     enemy::animate::ENEMY_MODEL_PATH,
     game_flow::GameFlowPlugin,
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
+    network::NetworkPlugin,
     particles::ParticlesPlugin,
     player::PlayerPlugin,
     shared::{CommonPlugin, systems::apply_render_layers_to_children},
@@ -41,11 +41,11 @@ use enemy::animate::AnimateEnemyPlugin;
 mod audio;
 mod auth;
 mod character_controller;
-mod client;
 mod enemy;
 mod game_flow;
 mod game_settings;
 mod gameplay_debug;
+mod network;
 mod particles;
 mod player;
 mod shared;

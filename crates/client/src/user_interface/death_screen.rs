@@ -7,8 +7,7 @@ use shared::{
 
 use crate::{
     game_flow::{
-        game_mode::{GameStateWave, StartGameModeMessage},
-        states::InGameState,
+        game_mode::StartGameModeMessage, states::InGameState,
         systems::free_mouse,
     },
     user_interface::{
@@ -37,7 +36,7 @@ enum DeathScreenButton {
 fn spawn_wave_game_mode_death_screen(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    game_state_wave: Option<Res<State<GameStateWave>>>,
+    // game_state_wave: Option<Res<State<GameStateWave>>>,
 ) {
     commands
         .spawn((
@@ -74,50 +73,50 @@ fn spawn_wave_game_mode_death_screen(
                         ..default()
                     },
                 ));
-            if let Some(ref game_state_wave) = game_state_wave {
-                parent
-                    .spawn(Node {
-                        padding: UiRect::new(
-                            Val::ZERO,
-                            Val::ZERO,
-                            Val::ZERO,
-                            Val::Px(16.0),
-                        ),
-                        ..default()
-                    })
-                    .with_child((
-                        Text::new(format!(
-                            "You survived until wave {}",
-                            game_state_wave.get().current_wave
-                        )),
-                        TextFont {
-                            font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                            font_size: NORMAL_FONT_SIZE,
-                            ..default()
-                        },
-                    ));
-                parent
-                    .spawn(Node {
-                        padding: UiRect::new(
-                            Val::ZERO,
-                            Val::ZERO,
-                            Val::ZERO,
-                            Val::Px(64.0),
-                        ),
-                        ..default()
-                    })
-                    .with_child((
-                        Text::new(format!(
-                            "Enemies killed: {}",
-                            game_state_wave.get().enemies_killed
-                        )),
-                        TextFont {
-                            font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                            font_size: NORMAL_FONT_SIZE,
-                            ..default()
-                        },
-                    ));
-            }
+            // if let Some(ref game_state_wave) = game_state_wave {
+            //     parent
+            //         .spawn(Node {
+            //             padding: UiRect::new(
+            //                 Val::ZERO,
+            //                 Val::ZERO,
+            //                 Val::ZERO,
+            //                 Val::Px(16.0),
+            //             ),
+            //             ..default()
+            //         })
+            //         .with_child((
+            //             Text::new(format!(
+            //                 "You survived until wave {}",
+            //                 game_state_wave.get().current_wave
+            //             )),
+            //             TextFont {
+            //                 font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+            //                 font_size: NORMAL_FONT_SIZE,
+            //                 ..default()
+            //             },
+            //         ));
+            //     parent
+            //         .spawn(Node {
+            //             padding: UiRect::new(
+            //                 Val::ZERO,
+            //                 Val::ZERO,
+            //                 Val::ZERO,
+            //                 Val::Px(64.0),
+            //             ),
+            //             ..default()
+            //         })
+            //         .with_child((
+            //             Text::new(format!(
+            //                 "Enemies killed: {}",
+            //                 game_state_wave.get().enemies_killed
+            //             )),
+            //             TextFont {
+            //                 font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+            //                 font_size: NORMAL_FONT_SIZE,
+            //                 ..default()
+            //             },
+            //         ));
+            // }
             parent
                 .spawn(Node {
                     row_gap: Val::Px(16.0),
@@ -126,16 +125,16 @@ fn spawn_wave_game_mode_death_screen(
                     ..default()
                 })
                 .with_children(|parent| {
-                    let restart_button_text = if game_state_wave.is_some() {
-                        "Retry"
-                    } else {
-                        "Respawn"
-                    };
+                    // let restart_button_text = if game_state_wave.is_some() {
+                    //     "Retry"
+                    // } else {
+                    //     "Respawn"
+                    // };
 
                     parent
                         .spawn((Button, DeathScreenButton::Restart))
                         .with_child((
-                            Text::new(restart_button_text),
+                            Text::new("Restart"),
                             TextFont {
                                 font: asset_server.load(DEFAULT_GAME_FONT_PATH),
                                 font_size: NORMAL_FONT_SIZE,

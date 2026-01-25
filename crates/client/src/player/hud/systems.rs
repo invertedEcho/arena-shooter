@@ -10,7 +10,6 @@ use shared::{
 
 use crate::{
     game_flow::{
-        game_mode::GameStateWave,
         score::GameScore,
         states::{AppState, InGameState},
     },
@@ -324,22 +323,22 @@ pub fn spawn_wave_info_hud(mut commands: Commands) {
         });
 }
 
-pub fn update_wave_info_hud(
-    game_state_wave: Res<State<GameStateWave>>,
-    mut current_wave_text: Single<
-        &mut Text,
-        (With<CurrentWaveText>, Without<EnemiesLeftText>),
-    >,
-    mut enemies_left_text: Single<&mut Text, With<EnemiesLeftText>>,
-) {
-    if game_state_wave.is_changed() {
-        **current_wave_text =
-            Text::new((game_state_wave.current_wave).to_string());
-        **enemies_left_text = Text::new(
-            game_state_wave.enemies_left_from_current_wave.to_string(),
-        );
-    }
-}
+// pub fn update_wave_info_hud(
+//     game_state_wave: Res<State<GameStateWave>>,
+//     mut current_wave_text: Single<
+//         &mut Text,
+//         (With<CurrentWaveText>, Without<EnemiesLeftText>),
+//     >,
+//     mut enemies_left_text: Single<&mut Text, With<EnemiesLeftText>>,
+// ) {
+//     if game_state_wave.is_changed() {
+//         **current_wave_text =
+//             Text::new((game_state_wave.current_wave).to_string());
+//         **enemies_left_text = Text::new(
+//             game_state_wave.enemies_left_from_current_wave.to_string(),
+//         );
+//     }
+// }
 
 pub fn update_selected_weapon(
     mut message_reader: MessageReader<PlayerWeaponSlotChangeMessage>,

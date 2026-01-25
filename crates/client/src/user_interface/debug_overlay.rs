@@ -1,7 +1,8 @@
 use bevy::prelude::*;
+use shared::GameModeServer;
 
 use crate::game_flow::states::{
-    AppDebugState, AppState, InGameState, MainMenuState,
+    AppDebugState, AppState, InGameState, LoadingGameState, MainMenuState,
 };
 
 const DEBUG_OVERLAY_TEXT_SIZE: f32 = 15.0;
@@ -21,6 +22,8 @@ impl Plugin for DebugOverlayPlugin {
                 update_current_in_game_state_text,
                 toggle_debug,
                 update_current_main_menu_state,
+                update_loading_game_state_text,
+                update_current_server_game_mode_text,
             ),
         );
     }
@@ -34,6 +37,12 @@ struct CurrentInGameStateText;
 
 #[derive(Component)]
 struct CurrentMainMenuStateText;
+
+#[derive(Component)]
+struct CurrentServerGameModeText;
+
+#[derive(Component)]
+struct CurrentLoadingGameStateText;
 
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
@@ -64,7 +73,7 @@ fn spawn_debug_overlay(mut commands: Commands) {
                     },
                 ))
                 .with_child((
-                    Text::new(""),
+                    Text::new("None"),
                     CurrentAppStateText,
                     TextFont {
                         font_size: DEBUG_OVERLAY_TEXT_SIZE,
@@ -86,7 +95,7 @@ fn spawn_debug_overlay(mut commands: Commands) {
                     },
                 ))
                 .with_child((
-                    Text::new(""),
+                    Text::new("None"),
                     CurrentInGameStateText,
                     TextFont {
                         font_size: DEBUG_OVERLAY_TEXT_SIZE,
@@ -107,8 +116,48 @@ fn spawn_debug_overlay(mut commands: Commands) {
                     },
                 ))
                 .with_child((
-                    Text::new(""),
+                    Text::new("None"),
                     CurrentMainMenuStateText,
+                    TextFont {
+                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                        ..default()
+                    },
+                ));
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    ..default()
+                })
+                .with_child((
+                    Text::new("Current ServerGameMode: "),
+                    TextFont {
+                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                        ..default()
+                    },
+                ))
+                .with_child((
+                    Text::new("None"),
+                    CurrentServerGameModeText,
+                    TextFont {
+                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                        ..default()
+                    },
+                ));
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    ..default()
+                })
+                .with_child((
+                    Text::new("Current LoadingGameState: "),
+                    TextFont {
+                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                        ..default()
+                    },
+                ))
+                .with_child((
+                    Text::new("None"),
+                    CurrentLoadingGameStateText,
                     TextFont {
                         font_size: DEBUG_OVERLAY_TEXT_SIZE,
                         ..default()
@@ -158,6 +207,35 @@ fn update_current_in_game_state_text(
         }
     } else {
         **current_in_game_state_text = Text::new("InGameState doesn't exist");
+    }
+}
+
+fn update_current_server_game_mode_text(
+    mut current_server_game_mode_text: Single<
+        &mut Text,
+        With<CurrentServerGameModeText>,
+    >,
+    server_game_mode: Single<&GameModeServer, Changed<GameModeServer>>,
+) {
+    **current_server_game_mode_text =
+        Text::new(format!("{:?}", *server_game_mode));
+}
+
+fn update_loading_game_state_text(
+    mut current_loading_game_state_text: Single<
+        &mut Text,
+        With<CurrentLoadingGameStateText>,
+    >,
+    loading_game_state: Option<Res<State<LoadingGameState>>>,
+) {
+    let Some(loading_game_state) = loading_game_state else {
+        **current_loading_game_state_text =
+            Text::new("LoadingGameState doesn't exist");
+        return;
+    };
+    if loading_game_state.is_changed() {
+        **current_loading_game_state_text =
+            Text::new(format!("{:?}", *loading_game_state));
     }
 }
 

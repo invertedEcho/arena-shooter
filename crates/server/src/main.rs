@@ -9,9 +9,9 @@ use bevy::color::palettes;
 use bevy::log::LogPlugin;
 use bevy::mesh::MeshPlugin;
 use bevy::prelude::*;
+use bevy::state::app::StatesPlugin;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use lightyear::netcode::Server;
 use lightyear::utils::collections::HashSet;
 use shared::{
     AUTH_BACKEND_ADDRESS_SERVER_SIDE, MEDIUM_PLASTIC_MAP_PATH, ServerMode,
@@ -87,6 +87,7 @@ fn main() {
         }
     }
 
+    app.add_plugins(StatesPlugin);
     app.add_plugins(game_core::ServerPlugin);
     app.add_plugins(MultiPlayerServerOnlyPlugin);
 
