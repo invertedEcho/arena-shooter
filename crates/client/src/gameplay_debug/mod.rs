@@ -30,15 +30,6 @@ impl Plugin for GameplayDebugPlugin {
 
         app.add_message::<SpawnDebugPointMessage>();
 
-        app.insert_resource(LoadFonts {
-            font_paths: vec![
-                "../../assets/fonts/Exo_2/static/Exo2-Regular.ttf".to_owned(),
-            ],
-            // font_directories: vec![
-            //     "../../assets/fonts/Exo_2/static".to_owned(),
-            // ],
-            ..Default::default()
-        });
         app.add_systems(
             Update,
             (
