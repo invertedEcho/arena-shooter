@@ -5,8 +5,11 @@ use crate::{
         game_mode::{GameModeClient, StartGameModeMessage},
         states::MainMenuState,
     },
-    user_interface::shared::{
-        DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE, TITLE_FONT_SIZE, UI_BG,
+    user_interface::{
+        common::CommonUiButton,
+        shared::{
+            DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE, TITLE_FONT_SIZE, UI_BG,
+        },
     },
 };
 
@@ -33,7 +36,6 @@ enum MainMenuButtonType {
     Singleplayer,
     Multiplayer,
     SettingsMainMenu,
-    Quit,
 }
 
 fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
@@ -125,7 +127,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                         ..default()
                     },
                     Button,
-                    MainMenuButton(MainMenuButtonType::Quit),
+                    CommonUiButton::Quit,
                     TextColor::WHITE,
                 ))
                 .with_child((
@@ -144,7 +146,6 @@ fn handle_main_menu_button_pressed(
         (&Interaction, &MainMenuButton),
         Changed<Interaction>,
     >,
-    mut app_exit_message_writer: MessageWriter<AppExit>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     mut start_game_mode_message_writer: MessageWriter<StartGameModeMessage>,
     mut next_game_mode_state: ResMut<NextState<GameModeClient>>,
@@ -164,9 +165,6 @@ fn handle_main_menu_button_pressed(
             }
             MainMenuButtonType::SettingsMainMenu => {
                 next_main_menu_state.set(MainMenuState::Settings);
-            }
-            MainMenuButtonType::Quit => {
-                app_exit_message_writer.write(AppExit::Success);
             }
         }
     }

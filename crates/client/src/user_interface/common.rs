@@ -62,8 +62,9 @@ fn handle_common_ui_button_press(
                     continue;
                 };
 
-                debug!("Triggering disconnect");
-                commands.trigger(Disconnect { entity: own_client })
+                debug!("Triggering disconnect and despawning our client");
+                commands.trigger(Disconnect { entity: own_client });
+                commands.entity(own_client).despawn();
             }
             CommonUiButton::ToGameModeSelection => {
                 next_main_menu_state.set(MainMenuState::GameModeSelection);

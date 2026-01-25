@@ -146,7 +146,7 @@ fn handle_new_client(
 
         // NOTE: The replicate component gets inserted into the player entity, but only registered
         // components will be replicated to all other clients
-        let client = commands
+        let player = commands
             .spawn((
                 Replicate::to_clients(NetworkTarget::All),
                 Name::new("Player"),
@@ -175,7 +175,7 @@ fn handle_new_client(
         if *server_mode == ServerMode::RemoteServer {
             // on headless setup, materials doesnt exist
             if let Some(mut materials) = materials {
-                commands.entity(client).insert((
+                commands.entity(player).insert((
                     Mesh3d(meshes.add(Capsule3d::new(
                         CHARACTER_CAPSULE_RADIUS,
                         CHARACTER_CAPSULE_LENGTH,
@@ -186,6 +186,9 @@ fn handle_new_client(
                     })),
                 ));
             }
+        }
+        if *server_mode == ServerMode::LocalServerSinglePlayer {
+            commands.entity(player).insert(Controlled);
         }
     }
 }

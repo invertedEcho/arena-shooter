@@ -28,7 +28,6 @@ use crate::game_flow::game_mode::GameModeClient;
 use crate::game_flow::states::{
     AppState, DisconnectedState, InGameState, LoadingGameState,
 };
-use crate::player::camera::messages::SpawnPlayerCamerasMessage;
 
 const CLIENT_PORT: u16 = 0;
 
@@ -123,22 +122,22 @@ pub fn on_enter_connecting_to_server(
 
         commands.trigger(Connect { entity: client });
     } else {
-        info!("SPAWNING CLIENT FOR MULTIPLAYER MODE");
-        let client = commands
-            .spawn((
-                Name::new("Client"),
-                Client::default(),
-                LocalAddr(SocketAddr::new(
-                    Ipv6Addr::UNSPECIFIED.into(),
-                    CLIENT_PORT,
-                )),
-                PeerAddr(server_address),
-                Link::new(None),
-                ReplicationReceiver::default(),
-                UdpIo::default(),
-            ))
-            .id();
-        commands.trigger(Connect { entity: client });
+        info!(
+            "SPAWNING CLIENT FOR MULTIPLAYER MODE, SERVER_ADDR: {}",
+            server_address
+        );
+        commands.spawn((
+            Name::new("Client"),
+            Client::default(),
+            LocalAddr(SocketAddr::new(
+                Ipv6Addr::UNSPECIFIED.into(),
+                CLIENT_PORT,
+            )),
+            PeerAddr(server_address),
+            Link::new(None),
+            ReplicationReceiver::default(),
+            UdpIo::default(),
+        ));
     }
 }
 
@@ -154,9 +153,6 @@ fn handle_new_player(
     trigger: On<Add, Player>,
     mut commands: Commands,
     player_query: Query<(Entity, Has<Controlled>), With<Player>>,
-    mut spawn_player_camera_message_writer: MessageWriter<
-        SpawnPlayerCamerasMessage,
-    >,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
     server_mode: Res<State<ServerMode>>,
@@ -181,9 +177,6 @@ fn handle_new_player(
             Transform::from_translation(vec3(0.0, 20.0, 0.0)),
             Name::new("Our Player"),
         ));
-
-        spawn_player_camera_message_writer
-            .write(SpawnPlayerCamerasMessage(trigger.entity));
     } else if *server_mode == ServerMode::RemoteServer && !has_controlled {
         commands.entity(trigger.entity).insert((
             Mesh3d(meshes.add(Capsule3d::new(0.2, 1.3))),

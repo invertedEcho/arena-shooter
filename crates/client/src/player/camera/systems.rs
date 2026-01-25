@@ -5,9 +5,13 @@ use bevy::{
 };
 use bevy_inspector_egui::bevy_egui;
 use lightyear::prelude::Controlled;
-use shared::{components::DespawnTimer, player::AimType};
+use shared::{
+    components::DespawnTimer,
+    player::{AimType, Player},
+};
 
 use crate::{
+    game_flow::states::AppState,
     player::{
         camera::{
             PLAYER_CAMERA_Y_OFFSET,
@@ -15,7 +19,6 @@ use crate::{
                 FreeCam, InterpolateWeapon, MuzzleFlash, PlayerCameraState,
                 PlayerWeaponModel, ViewModelCamera, WorldCamera,
             },
-            messages::SpawnPlayerCamerasMessage,
             weapon_positions::{
                 get_muzzle_flash_position_for_weapon, get_position_for_weapon,
             },
@@ -36,25 +39,21 @@ const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 pub fn setup_player_cameras(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    mut message_reader: MessageReader<SpawnPlayerCamerasMessage>,
-    any_cam_query: Query<Entity, With<Camera>>,
+    // using With<Controlled> ensures we only add cameras to our own player
+    added_players: Query<Entity, (Added<Player>, With<Controlled>)>,
 ) {
-    for message in message_reader.read() {
-        // despawn any existing cameras before spawning new one
-        for any_cam in any_cam_query {
-            commands.entity(any_cam).despawn();
-        }
-
+    for added_player in added_players {
         debug!(
-            "Received SpawnPlayerCamerasMessage, spawning weapon model and \
-             player cameras"
+            "A new player was added and it has Controlled, e.g. its our \
+             player. Spawning cameras as children..."
         );
 
         debug!("Inserting PlayerCameraState into player");
-        commands.entity(message.0).insert(PlayerCameraState::Normal);
+        commands
+            .entity(added_player)
+            .insert(PlayerCameraState::Normal);
 
-        debug!("Inserting player cameras into player entity");
-        commands.entity(message.0).with_children(|parent| {
+        commands.entity(added_player).with_children(|parent| {
             parent.spawn((
                 Name::new("WorldCamera"),
                 WorldCamera,
@@ -68,6 +67,8 @@ pub fn setup_player_cameras(
                     fov: 80.0_f32.to_radians(),
                     ..default()
                 }),
+                DespawnOnExit(AppState::InGame),
+                // bevy_egui::PrimaryEguiContext,
             ));
 
             let weapon_model_path =
@@ -87,9 +88,6 @@ pub fn setup_player_cameras(
                         order: 1,
                         ..default()
                     },
-                    // needed so our inspector is shown again when we enter game, as we despawn
-                    // `WorldUiCamera` and spawn player camera
-                    bevy_egui::PrimaryEguiContext,
                     RenderLayers::layer(1),
                     Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
                 ))

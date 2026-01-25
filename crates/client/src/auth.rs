@@ -21,18 +21,20 @@ pub fn fetch_connect_token(
     client: Single<Entity, With<Client>>,
     mut commands: Commands,
 ) -> Result {
-    if let Some(task) = &mut connect_token_request.task {
-        if let Some(connect_token) = block_on(future::poll_once(task)) {
-            info!("Received ConnectToken, starting connection!");
-            info!("Inserting netcode client with our connect token",);
-            let client = client.into_inner();
-            commands.entity(client).insert(NetcodeClient::new(
-                Authentication::Token(connect_token),
-                NetcodeConfig::default(),
-            )?);
-            commands.trigger(Connect { entity: client });
-            connect_token_request.task = None;
-        }
+    if let Some(task) = &mut connect_token_request.task
+        && let Some(connect_token) = block_on(future::poll_once(task))
+    {
+        info!("Received ConnectToken, starting connection!");
+        info!("Inserting netcode client with our connect token",);
+
+        let client = client.into_inner();
+
+        commands.entity(client).insert(NetcodeClient::new(
+            Authentication::Token(connect_token),
+            NetcodeConfig::default(),
+        )?);
+        commands.trigger(Connect { entity: client });
+        connect_token_request.task = None;
     }
     Ok(())
 }
@@ -55,12 +57,7 @@ pub async fn get_connect_token_from_auth_backend(
     stream.readable().await.unwrap();
     let mut buffer = [0u8; CONNECT_TOKEN_BYTES];
     match stream.try_read(&mut buffer) {
-        Ok(_number_of_bytes_read) => {
-            info!(
-                "Received token bytes: {:?}. Token len: {:?}",
-                buffer,
-                buffer.len()
-            );
+        Ok(n) if n == CONNECT_TOKEN_BYTES => {
             ConnectToken::try_from_bytes(&buffer)
                 .expect("Failed to parse token from authentication server")
         }
