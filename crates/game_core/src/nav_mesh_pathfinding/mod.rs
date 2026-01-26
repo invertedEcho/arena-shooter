@@ -95,7 +95,7 @@ fn on_navmesh_ready(
     };
 
     info!("NavMesh is now ready!");
-    next_server_loading_state.set(ServerLoadingState::NavMeshReady);
+    next_server_loading_state.set(ServerLoadingState::Done);
 
     commands.insert_resource(NavMeshHandle(nav_mesh_handle));
 }

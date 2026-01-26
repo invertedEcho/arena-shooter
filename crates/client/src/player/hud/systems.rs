@@ -10,10 +10,7 @@ use shared::{
 };
 
 use crate::{
-    game_flow::{
-        score::GameScore,
-        states::{AppState, InGameState},
-    },
+    game_flow::{score::GameScore, states::AppState},
     player::{
         Player, PlayerReady,
         hud::{

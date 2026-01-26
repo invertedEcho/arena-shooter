@@ -28,7 +28,7 @@ use shared::{
 use crate::{
     enemy::{
         EnemyPlugin,
-        spawn::{EnemySpawnStrategy, SpawnEnemiesMessage, spawn_enemies},
+        spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
     },
     nav_mesh_pathfinding::NavMeshPathfindingPlugin,
 };
@@ -39,10 +39,11 @@ mod nav_mesh_pathfinding;
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
 pub enum ServerLoadingState {
     #[default]
-    SpawningMap,
+    Initial,
     MapSpawned,
     CollidersSpawned,
     NavMeshReady,
+    Done,
 }
 
 #[derive(Resource)]
@@ -69,17 +70,16 @@ impl Plugin for ServerPlugin {
 
         app.add_systems(
             Update,
-            (
-                receive_shoot_request,
-                receive_client_update_position,
-                handle_server_game_mode_update,
-            ),
+            (receive_shoot_request, receive_client_update_position),
+        );
+
+        app.add_systems(
+            OnEnter(ServerLoadingState::Done),
+            handle_server_loading_state_done,
         );
 
         app.add_observer(handle_new_connection);
         app.add_observer(handle_new_client);
-        app.add_observer(handle_disconnect);
-        app.add_systems(Update, spawn_enemies);
     }
 }
 
@@ -276,41 +276,42 @@ fn receive_shoot_request(
     }
 }
 
-fn handle_server_game_mode_update(
+fn handle_server_loading_state_done(
     mut commands: Commands,
-    query: Query<&GameModeServer, Changed<GameModeServer>>,
+    game_mode_server: Single<&GameModeServer>,
     mut spawn_enemies: MessageWriter<SpawnEnemiesMessage>,
     enemy_query: Query<Entity, With<Enemy>>,
 ) {
-    for changed_server_game_mode in query {
-        info!(
-            "ServerGameMode has changed to: {:?}",
-            changed_server_game_mode
-        );
+    info!(
+        "ServerLoadingState is done, now doing actions corresponding to game \
+         mode. Game mode is: {:?}",
+        *game_mode_server
+    );
 
-        match *changed_server_game_mode {
-            GameModeServer::Waves => {
-                commands.insert_resource(GameStateWave {
-                    current_wave: 1,
-                    enemies_killed: 0,
-                    enemies_left_from_current_wave: 3,
-                });
-                spawn_enemies.write(SpawnEnemiesMessage {
-                    enemy_count: 3,
-                    spawn_strategy: EnemySpawnStrategy::RandomSelection,
-                });
+    match *game_mode_server {
+        GameModeServer::Waves => {
+            commands.insert_resource(GameStateWave {
+                current_wave: 1,
+                enemies_killed: 0,
+                enemies_left_from_current_wave: 3,
+            });
+            spawn_enemies.write(SpawnEnemiesMessage {
+                enemy_count: 3,
+                spawn_strategy: EnemySpawnStrategy::RandomSelection,
+            });
+        }
+        GameModeServer::FreeForAll | GameModeServer::FreeRoam => {
+            commands.remove_resource::<GameStateWave>();
+            for enemy in enemy_query {
+                commands.entity(enemy).despawn();
             }
-            GameModeServer::FreeForAll | GameModeServer::FreeRoam => {
-                commands.remove_resource::<GameStateWave>();
-                for enemy in enemy_query {
-                    commands.entity(enemy).despawn();
-                }
-            }
-        };
-    }
+        }
+    };
 }
 
-fn handle_disconnect(trigger: On<Add, Disconnected>, mut commands: Commands) {
-    info!("Despawning client entity, Disconnected was inserted");
-    commands.entity(trigger.entity).despawn();
-}
+// TODO: This doesnt work as lightyear inserts Disconnected component by default.
+// we probably just need to check for an additional component present in the entity
+// fn handle_disconnect(trigger: On<Add, Disconnected>, mut commands: Commands) {
+//     info!("Despawning client entity, Disconnected was inserted");
+//     commands.entity(trigger.entity).despawn();
+// }

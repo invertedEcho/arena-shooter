@@ -144,6 +144,8 @@ fn handle_game_mode_selection_button_press(
             let pressed_game_mode = game_mode_selection_button.0;
             next_game_mode_state.set(pressed_game_mode);
             next_app_state.set(AppState::LoadingGame);
+
+            // its too early here... but where do we it then
             if *server_mode.get() == ServerMode::LocalServerSinglePlayer
                 && let Ok(mut game_mode_server) = game_mode_server.single_mut()
             {

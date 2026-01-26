@@ -7,7 +7,6 @@ use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
 };
 use shared::{
-    GameModeServer,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, RUN_VELOCITY,
         WALK_VELOCITY,
@@ -45,30 +44,6 @@ pub struct AgentEnemyEntityPointer(pub Entity);
 pub enum EnemySpawnStrategy {
     /// Enemies will be spawned at randomly picked EnemySpawnLocations
     RandomSelection,
-}
-
-pub fn spawn_enemies(
-    mut commands: Commands,
-    mut message_writer: MessageWriter<SpawnEnemiesMessage>,
-    changed_server_game_mode: Single<&GameModeServer, Changed<GameModeServer>>,
-    enemy_query: Query<Entity, With<Enemy>>,
-) {
-    let game_mode = changed_server_game_mode.into_inner();
-
-    info!("Changed server game mode to: {:?}", game_mode);
-    match *game_mode {
-        GameModeServer::Waves => {
-            message_writer.write(SpawnEnemiesMessage {
-                enemy_count: 1,
-                spawn_strategy: EnemySpawnStrategy::RandomSelection,
-            });
-        }
-        GameModeServer::FreeForAll | GameModeServer::FreeRoam => {
-            for enemy in enemy_query {
-                commands.entity(enemy).despawn();
-            }
-        }
-    }
 }
 
 fn handle_spawn_enemies_at_enemy_spawn_locations_message(
