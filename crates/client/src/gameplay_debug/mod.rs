@@ -10,6 +10,7 @@ use bevy_inspector_egui::{
 };
 use bevy_rich_text3d::{Text3d, Text3dPlugin, Text3dStyling, TextAtlas};
 use shared::{
+    components::Health,
     enemy::{
         ENEMY_FOV, ENEMY_VISION_RANGE,
         components::{Enemy, EnemyState},
@@ -114,15 +115,21 @@ pub fn draw_enemy_fov(
 
 fn update_enemy_debug_text(
     mut query: Query<(&mut Text3d, &EnemyDebugText)>,
-    changed_enemies: Query<(Entity, &EnemyState), Changed<EnemyState>>,
+    changed_enemies: Query<
+        (Entity, &EnemyState, &Health),
+        Or<(Changed<EnemyState>, Changed<Health>)>,
+    >,
 ) {
-    for (enemy_entity, enemy_state) in changed_enemies {
+    for (enemy_entity, enemy_state, enemy_health) in changed_enemies {
         let Some((mut text, _)) =
             query.iter_mut().find(|e| e.1.0 == enemy_entity)
         else {
             continue;
         };
-        *text = Text3d::new(format!("{} | {:?}", enemy_entity, enemy_state));
+        *text = Text3d::new(format!(
+            "{} | {:?} | {} HP",
+            enemy_entity, enemy_state, enemy_health.0
+        ));
     }
 }
 
@@ -131,10 +138,10 @@ struct EnemyDebugText(pub Entity);
 
 fn add_enemy_state_text(
     mut commands: Commands,
-    enemy_query: Query<(Entity, &EnemyState), Added<EnemyState>>,
+    enemy_query: Query<(Entity, &EnemyState, &Health), Added<EnemyState>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    for (entity, enemy_state) in enemy_query {
+    for (entity, enemy_state, enemy_health) in enemy_query {
         let mat = materials.add(StandardMaterial {
             base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
             alpha_mode: AlphaMode::Mask(0.5),
@@ -144,7 +151,10 @@ fn add_enemy_state_text(
         });
 
         commands.entity(entity).with_child((
-            Text3d::new(format!(" | {:?}", enemy_state)),
+            Text3d::new(format!(
+                "{:?} | {:?} | {} HP",
+                entity, enemy_state, enemy_health.0
+            )),
             Text3dStyling {
                 size: 64.,
                 stroke: NonZero::new(10),

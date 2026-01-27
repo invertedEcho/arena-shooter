@@ -173,7 +173,7 @@ pub fn handle_set_new_enemy_agent_target_message(
             &SpatialQueryFilter::default()
                 .with_excluded_entities([player_entity]),
         ) else {
-            error!(
+            warn!(
                 "Could not get a valid new agent target point for chasing \
                  enemy"
             );
@@ -185,7 +185,7 @@ pub fn handle_set_new_enemy_agent_target_message(
 
         *agent_target = AgentTarget3d::Point(hit_point);
 
-        info!("Enemy {} has a new agent target", enemy_entity);
+        debug!("Enemy {} has a new agent target", enemy_entity);
     }
 }
 

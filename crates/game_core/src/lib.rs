@@ -118,12 +118,7 @@ pub fn start_server(
     }
 }
 
-fn handle_new_connection(
-    trigger: On<Add, LinkOf>,
-    mut commands: Commands,
-    // query: Query<(), Without<HostClient>>,
-) {
-    // if query.get(trigger.entity).is_ok() {
+fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
     commands
         .entity(trigger.entity)
         .insert((ReplicationSender::new(
@@ -131,7 +126,6 @@ fn handle_new_connection(
             SendUpdatesMode::SinceLastAck,
             false,
         ),));
-    // }
 }
 
 fn handle_new_client(
@@ -233,32 +227,33 @@ fn receive_client_update_position(
 
 fn handle_shoot_requests(
     mut receivers: Query<(&mut MessageReceiver<ShootRequest>, Entity)>,
-    // TODO: make this more generic, just have a marker component that is like `ShooterEntity` or
-    // something?
     mut health_query: Query<&mut Health>,
     spatial_query: SpatialQuery,
+    enemy_query: Query<Entity, With<Enemy>>,
+    player_query: Query<(Entity, &ControlledBy), With<Player>>,
 ) {
     for (mut message_receiver, remote_id) in receivers.iter_mut() {
         for message in message_receiver.receive() {
-            info!("RECEIVED ShootRequest message");
-            // let Some(shooter_entity) = player_or_enemies
-            //     .iter()
-            //     .find(|(_, controlled_by)| controlled_by.owner == remote_id)
-            //     .map(|(entity, _)| entity)
-            // else {
-            //     info!(
-            //         "Received ShootRequest but no corresponding player or \
-            //          enemy could be found"
-            //     );
-            //     continue;
-            // };
+            let excluded_entities = if message.from_enemy {
+                enemy_query.iter().collect()
+            } else {
+                match player_query
+                    .iter()
+                    .find(|(_, controlled_by)| controlled_by.owner == remote_id)
+                    .map(|(entity, _)| entity)
+                {
+                    None => vec![],
+                    Some(shooter_entity) => vec![shooter_entity],
+                }
+            };
 
             let Some(first_hit) = spatial_query.cast_ray(
                 message.origin,
                 message.direction,
                 200.,
                 false,
-                &SpatialQueryFilter::default().with_excluded_entities([]),
+                &SpatialQueryFilter::default()
+                    .with_excluded_entities(excluded_entities),
             ) else {
                 continue;
             };

@@ -1,8 +1,12 @@
-use crate::enemy::shooting::{
-    messages::EnemyKilledMessage,
-    systems::{
-        enemy_shoot_player, handle_enemy_killed_message,
-        tick_enemy_shoot_player_cooldown_timer,
+use crate::{
+    GameStateWave,
+    enemy::shooting::{
+        messages::EnemyKilledMessage,
+        systems::{
+            detect_killed_enemies, enemy_shoot_player,
+            handle_enemy_killed_message,
+            tick_enemy_shoot_player_cooldown_timer,
+        },
     },
 };
 use bevy::prelude::*;
@@ -21,7 +25,9 @@ impl Plugin for EnemyShootingPlugin {
                 enemy_shoot_player,
                 tick_enemy_shoot_player_cooldown_timer,
                 handle_enemy_killed_message,
-            ),
+                detect_killed_enemies,
+            )
+                .run_if(resource_exists::<GameStateWave>),
         );
     }
 }

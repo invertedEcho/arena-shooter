@@ -5,7 +5,7 @@ use bevy::{
     scene::SceneInstanceReady,
 };
 
-use crate::shared::components::HideOnPause;
+use crate::shared::components::OnlyVisibleInGame;
 
 /// Currently [`RenderLayers`] are not applied to children of a scene.
 /// This [`SceneInstanceReady`] observer applies the [`RenderLayers`]
@@ -41,13 +41,17 @@ pub fn disable_culling_for_skinned_meshes(
     }
 }
 
-pub fn hide_on_pause(query: Query<&mut Visibility, With<HideOnPause>>) {
+pub fn hide_only_visible_in_game(
+    query: Query<&mut Visibility, With<OnlyVisibleInGame>>,
+) {
     for mut visibility in query {
         *visibility = Visibility::Hidden;
     }
 }
 
-pub fn show_on_resume(query: Query<&mut Visibility, With<HideOnPause>>) {
+pub fn show_only_visible_in_game(
+    query: Query<&mut Visibility, With<OnlyVisibleInGame>>,
+) {
     for mut visibility in query {
         *visibility = Visibility::Visible;
     }

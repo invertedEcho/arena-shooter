@@ -172,9 +172,12 @@ pub fn send_shoot_request_on_weapon_fired(
         let origin = world_model_camera_query.1.translation();
         let direction = world_model_camera_query.1.forward();
 
-        info!("PLAYER: Sending shoot request message");
         shoot_request_sender.send::<OrderedReliableMessageChannel>(
-            ShootRequest { direction, origin },
+            ShootRequest {
+                direction,
+                origin,
+                from_enemy: false,
+            },
         );
     }
 }

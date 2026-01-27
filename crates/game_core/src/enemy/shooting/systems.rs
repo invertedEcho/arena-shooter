@@ -1,15 +1,18 @@
 use bevy::prelude::*;
 use lightyear::prelude::MessageSender;
 use shared::{
-    components::DespawnTimer,
-    enemy::components::{EnemyLastStateUpdate, EnemyState},
+    components::{DespawnTimer, Health},
+    enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
     player::Player,
     protocol::{OrderedReliableMessageChannel, ShootRequest},
     utils::random::get_random_number_from_range,
 };
 
-use crate::enemy::shooting::{
-    components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
+use crate::{
+    GameStateWave,
+    enemy::shooting::{
+        components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
+    },
 };
 
 pub fn enemy_shoot_player(
@@ -84,7 +87,11 @@ pub fn enemy_shoot_player(
         };
 
         message_sender_shoot_request.send::<OrderedReliableMessageChannel>(
-            ShootRequest { origin, direction },
+            ShootRequest {
+                origin,
+                direction,
+                from_enemy: true,
+            },
         );
     }
 }
@@ -102,6 +109,19 @@ pub fn tick_enemy_shoot_player_cooldown_timer(
         }
     }
 }
+pub fn detect_killed_enemies(
+    changed_enemy_health_query: Query<
+        (Entity, &Health),
+        (With<Enemy>, Changed<Health>),
+    >,
+    mut enemy_killed_message_writer: MessageWriter<EnemyKilledMessage>,
+) {
+    for (enemy_entity, changed_enemy_health) in changed_enemy_health_query {
+        if changed_enemy_health.0 <= 0.0 {
+            enemy_killed_message_writer.write(EnemyKilledMessage(enemy_entity));
+        }
+    }
+}
 
 pub fn handle_enemy_killed_message(
     mut commands: Commands,
@@ -111,6 +131,7 @@ pub fn handle_enemy_killed_message(
         &mut EnemyState,
         &mut EnemyLastStateUpdate,
     )>,
+    mut game_state_wave: ResMut<GameStateWave>,
 ) {
     for message in message_reader.read() {
         let Some((enemy_entity, mut enemy_state, mut enemy_last_state_update)) =
@@ -131,5 +152,7 @@ pub fn handle_enemy_killed_message(
         commands
             .entity(enemy_entity)
             .insert(DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)));
+        game_state_wave.enemies_killed += 1;
+        game_state_wave.enemies_left_from_current_wave -= 1;
     }
 }

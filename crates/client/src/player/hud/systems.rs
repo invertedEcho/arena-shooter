@@ -29,7 +29,7 @@ use crate::{
             },
         },
     },
-    shared::components::HideOnPause,
+    shared::components::OnlyVisibleInGame,
     user_interface::shared::{ITALIC_GAME_FONT_PATH, UI_SELECTED, UI_TEXT},
 };
 
@@ -67,7 +67,7 @@ pub fn spawn_player_hud(
             PlayerHud,
             DespawnOnExit(AppState::InGame),
             Name::new("PlayerHud"),
-            HideOnPause,
+            OnlyVisibleInGame,
         ))
         .with_children(|parent| {
             parent
@@ -181,7 +181,7 @@ pub fn spawn_player_crosshair(
                 PlayerCrosshair,
                 DespawnOnExit(AppState::InGame),
                 Name::new("PlayerCrosshair"),
-                HideOnPause,
+                OnlyVisibleInGame,
             ))
             .with_child(ImageNode::new(asset_server.load(MAIN_CROSSHAIR_PATH)));
     }
@@ -262,17 +262,17 @@ pub fn spawn_score_hud(mut commands: Commands, game_score: Res<GameScore>) {
         ))
         .with_children(|parent| {
             parent
-                .spawn((Node { ..default() }, HideOnPause))
+                .spawn((Node { ..default() }, OnlyVisibleInGame))
                 .with_child((
                     Text::new(game_score.player.to_string()),
                     TextColor(BLUE_500.into()),
                     PlayerScoreText,
                 ));
             parent
-                .spawn((Node { ..default() }, HideOnPause))
+                .spawn((Node { ..default() }, OnlyVisibleInGame))
                 .with_child(Text::new("Score"));
             parent
-                .spawn((Node { ..default() }, HideOnPause))
+                .spawn((Node { ..default() }, OnlyVisibleInGame))
                 .with_child((
                     Text::new(game_score.enemy.to_string()),
                     TextColor(RED_500.into()),
@@ -312,7 +312,7 @@ pub fn spawn_wave_hud(mut commands: Commands) {
                 ..default()
             },
             Name::new("WaveHud"),
-            HideOnPause,
+            OnlyVisibleInGame,
         ))
         .with_children(|parent| {
             parent.spawn(Text::new("Current wave:"));
