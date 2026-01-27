@@ -1,16 +1,20 @@
 # fun-shooter
 
-## Setup
-
+## Compiling from source
 1. If you're on linux, install `mold`, a linker, for faster iterative compile times
-  - Ubuntu/Debian: `sudo apt-get install mold clang`
+  - Ubuntu/Debian: `sudo apt install mold clang`
   - Fedora: `sudo dnf install mold clang`
   - Arch: `sudo pacman -S mold clang`
 2. This repository uses Git LFS. Follow the installation instructions [here](https://packagecloud.io/github/git-lfs/install). Afterwards, run `git lfs pull` to get all assets
-3. Bevy itself also needs a couple of dependency. You can find installation instructions for Linux, Windows and MacOS [here](https://bevy.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
-4. Install alternative codegen backend: `rustup component add rustc-codegen-cranelift-preview --toolchain-nightly`
-5. Run the app
-  - `cargo run`
+3. Bevy itself also needs a couple of dependency. You can find OS-specific installation instructions [here](https://bevy.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
+
+## Running the server/client
+- To run the server:
+    - `cargo run -p server <headless|headful>`
+    - You can specify either headless or headful. Headless is useful for running where a window cant be created, e.g. servers. Headful will spawn a window, which may be useful to see the map and the spawned players
+    - You can also emit the argument, and the server will be started in headless mode.
+- To run the client:
+    - `cargo run -p client`
 
 > [!IMPORTANT]
 > Some game assets are not included in this repository and are not covered by the GPL. These assets are proprietary and were obtained under separate licenses.
@@ -35,54 +39,25 @@
   - Note that a submodule may have its own plugin.
     - If the submodule doesnt have lots of logic, all code may be located in its `mod.rs` and then be used in the root plugin of given module
 
-### Entity Initialization & Readiness
+### Multiplayer Setup
+- Players are spawned on the server and replicated to all connected clients
+- A client can then find its own Player
+- Character controller is only running on the client
+  - Client sends its new position to the server
+  - The server validates whether this new position was even feasible by a distance check, comparing new position to old position (to be implemented)
+  - The validated position is stored in `PlayerPositionServer`. This component gets replicated to all other clients
+  - All clients can then update the `Transform` of that corresponding player
+    - This is done via interpolation so it looks smooth. Without the intermediate component `PlayerPositionServer`, we wouldn't be able to add interpolation
 
-Entities in this project are initialized incrementally.
-The presence of an entity does **not** mean it is fully ready.
 
-We use marker components (e.g. `PlayerReady`) to explicitly signal
-when an entity has all required components and can be used by
-dependent systems (HUD, camera, input, etc).
-
-- Systems must **not** assume ordering between other systems
-- Game states gate *systems*, not entity readiness
-- Systems that depend on fully initialized entities must query
-  for the corresponding `*Ready` marker
-
-#### Example
-(Identifiers may be abbreviated for documentation clarity.)
-```rust
-// Attach equipment
-fn add_player_weapon(
-    mut commands: Commands,
-    q: Query<Entity, Added<Player>>,
-) {
-    for e in &q {
-        commands.entity(e).insert(PlayerWeapon);
-    }
-}
-
-// Mark readiness once all requirements are present
-fn mark_player_ready(
-    mut commands: Commands,
-    q: Query<Entity, (With<Player>, With<PlayerWeapon>), Without<PlayerReady>>,
-) {
-    for e in &q {
-        commands.entity(e).insert(PlayerReady);
-    }
-}
-
-// Spawn HUD only for ready players
-fn spawn_player_hud(
-    mut commands: Commands,
-    q: Query<Entity, Added<PlayerReady>>,
-) {
-    for player in &q {
-        commands.spawn(PlayerHud { player });
-    }
-}
-```
-
+For shooting:
+- Note that the following below is not yet implemented, just client sends message -> raycast on server
+- Server saves the position history of a player in a `VecDeque<(u32, Vec3)>`
+  - Gets updated each tick and only last ~200ms are saved
+- Clients send a ShootRequest to the server, that contains the necessary information together with a `client_tick`
+- Server looks up the position for the given `client_tick`
+- Server spawns temporary colliders to make the raycast
+- If hit was sucessful, the `Health` component on the corresponding player is updated
 
 ## Todo and feature list
 - [x] User interface
@@ -93,6 +68,7 @@ fn spawn_player_hud(
     - [x] slide along walls when going into walls instead of zeroeing velocity
 - [x] Different maps to play on
 - [X] Game modes
+  - [x] Free for all
   - [x] Wave mode (the game gets more difficult each round, e.g. more enemies are spawned)
   - [ ] Capture the flag
   - [ ] Deathmatch
@@ -103,18 +79,18 @@ fn spawn_player_hud(
   - [x] Enemies check if they can see the player and shoot them
   - [x] Chasing the player via pathfinding
   - [ ] Going to locations the player made noises
-- [ ] Multiplayer
-- [ ] Weapon animations
+- [x] Multiplayer
+- [x] Weapon animations
   - [x] Weapon sway
-  - [ ] Weapon recoil animation (e.g. when shooting kick back)
-  - [ ] Interpolate translation when switching aiming
+  - [x] Weapon recoil animation (e.g. when shooting kick back)
+  - [x] Interpolate translation when switching aiming
 - [ ] Audio Settings menu
   - [x] Global volume
   - [ ] Audio volume
   - [ ] Music volume
 - [ ] Graphics settings menu 
   - [ ] Target FPS
-- [ ] Input menu
+- [ ] Input settings menu
   - [ ] Change keybinds of all inputs in the game
 - and probably more stuff already implemented and coming soon..
 
@@ -127,6 +103,7 @@ uses:
 - bevy for game engine
 - avian3d for physics
 - skein for bevy <-> blender integration (work with bevy components in blender)
+- lightyear for multiplayer
 
 ## Credits
 

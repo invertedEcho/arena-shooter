@@ -1,0 +1,15 @@
+[package]
+name = "game_core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+avian3d = "0.4.1"
+bevy = {workspace = true}
+lightyear = {workspace = true}
+shared.workspace = true
+avian_rerecast = "0.3.0"
+bevy_landmass = "0.10.0"
+bevy_rerecast = {version = "0.3.0", default-features=false}
+landmass_rerecast = "0.1.0"
+rand = {workspace = true}
