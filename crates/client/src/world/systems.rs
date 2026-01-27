@@ -10,7 +10,7 @@ use shared::{MEDIUM_PLASTIC_MAP_PATH, SelectedMapState, TINY_TOWN_MAP_PATH};
 
 use super::resources::WorldSceneHandle;
 use crate::{
-    game_flow::states::AppState,
+    game_flow::{game_mode::GameModeClient, states::AppState},
     world::components::{MapDirectionalLight, MapModel},
 };
 
@@ -20,11 +20,17 @@ pub fn on_enter_spawn_map(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     selected_map_state: Res<State<SelectedMapState>>,
+    selected_game_mode: Res<State<GameModeClient>>,
 ) {
     let selected_map = selected_map_state.get();
-    let map_path = match selected_map {
-        SelectedMapState::TinyTown => TINY_TOWN_MAP_PATH,
-        SelectedMapState::MediumPlastic => MEDIUM_PLASTIC_MAP_PATH,
+
+    let map_path = if *selected_game_mode == GameModeClient::Multiplayer {
+        MEDIUM_PLASTIC_MAP_PATH
+    } else {
+        match selected_map {
+            SelectedMapState::TinyTown => TINY_TOWN_MAP_PATH,
+            SelectedMapState::MediumPlastic => MEDIUM_PLASTIC_MAP_PATH,
+        }
     };
 
     info!(
