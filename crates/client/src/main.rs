@@ -6,7 +6,7 @@ use ::shared::{
     get_auth_backend_socket_addr_client_side,
 };
 use bevy::{
-    dev_tools::fps_overlay::FpsOverlayPlugin,
+    dev_tools::fps_overlay::{FpsOverlayPlugin, FrameTimeGraphConfig},
     diagnostic::FrameTimeDiagnosticsPlugin,
     input_focus::InputDispatchPlugin,
     log::LogPlugin,
@@ -116,7 +116,15 @@ fn main() {
 
     app.add_plugins((UiWidgetsPlugins, InputDispatchPlugin));
     app.add_plugins(FrameTimeDiagnosticsPlugin::default());
-    app.add_plugins(FpsOverlayPlugin::default());
+    app.add_plugins(FpsOverlayPlugin {
+        config: bevy::dev_tools::fps_overlay::FpsOverlayConfig {
+            text_config: TextFont {
+                font_size: 14.,
+                ..default()
+            },
+            ..default()
+        },
+    });
 
     // External plugins
     app.add_plugins(HanabiPlugin); // particles

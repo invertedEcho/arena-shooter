@@ -6,7 +6,9 @@ use crate::{
         game_mode::GameModeClient,
         states::{AppState, MainMenuState},
     },
-    user_interface::shared::{DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE},
+    user_interface::shared::{
+        DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE, UI_BACKGROUND,
+    },
 };
 
 pub struct GameModeSelectionUIPlugin;
@@ -55,6 +57,7 @@ fn spawn_game_mode_selection_screen(
             },
             GameModeSelectionScreen,
             DespawnOnExit(MainMenuState::GameModeSelection),
+            BackgroundColor(UI_BACKGROUND),
         ))
         .with_children(|parent| {
             parent

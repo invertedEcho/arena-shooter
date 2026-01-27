@@ -9,7 +9,8 @@ pub const NORMAL_FONT_SIZE: f32 = 32.0;
 pub const ELEMENT_OUTLINE: Color = Color::srgb(0.45, 0.45, 0.45);
 pub const ELEMENT_FILL: Color = Color::srgb(0.35, 0.75, 0.35);
 
-pub const UI_BG: Color = Color::Srgba(Srgba::new(0.055, 0.067, 0.086, 1.0)); // #0E1116
+pub const UI_BACKGROUND: Color =
+    Color::Srgba(Srgba::new(0.055, 0.067, 0.086, 1.0)); // #0E1116
 pub const UI_PANEL: Color = Color::Srgba(Srgba::new(0.086, 0.106, 0.137, 1.0)); // #161B22
 pub const UI_PRIMARY: Color =
     Color::Srgba(Srgba::new(0.902, 0.224, 0.275, 1.0)); // #E63946

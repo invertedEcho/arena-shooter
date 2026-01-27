@@ -6,7 +6,8 @@ use crate::{
     user_interface::{
         common::CommonUiButton,
         shared::{
-            DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE, UI_SELECTED, UI_TEXT,
+            DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE, UI_BACKGROUND,
+            UI_SELECTED, UI_TEXT,
         },
     },
 };
@@ -56,6 +57,7 @@ fn spawn_map_selection(
                 ..default()
             },
             DespawnOnExit(MainMenuState::MapSelection),
+            BackgroundColor(UI_BACKGROUND),
         ))
         .with_children(|parent| {
             let selected_map_preview_image = match selected_map_state {

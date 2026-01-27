@@ -1,5 +1,5 @@
 ﻿use bevy::prelude::*;
-use shared::{ServerMode, ServerRunMode};
+use shared::ServerMode;
 
 use crate::{
     game_flow::{
@@ -9,7 +9,8 @@ use crate::{
     user_interface::{
         common::CommonUiButton,
         shared::{
-            DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE, TITLE_FONT_SIZE, UI_BG,
+            DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE, TITLE_FONT_SIZE,
+            UI_BACKGROUND,
         },
     },
 };
@@ -31,9 +32,7 @@ pub fn get_main_menu_camera_transform() -> Transform {
 }
 
 #[derive(Component)]
-struct MainMenuButton(pub MainMenuButtonType);
-
-enum MainMenuButtonType {
+enum MainMenuButton {
     Singleplayer,
     Multiplayer,
     SettingsMainMenu,
@@ -52,7 +51,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 ..default()
             },
             DespawnOnExit(MainMenuState::Root),
-            BackgroundColor(UI_BG),
+            BackgroundColor(UI_BACKGROUND),
             Name::new("Main Menu UI Root"),
         ))
         .with_children(|parent| {
@@ -78,7 +77,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 .spawn((
                     Node { ..default() },
                     Button,
-                    MainMenuButton(MainMenuButtonType::Singleplayer),
+                    MainMenuButton::Singleplayer,
                     TextColor::WHITE,
                 ))
                 .with_child((
@@ -93,7 +92,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 .spawn((
                     Node { ..default() },
                     Button,
-                    MainMenuButton(MainMenuButtonType::Multiplayer),
+                    MainMenuButton::Multiplayer,
                     TextColor::WHITE,
                 ))
                 .with_child((
@@ -108,7 +107,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 .spawn((
                     Node { ..default() },
                     Button,
-                    MainMenuButton(MainMenuButtonType::SettingsMainMenu),
+                    MainMenuButton::SettingsMainMenu,
                 ))
                 .with_child((
                     Text::new("Settings"),
@@ -156,18 +155,18 @@ fn handle_main_menu_button_pressed(
         let Interaction::Pressed = interaction else {
             continue;
         };
-        match main_menu_button.0 {
-            MainMenuButtonType::Singleplayer => {
+        match main_menu_button {
+            MainMenuButton::Singleplayer => {
                 server_run_mode.set(ServerMode::LocalServerSinglePlayer);
                 next_main_menu_state.set(MainMenuState::MapSelection);
             }
-            MainMenuButtonType::Multiplayer => {
+            MainMenuButton::Multiplayer => {
                 server_run_mode.set(ServerMode::RemoteServer);
                 next_game_mode_state.set(GameModeClient::Multiplayer);
                 start_game_mode_message_writer
                     .write(StartGameModeMessage { restart: false });
             }
-            MainMenuButtonType::SettingsMainMenu => {
+            MainMenuButton::SettingsMainMenu => {
                 next_main_menu_state.set(MainMenuState::Settings);
             }
         }

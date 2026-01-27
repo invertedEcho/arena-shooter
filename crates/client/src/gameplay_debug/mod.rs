@@ -18,10 +18,15 @@ use shared::{
     player::Player,
 };
 
+use crate::gameplay_debug::debug_overlay::DebugOverlayPlugin;
+
+mod debug_overlay;
+
 pub struct GameplayDebugPlugin;
 
 impl Plugin for GameplayDebugPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(DebugOverlayPlugin);
         app.add_plugins(Text3dPlugin {
             load_system_fonts: true,
             ..Default::default()
