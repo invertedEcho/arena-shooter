@@ -29,10 +29,12 @@ use crate::{
         EnemyPlugin,
         spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
     },
+    game_flow::GameFlowPlugin,
     nav_mesh_pathfinding::NavMeshPathfindingPlugin,
 };
 
 mod enemy;
+mod game_flow;
 mod nav_mesh_pathfinding;
 
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
@@ -64,6 +66,7 @@ impl Plugin for ServerPlugin {
 
         app.add_plugins(EnemyPlugin);
         app.add_plugins(NavMeshPathfindingPlugin);
+        app.add_plugins(GameFlowPlugin);
 
         app.add_systems(Startup, start_server);
 

@@ -6,7 +6,7 @@ use ::shared::{
     get_auth_backend_socket_addr_client_side,
 };
 use bevy::{
-    dev_tools::fps_overlay::{FpsOverlayPlugin, FrameTimeGraphConfig},
+    dev_tools::fps_overlay::FpsOverlayPlugin,
     diagnostic::FrameTimeDiagnosticsPlugin,
     input_focus::InputDispatchPlugin,
     log::LogPlugin,

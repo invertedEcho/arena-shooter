@@ -1,3 +1,4 @@
+use avian3d::prelude::*;
 use bevy::prelude::*;
 use lightyear::prelude::MessageSender;
 use shared::{
@@ -8,11 +9,8 @@ use shared::{
     utils::random::get_random_number_from_range,
 };
 
-use crate::{
-    GameStateWave,
-    enemy::shooting::{
-        components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
-    },
+use crate::enemy::shooting::{
+    components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
 };
 
 pub fn enemy_shoot_player(
@@ -42,7 +40,7 @@ pub fn enemy_shoot_player(
         }
 
         let Some(mut closest_player_transform) =
-            player_transforms.iter().nth(0)
+            player_transforms.iter().next()
         else {
             return;
         };
@@ -131,7 +129,6 @@ pub fn handle_enemy_killed_message(
         &mut EnemyState,
         &mut EnemyLastStateUpdate,
     )>,
-    mut game_state_wave: ResMut<GameStateWave>,
 ) {
     for message in message_reader.read() {
         let Some((enemy_entity, mut enemy_state, mut enemy_last_state_update)) =
@@ -151,8 +148,8 @@ pub fn handle_enemy_killed_message(
             .update_state(EnemyState::Dead, &mut enemy_last_state_update);
         commands
             .entity(enemy_entity)
+            .remove::<RigidBody>()
+            .remove::<Collider>()
             .insert(DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)));
-        game_state_wave.enemies_killed += 1;
-        game_state_wave.enemies_left_from_current_wave -= 1;
     }
 }
