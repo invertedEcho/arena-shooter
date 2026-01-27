@@ -1,10 +1,10 @@
 use bevy::prelude::*;
-use lightyear::prelude::{MessageSender, ReliableSettings};
+use lightyear::prelude::MessageSender;
 use shared::{
     components::DespawnTimer,
     enemy::components::{EnemyLastStateUpdate, EnemyState},
     player::Player,
-    protocol::ShootRequest,
+    protocol::{OrderedReliableMessageChannel, ShootRequest},
     utils::random::get_random_number_from_range,
 };
 
@@ -45,7 +45,7 @@ pub fn enemy_shoot_player(
         };
 
         // for a position X, and an array of positions Y, find the closest position Y to x.
-
+        // TODO: This should be an util
         for player_transform in player_transforms {
             let old_distance = closest_player_transform
                 .translation
@@ -83,27 +83,9 @@ pub fn enemy_shoot_player(
             continue;
         };
 
-        message_sender_shoot_request
-            .send::<ReliableSettings>(ShootRequest { origin, direction });
-
-        // FIXME: move to client, send a message from server to client to indicate player was hit
-        // if first_hit.entity == player_entity {
-        //     commands.spawn((
-        //         ImageNode {
-        //             image: asset_server
-        //                 .load("hud/blood_screen_effects/Effect_5.png"),
-        //             color: Color::srgba(1.0, 1.0, 1.0, 1.0),
-        //             ..default()
-        //         },
-        //         BloodScreenEffect::default(),
-        //         DespawnOnExit(InGameState::Playing),
-        //     ));
-        //
-        //     // TODO: doesnt really make sense to have random number of damage but we do that for now for more "realism"
-        //     let random_damage = get_random_number_from_range(10..15);
-        //
-        //     player_health.0 -= random_damage as f32;
-        // }
+        message_sender_shoot_request.send::<OrderedReliableMessageChannel>(
+            ShootRequest { origin, direction },
+        );
     }
 }
 

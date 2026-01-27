@@ -67,7 +67,6 @@ pub fn setup_player_cameras(
                     ..default()
                 }),
                 DespawnOnExit(AppState::InGame),
-                // bevy_egui::PrimaryEguiContext,
             ));
 
             let weapon_model_path =

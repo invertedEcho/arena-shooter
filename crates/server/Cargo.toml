@@ -10,7 +10,6 @@ bevy-inspector-egui = "0.35.0"
 dotenvy = "0.15.7"
 hex = "0.4.3"
 lightyear = {workspace = true}
-lightyear_replication = "0.25.5"
 shared = { workspace = true }
 tokio = {workspace = true}
 async-compat = {workspace = true}

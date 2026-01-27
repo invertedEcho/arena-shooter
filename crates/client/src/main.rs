@@ -15,7 +15,7 @@ use bevy::{
 };
 use bevy_hanabi::HanabiPlugin;
 use bevy_inspector_egui::{
-    bevy_egui::{self, EguiPlugin},
+    bevy_egui::{self, EguiContext, EguiPlugin, PrimaryEguiContext},
     quick::WorldInspectorPlugin,
 };
 use bevy_skein::SkeinPlugin;
@@ -130,9 +130,10 @@ fn main() {
         app.add_plugins(GameplayDebugPlugin);
     }
 
+    // TODO: move elsewhere
     app.add_observer(apply_render_layers_to_children);
-
     app.add_systems(Update, spawn_enemy_model_for_new_enemies);
+    app.add_systems(Update, handle_egui_context);
 
     app.run();
 }
@@ -162,5 +163,23 @@ pub fn spawn_enemy_model_for_new_enemies(
             SceneRoot(enemy_model),
             Visibility::Visible,
         ));
+    }
+}
+
+fn handle_egui_context(
+    mut commands: Commands,
+    query: Query<&PrimaryEguiContext>,
+    camera_query: Query<Entity, With<Camera>>,
+) {
+    if query.count() == 0 {
+        let Some(first_camera) = camera_query.iter().next() else {
+            return;
+        };
+
+        info!(
+            "No PrimaryEguiContext exists in the world, inserting it into \
+             first camera found."
+        );
+        commands.entity(first_camera).insert(PrimaryEguiContext);
     }
 }

@@ -14,10 +14,7 @@ use shared::protocol::{
 use shared::utils::lightyear::{
     DisconnectReason, parse_lightyear_disconnect_reason,
 };
-use shared::{
-    NETCODE_PROTOCOL_VERSION, SERVER_PORT, ServerMode, get_private_key,
-    get_server_socket_addr_client_side,
-};
+use shared::{SERVER_PORT, ServerMode, get_server_socket_addr_client_side};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,
@@ -60,7 +57,6 @@ pub fn on_enter_connecting_to_server(
     mut task_state: ResMut<ConnectTokenRequestTask>,
     game_mode: Res<State<GameModeClient>>,
     server_entity: Query<Entity, With<Server>>,
-    server_mode: Res<State<ServerMode>>,
 ) {
     // Connected component only present on our own client
     for connected in connected_query {
@@ -92,8 +88,6 @@ pub fn on_enter_connecting_to_server(
         ),
     };
 
-    let private_key = get_private_key(&server_mode);
-
     if let Ok(server_entity) = server_entity.single()
         && is_singleplayer
     {
@@ -104,21 +98,9 @@ pub fn on_enter_connecting_to_server(
                 LinkOf {
                     server: server_entity,
                 },
+                Client::default(),
             ))
             .id();
-
-        commands.entity(client).insert(
-            NetcodeClient::new(
-                Authentication::Manual {
-                    server_addr: server_address,
-                    client_id: 0,
-                    protocol_id: NETCODE_PROTOCOL_VERSION,
-                    private_key,
-                },
-                NetcodeConfig::default(),
-            )
-            .unwrap(),
-        );
 
         commands.trigger(Connect { entity: client });
     } else {
