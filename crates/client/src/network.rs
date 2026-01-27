@@ -145,11 +145,11 @@ fn handle_new_player(
         return;
     };
 
-    let remote_server_and_our_player =
-        *server_mode == ServerMode::RemoteServer && has_controlled;
-    if remote_server_and_our_player
-        || *server_mode == ServerMode::LocalServerSinglePlayer
-    {
+    let is_remote_server = *server_mode == ServerMode::RemoteServer;
+    let is_local_server_single_player =
+        *server_mode == ServerMode::LocalServerSinglePlayer;
+
+    if (is_remote_server && has_controlled) || is_local_server_single_player {
         // we insert the character controller locally on our client, as it should only run on the
         // client. as it is not registered in our protocol, it wont be replicated.
         commands.entity(our_player_entity).insert((
@@ -159,7 +159,7 @@ fn handle_new_player(
             Transform::from_translation(vec3(0.0, 20.0, 0.0)),
             Name::new("Our Player"),
         ));
-    } else if *server_mode == ServerMode::RemoteServer && !has_controlled {
+    } else if is_remote_server && !has_controlled {
         commands.entity(trigger.entity).insert((
             Mesh3d(meshes.add(Capsule3d::new(0.2, 1.3))),
             MeshMaterial3d(materials.add(StandardMaterial {

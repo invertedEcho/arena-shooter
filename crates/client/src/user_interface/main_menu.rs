@@ -1,4 +1,5 @@
 ﻿use bevy::prelude::*;
+use shared::{ServerMode, ServerRunMode};
 
 use crate::{
     game_flow::{
@@ -149,6 +150,7 @@ fn handle_main_menu_button_pressed(
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     mut start_game_mode_message_writer: MessageWriter<StartGameModeMessage>,
     mut next_game_mode_state: ResMut<NextState<GameModeClient>>,
+    mut server_run_mode: ResMut<NextState<ServerMode>>,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
         let Interaction::Pressed = interaction else {
@@ -156,9 +158,11 @@ fn handle_main_menu_button_pressed(
         };
         match main_menu_button.0 {
             MainMenuButtonType::Singleplayer => {
+                server_run_mode.set(ServerMode::LocalServerSinglePlayer);
                 next_main_menu_state.set(MainMenuState::MapSelection);
             }
             MainMenuButtonType::Multiplayer => {
+                server_run_mode.set(ServerMode::RemoteServer);
                 next_game_mode_state.set(GameModeClient::Multiplayer);
                 start_game_mode_message_writer
                     .write(StartGameModeMessage { restart: false });
