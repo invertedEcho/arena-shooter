@@ -135,10 +135,6 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             EntityPositionServer {
                                 translation: spawn_location_translation,
                             },
-                            // LockedAxes::new()
-                            //     .lock_rotation_x()
-                            //     .lock_rotation_y()
-                            //     .lock_rotation_z(),
                             RigidBody::Kinematic,
                             Collider::capsule(
                                 CHARACTER_CAPSULE_RADIUS,

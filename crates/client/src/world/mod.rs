@@ -3,6 +3,7 @@ use crate::world::systems::on_enter_spawn_map;
 use crate::world::world_objects::WorldObjectsPlugin;
 use bevy::prelude::*;
 
+pub mod components;
 pub mod resources;
 mod systems;
 pub mod world_objects;

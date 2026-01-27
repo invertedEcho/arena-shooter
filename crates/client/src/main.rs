@@ -26,7 +26,7 @@ use crate::{
     auth::ConnectTokenRequestTask,
     character_controller::CharacterControllerPlugin,
     enemy::animate::ENEMY_MODEL_PATH,
-    game_flow::GameFlowPlugin,
+    game_flow::{GameFlowPlugin, states::AppState},
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
     network::NetworkPlugin,
@@ -151,8 +151,11 @@ fn main() {
 
     // TODO: move elsewhere
     app.add_observer(apply_render_layers_to_children);
-    app.add_systems(Update, spawn_enemy_model_for_new_enemies);
-    app.add_systems(Update, handle_egui_context);
+    app.add_systems(
+        Update,
+        (spawn_enemy_model_for_new_enemies, handle_egui_context),
+    );
+    app.add_systems(OnExit(AppState::InGame), despawn_enemys_on_exit);
 
     app.run();
 }
@@ -200,5 +203,14 @@ fn handle_egui_context(
              first camera found."
         );
         commands.entity(first_camera).insert(PrimaryEguiContext);
+    }
+}
+
+pub fn despawn_enemys_on_exit(
+    mut commands: Commands,
+    enemy_query: Query<Entity, With<Enemy>>,
+) {
+    for enemy in enemy_query {
+        commands.entity(enemy).despawn();
     }
 }

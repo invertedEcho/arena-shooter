@@ -9,7 +9,10 @@ use bevy::{
 use shared::{MEDIUM_PLASTIC_MAP_PATH, SelectedMapState, TINY_TOWN_MAP_PATH};
 
 use super::resources::WorldSceneHandle;
-use crate::game_flow::states::AppState;
+use crate::{
+    game_flow::states::AppState,
+    world::components::{MapDirectionalLight, MapModel},
+};
 
 /// Spawns the corresponding map (determined by looking at SelectedMapState) on the client, when
 /// we enter LoadingGameState::SpawningMap
@@ -38,6 +41,7 @@ pub fn on_enter_spawn_map(
             color: palettes::css::ANTIQUE_WHITE.into(),
             ..default()
         },
+        MapDirectionalLight,
         Transform {
             translation: Vec3::new(0.0, 12.0, 0.0),
             rotation: Quat::from_rotation_x(-PI / 4.),
@@ -58,5 +62,6 @@ pub fn on_enter_spawn_map(
         Name::new("Scene Root (Map)"),
         Visibility::Visible,
         RigidBody::Static,
+        MapModel,
     ));
 }

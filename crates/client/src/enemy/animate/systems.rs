@@ -95,7 +95,7 @@ pub fn link_enemy_animation(
 pub fn play_enemy_animation(
     animations: Res<EnemyAnimations>,
     mut message_reader: MessageReader<PlayEnemyAnimationMessage>,
-    enemy_query: Query<(&EnemyState, &AnimationPlayerEntityPointer)>,
+    enemy_query: Query<&AnimationPlayerEntityPointer>,
     mut animation_players_and_transitions: Query<(
         Entity,
         &mut AnimationPlayer,
@@ -103,8 +103,7 @@ pub fn play_enemy_animation(
     )>,
 ) {
     for event in message_reader.read() {
-        let Ok((enemy_state, animation_player_entity_pointer)) =
-            enemy_query.get(event.enemy)
+        let Ok(animation_player_entity_pointer) = enemy_query.get(event.enemy)
         else {
             warn!(
                 "Tried to play enemy hit animation, but could not find an \
@@ -114,9 +113,6 @@ pub fn play_enemy_animation(
             );
             continue;
         };
-        if *enemy_state == EnemyState::Dead {
-            continue;
-        }
 
         let Some((_, mut animation_player, mut animation_transitions)) =
             animation_players_and_transitions
@@ -131,8 +127,12 @@ pub fn play_enemy_animation(
         };
 
         let animation_index =
-            get_animation_index_for_enemy_animation_type(&event.animaton_type);
+            get_animation_index_for_enemy_animation_type(&event.animation_type);
 
+        // info!(
+        //     "Playing animation {:?} for enemy {:?}",
+        //     event.animation_type, event.enemy
+        // );
         if event.repeat {
             animation_transitions
                 .play(
@@ -163,7 +163,7 @@ pub fn update_animation_on_enemy_state_change(
 
         message_writer.write(PlayEnemyAnimationMessage {
             enemy: entity,
-            animaton_type: animation_type,
+            animation_type,
             repeat,
         });
     }
@@ -180,17 +180,15 @@ pub fn play_animation_on_changed_health(
             play_enemy_animation_message_writer.write(
                 PlayEnemyAnimationMessage {
                     enemy: enemy_entity,
-                    animaton_type: EnemyAnimationType::HitReceive,
+                    animation_type: EnemyAnimationType::HitReceive,
                     repeat: false,
                 },
             );
         } else {
-            // FIXME: reintroduce
-            // enemy_killed_event_writer.write(EnemyKilledMessage(enemy_entity));
             play_enemy_animation_message_writer.write(
                 PlayEnemyAnimationMessage {
                     enemy: enemy_entity,
-                    animaton_type: EnemyAnimationType::Death,
+                    animation_type: EnemyAnimationType::Death,
                     repeat: false,
                 },
             );

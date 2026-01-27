@@ -17,6 +17,7 @@ use crate::enemy::{
     ai::messages::UpdateEnemyAgentTargetMessage, spawn::AgentEnemyEntityPointer,
 };
 
+// TODO: except this is not the case...
 /// This system is the only system allowed to change the enemy state
 /// Depending on the EnemyState, different systems will be run.
 pub fn enemy_state_decision_system(
@@ -209,7 +210,7 @@ pub fn check_if_enemy_agent_reached_target(
             continue;
         };
 
-        info!(
+        debug!(
             "Enemy has reached agent target! Now checking whether the player \
              is seeable"
         );

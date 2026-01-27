@@ -157,16 +157,16 @@ pub fn update_yaw_pitch_on_mouse_motion(
 // TODO: is this even needed? cant we just query for With<Camera>?
 // 'w -> the world borrow lifetime, e.g. how long this query can read/write world data
 // 'a -> the system lifetime, e.g. how long this query is valid inside a system function
-type AnyCamEntityQuery<'w, 's> = Query<
-    'w,
-    's,
-    Entity,
-    Or<(
-        With<ViewModelCamera>,
-        With<WorldCamera>,
-        With<PlayerWeaponModel>,
-    )>,
->;
+// type AnyCamEntityQuery<'w, 's> = Query<
+//     'w,
+//     's,
+//     Entity,
+//     Or<(
+//         With<ViewModelCamera>,
+//         With<WorldCamera>,
+//         With<PlayerWeaponModel>,
+//     )>,
+// >;
 
 // FIXME: Reintroduce
 //

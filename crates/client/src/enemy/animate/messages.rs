@@ -6,7 +6,7 @@ use crate::enemy::animate::EnemyAnimationType;
 pub struct PlayEnemyAnimationMessage {
     /// Which enemy entity to play the animation for
     pub enemy: Entity,
-    pub animaton_type: EnemyAnimationType,
+    pub animation_type: EnemyAnimationType,
     /// Whether the animation should repeat
-    pub repeat: bool
+    pub repeat: bool,
 }
