@@ -136,8 +136,8 @@ pub fn get_auth_backend_socket_addr_client_side() -> SocketAddr {
         .unwrap()
 }
 
-pub const SERVER_SOCKET_ADDR_SERVER_SIDE: SocketAddr =
-    SocketAddr::new(SERVER_ADDRESS_SERVER_SIDE, SERVER_PORT);
+pub const SERVER_SOCKET_ADDR_SINGLEPLAYER: SocketAddr =
+    SocketAddr::new(SERVER_ADDRESS_SERVER_SIDE, 0);
 
 pub const AUTH_BACKEND_ADDRESS_SERVER_SIDE: SocketAddr =
     SocketAddr::new(SERVER_ADDRESS_SERVER_SIDE, AUTH_BACKEND_PORT);
@@ -150,7 +150,7 @@ pub const DEFAULT_BULLET_DAMAGE: f32 = 7.5;
 
 pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
 pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
-pub const SPAWN_POINT_MEDIUM_PLASTIC_MAP: Vec3 = vec3(0.0, 15.0, 0.0);
+pub const SPAWN_POINT_MEDIUM_PLASTIC_MAP: Vec3 = vec3(0.0, 10.0, 0.0);
 
 /// Functionality that runs on both client and server
 pub struct SharedPlugin;

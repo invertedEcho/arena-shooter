@@ -10,7 +10,7 @@ use lightyear::{
     },
 };
 use shared::{
-    GameModeServer, NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_SERVER_SIDE,
+    GameModeServer, NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_SINGLEPLAYER,
     ServerMode, ServerRunMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
@@ -100,7 +100,7 @@ pub fn start_server(
                 private_key: get_private_key(&server_mode),
                 ..default()
             }),
-            LocalAddr(SERVER_SOCKET_ADDR_SERVER_SIDE),
+            LocalAddr(SERVER_SOCKET_ADDR_SINGLEPLAYER),
             ServerUdpIo::default(),
             Name::new(entity_name),
             GameModeServer::FreeForAll,
