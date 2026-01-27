@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::{
     env,
     net::{IpAddr, Ipv6Addr, SocketAddr, ToSocketAddrs},
+    thread::sleep,
+    time::Duration,
 };
 
 use crate::{
@@ -98,18 +100,39 @@ pub const AUTH_BACKEND_PORT: u16 = 4000;
 pub const SERVER_ADDRESS_SERVER_SIDE: IpAddr =
     IpAddr::V6(Ipv6Addr::UNSPECIFIED);
 
+fn resolve_with_retry(
+    address: &str,
+) -> std::io::Result<Vec<std::net::SocketAddr>> {
+    const RETRY_COUNT: u8 = 3;
+    let mut last_err = None;
+
+    for _ in 0..RETRY_COUNT {
+        match address.to_socket_addrs() {
+            Ok(addrs) => return Ok(addrs.collect()),
+            Err(error) => {
+                warn!(
+                    "Failed to resolve game server dns. Retrying, sleeping \
+                     for 100ms"
+                );
+                last_err = Some(error);
+                sleep(Duration::from_millis(100));
+            }
+        }
+    }
+
+    Err(last_err.unwrap())
+}
+
 pub fn get_server_socket_addr_client_side() -> SocketAddr {
-    "game.invertedecho.com:5888"
-        .to_socket_addrs()
-        .expect("DNS resolution failed")
-        .next()
+    *resolve_with_retry("game.invertedecho.com:5888")
+        .unwrap()
+        .first()
         .unwrap()
 }
 pub fn get_auth_backend_socket_addr_client_side() -> SocketAddr {
-    "game.invertedecho.com:4000"
-        .to_socket_addrs()
-        .expect("DNS resolution failed")
-        .next()
+    *resolve_with_retry("game.invertedecho.com:4000")
+        .unwrap()
+        .first()
         .unwrap()
 }
 
