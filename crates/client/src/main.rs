@@ -9,13 +9,14 @@ use bevy::{
     dev_tools::fps_overlay::FpsOverlayPlugin,
     diagnostic::FrameTimeDiagnosticsPlugin,
     input_focus::InputDispatchPlugin,
+    log::LogPlugin,
     prelude::*,
     ui_widgets::UiWidgetsPlugins,
     window::{PresentMode, WindowMode},
 };
 use bevy_hanabi::HanabiPlugin;
 use bevy_inspector_egui::{
-    bevy_egui::{self, EguiContext, EguiPlugin, PrimaryEguiContext},
+    bevy_egui::{self, EguiPlugin, PrimaryEguiContext},
     quick::WorldInspectorPlugin,
 };
 use bevy_skein::SkeinPlugin;
@@ -52,6 +53,20 @@ mod shared;
 mod user_interface;
 mod world;
 
+// TODO: copied from bevy 0.18. remove once migrated to bevy 0.18.
+pub const DEFAULT_FILTER: &str = concat!(
+    "wgpu=error,",
+    "naga=warn,",
+    "symphonia_bundle_mp3::demuxer=warn,",
+    "symphonia_format_caf::demuxer=warn,",
+    "symphonia_format_isompf4::demuxer=warn,",
+    "symphonia_format_mkv::demuxer=warn,",
+    "symphonia_format_ogg::demuxer=warn,",
+    "symphonia_format_riff::demuxer=warn,",
+    "symphonia_format_wav::demuxer=warn,",
+    "calloop::loop_logic=error,",
+);
+
 fn main() {
     let mut app = App::new();
     let game_settings = get_or_create_game_settings();
@@ -84,6 +99,10 @@ fn main() {
             })
             .set(AssetPlugin {
                 file_path: "../../assets".to_string(),
+                ..default()
+            })
+            .set(LogPlugin {
+                filter: DEFAULT_FILTER.to_string(),
                 ..default()
             }),
     );
