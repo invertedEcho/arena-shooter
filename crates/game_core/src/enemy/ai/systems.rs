@@ -247,7 +247,7 @@ pub fn handle_chasing_enemies(
             continue;
         }
 
-        // FIXME: this is problematic. character controller only runs on client.
+        // TODO: this is problematic. character controller only runs on client.
         // this works for now as we only have enemies in singleplayer, but if we start having Waves
         // game mode multiplayer, the character controller for enemies should run on the server and
         // position be synced to all clients

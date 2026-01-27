@@ -1,11 +1,15 @@
 use std::net::{Ipv6Addr, SocketAddr};
 
 use async_compat::Compat;
+use avian3d::prelude::*;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
+use shared::character_controller::{
+    CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+};
 use shared::player::Player;
 use shared::protocol::{
     ClientUpdatePositionMessage, EntityPositionServer,
@@ -167,6 +171,11 @@ fn handle_new_player(
                 ..Default::default()
             })),
             Name::new("Remote Player"),
+            RigidBody::Kinematic,
+            Collider::capsule(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ),
         ));
     }
 }

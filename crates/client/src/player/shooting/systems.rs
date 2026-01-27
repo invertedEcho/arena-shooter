@@ -3,6 +3,7 @@ use bevy::{input::mouse::MouseWheel, prelude::*};
 use lightyear::prelude::*;
 use shared::{
     components::Health,
+    enemy::components::Enemy,
     player::AimType,
     protocol::{OrderedReliableMessageChannel, ShootRequest},
 };
@@ -182,6 +183,7 @@ pub fn send_shoot_request_on_weapon_fired(
     }
 }
 
+type PlayerOrEnemy = Or<(With<Enemy>, With<Player>)>;
 pub fn spawn_bullet_impact_particle_on_weapon_fired(
     mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
     mut spawn_bullet_impact_effect_message_writer: MessageWriter<
@@ -190,6 +192,7 @@ pub fn spawn_bullet_impact_particle_on_weapon_fired(
     world_model_camera_query: WorldModelCameraQuery,
     player_query: Single<Entity, (With<Player>, With<Controlled>)>,
     spatial_query: SpatialQuery,
+    player_and_enemies: Query<Entity, PlayerOrEnemy>,
 ) {
     let player_entity = player_query.into_inner();
     for _ in message_reader.read() {
@@ -206,11 +209,19 @@ pub fn spawn_bullet_impact_particle_on_weapon_fired(
         ) {
             let spawn_location = origin + direction * first_hit.distance;
 
+            let player_or_enemy_hit =
+                player_and_enemies.get(first_hit.entity).is_ok();
+
+            let bullet_impact_effect_variant = if player_or_enemy_hit {
+                BulletImpactEffectVariant::Enemy
+            } else {
+                BulletImpactEffectVariant::World
+            };
+
             spawn_bullet_impact_effect_message_writer.write(
                 SpawnBulletImpactEffectMessage {
                     spawn_location,
-                    // FIXME: check whether enemy or world, must first reintroduce enemies though
-                    variant: BulletImpactEffectVariant::World,
+                    variant: bullet_impact_effect_variant,
                 },
             );
         }
