@@ -44,6 +44,26 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: Download proprietary assets from google drive
+        run: |
+          sudo apt install -y rclone unzip
+
+          mkdir -p ~/.config/rclone
+          cat > ~/.config/rclone/rclone.conf <<EOF
+          [gdrive]
+          type = drive
+          scope = drive.readonly
+          service_account_credentials = /tmp/sa.json
+          EOF
+
+          echo "$GDRIVE_SERVICE_ACCOUNT_JSON" > /tmp/sa.json
+
+          FILE_ID="12hb8c5fgbg4Ob6Y9TUldoHTA269niqRi"
+
+          rclone copy gdrive:{"id":"$FILE_ID"} ./weapons.zip
+
+          unzip ./weapon.zip -d ./assets/weapons
+
       - name: Build
         run: |
           cargo build --release --target x86_64-unknown-linux-gnu -p client
