@@ -7,11 +7,11 @@ use crate::{
         states::MainMenuState,
     },
     user_interface::{
-        common::CommonUiButton,
-        shared::{
-            DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE, TITLE_FONT_SIZE,
-            UI_BACKGROUND,
+        common::{
+            CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
+            TITLE_FONT_SIZE, UI_BACKGROUND,
         },
+        widgets::button::build_common_button,
     },
 };
 
@@ -48,6 +48,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
+                row_gap: px(8),
                 ..default()
             },
             DespawnOnExit(MainMenuState::Root),
@@ -73,71 +74,34 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                         ..default()
                     },
                 ));
-            parent
-                .spawn((
-                    Node { ..default() },
-                    Button,
-                    MainMenuButton::Singleplayer,
-                    TextColor::WHITE,
-                ))
-                .with_child((
-                    Text::new("Singleplayer"),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
-                        ..default()
-                    },
-                ));
-            parent
-                .spawn((
-                    Node { ..default() },
-                    Button,
-                    MainMenuButton::Multiplayer,
-                    TextColor::WHITE,
-                ))
-                .with_child((
-                    Text::new("Multiplayer (FFA)"),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
-                        ..default()
-                    },
-                ));
-            parent
-                .spawn((
-                    Node { ..default() },
-                    Button,
-                    MainMenuButton::SettingsMainMenu,
-                ))
-                .with_child((
-                    Text::new("Settings"),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
-                        ..default()
-                    },
-                ));
-            parent
-                .spawn((
-                    Node {
-                        padding: UiRect {
-                            top: Val::Px(16.0),
-                            ..default()
-                        },
-                        ..default()
-                    },
-                    Button,
-                    CommonUiButton::Quit,
-                    TextColor::WHITE,
-                ))
-                .with_child((
-                    Text::new("Quit"),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
-                        ..default()
-                    },
-                ));
+            parent.spawn((
+                build_common_button(
+                    "Singleplayer",
+                    asset_server.load(DEFAULT_GAME_FONT_PATH),
+                ),
+                MainMenuButton::Singleplayer,
+            ));
+            parent.spawn((
+                build_common_button(
+                    "Multiplayer",
+                    asset_server.load(DEFAULT_GAME_FONT_PATH),
+                ),
+                MainMenuButton::Multiplayer,
+            ));
+            parent.spawn((
+                build_common_button(
+                    "Settings",
+                    asset_server.load(DEFAULT_GAME_FONT_PATH),
+                ),
+                MainMenuButton::SettingsMainMenu,
+            ));
+            parent.spawn((
+                build_common_button(
+                    "Quit",
+                    asset_server.load(DEFAULT_GAME_FONT_PATH),
+                ),
+                CommonUiButton::Quit,
+            ));
         });
 }
 

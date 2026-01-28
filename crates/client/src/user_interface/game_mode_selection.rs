@@ -6,8 +6,8 @@ use crate::{
         game_mode::GameModeClient,
         states::{AppState, MainMenuState},
     },
-    user_interface::shared::{
-        DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE, UI_BACKGROUND,
+    user_interface::common::{
+        DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH, UI_BACKGROUND,
     },
 };
 
@@ -74,7 +74,7 @@ fn spawn_game_mode_selection_screen(
                     Text::new("Select a game mode"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -89,7 +89,7 @@ fn spawn_game_mode_selection_screen(
                     Text::new("Waves"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -104,7 +104,7 @@ fn spawn_game_mode_selection_screen(
                     Text::new("Free Roam"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -125,7 +125,7 @@ fn spawn_game_mode_selection_screen(
                     Text::new("Go back"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));

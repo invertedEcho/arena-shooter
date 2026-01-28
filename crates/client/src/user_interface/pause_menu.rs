@@ -2,9 +2,8 @@ use bevy::prelude::*;
 
 use crate::{
     game_flow::states::InGameState,
-    user_interface::{
-        common::CommonUiButton,
-        shared::{DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE},
+    user_interface::common::{
+        CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
     },
 };
 
@@ -58,7 +57,7 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Paused"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -73,7 +72,7 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Resume"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -87,7 +86,7 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     Text::new("Exit to Main Menu"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));

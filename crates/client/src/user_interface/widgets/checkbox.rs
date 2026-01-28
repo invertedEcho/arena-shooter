@@ -6,7 +6,7 @@ use bevy::{
     ui_widgets::Checkbox,
 };
 
-use crate::user_interface::shared::{
+use crate::user_interface::common::{
     DEFAULT_GAME_FONT_PATH, ELEMENT_FILL, ELEMENT_OUTLINE,
 };
 

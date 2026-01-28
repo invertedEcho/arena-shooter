@@ -9,7 +9,7 @@ use crate::user_interface::{
     settings_menu::SettingsMenuPlugin,
 };
 
-mod common;
+pub mod common;
 mod death_screen;
 mod disconnect_screen;
 mod game_mode_selection;
@@ -18,7 +18,6 @@ pub mod main_menu;
 mod map_selection;
 mod pause_menu;
 mod settings_menu;
-pub mod shared;
 mod widgets;
 
 pub struct UserInterfacePlugin;

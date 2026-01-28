@@ -6,13 +6,30 @@ use crate::{
     user_interface::{
         map_selection::MapSelectionButton,
         settings_menu::SettingsChangeTabButton,
-        shared::{UI_HOVER, UI_TEXT},
         widgets::{
             checkbox::{update_checkbox_style, update_checkbox_style2},
             slider::update_slider_style,
         },
     },
 };
+
+pub const DEFAULT_GAME_FONT_PATH: &str = "fonts/Exo_2/static/Exo2-Regular.ttf";
+pub const ITALIC_GAME_FONT_PATH: &str = "fonts/Exo_2/static/Exo2-Italic.ttf";
+pub const TITLE_FONT_SIZE: f32 = 64.0;
+pub const DEFAULT_FONT_SIZE: f32 = 32.0;
+
+pub const ELEMENT_OUTLINE: Color = Color::srgb(0.45, 0.45, 0.45);
+pub const ELEMENT_FILL: Color = Color::srgb(0.35, 0.75, 0.35);
+
+pub const UI_BACKGROUND: Color =
+    Color::Srgba(Srgba::new(0.055, 0.067, 0.086, 1.0)); // #0E1116
+pub const UI_PANEL: Color = Color::Srgba(Srgba::new(0.086, 0.106, 0.137, 1.0)); // #161B22
+pub const UI_PRIMARY: Color =
+    Color::Srgba(Srgba::new(0.902, 0.224, 0.275, 1.0)); // #E63946
+pub const UI_HOVER: Color = Color::Srgba(Srgba::new(0.298, 0.788, 0.941, 1.0)); // #4CC9F0
+pub const UI_TEXT: Color = Color::Srgba(Srgba::new(0.918, 0.918, 0.918, 1.0)); // #EAEAEA
+pub const UI_BORDER: Color = Color::Srgba(Srgba::new(0.165, 0.196, 0.251, 1.0)); // ~ #2A3240
+pub const UI_SELECTED: Color = Color::Srgba(Srgba::new(0.22, 0.55, 0.75, 1.0)); // ~ #388CBF
 
 pub struct CommonUiPlugin;
 

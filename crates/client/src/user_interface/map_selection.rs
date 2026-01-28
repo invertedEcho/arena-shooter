@@ -3,12 +3,9 @@ use shared::SelectedMapState;
 
 use crate::{
     game_flow::states::MainMenuState,
-    user_interface::{
-        common::CommonUiButton,
-        shared::{
-            DEFAULT_GAME_FONT_PATH, NORMAL_FONT_SIZE, UI_BACKGROUND,
-            UI_SELECTED, UI_TEXT,
-        },
+    user_interface::common::{
+        CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
+        UI_BACKGROUND, UI_SELECTED, UI_TEXT,
     },
 };
 
@@ -110,7 +107,7 @@ fn spawn_map_selection(
                     Text::new("Select a Map"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -125,7 +122,7 @@ fn spawn_map_selection(
                     Text::new("Tiny Town"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                     TextColor(get_text_button_color_for_map_selection_button(
@@ -144,7 +141,7 @@ fn spawn_map_selection(
                     Text::new("Medium Plastic"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                     TextColor(get_text_button_color_for_map_selection_button(
@@ -169,7 +166,7 @@ fn spawn_map_selection(
                     Text::new("Continue to Game Mode Selection"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));
@@ -190,7 +187,7 @@ fn spawn_map_selection(
                     Text::new("Go back to Main Menu"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: NORMAL_FONT_SIZE,
+                        font_size: DEFAULT_FONT_SIZE,
                         ..default()
                     },
                 ));

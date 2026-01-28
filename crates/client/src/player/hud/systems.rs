@@ -30,7 +30,7 @@ use crate::{
         },
     },
     shared::components::OnlyVisibleInGame,
-    user_interface::shared::{ITALIC_GAME_FONT_PATH, UI_SELECTED, UI_TEXT},
+    user_interface::common::{ITALIC_GAME_FONT_PATH, UI_SELECTED, UI_TEXT},
 };
 
 pub fn spawn_player_hud(
@@ -87,7 +87,8 @@ pub fn spawn_player_hud(
                         Text::new(player_health.0.to_string()),
                         PlayerHealthText,
                         TextFont {
-                            font: asset_server.load(ITALIC_GAME_FONT_PATH),
+                            font: asset_server
+                                .load("fonts/Exo_2/static/Exo2-Italic.ttf"),
                             ..default()
                         },
                     ));

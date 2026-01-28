@@ -3,9 +3,9 @@ use bevy::{color::palettes::css::RED, prelude::*};
 use crate::{
     game_flow::states::{DisconnectedState, InGameState},
     user_interface::{
-        common::CommonUiButton,
+        common::{CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH},
         main_menu::{MainMenuCamera, get_main_menu_camera_transform},
-        shared::build_common_button,
+        widgets::button::build_common_button,
     },
 };
 
@@ -59,8 +59,8 @@ fn spawn_disconnected_screen(
 
             parent.spawn((
                 build_common_button(
-                    asset_server,
-                    "Return to Main Menu".to_string(),
+                    "Return to Main Menu",
+                    asset_server.load(DEFAULT_GAME_FONT_PATH),
                 ),
                 CommonUiButton::BackToMainMenu,
             ));

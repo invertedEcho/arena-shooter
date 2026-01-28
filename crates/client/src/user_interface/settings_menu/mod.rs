@@ -3,14 +3,14 @@ use crate::{
     game_flow::states::MainMenuState,
     game_settings::{GameSettings, update_game_settings_file},
     user_interface::{
+        common::{
+            DEFAULT_GAME_FONT_PATH, UI_BORDER, UI_PANEL, UI_SELECTED, UI_TEXT,
+        },
         settings_menu::{
             audio::{
                 build_audio_settings_tab_content, update_volume_slider_value,
             },
             graphics::{GraphicsCheckbox, GraphicsCheckboxType},
-        },
-        shared::{
-            DEFAULT_GAME_FONT_PATH, UI_BORDER, UI_PANEL, UI_SELECTED, UI_TEXT,
         },
         widgets::checkbox::build_checkbox,
     },
