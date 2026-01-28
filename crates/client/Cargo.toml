@@ -5,7 +5,8 @@ edition = "2024"
 
 [dependencies]
 avian3d = {version = "0.4.1", features = ["serialize"]}
-bevy = { version = "0.17.2", features = ["mp3", "file_watcher", "wayland", "dynamic_linking", "experimental_bevy_ui_widgets", "track_location", "bevy_dev_tools"] }
+# bevy = { version = "0.17.2", features = ["mp3", "file_watcher", "wayland", "dynamic_linking", "experimental_bevy_ui_widgets", "track_location", "bevy_dev_tools"] }
+bevy = { version = "0.17.2", features = ["mp3", "file_watcher", "wayland", "experimental_bevy_ui_widgets", "track_location", "bevy_dev_tools"] }
 bevy-inspector-egui = "0.34"
 bevy_hanabi = "0.17"
 bevy_rich_text3d = "0.5.1"
@@ -21,3 +22,4 @@ bincode = "2.0.1"
 game_core = { version = "0.1.0", path = "../game_core" }
 bevy_common_assets = "0.15.0"
 bevy_skein = "0.4.0"
+bevy_embedded_assets = "0.14.0"
