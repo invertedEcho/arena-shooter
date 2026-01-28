@@ -31,6 +31,8 @@ pub const UI_TEXT: Color = Color::Srgba(Srgba::new(0.918, 0.918, 0.918, 1.0)); /
 pub const UI_BORDER: Color = Color::Srgba(Srgba::new(0.165, 0.196, 0.251, 1.0)); // ~ #2A3240
 pub const UI_SELECTED: Color = Color::Srgba(Srgba::new(0.22, 0.55, 0.75, 1.0)); // ~ #388CBF
 
+pub const DEFAULT_ROW_GAP: Val = Val::Px(8.0);
+
 pub struct CommonUiPlugin;
 
 impl Plugin for CommonUiPlugin {

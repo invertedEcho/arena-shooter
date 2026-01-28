@@ -3,9 +3,12 @@ use shared::SelectedMapState;
 
 use crate::{
     game_flow::states::MainMenuState,
-    user_interface::common::{
-        CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
-        UI_BACKGROUND, UI_SELECTED, UI_TEXT,
+    user_interface::{
+        common::{
+            CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
+            DEFAULT_ROW_GAP, UI_BACKGROUND, UI_SELECTED, UI_TEXT,
+        },
+        widgets::button::build_common_button,
     },
 };
 
@@ -51,6 +54,7 @@ fn spawn_map_selection(
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 flex_grow: 1.0,
+                row_gap: DEFAULT_ROW_GAP,
                 ..default()
             },
             DespawnOnExit(MainMenuState::MapSelection),
@@ -67,12 +71,6 @@ fn spawn_map_selection(
                 .spawn(Node {
                     width: Val::Percent(30.0),
                     height: Val::Auto,
-                    padding: UiRect::new(
-                        Val::ZERO,
-                        Val::ZERO,
-                        Val::ZERO,
-                        Val::Px(16.0),
-                    ),
                     align_items: AlignItems::Center,
                     justify_content: JustifyContent::Center,
                     ..default()
@@ -93,24 +91,14 @@ fn spawn_map_selection(
                         },
                     ));
                 });
-            parent
-                .spawn(Node {
-                    padding: UiRect::new(
-                        Val::ZERO,
-                        Val::ZERO,
-                        Val::ZERO,
-                        Val::Px(16.0),
-                    ),
+            parent.spawn(Node { ..default() }).with_child((
+                Text::new("Select a Map"),
+                TextFont {
+                    font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                    font_size: DEFAULT_FONT_SIZE,
                     ..default()
-                })
-                .with_child((
-                    Text::new("Select a Map"),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
-                        ..default()
-                    },
-                ));
+                },
+            ));
             parent
                 .spawn((
                     Node { ..default() },
@@ -149,48 +137,20 @@ fn spawn_map_selection(
                         MapSelectionButton(SelectedMapState::MediumPlastic),
                     )),
                 ));
-            parent
-                .spawn((
-                    Node {
-                        padding: UiRect {
-                            top: Val::Px(16.0),
-                            ..default()
-                        },
-                        ..default()
-                    },
-                    Button,
-                    CommonUiButton::ToGameModeSelection,
-                    TextColor::WHITE,
-                ))
-                .with_child((
-                    Text::new("Continue to Game Mode Selection"),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
-                        ..default()
-                    },
-                ));
-            parent
-                .spawn((
-                    Node {
-                        padding: UiRect {
-                            top: Val::Px(16.0),
-                            ..default()
-                        },
-                        ..default()
-                    },
-                    Button,
-                    CommonUiButton::BackToMainMenu,
-                    TextColor::WHITE,
-                ))
-                .with_child((
-                    Text::new("Go back to Main Menu"),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
-                        ..default()
-                    },
-                ));
+            parent.spawn((
+                build_common_button(
+                    "Continue to Game Mode Selection",
+                    asset_server.load(DEFAULT_GAME_FONT_PATH),
+                ),
+                CommonUiButton::ToGameModeSelection,
+            ));
+            parent.spawn((
+                build_common_button(
+                    "Go back to Main Menu",
+                    asset_server.load(DEFAULT_GAME_FONT_PATH),
+                ),
+                CommonUiButton::BackToMainMenu,
+            ));
         });
 }
 

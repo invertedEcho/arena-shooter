@@ -9,7 +9,7 @@ use crate::{
     user_interface::{
         common::{
             CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
-            TITLE_FONT_SIZE, UI_BACKGROUND,
+            DEFAULT_ROW_GAP, TITLE_FONT_SIZE, UI_BACKGROUND,
         },
         widgets::button::build_common_button,
     },
@@ -48,7 +48,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
-                row_gap: px(8),
+                row_gap: DEFAULT_ROW_GAP,
                 ..default()
             },
             DespawnOnExit(MainMenuState::Root),

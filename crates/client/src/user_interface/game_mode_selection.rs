@@ -6,8 +6,12 @@ use crate::{
         game_mode::GameModeClient,
         states::{AppState, MainMenuState},
     },
-    user_interface::common::{
-        DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH, UI_BACKGROUND,
+    user_interface::{
+        common::{
+            DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
+            UI_BACKGROUND,
+        },
+        widgets::button::build_common_button,
     },
 };
 
@@ -53,6 +57,7 @@ fn spawn_game_mode_selection_screen(
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
+                row_gap: DEFAULT_ROW_GAP,
                 ..default()
             },
             GameModeSelectionScreen,
@@ -78,57 +83,27 @@ fn spawn_game_mode_selection_screen(
                         ..default()
                     },
                 ));
-            parent
-                .spawn((
-                    Node { ..default() },
-                    Button,
-                    GameModeSelectionButton(GameModeClient::Waves),
-                    TextColor::WHITE,
-                ))
-                .with_child((
-                    Text::new("Waves"),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
-                        ..default()
-                    },
-                ));
-            parent
-                .spawn((
-                    Node { ..default() },
-                    Button,
-                    GameModeSelectionButton(GameModeClient::FreeRoam),
-                    TextColor::WHITE,
-                ))
-                .with_child((
-                    Text::new("Free Roam"),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
-                        ..default()
-                    },
-                ));
-            parent
-                .spawn((
-                    Node {
-                        padding: UiRect {
-                            top: Val::Px(16.0),
-                            ..default()
-                        },
-                        ..default()
-                    },
-                    Button,
-                    GameModeSelectionActionButton::GoBack,
-                    TextColor::WHITE,
-                ))
-                .with_child((
-                    Text::new("Go back"),
-                    TextFont {
-                        font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                        font_size: DEFAULT_FONT_SIZE,
-                        ..default()
-                    },
-                ));
+            parent.spawn((
+                build_common_button(
+                    "Waves",
+                    asset_server.load(DEFAULT_GAME_FONT_PATH),
+                ),
+                GameModeSelectionButton(GameModeClient::Waves),
+            ));
+            parent.spawn((
+                build_common_button(
+                    "Free Roam",
+                    asset_server.load(DEFAULT_GAME_FONT_PATH),
+                ),
+                GameModeSelectionButton(GameModeClient::FreeRoam),
+            ));
+            parent.spawn((
+                build_common_button(
+                    "Go back",
+                    asset_server.load(DEFAULT_GAME_FONT_PATH),
+                ),
+                GameModeSelectionActionButton::GoBack,
+            ));
         });
 }
 
