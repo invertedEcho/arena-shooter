@@ -48,12 +48,11 @@ jobs:
         run: |
           sudo apt install -y rclone unzip
 
-          export RCLONE_CONFIG_GDRIVE_TYPE=drive
-          export RCLONE_CONFIG_GDRIVE_SCOPE=drive.readonly
-          export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
-          export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID="$GDRIVE_ASSETS_DIRECTORY_ID"
+          echo $GDRIVE_SERVICE_ACCOUNT_JSON > /tmp/sa.json
 
-          echo "$GDRIVE_SERVICE_ACCOUNT_JSON" > /tmp/sa.json
+          export RCLONE_CONFIG_GDRIVE_TYPE=drive
+          export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
+          export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID=$GDRIVE_ASSETS_DIRECTORY_ID
 
           rclone copy gdrive:weapons.zip .
 
