@@ -419,16 +419,25 @@ pub fn interpolate_weapon_position(
 ) {
     const SPEED: f32 = 20.0;
 
-    let target_destination = get_position_for_weapon(
-        &player_query.0.weapons[player_query.0.active_slot]
+    let player_weapons = player_query.0;
+    let reloading = player_weapons.reloading;
+
+    let mut target_destination = get_position_for_weapon(
+        &player_weapons.weapons[player_weapons.active_slot]
             .stats
             .weapon_type,
         player_query.1,
     );
 
+    if reloading {
+        target_destination = target_destination.with_y(-1.0);
+    }
+
+    let speed = if reloading { 10.0 } else { SPEED };
+
     player_weapon_model_transform.translation = player_weapon_model_transform
         .translation
-        .lerp(target_destination, time.delta_secs() * SPEED);
+        .lerp(target_destination, time.delta_secs() * speed);
 }
 
 pub fn do_weapon_kickback(
