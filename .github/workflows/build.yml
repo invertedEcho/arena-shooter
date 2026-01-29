@@ -48,19 +48,14 @@ jobs:
         run: |
           sudo apt install -y rclone unzip
 
-          mkdir -p ~/.config/rclone
-          cat > ~/.config/rclone/rclone.conf <<EOF
-          [gdrive]
-          type = drive
-          scope = drive.readonly
-          service_account_file = /tmp/sa.json
-          EOF
+          export RCLONE_CONFIG_GDRIVE_TYPE=drive
+          export RCLONE_CONFIG_GDRIVE_SCOPE=drive.readonly
+          export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
+          export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID="$GDRIVE_ASSETS_DIRECTORY_ID"
 
           echo "$GDRIVE_SERVICE_ACCOUNT_JSON" > /tmp/sa.json
 
-          FILE_ID="12hb8c5fgbg4Ob6Y9TUldoHTA269niqRi"
-
-          rclone copy gdrive:{"id":"$FILE_ID"} ./weapons.zip
+          rclone copy gdrive:weapons.zip .
 
           unzip ./weapon.zip -d ./assets/weapons
 
