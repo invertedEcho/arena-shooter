@@ -3,7 +3,7 @@ use bevy::{color::palettes::css::RED, prelude::*};
 use crate::{
     game_flow::states::{DisconnectedState, InGameState},
     user_interface::{
-        common::{CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH},
+        common::{CommonUiButton, DEFAULT_GAME_FONT_PATH},
         main_menu::{MainMenuCamera, get_main_menu_camera_transform},
         widgets::button::build_common_button,
     },

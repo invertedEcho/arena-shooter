@@ -15,8 +15,8 @@ use crate::{
         camera::{
             PLAYER_CAMERA_Y_OFFSET,
             components::{
-                FreeCam, InterpolateWeapon, MuzzleFlash, PlayerCameraState,
-                PlayerWeaponModel, ViewModelCamera, WorldCamera,
+                FreeCam, MuzzleFlash, PlayerCameraState, PlayerWeaponModel,
+                ViewModelCamera, WorldCamera,
             },
             weapon_positions::{
                 get_muzzle_flash_position_for_weapon, get_position_for_weapon,
@@ -118,6 +118,7 @@ pub fn handle_player_scope_aim(
     if mouse_input.just_pressed(MouseButton::Right) {
         *aim_type = AimType::Scoped;
     } else if mouse_input.just_released(MouseButton::Right) {
+        info!("MouseButton::Right released, setting aim_type to Normal");
         *aim_type = AimType::Normal;
     }
 }
@@ -339,19 +340,21 @@ pub fn update_player_weapon_model(
         (Entity, &mut Transform),
         With<PlayerWeaponModel>,
     >,
-    player_weapons: Single<&PlayerWeapons>,
+    player_query: Single<(&PlayerWeapons, &AimType)>,
 ) {
     let (player_weapon_model_entity, mut player_weapon_model_transform) =
         player_weapon_model_query.into_inner();
 
     for message in message_reader.read() {
+        let player_weapons = player_query.0;
+        let aim_type = player_query.1;
+
         let new_slot_index = message.0;
 
         let weapon_type =
             &player_weapons.weapons[new_slot_index].stats.weapon_type;
 
-        let weapon_position =
-            get_position_for_weapon(weapon_type, &AimType::Normal);
+        let weapon_position = get_position_for_weapon(weapon_type, aim_type);
 
         let model_path = get_asset_path_for_weapon_type(weapon_type);
 
@@ -406,26 +409,8 @@ pub fn spawn_muzzle_flash(
     }
 }
 
-pub fn update_target_weapon_position_for_changed_aim_type(
-    query: Query<(Entity, &AimType), Changed<AimType>>,
-    player_weapons: Single<&PlayerWeapons>,
-    mut commands: Commands,
-) {
-    for (player_entity, changed_aim_type) in query {
-        let weapon_type = &player_weapons.weapons[player_weapons.active_slot]
-            .stats
-            .weapon_type;
-        let target_position =
-            get_position_for_weapon(weapon_type, changed_aim_type);
-
-        commands
-            .entity(player_entity)
-            .insert(InterpolateWeapon { target_position });
-    }
-}
-
 pub fn interpolate_weapon_position(
-    interpolate_weapon: Single<&InterpolateWeapon>,
+    player_query: Single<(&PlayerWeapons, &AimType)>,
     mut player_weapon_model_transform: Single<
         &mut Transform,
         With<PlayerWeaponModel>,
@@ -433,7 +418,13 @@ pub fn interpolate_weapon_position(
     time: Res<Time>,
 ) {
     const SPEED: f32 = 20.0;
-    let target_destination = interpolate_weapon.target_position;
+
+    let target_destination = get_position_for_weapon(
+        &player_query.0.weapons[player_query.0.active_slot]
+            .stats
+            .weapon_type,
+        player_query.1,
+    );
 
     player_weapon_model_transform.translation = player_weapon_model_transform
         .translation

@@ -7,7 +7,6 @@ use crate::{
         handle_player_scope_aim, interpolate_weapon_position,
         make_player_weapon_hidden, make_player_weapon_visible,
         setup_player_cameras, spawn_muzzle_flash, update_player_weapon_model,
-        update_target_weapon_position_for_changed_aim_type,
         update_yaw_pitch_on_mouse_motion, weapon_sway,
     },
 };
@@ -37,7 +36,6 @@ impl Plugin for PlayerCameraPlugin {
                 update_player_weapon_model,
                 spawn_muzzle_flash,
                 interpolate_weapon_position,
-                update_target_weapon_position_for_changed_aim_type,
                 do_weapon_kickback,
             ),
         )

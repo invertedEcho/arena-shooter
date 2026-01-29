@@ -29,9 +29,3 @@ pub struct FreeCam;
 
 #[derive(Component)]
 pub struct MuzzleFlash;
-
-// TODO: rename me
-#[derive(Component)]
-pub struct InterpolateWeapon {
-    pub target_position: Vec3,
-}

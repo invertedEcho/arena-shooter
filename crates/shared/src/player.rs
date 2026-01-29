@@ -30,7 +30,7 @@ impl Default for PlayerBundle {
     }
 }
 
-#[derive(Component, PartialEq, Clone)]
+#[derive(Component, PartialEq, Clone, Debug)]
 pub enum AimType {
     Normal,
     Scoped,

@@ -14,7 +14,7 @@ pub mod systems;
 
 pub struct CommonPlugin;
 
-#[derive(Reflect, PartialEq, Clone)]
+#[derive(Reflect, PartialEq, Clone, Debug)]
 pub enum WeaponType {
     Pistol,
     AssaultRifle,
