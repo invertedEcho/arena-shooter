@@ -51,7 +51,7 @@ jobs:
         run: |
           sudo apt install -y rclone unzip
 
-          echo $GDRIVE_SERVICE_ACCOUNT_JSON > /tmp/sa.json
+          echo "$GDRIVE_SERVICE_ACCOUNT_JSON" > /tmp/sa.json
 
           export RCLONE_CONFIG_GDRIVE_TYPE=drive
           export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
