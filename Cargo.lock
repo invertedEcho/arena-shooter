@@ -1351,6 +1351,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_embedded_assets"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d74a80901405b5c70661f44492b4e2ef02b37497d38abc3b0a4a4a0614cc8d0e"
+dependencies = [
+ "bevy_app 0.17.3",
+ "bevy_asset 0.17.3",
+ "bevy_ecs 0.17.3",
+ "cargo-emit",
+ "futures-io",
+ "futures-lite",
+ "log",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "bevy_encase_derive"
 version = "0.17.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2774,6 +2790,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cargo-emit"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1582e1c9e755dd6ad6b224dcffb135d199399a4568d454bd89fe515ca8425695"
+
+[[package]]
 name = "cc"
 version = "1.2.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2880,6 +2902,7 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui 0.34.0",
  "bevy_common_assets",
+ "bevy_embedded_assets",
  "bevy_hanabi",
  "bevy_rich_text3d",
  "bevy_skein",

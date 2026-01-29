@@ -21,3 +21,4 @@ bincode = "2.0.1"
 game_core = { version = "0.1.0", path = "../game_core" }
 bevy_common_assets = "0.15.0"
 bevy_skein = "0.4.0"
+bevy_embedded_assets = "0.14.0"
