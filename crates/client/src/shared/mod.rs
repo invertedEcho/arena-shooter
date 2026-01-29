@@ -45,7 +45,7 @@ impl Plugin for CommonPlugin {
 
 pub fn get_fire_delay_by_weapon_type(weapon_type: &WeaponType) -> f32 {
     match weapon_type {
-        WeaponType::Pistol => 0.5,
+        WeaponType::Pistol => 0.3,
         WeaponType::AssaultRifle => 0.115,
     }
 }

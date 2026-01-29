@@ -28,10 +28,7 @@ pub fn get_position_for_weapon(
         y: -0.3,
         z: -0.3,
     };
-    info!(
-        "Getting Position for weapon: {:?} with scope_type: {:?}",
-        weapon_type, aim_type
-    );
+
     match weapon_type {
         WeaponType::Pistol => match aim_type {
             AimType::Normal => NORMAL_POSITION_PISTOL,
