@@ -59,7 +59,7 @@ jobs:
 
           rclone copy gdrive:weapons.zip .
 
-          unzip ./weapon.zip -d ./assets/weapons
+          unzip ./weapons.zip -d ./assets/weapons
 
       - name: Build
         run: |
