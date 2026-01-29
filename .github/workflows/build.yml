@@ -31,7 +31,7 @@ jobs:
           targets: x86_64-unknown-linux-gnu
       - name: Install system dependencies
         run: |
-          sudo apt-get update; sudo apt-get install pkg-config libx11-dev libasound2-dev libudev-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libwayland-dev libxkbcommon-dev mold
+          sudo apt-get update; sudo apt-get install -y pkg-config libx11-dev libasound2-dev libudev-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libwayland-dev libxkbcommon-dev mold
 
       - name: Cache cargo
         uses: actions/cache@v4
@@ -45,6 +45,9 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Download proprietary assets from google drive
+        env:
+          GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}    
+          GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
         run: |
           sudo apt install -y rclone unzip
 
