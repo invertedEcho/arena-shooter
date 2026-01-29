@@ -14,6 +14,7 @@ use bevy::{
     ui_widgets::UiWidgetsPlugins,
     window::{PresentMode, WindowMode},
 };
+use bevy_embedded_assets::EmbeddedAssetPlugin;
 use bevy_hanabi::HanabiPlugin;
 use bevy_inspector_egui::{
     bevy_egui::{self, EguiPlugin, PrimaryEguiContext},
@@ -69,6 +70,11 @@ pub const DEFAULT_FILTER: &str = concat!(
 
 fn main() {
     let mut app = App::new();
+
+    app.add_plugins(EmbeddedAssetPlugin {
+        mode: bevy_embedded_assets::PluginMode::ReplaceDefault,
+    });
+
     let game_settings = get_or_create_game_settings();
 
     app.insert_resource(game_settings.clone());
