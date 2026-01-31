@@ -117,6 +117,23 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: Download proprietary assets from google drive
+        env:
+          GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
+          GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
+        run: |
+          winget install rclone unzip
+
+          $env:GDRIVE_SERVICE_ACCOUNT_JSON | Out-File -Encoding utf8 $env:TEMP\sa.json
+
+          $env:RCLONE_CONFIG_GDRIVE_TYPE = "drive"
+          $env:RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE = "$env:TEMP\sa.json"
+          $env:RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID = $env:GDRIVE_ASSETS_DIRECTORY_ID
+
+          rclone copy gdrive:weapons.zip .
+
+          unzip .\weapons.zip -d .\assets\
+
       - name: Build
         run: |
           cargo build --release --target x86_64-pc-windows-msvc -p client
@@ -164,6 +181,23 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: Download proprietary assets from google drive
+        env:
+          GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}    
+          GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
+        run: |
+          brew install rclone unzip
+
+          echo "$GDRIVE_SERVICE_ACCOUNT_JSON" > /tmp/sa.json
+
+          export RCLONE_CONFIG_GDRIVE_TYPE=drive
+          export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
+          export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID=$GDRIVE_ASSETS_DIRECTORY_ID
+
+          rclone copy gdrive:weapons.zip .
+
+          unzip ./weapons.zip -d ./assets/
+
       - name: Build
         run: |
           rustup target add x86_64-apple-darwin
@@ -210,6 +244,23 @@ jobs:
             ${{ env.CARGO_HOME }}/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Download proprietary assets from google drive
+        env:
+          GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}    
+          GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
+        run: |
+          brew install rclone unzip
+
+          echo "$GDRIVE_SERVICE_ACCOUNT_JSON" > /tmp/sa.json
+
+          export RCLONE_CONFIG_GDRIVE_TYPE=drive
+          export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
+          export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID=$GDRIVE_ASSETS_DIRECTORY_ID
+
+          rclone copy gdrive:weapons.zip .
+
+          unzip ./weapons.zip -d ./assets/
 
       - name: Build
         run: |
