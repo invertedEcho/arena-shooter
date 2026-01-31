@@ -43,7 +43,7 @@ jobs:
           GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}    
           GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
         run: |
-          sudo apt install -y rclone unzip
+          sudo apt install -y rclone
 
           echo "$GDRIVE_SERVICE_ACCOUNT_JSON" > /tmp/sa.json
 
@@ -51,16 +51,10 @@ jobs:
           export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
           export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID=$GDRIVE_ASSETS_DIRECTORY_ID
 
-          rclone copy gdrive:assets.zip .
-
-          unzip ./assets.zip
+          rclone copy gdrive:assets .
 
       - name: Build
         run: |
-          echo "root dir ls"
-          ls
-          echo "assets dir ls"
-          ls assets
           cargo build --release --target x86_64-unknown-linux-gnu -p client
 
       - name: Prepare package
@@ -117,7 +111,7 @@ jobs:
           GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
           GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
         run: |
-          winget install rclone unzip --accept-package-agreements --accept-source-agreements
+          winget install rclone --accept-package-agreements --accept-source-agreements
 
           Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
           refreshenv
@@ -128,9 +122,7 @@ jobs:
           $env:RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE = "$env:TEMP\sa.json"
           $env:RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID = $env:GDRIVE_ASSETS_DIRECTORY_ID
 
-          rclone copy gdrive:assets.zip .
-
-          unzip .\assets.zip
+          rclone copy gdrive:assets .
 
       - name: Build
         run: |
@@ -188,9 +180,7 @@ jobs:
           export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
           export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID=$GDRIVE_ASSETS_DIRECTORY_ID
 
-          rclone copy gdrive:assets.zip .
-
-          unzip ./assets.zip
+          rclone copy gdrive:assets .
 
       - name: Build
         run: |
@@ -241,7 +231,7 @@ jobs:
           GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}    
           GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
         run: |
-          brew install rclone unzip
+          brew install rclone
 
           echo "$GDRIVE_SERVICE_ACCOUNT_JSON" > /tmp/sa.json
 
@@ -249,9 +239,7 @@ jobs:
           export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
           export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID=$GDRIVE_ASSETS_DIRECTORY_ID
 
-          rclone copy gdrive:assets.zip .
-
-          unzip ./assets.zip -d ./assets/
+          rclone copy gdrive:assets .
 
       - name: Build
         run: |
