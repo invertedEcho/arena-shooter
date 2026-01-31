@@ -14,7 +14,7 @@ pub mod systems;
 
 pub struct CommonPlugin;
 
-#[derive(Reflect, PartialEq, Clone)]
+#[derive(Reflect, PartialEq, Clone, Debug)]
 pub enum WeaponType {
     Pistol,
     AssaultRifle,
@@ -45,8 +45,8 @@ impl Plugin for CommonPlugin {
 
 pub fn get_fire_delay_by_weapon_type(weapon_type: &WeaponType) -> f32 {
     match weapon_type {
-        WeaponType::Pistol => 0.5,
-        WeaponType::AssaultRifle => 0.2,
+        WeaponType::Pistol => 0.3,
+        WeaponType::AssaultRifle => 0.115,
     }
 }
 

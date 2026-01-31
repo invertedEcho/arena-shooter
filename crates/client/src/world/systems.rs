@@ -42,17 +42,12 @@ pub fn on_enter_spawn_map(
     commands.spawn((
         DespawnOnExit(AppState::InGame),
         DirectionalLight {
-            illuminance: 4000.,
+            illuminance: 6000.,
             shadows_enabled: true,
-            color: palettes::css::ANTIQUE_WHITE.into(),
             ..default()
         },
         MapDirectionalLight,
-        Transform {
-            translation: Vec3::new(0.0, 12.0, 0.0),
-            rotation: Quat::from_rotation_x(-PI / 4.),
-            ..default()
-        },
+        Transform::default().looking_at(Vec3::new(-1.0, -3.0, -2.0), Vec3::Y),
         // TODO: should be constants
         RenderLayers::from_layers(&[0, 1]),
     ));

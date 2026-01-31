@@ -110,7 +110,7 @@ fn resolve_with_retry(
         match address.to_socket_addrs() {
             Ok(addrs) => return Ok(addrs.collect()),
             Err(error) => {
-                warn!(
+                println!(
                     "Failed to resolve game server dns. Retrying, sleeping \
                      for 100ms"
                 );
