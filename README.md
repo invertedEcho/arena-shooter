@@ -5,8 +5,7 @@
   - Ubuntu/Debian: `sudo apt install mold clang`
   - Fedora: `sudo dnf install mold clang`
   - Arch: `sudo pacman -S mold clang`
-2. This repository uses Git LFS. Follow the installation instructions [here](https://packagecloud.io/github/git-lfs/install). Afterwards, run `git lfs pull` to get all assets
-3. Bevy itself also needs a couple of dependency. You can find OS-specific installation instructions [here](https://bevy.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
+2. Bevy itself also needs a couple of dependency. You can find OS-specific installation instructions [here](https://bevy.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
 
 ## Running the server/client
 - To run the server:
@@ -15,6 +14,10 @@
     - You can also emit the argument, and the server will be started in headless mode.
 - To run the client:
     - `cargo run -p client`
+
+> [!WARNING]
+> Please note that I've removed all assets from the repository as I've exceeded free LFS storage.
+> As explained below, release builds will contain the assets.
 
 > [!IMPORTANT]
 > Some game assets are not included in this repository and are not covered by the GPL. These assets are proprietary and were obtained under separate licenses.
