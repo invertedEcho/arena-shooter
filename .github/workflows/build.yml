@@ -11,10 +11,6 @@ env:
   binary: client
   #itch_target: <itch.io-username>/<game-name>
 
-  # Before enabling LFS, please take a look at GitHub's documentation for costs and quota limits:
-  # https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-storage-and-bandwidth-usage
-  use_git_lfs: true
-
 jobs:
   # Build for Linux
   build-linux:
@@ -24,8 +20,6 @@ jobs:
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
       - uses: actions/checkout@v4
-        with:
-          lfs: ${{ env.use_git_lfs }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-unknown-linux-gnu
@@ -100,8 +94,6 @@ jobs:
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
       - uses: actions/checkout@v4
-        with:
-          lfs: ${{ env.use_git_lfs }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-msvc
@@ -163,8 +155,6 @@ jobs:
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
       - uses: actions/checkout@v4
-        with:
-          lfs: ${{ env.use_git_lfs }}
       - name: Environment Setup
         run: |
           export CFLAGS="-fno-stack-check"
@@ -224,8 +214,6 @@ jobs:
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
       - uses: actions/checkout@v4
-        with:
-          lfs: ${{ env.use_git_lfs }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin
