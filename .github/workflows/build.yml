@@ -186,7 +186,7 @@ jobs:
           GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}    
           GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
         run: |
-          brew install rclone unzip
+          brew install rclone
 
           echo "$GDRIVE_SERVICE_ACCOUNT_JSON" > /tmp/sa.json
 
