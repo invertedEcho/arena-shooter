@@ -57,6 +57,10 @@ jobs:
 
       - name: Build
         run: |
+          echo "root dir ls"
+          ls
+          echo "assets dir ls"
+          ls assets
           cargo build --release --target x86_64-unknown-linux-gnu -p client
 
       - name: Prepare package
