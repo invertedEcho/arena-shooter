@@ -1,7 +1,7 @@
 use avian3d::math::FRAC_PI_2;
 use bevy::{
     camera::visibility::RenderLayers, input::mouse::AccumulatedMouseMotion,
-    prelude::*,
+    pbr::Atmosphere, prelude::*,
 };
 use lightyear::prelude::Controlled;
 use shared::{
@@ -67,6 +67,16 @@ pub fn setup_player_cameras(
                     ..default()
                 }),
                 DespawnOnExit(AppState::InGame),
+                EnvironmentMapLight {
+                    diffuse_map: asset_server.load(
+                        "light_maps/voortrekker_interior_1k_diffuse.ktx2",
+                    ),
+                    specular_map: asset_server.load(
+                        "light_maps/voortrekker_interior_1k_specular.ktx2",
+                    ),
+                    intensity: 1500.0,
+                    ..default()
+                },
             ));
 
             let weapon_model_path =
