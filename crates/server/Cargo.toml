@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-avian3d = "0.4.1"
-bevy = {workspace=true}
+avian3d = {workspace=true}
+bevy = { workspace = true }
 bevy-inspector-egui = "0.35.0"
 dotenvy = "0.15.7"
 hex = "0.4.3"
