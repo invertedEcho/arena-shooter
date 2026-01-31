@@ -38,7 +38,7 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download proprietary assets from google drive
+      - name: Download assets from google drive
         env:
           GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}    
           GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
@@ -51,7 +51,7 @@ jobs:
           export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
           export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID=$GDRIVE_ASSETS_DIRECTORY_ID
 
-          rclone copy gdrive:assets .
+          rclone copy gdrive:assets assets/
 
       - name: Build
         run: |
@@ -106,7 +106,7 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download proprietary assets from google drive
+      - name: Download assets from google drive
         env:
           GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
           GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
@@ -122,7 +122,7 @@ jobs:
           $env:RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE = "$env:TEMP\sa.json"
           $env:RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID = $env:GDRIVE_ASSETS_DIRECTORY_ID
 
-          rclone copy gdrive:assets .
+          rclone copy gdrive:assets assets/
 
       - name: Build
         run: |
@@ -167,7 +167,7 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download proprietary assets from google drive
+      - name: Download assets from google drive
         env:
           GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}    
           GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
@@ -180,7 +180,7 @@ jobs:
           export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
           export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID=$GDRIVE_ASSETS_DIRECTORY_ID
 
-          rclone copy gdrive:assets .
+          rclone copy gdrive:assets assets/
 
       - name: Build
         run: |
@@ -226,7 +226,7 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download proprietary assets from google drive
+      - name: Download assets from google drive
         env:
           GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}    
           GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
@@ -239,7 +239,7 @@ jobs:
           export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
           export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID=$GDRIVE_ASSETS_DIRECTORY_ID
 
-          rclone copy gdrive:assets .
+          rclone copy gdrive:assets assets/
 
       - name: Build
         run: |
