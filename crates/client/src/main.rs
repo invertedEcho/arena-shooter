@@ -9,7 +9,7 @@ use bevy::{
     dev_tools::fps_overlay::FpsOverlayPlugin,
     diagnostic::FrameTimeDiagnosticsPlugin,
     input_focus::InputDispatchPlugin,
-    log::LogPlugin,
+    log::{DEFAULT_FILTER, LogPlugin},
     prelude::*,
     ui_widgets::UiWidgetsPlugins,
     window::{PresentMode, WindowMode},
@@ -54,20 +54,6 @@ mod shared;
 mod user_interface;
 mod world;
 
-// TODO: copied from bevy 0.18. remove once migrated to bevy 0.18.
-pub const DEFAULT_FILTER: &str = concat!(
-    "wgpu=error,",
-    "naga=warn,",
-    "symphonia_bundle_mp3::demuxer=warn,",
-    "symphonia_format_caf::demuxer=warn,",
-    "symphonia_format_isompf4::demuxer=warn,",
-    "symphonia_format_mkv::demuxer=warn,",
-    "symphonia_format_ogg::demuxer=warn,",
-    "symphonia_format_riff::demuxer=warn,",
-    "symphonia_format_wav::demuxer=warn,",
-    "calloop::loop_logic=error,",
-);
-
 fn main() {
     let mut app = App::new();
 
@@ -108,7 +94,9 @@ fn main() {
                 ..default()
             })
             .set(LogPlugin {
-                filter: DEFAULT_FILTER.to_string(),
+                filter: DEFAULT_FILTER.to_owned()
+                    + "bevy_hanabi=error,wgpu_hal=error",
+
                 ..default()
             }),
     );
