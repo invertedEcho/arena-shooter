@@ -43,10 +43,10 @@ pub fn build_slider<T: Component>(
             Spawn((
                 Node {
                     height: px(6),
+                    border_radius: BorderRadius::all(px(3)),
                     ..default()
                 },
                 BackgroundColor(DEFAULT_SLIDER_TRACK), // Border color for the slider
-                BorderRadius::all(px(3)),
             )),
             // Invisible track to allow absolute placement of thumb entity. This is narrower than
             // the actual slider, which allows us to position the thumb entity using simple
@@ -70,9 +70,9 @@ pub fn build_slider<T: Component>(
                         height: px(12),
                         position_type: PositionType::Absolute,
                         left: percent(0), // This will be updated by the slider's value
+                        border_radius: BorderRadius::MAX,
                         ..default()
                     },
-                    BorderRadius::MAX,
                     BackgroundColor(DEFAULT_SLIDER_THUMB),
                 )],
             )),

@@ -4,16 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-avian3d = "0.4.1"
-bevy = {workspace=true}
-bevy-inspector-egui = "0.35.0"
+async-compat = { workspace = true }
+avian3d = { workspace = true }
+bevy = { workspace = true }
+bevy_common_assets = { version = "0.15.0", features = ["json"] }
+bevy-inspector-egui = { workspace = true }
 dotenvy = "0.15.7"
+game_core = { path = "../game_core", version = "0.1.0" }
 hex = "0.4.3"
-lightyear = {workspace = true}
+lightyear = { workspace = true }
+rand = { workspace = true }
+serde_json = { workspace = true }
 shared = { workspace = true }
-tokio = {workspace = true}
-async-compat = {workspace = true}
-rand = {workspace = true}
-serde_json = {workspace = true}
-bevy_common_assets = {version = "0.15.0", features = ["json"]}
-game_core = { version = "0.1.0", path = "../game_core" }
+tokio = { workspace = true }
