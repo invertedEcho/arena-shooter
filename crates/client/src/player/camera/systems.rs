@@ -1,7 +1,7 @@
 use avian3d::math::FRAC_PI_2;
 use bevy::{
-    camera::visibility::RenderLayers, input::mouse::AccumulatedMouseMotion,
-    pbr::Atmosphere, prelude::*,
+    camera::visibility::RenderLayers, core_pipeline::Skybox,
+    input::mouse::AccumulatedMouseMotion, prelude::*,
 };
 use lightyear::prelude::Controlled;
 use shared::{
@@ -68,13 +68,17 @@ pub fn setup_player_cameras(
                 }),
                 DespawnOnExit(AppState::InGame),
                 EnvironmentMapLight {
-                    diffuse_map: asset_server.load(
-                        "light_maps/voortrekker_interior_1k_diffuse.ktx2",
-                    ),
+                    diffuse_map: asset_server
+                        .load("lightmaps/voortrekker_interior_1k_diffuse.ktx2"),
                     specular_map: asset_server.load(
-                        "light_maps/voortrekker_interior_1k_specular.ktx2",
+                        "lightmaps/voortrekker_interior_1k_specular.ktx2",
                     ),
                     intensity: 1500.0,
+                    ..default()
+                },
+                Skybox {
+                    image: asset_server.load("skyboxes/skybox_main.ktx2"),
+                    brightness: 1000.0,
                     ..default()
                 },
             ));
@@ -128,7 +132,6 @@ pub fn handle_player_scope_aim(
     if mouse_input.just_pressed(MouseButton::Right) {
         *aim_type = AimType::Scoped;
     } else if mouse_input.just_released(MouseButton::Right) {
-        info!("MouseButton::Right released, setting aim_type to Normal");
         *aim_type = AimType::Normal;
     }
 }
