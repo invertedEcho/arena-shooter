@@ -72,7 +72,7 @@ pub struct SettingsChangeTabButton(pub SelectedTabSettings);
 enum SettingsButtonType {
     ToggleFullscreen,
     Back,
-    Apply,
+    Save,
 }
 
 #[derive(Component)]
@@ -215,7 +215,7 @@ fn spawn_settings_menu(
                                 Button,
                                 BackgroundColor(UI_PANEL),
                                 BorderColor::all(UI_BORDER),
-                                SettingsMenuButton(SettingsButtonType::Apply),
+                                SettingsMenuButton(SettingsButtonType::Save),
                                 children![(
                                     Text::new("Apply"),
                                     TextFont {
@@ -402,7 +402,7 @@ fn handle_settings_menu_button_pressed(
             SettingsButtonType::Back => {
                 next_main_menu_state.set(MainMenuState::Root);
             }
-            SettingsButtonType::Apply => {
+            SettingsButtonType::Save => {
                 update_game_settings_file(&game_settings);
                 apply_game_settings_message_writer
                     .write(ApplyGameSettingsMessage);
@@ -442,12 +442,11 @@ fn update_settings_tab_button_color(
 #[derive(Message)]
 pub struct ApplyGameSettingsMessage;
 
+// TODO: should happen in a graphics/window file or something
 fn apply_game_settings(
     mut message_reader: MessageReader<ApplyGameSettingsMessage>,
     game_settings: Res<GameSettings>,
     mut window: Single<&mut Window>,
-    mut global_volume: ResMut<GlobalVolume>,
-    mut music_audio_sinks: Query<&mut AudioSink, With<MusicAudio>>,
 ) {
     for _ in message_reader.read() {
         let fullscreen = game_settings.fullscreen;
@@ -456,16 +455,6 @@ fn apply_game_settings(
                 WindowMode::BorderlessFullscreen(MonitorSelection::Current);
         } else {
             window.mode = WindowMode::Windowed;
-        }
-
-        // TODO: should happen in audio plugin
-        let master_volume = game_settings.master_volume;
-        let new_master_volume =
-            Volume::Linear((master_volume / 100.0).clamp(0.0, 1.0));
-        global_volume.volume = new_master_volume;
-
-        for mut music_audio_sink in &mut music_audio_sinks {
-            music_audio_sink.set_volume(new_master_volume);
         }
     }
 }

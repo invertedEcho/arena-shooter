@@ -116,6 +116,7 @@ fn update_game_settings_on_volume_slider_change(
     volume_sliders: Query<&VolumeSlider>,
 ) {
     let source = value_change.source;
+    info!("observer triggered, value changed? source: {}", source);
     let Ok(volume_slider) = volume_sliders.get(source) else {
         return;
     };
@@ -133,11 +134,11 @@ fn update_game_settings_on_volume_slider_change(
 }
 
 pub fn update_volume_slider_value(
-    res: Res<GameSettings>,
+    game_settings: Res<GameSettings>,
     mut sliders: Query<(Entity, &VolumeSlider), With<Slider>>,
     mut commands: Commands,
 ) {
-    if res.is_changed() {
+    if game_settings.is_changed() {
         for (slider_entity, volume_slider) in sliders.iter_mut() {
             // we insert as component instead of changing the SliderValue component directly,
             // as SliderValue is internally marked as immutable
@@ -145,17 +146,17 @@ pub fn update_volume_slider_value(
                 VolumeSliderType::Master => {
                     commands
                         .entity(slider_entity)
-                        .insert(SliderValue(res.master_volume));
+                        .insert(SliderValue(game_settings.master_volume));
                 }
                 VolumeSliderType::Sounds => {
                     commands
                         .entity(slider_entity)
-                        .insert(SliderValue(res.sounds_volume));
+                        .insert(SliderValue(game_settings.sounds_volume));
                 }
                 VolumeSliderType::Music => {
                     commands
                         .entity(slider_entity)
-                        .insert(SliderValue(res.music_volume));
+                        .insert(SliderValue(game_settings.music_volume));
                 }
             }
         }

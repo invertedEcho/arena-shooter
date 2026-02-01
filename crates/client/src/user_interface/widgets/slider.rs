@@ -103,6 +103,7 @@ pub fn update_slider_style(
     mut thumbs: Query<(&mut Node, &mut BackgroundColor, Has<SliderThumb>)>,
 ) {
     for (entity, value, range, hovered, drag_state) in sliders.iter() {
+        info!("HELLO?");
         for child in children.iter_descendants(entity) {
             if let Ok((mut thumb_node, mut thumb_bg, is_thumb)) =
                 thumbs.get_mut(child)

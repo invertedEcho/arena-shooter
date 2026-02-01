@@ -2,7 +2,8 @@ use bevy::{audio::Volume, prelude::*};
 use shared::components::DespawnTimer;
 
 use crate::{
-    game_flow::states::AppState, game_settings::GameSettings,
+    game_flow::states::AppState,
+    game_settings::{self, GameSettings},
     player::shooting::messages::PlayerWeaponFiredMessage,
 };
 
@@ -19,7 +20,12 @@ impl Plugin for AudioPlugin {
             ),
         )
         .add_systems(OnEnter(AppState::InGame), stop_music_audio)
-        .add_systems(Update, play_shooting_sound_on_player_weapon_fired);
+        .add_systems(Update, play_shooting_sound_on_player_weapon_fired)
+        .add_systems(
+            Update,
+            update_audio_settings_on_game_settings_change
+                .run_if(resource_changed::<GameSettings>),
+        );
     }
 }
 
@@ -30,12 +36,19 @@ fn start_main_menu_theme(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     audio_player_container: Single<Entity, With<AudioPlayerContainer>>,
+    game_settings: Res<GameSettings>,
 ) {
     let audio = asset_server.load("music/main_menu_theme.mp3");
 
     commands.entity(*audio_player_container).with_child((
         AudioPlayer::new(audio),
-        PlaybackSettings::LOOP,
+        PlaybackSettings {
+            mode: bevy::audio::PlaybackMode::Loop,
+            volume: Volume::Linear(
+                (game_settings.music_volume / 100.0).clamp(0.0, 1.0),
+            ),
+            ..default()
+        },
         MusicAudio,
     ));
 }
@@ -46,6 +59,25 @@ fn apply_audio_settings(
 ) {
     let volume = Volume::Linear(game_settings.master_volume / 100.0);
     global_volume.volume = volume;
+}
+
+fn update_audio_settings_on_game_settings_change(
+    game_settings: Res<GameSettings>,
+    music_audio_sinks: Query<&mut AudioSink, With<MusicAudio>>,
+    mut global_volume: ResMut<GlobalVolume>,
+) {
+    let master_volume = game_settings.master_volume;
+    let new_master_volume =
+        Volume::Linear((master_volume / 100.0).clamp(0.0, 1.0));
+    global_volume.volume = new_master_volume;
+
+    let music_volume = game_settings.music_volume;
+    let new_music_volume =
+        Volume::Linear((music_volume / 100.0).clamp(0.0, 1.0));
+
+    for mut music_audio_sink in music_audio_sinks {
+        music_audio_sink.set_volume(new_music_volume);
+    }
 }
 
 fn stop_music_audio(
