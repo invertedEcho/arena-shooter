@@ -582,13 +582,14 @@ dependencies = [
 [[package]]
 name = "avian_rerecast"
 version = "0.4.0"
-source = "git+https://github.com/invertedecho/rerecast.git?branch=fix%2Favian-rerecast-dependency#1a9f414c6f996eb9c030f4ff71df23fbce2d8091"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f90cecd83ba9c404d1192cd70248702de09ffa4dee3f526c22549eeb294e7c31"
 dependencies = [
  "avian3d",
  "bevy_app",
  "bevy_ecs",
  "bevy_math",
- "bevy_rerecast_core 0.4.0 (git+https://github.com/invertedecho/rerecast.git?branch=fix%2Favian-rerecast-dependency)",
+ "bevy_rerecast_core",
 ]
 
 [[package]]
@@ -1820,7 +1821,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b56bf885d077e04dbfe050892a29feb3a20c602e59c80ae84ebe16742dd572e"
 dependencies = [
  "bevy_app",
- "bevy_rerecast_core 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bevy_rerecast_core",
 ]
 
 [[package]]
@@ -1844,32 +1845,7 @@ dependencies = [
  "bevy_transform",
  "bincode",
  "glam 0.30.9",
- "rerecast 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde",
- "thiserror 2.0.17",
- "tracing",
-]
-
-[[package]]
-name = "bevy_rerecast_core"
-version = "0.4.0"
-source = "git+https://github.com/invertedecho/rerecast.git?branch=fix%2Favian-rerecast-dependency#1a9f414c6f996eb9c030f4ff71df23fbce2d8091"
-dependencies = [
- "anyhow",
- "bevy_app",
- "bevy_camera",
- "bevy_color",
- "bevy_derive",
- "bevy_ecs",
- "bevy_light",
- "bevy_math",
- "bevy_platform",
- "bevy_reflect",
- "bevy_tasks",
- "bevy_transform",
- "bincode",
- "glam 0.30.9",
- "rerecast 0.3.0 (git+https://github.com/invertedecho/rerecast.git?branch=fix%2Favian-rerecast-dependency)",
+ "rerecast",
  "serde",
  "thiserror 2.0.17",
  "tracing",
@@ -7132,21 +7108,6 @@ name = "rerecast"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "743dec299d7c17317a33978487718186c30db69a178a3caccdca74b9258d921c"
-dependencies = [
- "anyhow",
- "bevy_reflect",
- "bitflags 2.10.0",
- "glam 0.30.9",
- "serde",
- "slotmap",
- "thiserror 2.0.17",
- "tracing",
-]
-
-[[package]]
-name = "rerecast"
-version = "0.3.0"
-source = "git+https://github.com/invertedecho/rerecast.git?branch=fix%2Favian-rerecast-dependency#1a9f414c6f996eb9c030f4ff71df23fbce2d8091"
 dependencies = [
  "anyhow",
  "bevy_reflect",
