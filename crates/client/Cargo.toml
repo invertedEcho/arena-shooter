@@ -6,9 +6,9 @@ edition = "2024"
 [dependencies]
 avian3d = {workspace=true, features = ["serialize"]}
 bevy = { workspace = true, features = ["mp3", "file_watcher", "wayland", "dynamic_linking", "experimental_bevy_ui_widgets", "track_location", "bevy_dev_tools"] }
-bevy-inspector-egui = "0.34"
-bevy_hanabi = "0.17"
-bevy_rich_text3d = "0.5.1"
+bevy-inspector-egui = {workspace=true}
+bevy_hanabi = {version="0.16.0", git="https://github.com/pcwalton/bevy_hanabi"}
+bevy_rich_text3d = "0.6.0"
 dirs = "6.0.0"
 lightyear = {workspace = true}
 tokio = {workspace = true}
@@ -18,6 +18,5 @@ async-compat = {workspace = true}
 serde = "1.0.228"
 serde_json = {workspace = true}
 game_core = { version = "0.1.0", path = "../game_core" }
-bevy_common_assets = "0.15.0"
-bevy_skein = "0.4.0"
-bevy_embedded_assets = "0.14.0"
+bevy_skein = "0.5.0"
+bevy_embedded_assets = "0.15.0"
