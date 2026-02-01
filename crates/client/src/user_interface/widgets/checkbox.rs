@@ -39,10 +39,10 @@ pub fn build_checkbox<T: Component>(
                     width: px(16),
                     height: px(16),
                     border: UiRect::all(px(2)),
+                    border_radius: BorderRadius::all(px(3)),
                     ..default()
                 },
                 BorderColor::all(ELEMENT_OUTLINE), // Border color for the checkbox
-                BorderRadius::all(px(3)),
                 children![
                     // Checkbox inner
                     (
