@@ -15,13 +15,9 @@
 - To run the client:
     - `cargo run -p client`
 
-> [!WARNING]
-> Please note that I've removed all assets from the repository as I've exceeded free LFS storage.
-> As explained below, release builds will contain the assets.
-
 > [!IMPORTANT]
-> Some game assets are not included in this repository and are not covered by the GPL. These assets are proprietary and were obtained under separate licenses.
-> Release builds of the game may include these assets bundled inside the game binary. The assets are provided only as part of the compiled game and are not redistributed as standalone files.
+> The game assets are not included in this repository. Assets are only provided as part of the compiled game.
+> You can find the compiled game with bundled assets in the latest github action run for your platform. Supported platforms: Linux, macOS (silicon and intel) and Windows
 
 ## Architecture & Project Structure
 

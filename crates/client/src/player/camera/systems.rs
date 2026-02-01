@@ -1,7 +1,7 @@
 use avian3d::math::FRAC_PI_2;
 use bevy::{
     camera::visibility::RenderLayers, input::mouse::AccumulatedMouseMotion,
-    pbr::Atmosphere, prelude::*,
+    prelude::*,
 };
 use lightyear::prelude::Controlled;
 use shared::{
