@@ -3,14 +3,13 @@ name = "game_core"
 version = "0.1.0"
 edition = "2024"
 
-
 [dependencies]
-avian3d = {workspace=true}
-bevy = {workspace = true}
-lightyear = {workspace = true}
-shared.workspace = true
 avian_rerecast = { workspace = true }
+avian3d = { workspace = true }
+bevy = { workspace = true }
 bevy_landmass = "0.11.0"
-bevy_rerecast = {version = "0.4.0", default-features=false}
+bevy_rerecast = { version = "0.4.0", default-features = false }
 landmass_rerecast = "0.2.0"
-rand = {workspace = true}
+lightyear = { workspace = true }
+rand = { workspace = true }
+shared.workspace = true
