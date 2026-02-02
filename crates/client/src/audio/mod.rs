@@ -12,7 +12,10 @@ impl Plugin for AudioPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Startup,
-            (spawn_audio_player_container, start_main_menu_theme),
+            (
+                spawn_audio_player_container,
+                start_main_menu_theme.after(spawn_audio_player_container),
+            ),
         )
         .add_systems(OnEnter(AppState::InGame), stop_music_audio)
         .add_systems(Update, play_sound_on_player_weapon_fired)
