@@ -5,7 +5,7 @@ use crate::{
     game_flow::states::{AppState, MainMenuState},
     user_interface::{
         map_selection::MapSelectionButton,
-        settings_menu::SettingsChangeTabButton,
+        settings_menu::TabButtonSettings,
         widgets::{
             checkbox::{update_checkbox_style, update_checkbox_style2},
             slider::update_slider_style,
@@ -21,15 +21,25 @@ pub const DEFAULT_FONT_SIZE: f32 = 32.0;
 pub const ELEMENT_OUTLINE: Color = Color::srgb(0.45, 0.45, 0.45);
 pub const ELEMENT_FILL: Color = Color::srgb(0.35, 0.75, 0.35);
 
+/// Background color
 pub const UI_BACKGROUND: Color =
-    Color::Srgba(Srgba::new(0.055, 0.067, 0.086, 1.0)); // #0E1116
-pub const UI_PANEL: Color = Color::Srgba(Srgba::new(0.086, 0.106, 0.137, 1.0)); // #161B22
-pub const UI_PRIMARY: Color =
-    Color::Srgba(Srgba::new(0.902, 0.224, 0.275, 1.0)); // #E63946
-pub const UI_HOVER: Color = Color::Srgba(Srgba::new(0.298, 0.788, 0.941, 1.0)); // #4CC9F0
-pub const UI_TEXT: Color = Color::Srgba(Srgba::new(0.918, 0.918, 0.918, 1.0)); // #EAEAEA
-pub const UI_BORDER: Color = Color::Srgba(Srgba::new(0.165, 0.196, 0.251, 1.0)); // ~ #2A3240
-pub const UI_SELECTED: Color = Color::Srgba(Srgba::new(0.22, 0.55, 0.75, 1.0)); // ~ #388CBF
+    Color::Srgba(Srgba::new(0.055, 0.067, 0.086, 1.0));
+
+/// Color for visually elevated elements
+pub const UI_PANEL: Color = Color::Srgba(Srgba::new(0.086, 0.106, 0.137, 1.0));
+
+/// Color for text of hovered buttons
+pub const UI_HOVER: Color = Color::Srgba(Srgba::new(0.298, 0.788, 0.941, 1.0));
+
+/// default text color
+pub const UI_TEXT: Color = Color::Srgba(Srgba::new(0.918, 0.918, 0.918, 1.0));
+
+/// default border color
+pub const UI_BORDER: Color = Color::Srgba(Srgba::new(0.165, 0.196, 0.251, 1.0));
+
+// TODO: make MapSelectionButton visually a button too, right now its just text
+/// Color for selected elements, for example MapSelectionButton or SettingsChangeTabButton
+pub const UI_SELECTED: Color = Color::Srgba(Srgba::new(0.22, 0.55, 0.75, 1.0));
 
 pub const DEFAULT_ROW_GAP: Val = Val::Px(8.0);
 
@@ -100,7 +110,7 @@ type AnyButtonHoveredQuery<'w, 's> = Query<
         Changed<Interaction>,
         With<Button>,
         Without<MapSelectionButton>,
-        Without<SettingsChangeTabButton>,
+        Without<TabButtonSettings>,
     ),
 >;
 

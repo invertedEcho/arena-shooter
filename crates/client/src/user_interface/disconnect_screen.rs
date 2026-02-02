@@ -57,11 +57,9 @@ fn spawn_disconnected_screen(
 
             parent.spawn(Text::new("Attempting to reconnect..."));
 
-            parent.spawn((
-                build_common_button(
-                    "Return to Main Menu",
-                    asset_server.load(DEFAULT_GAME_FONT_PATH),
-                ),
+            parent.spawn(build_common_button(
+                "Return to Main Menu",
+                asset_server.load(DEFAULT_GAME_FONT_PATH),
                 CommonUiButton::BackToMainMenu,
             ));
 

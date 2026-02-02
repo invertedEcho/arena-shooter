@@ -2,9 +2,10 @@ use bevy::prelude::*;
 
 use crate::user_interface::common::{UI_BORDER, UI_PANEL, UI_TEXT};
 
-pub fn build_common_button(
+pub fn build_common_button<T: Component>(
     button_text: &str,
     font_handle: Handle<Font>,
+    marker_component: T,
 ) -> impl Bundle {
     (
         Node {
@@ -15,6 +16,7 @@ pub fn build_common_button(
             border_radius: BorderRadius::all(px(4)),
             ..default()
         },
+        marker_component,
         BackgroundColor(UI_PANEL),
         Button,
         BorderColor::all(UI_BORDER),

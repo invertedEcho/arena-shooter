@@ -3,7 +3,8 @@ use bevy::prelude::*;
 use crate::{
     game_flow::states::{AppState, LoadingGameState},
     user_interface::{
-        common::DEFAULT_GAME_FONT_PATH, widgets::button::build_common_button,
+        common::{DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP},
+        widgets::button::build_common_button,
     },
     world::components::{MapDirectionalLight, MapModel},
 };
@@ -49,6 +50,7 @@ pub fn spawn_loading_screen(
                 flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                row_gap: DEFAULT_ROW_GAP,
                 ..default()
             },
             LoadingScreenRoot,
@@ -57,11 +59,9 @@ pub fn spawn_loading_screen(
         .with_children(|parent| {
             parent.spawn(Text::new("Loading..."));
             parent.spawn((Text::new(""), LoadingStateText));
-            parent.spawn((
-                build_common_button(
-                    "Cancel",
-                    asset_server.load(DEFAULT_GAME_FONT_PATH),
-                ),
+            parent.spawn(build_common_button(
+                "Cancel",
+                asset_server.load(DEFAULT_GAME_FONT_PATH),
                 LoadingScreenButton::Cancel,
             ));
         });

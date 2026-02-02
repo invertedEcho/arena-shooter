@@ -195,7 +195,6 @@ pub fn update_yaw_pitch_on_mouse_motion(
 //         SpawnPlayerCamerasMessage,
 //     >,
 // ) {
-//     info!("HELLO?");
 //     if keyboard_input.just_pressed(KeyCode::KeyC) {
 //         let Some(client_local_player) = client_local_player else {
 //             return;
