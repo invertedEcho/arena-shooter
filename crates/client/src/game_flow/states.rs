@@ -8,6 +8,7 @@ pub enum AppState {
     MainMenu,
     LoadingGame,
     InGame,
+    Disconnected,
 }
 
 /// The current loading state of a new game.
@@ -17,9 +18,9 @@ pub enum AppState {
 #[source(AppState = AppState::LoadingGame)]
 pub enum LoadingGameState {
     #[default]
+    ConnectingToServer,
     SpawningMap,
     SpawningColliders,
-    ConnectingToServer,
 }
 
 impl Display for LoadingGameState {
@@ -53,20 +54,14 @@ pub enum InGameState {
     Playing,
     Paused,
     PlayerDead,
+}
+
+#[derive(States, Debug, Hash, Eq, PartialEq, Clone, Default)]
+pub enum ServerConnectionState {
+    #[default]
+    Connecting,
+    Connected,
     Disconnected,
-}
-
-#[derive(SubStates, Debug, Hash, Eq, PartialEq, Clone)]
-#[source(InGameState = InGameState::Disconnected)]
-pub enum DisconnectedState {
-    Reason(String),
-    Reconnecting,
-}
-
-impl Default for DisconnectedState {
-    fn default() -> Self {
-        DisconnectedState::Reason("Unknown".to_string())
-    }
 }
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]

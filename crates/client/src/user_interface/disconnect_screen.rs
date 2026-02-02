@@ -1,9 +1,13 @@
 use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
-    game_flow::states::{DisconnectedState, InGameState},
+    game_flow::states::{AppState, InGameState, ServerConnectionState},
+    network::GENERIC_NO_CONNECTION_ERROR_MESSAGE,
     user_interface::{
-        common::{CommonUiButton, DEFAULT_GAME_FONT_PATH},
+        common::{
+            CommonUiButton, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
+            UI_BACKGROUND,
+        },
         main_menu::{MainMenuCamera, get_main_menu_camera_transform},
         widgets::button::build_common_button,
     },
@@ -14,7 +18,7 @@ pub struct DisconnectScreenPlugin;
 impl Plugin for DisconnectScreenPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            OnEnter(InGameState::Disconnected),
+            OnEnter(ServerConnectionState::Disconnected),
             spawn_disconnected_screen,
         );
     }
@@ -26,7 +30,7 @@ struct DisconnectScreenRoot;
 fn spawn_disconnected_screen(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    disconnect_state: Res<State<DisconnectedState>>,
+    disconnect_state: Res<State<ServerConnectionState>>,
     existing_main_menu_camera: Query<&MainMenuCamera>,
 ) {
     // TODO: optimally this couldnt happen in first place
@@ -47,15 +51,16 @@ fn spawn_disconnected_screen(
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 flex_direction: FlexDirection::Column,
+                row_gap: DEFAULT_ROW_GAP,
                 ..default()
             },
+            BackgroundColor(UI_BACKGROUND),
             DisconnectScreenRoot,
-            DespawnOnExit(InGameState::Disconnected),
+            DespawnOnEnter(ServerConnectionState::Connected),
+            DespawnOnExit(AppState::Disconnected),
         ))
         .with_children(|parent| {
-            parent.spawn(Text::new("CONNECTION LOST"));
-
-            parent.spawn(Text::new("Attempting to reconnect..."));
+            parent.spawn(Text::new("Connection lost!"));
 
             parent.spawn((
                 build_common_button(
@@ -76,13 +81,15 @@ fn spawn_disconnected_screen(
                     BorderColor::all(RED),
                 ))
                 .with_children(|parent| match disconnect_state.get() {
-                    DisconnectedState::Reason(reason) => {
-                        parent.spawn(Text::new("Reason: "));
-                        parent.spawn(Text::new(reason));
+                    ServerConnectionState::Disconnected => {
+                        parent.spawn(Text::new(
+                            GENERIC_NO_CONNECTION_ERROR_MESSAGE,
+                        ));
                     }
-                    DisconnectedState::Reconnecting => {
-                        parent.spawn(Text::new("Reconnecting..."));
+                    ServerConnectionState::Connecting => {
+                        parent.spawn(Text::new("Connecting to game server..."));
                     }
+                    _ => {}
                 });
         });
 }

@@ -5,6 +5,7 @@ use avian3d::prelude::*;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
+use game_core::ServerLoadingState;
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
 use shared::character_controller::{
@@ -27,10 +28,14 @@ use crate::auth::{
 use crate::character_controller::components::CharacterControllerBundle;
 use crate::game_flow::game_mode::GameModeClient;
 use crate::game_flow::states::{
-    AppState, DisconnectedState, InGameState, LoadingGameState,
+    AppState, LoadingGameState, ServerConnectionState,
 };
 
 const CLIENT_PORT: u16 = 0;
+
+pub const GENERIC_NO_CONNECTION_ERROR_MESSAGE: &str =
+    "Failed to connect to Game Server. Please verify your internet connection \
+     works. The Game Server may also be currently down.";
 
 pub struct NetworkPlugin;
 
@@ -65,7 +70,7 @@ pub fn on_enter_connecting_to_server(
     // Connected component only present on our own client
     for connected in connected_query {
         if connected {
-            info!("Already connected, skipping ConnectToServerMessage");
+            warn!("Already connected to the game server");
             continue;
         }
     }
@@ -95,7 +100,6 @@ pub fn on_enter_connecting_to_server(
     if let Ok(server_entity) = server_entity.single()
         && is_singleplayer
     {
-        info!("SPAWNING CLIENT FOR SINGLEPLAYER MODE");
         let client = commands
             .spawn((
                 Name::new("Host Client"),
@@ -108,10 +112,6 @@ pub fn on_enter_connecting_to_server(
 
         commands.trigger(Connect { entity: client });
     } else {
-        info!(
-            "SPAWNING CLIENT FOR MULTIPLAYER MODE, SERVER_ADDR: {}",
-            server_address
-        );
         commands.spawn((
             Name::new("Client"),
             Client::default(),
@@ -129,10 +129,10 @@ pub fn on_enter_connecting_to_server(
 
 fn handle_connected(
     _trigger: On<Add, Connected>,
-    mut next_app_state: ResMut<NextState<AppState>>,
+    mut next_loading_game_state: ResMut<NextState<LoadingGameState>>,
 ) {
-    debug!("Connected to server, setting AppState to InGame");
-    next_app_state.set(AppState::InGame);
+    debug!("Connected to server, setting LoadingGameState to SpawningMap");
+    next_loading_game_state.set(LoadingGameState::SpawningMap);
 }
 
 fn handle_new_player(
@@ -221,8 +221,7 @@ pub fn apply_server_position_other_clients(
 pub fn handle_disconnect(
     trigger: On<Add, Disconnected>,
     disconnected: Query<&Disconnected>,
-    mut next_in_game_state: ResMut<NextState<InGameState>>,
-    mut next_disconnected_state: ResMut<NextState<DisconnectedState>>,
+    mut next_disconnected_state: ResMut<NextState<ServerConnectionState>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     match disconnected.get(trigger.entity) {
@@ -251,10 +250,8 @@ pub fn handle_disconnect(
                         // exists when AppState is InGame
                         next_app_state.set(AppState::InGame);
 
-                        next_in_game_state.set(InGameState::Disconnected);
-                        next_disconnected_state.set(DisconnectedState::Reason(
-                            disconnected_reason.to_string(),
-                        ));
+                        next_disconnected_state
+                            .set(ServerConnectionState::Disconnected);
                     }
                 }
             }

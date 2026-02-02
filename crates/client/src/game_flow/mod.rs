@@ -6,8 +6,8 @@ use crate::{
         game_mode::GameModePlugin,
         score::GameScorePlugin,
         states::{
-            AppDebugState, AppState, DisconnectedState, InGameState,
-            LoadingGameState, MainMenuState,
+            AppDebugState, AppState, InGameState, LoadingGameState,
+            MainMenuState, ServerConnectionState,
         },
         systems::{
             check_collider_constructor_hierarchy_ready,
@@ -35,7 +35,7 @@ impl Plugin for GameFlowPlugin {
             .add_sub_state::<InGameState>()
             .add_sub_state::<MainMenuState>()
             .add_sub_state::<LoadingGameState>()
-            .add_sub_state::<DisconnectedState>()
+            .init_state::<ServerConnectionState>()
             .add_message::<PlayerDeathMessage>()
             .add_plugins(GameScorePlugin)
             .add_plugins(GameModePlugin)

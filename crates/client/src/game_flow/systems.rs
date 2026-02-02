@@ -53,7 +53,6 @@ pub fn handle_escape_in_game(
             }
             InGameState::Paused => next_in_game_state.set(InGameState::Playing),
             InGameState::PlayerDead => {}
-            InGameState::Disconnected => {}
         }
     }
 }
@@ -113,11 +112,11 @@ pub fn check_world_scene_loaded(
 // events with expected
 pub fn check_collider_constructor_hierarchy_ready(
     _trigger: On<ColliderConstructorHierarchyReady>,
-    mut next_game_loading_state: ResMut<NextState<LoadingGameState>>,
     mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
     server_mode: Res<State<ServerMode>>,
+    mut next_app_state: ResMut<NextState<AppState>>,
 ) {
-    next_game_loading_state.set(LoadingGameState::ConnectingToServer);
+    next_app_state.set(AppState::InGame);
 
     if *server_mode == ServerMode::LocalServerSinglePlayer {
         next_server_loading_state.set(ServerLoadingState::CollidersSpawned);
