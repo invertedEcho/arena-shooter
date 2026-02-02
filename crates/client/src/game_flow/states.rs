@@ -72,7 +72,7 @@ impl Default for DisconnectedState {
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[states(scoped_entities)]
 pub enum AppDebugState {
-    #[default]
     DebugVisible,
+    #[default]
     DebugHidden,
 }
