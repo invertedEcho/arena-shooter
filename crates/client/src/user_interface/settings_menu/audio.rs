@@ -4,58 +4,37 @@ use bevy::{
 };
 
 use crate::{
-    game_settings::GameSettings,
-    user_interface::{
-        common::DEFAULT_GAME_FONT_PATH, widgets::slider::build_slider,
-    },
+    game_settings::GameSettings, user_interface::widgets::slider::build_slider,
 };
 
 #[derive(Component)]
 pub struct VolumeSlider(VolumeSliderType);
 
 enum VolumeSliderType {
-    Master,
     Sounds,
     Music,
 }
 
 pub fn build_audio_settings_tab_content(
-    asset_server: Res<AssetServer>,
+    game_font: Handle<Font>,
     game_settings: Res<GameSettings>,
 ) -> impl Bundle {
     let game_settings = game_settings.into_inner();
     (
         Node {
+            width: percent(100.0),
+            height: percent(100.0),
             flex_direction: FlexDirection::Column,
             row_gap: px(8.0),
+            padding: UiRect::all(px(8.0)),
             ..default()
         },
         children![
-            (
-                Node {
-                    flex_direction: FlexDirection::Row,
-                    justify_content: JustifyContent::SpaceBetween,
-                    ..default()
-                },
-                children![
-                    (
-                        Text::new("Master Volume"),
-                        TextFont {
-                            font: asset_server.load(DEFAULT_GAME_FONT_PATH),
-                            ..default()
-                        }
-                    ),
-                    (
-                        build_slider(
-                            0.0,
-                            100.0,
-                            game_settings.master_volume,
-                            VolumeSlider(VolumeSliderType::Master),
-                        ),
-                        observe(update_game_settings_on_volume_slider_change),
-                    )
-                ],
-            ),
+            Node {
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                ..default()
+            },
             (
                 Node {
                     flex_direction: FlexDirection::Row,
@@ -66,7 +45,7 @@ pub fn build_audio_settings_tab_content(
                     (
                         Text::new("Sound Volume"),
                         TextFont {
-                            font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                            font: game_font.clone(),
                             ..default()
                         },
                     ),
@@ -91,7 +70,7 @@ pub fn build_audio_settings_tab_content(
                     (
                         Text::new("Music Volume"),
                         TextFont {
-                            font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                            font: game_font,
                             ..default()
                         },
                     ),
@@ -120,9 +99,6 @@ fn update_game_settings_on_volume_slider_change(
         return;
     };
     match volume_slider.0 {
-        VolumeSliderType::Master => {
-            game_settings.master_volume = value_change.value;
-        }
         VolumeSliderType::Sounds => {
             game_settings.sounds_volume = value_change.value;
         }
@@ -133,29 +109,24 @@ fn update_game_settings_on_volume_slider_change(
 }
 
 pub fn update_volume_slider_value(
-    res: Res<GameSettings>,
+    game_settings: Res<GameSettings>,
     mut sliders: Query<(Entity, &VolumeSlider), With<Slider>>,
     mut commands: Commands,
 ) {
-    if res.is_changed() {
+    if game_settings.is_changed() {
         for (slider_entity, volume_slider) in sliders.iter_mut() {
             // we insert as component instead of changing the SliderValue component directly,
             // as SliderValue is internally marked as immutable
             match volume_slider.0 {
-                VolumeSliderType::Master => {
-                    commands
-                        .entity(slider_entity)
-                        .insert(SliderValue(res.master_volume));
-                }
                 VolumeSliderType::Sounds => {
                     commands
                         .entity(slider_entity)
-                        .insert(SliderValue(res.sounds_volume));
+                        .insert(SliderValue(game_settings.sounds_volume));
                 }
                 VolumeSliderType::Music => {
                     commands
                         .entity(slider_entity)
-                        .insert(SliderValue(res.music_volume));
+                        .insert(SliderValue(game_settings.music_volume));
                 }
             }
         }

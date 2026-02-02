@@ -14,7 +14,6 @@ mod utils;
 
 #[derive(Serialize, Deserialize, Resource, Clone)]
 pub struct GameSettings {
-    pub master_volume: f32,
     pub sounds_volume: f32,
     pub music_volume: f32,
     pub fullscreen: bool,
@@ -23,7 +22,6 @@ pub struct GameSettings {
 impl Default for GameSettings {
     fn default() -> Self {
         Self {
-            master_volume: 50.0,
             sounds_volume: 50.0,
             music_volume: 50.0,
             fullscreen: true,

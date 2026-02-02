@@ -83,25 +83,19 @@ fn spawn_game_mode_selection_screen(
                         ..default()
                     },
                 ));
-            parent.spawn((
-                build_common_button(
-                    "Waves",
-                    asset_server.load(DEFAULT_GAME_FONT_PATH),
-                ),
+            parent.spawn(build_common_button(
+                "Waves",
+                asset_server.load(DEFAULT_GAME_FONT_PATH),
                 GameModeSelectionButton(GameModeClient::Waves),
             ));
-            parent.spawn((
-                build_common_button(
-                    "Free Roam",
-                    asset_server.load(DEFAULT_GAME_FONT_PATH),
-                ),
+            parent.spawn(build_common_button(
+                "Free Roam",
+                asset_server.load(DEFAULT_GAME_FONT_PATH),
                 GameModeSelectionButton(GameModeClient::FreeRoam),
             ));
-            parent.spawn((
-                build_common_button(
-                    "Go back",
-                    asset_server.load(DEFAULT_GAME_FONT_PATH),
-                ),
+            parent.spawn(build_common_button(
+                "Go back",
+                asset_server.load(DEFAULT_GAME_FONT_PATH),
                 GameModeSelectionActionButton::GoBack,
             ));
         });

@@ -8,8 +8,8 @@ use crate::{
     },
     user_interface::{
         common::{
-            CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
-            DEFAULT_ROW_GAP, TITLE_FONT_SIZE, UI_BACKGROUND,
+            CommonUiButton, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
+            TITLE_FONT_SIZE, UI_BACKGROUND,
         },
         widgets::button::build_common_button,
     },
@@ -74,32 +74,24 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                         ..default()
                     },
                 ));
-            parent.spawn((
-                build_common_button(
-                    "Singleplayer",
-                    asset_server.load(DEFAULT_GAME_FONT_PATH),
-                ),
+            parent.spawn(build_common_button(
+                "Singleplayer",
+                asset_server.load(DEFAULT_GAME_FONT_PATH),
                 MainMenuButton::Singleplayer,
             ));
-            parent.spawn((
-                build_common_button(
-                    "Multiplayer",
-                    asset_server.load(DEFAULT_GAME_FONT_PATH),
-                ),
+            parent.spawn(build_common_button(
+                "Multiplayer",
+                asset_server.load(DEFAULT_GAME_FONT_PATH),
                 MainMenuButton::Multiplayer,
             ));
-            parent.spawn((
-                build_common_button(
-                    "Settings",
-                    asset_server.load(DEFAULT_GAME_FONT_PATH),
-                ),
+            parent.spawn(build_common_button(
+                "Settings",
+                asset_server.load(DEFAULT_GAME_FONT_PATH),
                 MainMenuButton::SettingsMainMenu,
             ));
-            parent.spawn((
-                build_common_button(
-                    "Quit",
-                    asset_server.load(DEFAULT_GAME_FONT_PATH),
-                ),
+            parent.spawn(build_common_button(
+                "Quit",
+                asset_server.load(DEFAULT_GAME_FONT_PATH),
                 CommonUiButton::Quit,
             ));
         });

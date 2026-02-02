@@ -137,20 +137,16 @@ fn spawn_map_selection(
                         MapSelectionButton(SelectedMapState::MediumPlastic),
                     )),
                 ));
-            parent.spawn((
-                build_common_button(
-                    "Continue to Game Mode Selection",
-                    asset_server.load(DEFAULT_GAME_FONT_PATH),
-                ),
+            parent.spawn((build_common_button(
+                "Continue to Game Mode Selection",
+                asset_server.load(DEFAULT_GAME_FONT_PATH),
                 CommonUiButton::ToGameModeSelection,
-            ));
-            parent.spawn((
-                build_common_button(
-                    "Go back to Main Menu",
-                    asset_server.load(DEFAULT_GAME_FONT_PATH),
-                ),
+            ),));
+            parent.spawn((build_common_button(
+                "Go back to Main Menu",
+                asset_server.load(DEFAULT_GAME_FONT_PATH),
                 CommonUiButton::BackToMainMenu,
-            ));
+            ),));
         });
 }
 
