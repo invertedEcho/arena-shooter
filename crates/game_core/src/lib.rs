@@ -103,6 +103,8 @@ pub fn start_server(
             SERVER_SOCKET_ADDR_REMOTE_SERVER
         };
 
+    info!("Starting server on {}", local_addr);
+
     let server = commands
         .spawn((
             NetcodeServer::new(NetcodeConfig {
