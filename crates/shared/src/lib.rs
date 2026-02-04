@@ -110,7 +110,7 @@ fn resolve_with_retry(
         match address.to_socket_addrs() {
             Ok(addrs) => return Ok(addrs.collect()),
             Err(error) => {
-                println!(
+                eprintln!(
                     "Failed to resolve game server dns. Retrying, sleeping \
                      for 100ms"
                 );
@@ -123,17 +123,23 @@ fn resolve_with_retry(
     Err(last_err.unwrap())
 }
 
-pub fn get_server_socket_addr_client_side() -> SocketAddr {
-    *resolve_with_retry("game.invertedecho.com:5888")
-        .unwrap()
-        .first()
-        .unwrap()
+pub fn get_server_socket_addr_client_side() -> Option<SocketAddr> {
+    match resolve_with_retry("game.invertedecho.com:5888") {
+        Ok(success) => success.first().copied(),
+        Err(error) => {
+            warn!("Failed to resolve game server: {}", error);
+            None
+        }
+    }
 }
-pub fn get_auth_backend_socket_addr_client_side() -> SocketAddr {
-    *resolve_with_retry("game.invertedecho.com:4000")
-        .unwrap()
-        .first()
-        .unwrap()
+pub fn get_auth_backend_socket_addr_client_side() -> Option<SocketAddr> {
+    match resolve_with_retry("game.invertedecho.com:4000") {
+        Ok(success) => success.first().copied(),
+        Err(error) => {
+            warn!("Failed to resolve game auth server: {}", error);
+            None
+        }
+    }
 }
 
 pub const SERVER_SOCKET_ADDR_SINGLEPLAYER: SocketAddr =

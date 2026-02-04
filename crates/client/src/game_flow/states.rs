@@ -56,8 +56,9 @@ pub enum InGameState {
     PlayerDead,
 }
 
+/// The current connection state to the game server.
 #[derive(States, Debug, Hash, Eq, PartialEq, Clone, Default)]
-pub enum ServerConnectionState {
+pub enum ConnectionState {
     #[default]
     Connecting,
     Connected,
@@ -67,7 +68,7 @@ pub enum ServerConnectionState {
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[states(scoped_entities)]
 pub enum AppDebugState {
-    DebugVisible,
     #[default]
+    DebugVisible,
     DebugHidden,
 }

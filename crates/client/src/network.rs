@@ -5,7 +5,6 @@ use avian3d::prelude::*;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
-use game_core::ServerLoadingState;
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
 use shared::character_controller::{
@@ -19,7 +18,10 @@ use shared::protocol::{
 use shared::utils::lightyear::{
     DisconnectReason, parse_lightyear_disconnect_reason,
 };
-use shared::{SERVER_PORT, ServerMode, get_server_socket_addr_client_side};
+use shared::{
+    SERVER_PORT, ServerMode, get_auth_backend_socket_addr_client_side,
+    get_server_socket_addr_client_side,
+};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,
@@ -27,25 +29,28 @@ use crate::auth::{
 };
 use crate::character_controller::components::CharacterControllerBundle;
 use crate::game_flow::game_mode::GameModeClient;
-use crate::game_flow::states::{
-    AppState, LoadingGameState, ServerConnectionState,
-};
+use crate::game_flow::states::{AppState, ConnectionState, LoadingGameState};
 
 const CLIENT_PORT: u16 = 0;
 
 pub const GENERIC_NO_CONNECTION_ERROR_MESSAGE: &str =
     "Failed to connect to Game Server. Please verify your internet connection \
-     works. The Game Server may also be currently down.";
+     works. The Game Server may also be currently unavailable.";
 
 pub struct NetworkPlugin;
 
 impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
+        app.init_state::<ConnectionState>();
         app.add_systems(
             OnEnter(LoadingGameState::ConnectingToServer),
             on_enter_connecting_to_server,
         );
-        app.add_systems(Update, (fetch_connect_token,));
+        app.add_systems(
+            Update,
+            fetch_connect_token
+                .run_if(resource_exists::<ConnectTokenRequestTask>),
+        );
         app.add_systems(
             Update,
             (
@@ -63,9 +68,9 @@ impl Plugin for NetworkPlugin {
 pub fn on_enter_connecting_to_server(
     mut commands: Commands,
     connected_query: Query<Has<Connected>>,
-    mut task_state: ResMut<ConnectTokenRequestTask>,
     game_mode: Res<State<GameModeClient>>,
     server_entity: Query<Entity, With<Server>>,
+    mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     // Connected component only present on our own client
     for connected in connected_query {
@@ -76,26 +81,6 @@ pub fn on_enter_connecting_to_server(
     }
 
     let is_singleplayer = *game_mode.get() != GameModeClient::Multiplayer;
-
-    if !is_singleplayer {
-        let auth_backend_addr = task_state.auth_backend_addr;
-        debug!(
-            "Starting task to get auth ConnectToken via AuthBackend at {}",
-            auth_backend_addr
-        );
-        let task = IoTaskPool::get().spawn_local(Compat::new(async move {
-            get_connect_token_from_auth_backend(auth_backend_addr).await
-        }));
-        task_state.task = Some(task);
-    }
-
-    let server_address = match *game_mode.get() {
-        GameModeClient::Multiplayer => get_server_socket_addr_client_side(),
-        _ => SocketAddr::new(
-            std::net::IpAddr::V6(Ipv6Addr::LOCALHOST),
-            SERVER_PORT,
-        ),
-    };
 
     if let Ok(server_entity) = server_entity.single()
         && is_singleplayer
@@ -112,18 +97,54 @@ pub fn on_enter_connecting_to_server(
 
         commands.trigger(Connect { entity: client });
     } else {
-        commands.spawn((
-            Name::new("Client"),
-            Client::default(),
-            LocalAddr(SocketAddr::new(
-                Ipv6Addr::UNSPECIFIED.into(),
-                CLIENT_PORT,
+        if !is_singleplayer {
+            let auth_backend_addr = get_auth_backend_socket_addr_client_side();
+            if let Some(auth_backend_addr) = auth_backend_addr {
+                debug!(
+                    "Starting task to get auth ConnectToken via AuthBackend \
+                     at {}",
+                    auth_backend_addr
+                );
+                let task =
+                    IoTaskPool::get().spawn_local(Compat::new(async move {
+                        get_connect_token_from_auth_backend(auth_backend_addr)
+                            .await
+                    }));
+                commands.insert_resource(ConnectTokenRequestTask {
+                    task: Some(task),
+                });
+            } else {
+                next_app_state.set(AppState::Disconnected);
+            }
+        }
+        let server_address = match *game_mode.get() {
+            GameModeClient::Multiplayer => get_server_socket_addr_client_side(),
+            _ => Some(SocketAddr::new(
+                std::net::IpAddr::V6(Ipv6Addr::LOCALHOST),
+                SERVER_PORT,
             )),
-            PeerAddr(server_address),
-            Link::new(None),
-            ReplicationReceiver::default(),
-            UdpIo::default(),
-        ));
+        };
+
+        if let Some(server_address) = server_address {
+            commands.spawn((
+                Name::new("Client"),
+                Client::default(),
+                LocalAddr(SocketAddr::new(
+                    Ipv6Addr::UNSPECIFIED.into(),
+                    CLIENT_PORT,
+                )),
+                PeerAddr(server_address),
+                Link::new(None),
+                ReplicationReceiver::default(),
+                UdpIo::default(),
+            ));
+        } else {
+            info!(
+                "Could not resolve server address, setting AppState to \
+                 Disconnected"
+            );
+            next_app_state.set(AppState::Disconnected);
+        }
     }
 }
 
@@ -221,7 +242,7 @@ pub fn apply_server_position_other_clients(
 pub fn handle_disconnect(
     trigger: On<Add, Disconnected>,
     disconnected: Query<&Disconnected>,
-    mut next_disconnected_state: ResMut<NextState<ServerConnectionState>>,
+    mut next_disconnected_state: ResMut<NextState<ConnectionState>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     match disconnected.get(trigger.entity) {
@@ -251,7 +272,7 @@ pub fn handle_disconnect(
                         next_app_state.set(AppState::InGame);
 
                         next_disconnected_state
-                            .set(ServerConnectionState::Disconnected);
+                            .set(ConnectionState::Disconnected);
                     }
                 }
             }

@@ -1,7 +1,7 @@
 use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
-    game_flow::states::{AppState, InGameState, ServerConnectionState},
+    game_flow::states::{AppState, ConnectionState},
     network::GENERIC_NO_CONNECTION_ERROR_MESSAGE,
     user_interface::{
         common::{
@@ -18,7 +18,7 @@ pub struct DisconnectScreenPlugin;
 impl Plugin for DisconnectScreenPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            OnEnter(ServerConnectionState::Disconnected),
+            OnEnter(ConnectionState::Disconnected),
             spawn_disconnected_screen,
         );
     }
@@ -30,7 +30,7 @@ struct DisconnectScreenRoot;
 fn spawn_disconnected_screen(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    disconnect_state: Res<State<ServerConnectionState>>,
+    disconnect_state: Res<State<ConnectionState>>,
     existing_main_menu_camera: Query<&MainMenuCamera>,
 ) {
     // TODO: optimally this couldnt happen in first place
@@ -56,7 +56,7 @@ fn spawn_disconnected_screen(
             },
             BackgroundColor(UI_BACKGROUND),
             DisconnectScreenRoot,
-            DespawnOnEnter(ServerConnectionState::Connected),
+            DespawnOnEnter(ConnectionState::Connected),
             DespawnOnExit(AppState::Disconnected),
         ))
         .with_children(|parent| {
@@ -71,20 +71,22 @@ fn spawn_disconnected_screen(
             parent
                 .spawn((
                     Node {
-                        align_self: AlignSelf::End,
-                        justify_self: JustifySelf::End,
-                        justify_content: JustifyContent::End,
+                        max_width: percent(50.0),
                         ..default()
                     },
                     BorderColor::all(RED),
                 ))
                 .with_children(|parent| match disconnect_state.get() {
-                    ServerConnectionState::Disconnected => {
-                        parent.spawn(Text::new(
-                            GENERIC_NO_CONNECTION_ERROR_MESSAGE,
+                    ConnectionState::Disconnected => {
+                        parent.spawn((
+                            Text::new(GENERIC_NO_CONNECTION_ERROR_MESSAGE),
+                            TextLayout {
+                                linebreak: LineBreak::WordBoundary,
+                                ..default()
+                            },
                         ));
                     }
-                    ServerConnectionState::Connecting => {
+                    ConnectionState::Connecting => {
                         parent.spawn(Text::new("Connecting to game server..."));
                     }
                     _ => {}
