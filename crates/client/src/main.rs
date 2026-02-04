@@ -8,7 +8,6 @@ use bevy::{
     dev_tools::fps_overlay::FpsOverlayPlugin,
     diagnostic::FrameTimeDiagnosticsPlugin,
     input_focus::InputDispatchPlugin,
-    log::{DEFAULT_FILTER, LogPlugin},
     prelude::*,
     ui_widgets::UiWidgetsPlugins,
     window::{PresentMode, WindowMode},
@@ -84,12 +83,6 @@ fn main() {
             })
             .set(AssetPlugin {
                 file_path: "../../assets".to_string(),
-                ..default()
-            })
-            .set(LogPlugin {
-                filter: DEFAULT_FILTER.to_owned()
-                    + "bevy_hanabi=error,wgpu_hal=error",
-
                 ..default()
             }),
     );

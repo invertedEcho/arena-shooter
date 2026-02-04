@@ -145,6 +145,9 @@ pub fn get_auth_backend_socket_addr_client_side() -> Option<SocketAddr> {
 pub const SERVER_SOCKET_ADDR_SINGLEPLAYER: SocketAddr =
     SocketAddr::new(SERVER_ADDRESS_SERVER_SIDE, 0);
 
+pub const SERVER_SOCKET_ADDR_REMOTE_SERVER: SocketAddr =
+    SocketAddr::new(SERVER_ADDRESS_SERVER_SIDE, SERVER_PORT);
+
 pub const AUTH_BACKEND_ADDRESS_SERVER_SIDE: SocketAddr =
     SocketAddr::new(SERVER_ADDRESS_SERVER_SIDE, AUTH_BACKEND_PORT);
 
