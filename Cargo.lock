@@ -1289,24 +1289,22 @@ dependencies = [
 
 [[package]]
 name = "bevy_hanabi"
-version = "0.16.0"
-source = "git+https://github.com/pcwalton/bevy_hanabi#8a06bab5c8efc9c658bb738aafc0d878baa62b50"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d551e95cf661cfc74bd71faf16e7cc8eed7d21b7f0ac8ca8301426338e38be36"
 dependencies = [
  "anyhow",
- "arrayvec",
  "bevy",
  "bitflags 2.10.0",
  "bytemuck",
- "copyless",
  "fixedbitset",
- "indexmap",
+ "getrandom 0.3.4",
  "naga",
  "naga_oil",
  "rand",
  "rand_pcg",
  "ron 0.8.1",
  "serde",
- "smallvec",
  "thiserror 2.0.18",
  "typetag",
  "wgpu",
@@ -2688,12 +2686,6 @@ checksum = "633458d4ef8c78b72454de2d54fd6ab2e60f9e02be22f3c6104cdc8a4e0fceb9"
 dependencies = [
  "unicode-segmentation",
 ]
-
-[[package]]
-name = "copyless"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2df960f5d869b2dd8532793fde43eb5427cceb126c929747a26823ab0eeb536"
 
 [[package]]
 name = "core-foundation"
