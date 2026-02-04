@@ -58,30 +58,48 @@ pub async fn get_connect_token_from_auth_backend(
 ) -> Option<ConnectToken> {
     let Ok(stream) = tokio::net::TcpStream::connect(auth_backend_address).await
     else {
+        error!("Failed to open tcp stream to auth backend");
         return None;
     };
 
-    info!("auth backend tcp stream address: {:?}", stream.peer_addr());
+    debug!("Sucesfully opened tcp stream to auth backend!");
+
+    debug!("auth backend tcp stream address: {:?}", stream.peer_addr());
+
     // wait for the socket to be readable
     stream.readable().await.unwrap();
+    debug!("socket is readable");
+
+    // create new buffer
     let mut buffer = [0u8; CONNECT_TOKEN_BYTES];
+
+    // tries to read buffer from tcp stream into our created buffer
     match stream.try_read(&mut buffer) {
-        Ok(n) if n == CONNECT_TOKEN_BYTES => {
-            match ConnectToken::try_from_bytes(&buffer) {
-                Ok(connect_token) => Some(connect_token),
-                Err(error) => {
-                    error!(
-                        "Failed to parse ConnectToken from authentication \
-                         server. {}",
-                        error
-                    );
-                    return None;
+        Ok(bytes_read) => {
+            if bytes_read == CONNECT_TOKEN_BYTES {
+                match ConnectToken::try_from_bytes(&buffer) {
+                    Ok(connect_token) => Some(connect_token),
+                    Err(error) => {
+                        error!(
+                            "Failed to parse ConnectToken from authentication \
+                             server. {}",
+                            error
+                        );
+                        None
+                    }
                 }
+            } else {
+                error!(
+                    "bytes read is not what we expect, length: {}, expected: \
+                     {}",
+                    bytes_read, CONNECT_TOKEN_BYTES
+                );
+                None
             }
         }
-        _ => {
-            return None;
+        Err(error) => {
+            error!("Failed to read from tcp stream: {}", error);
+            None
         }
-    };
-    None
+    }
 }
