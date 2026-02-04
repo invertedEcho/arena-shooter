@@ -1,11 +1,5 @@
-use std::f32::consts::PI;
-
 use avian3d::prelude::*;
-use bevy::{
-    camera::visibility::RenderLayers,
-    color::palettes::{self},
-    prelude::*,
-};
+use bevy::{camera::visibility::RenderLayers, prelude::*};
 use shared::{MEDIUM_PLASTIC_MAP_PATH, SelectedMapState, TINY_TOWN_MAP_PATH};
 
 use super::resources::WorldSceneHandle;
