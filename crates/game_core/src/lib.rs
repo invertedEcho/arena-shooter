@@ -10,8 +10,8 @@ use lightyear::{
     },
 };
 use shared::{
-    GameModeServer, NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_SINGLEPLAYER,
-    ServerMode, ServerRunMode,
+    GameModeServer, NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_REMOTE_SERVER,
+    SERVER_SOCKET_ADDR_SINGLEPLAYER, ServerMode, ServerRunMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -96,6 +96,13 @@ pub fn start_server(
         ServerMode::None => "Server None",
     };
 
+    let local_addr =
+        if *server_mode.get() == ServerMode::LocalServerSinglePlayer {
+            SERVER_SOCKET_ADDR_SINGLEPLAYER
+        } else {
+            SERVER_SOCKET_ADDR_REMOTE_SERVER
+        };
+
     let server = commands
         .spawn((
             NetcodeServer::new(NetcodeConfig {
@@ -103,7 +110,7 @@ pub fn start_server(
                 private_key: get_private_key(&server_mode),
                 ..default()
             }),
-            LocalAddr(SERVER_SOCKET_ADDR_SINGLEPLAYER),
+            LocalAddr(local_addr),
             ServerUdpIo::default(),
             Name::new(entity_name),
             GameModeServer::FreeForAll,
