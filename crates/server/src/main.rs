@@ -102,10 +102,14 @@ fn main() {
 
     // authentication
     let client_ids = Arc::new(RwLock::new(HashSet::default()));
+
     start_netcode_authentication_task(
         // this must be client side because it will be contained in the token that the client
         // receives and uses to connect
-        get_server_socket_addr_client_side(),
+        get_server_socket_addr_client_side().expect(
+            "Could not resolve game server address. Please make sure you have \
+             a working internet connection. Game server may be currently down",
+        ),
         AUTH_BACKEND_ADDRESS_SERVER_SIDE,
         client_ids.clone(),
         get_private_key(&ServerMode::RemoteServer),

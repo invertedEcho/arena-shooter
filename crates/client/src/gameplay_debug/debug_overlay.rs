@@ -2,7 +2,8 @@ use bevy::prelude::*;
 use shared::GameModeServer;
 
 use crate::game_flow::states::{
-    AppDebugState, AppState, InGameState, LoadingGameState, MainMenuState,
+    AppDebugState, AppState, ConnectionState, InGameState, LoadingGameState,
+    MainMenuState,
 };
 
 const DEBUG_OVERLAY_TEXT_SIZE: f32 = 15.0;
@@ -18,12 +19,13 @@ impl Plugin for DebugOverlayPlugin {
         .add_systems(
             Update,
             (
+                toggle_debug,
                 update_current_app_state_text,
                 update_current_in_game_state_text,
-                toggle_debug,
                 update_current_main_menu_state,
                 update_loading_game_state_text,
                 update_current_server_game_mode_text,
+                update_current_connection_state_text,
             ),
         );
     }
@@ -44,6 +46,9 @@ struct CurrentServerGameModeText;
 #[derive(Component)]
 struct CurrentLoadingGameStateText;
 
+#[derive(Component)]
+struct CurrentConnectionStateText;
+
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
         .spawn((
@@ -59,111 +64,74 @@ fn spawn_debug_overlay(mut commands: Commands) {
             Name::new("Debug Overlay UI Root"),
         ))
         .with_children(|parent| {
-            // App State Text
-            parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    ..default()
-                })
-                .with_child((
-                    Text::new("Current AppState: "),
-                    TextFont {
-                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                        ..default()
-                    },
-                ))
-                .with_child((
-                    Text::new("None"),
-                    CurrentAppStateText,
-                    TextFont {
-                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                        ..default()
-                    },
-                ));
+            parent.spawn(build_debug_overlay_state_item_text(
+                "AppState",
+                CurrentAppStateText,
+            ));
 
-            // InGame State Text
-            parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    ..default()
-                })
-                .with_child((
-                    Text::new("Current InGameState: "),
-                    TextFont {
-                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                        ..default()
-                    },
-                ))
-                .with_child((
-                    Text::new("None"),
-                    CurrentInGameStateText,
-                    TextFont {
-                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                        ..default()
-                    },
-                ));
+            parent.spawn(build_debug_overlay_state_item_text(
+                "InGameState",
+                CurrentInGameStateText,
+            ));
 
-            parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    ..default()
-                })
-                .with_child((
-                    Text::new("Current MainMenuState: "),
-                    TextFont {
-                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                        ..default()
-                    },
-                ))
-                .with_child((
-                    Text::new("None"),
-                    CurrentMainMenuStateText,
-                    TextFont {
-                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                        ..default()
-                    },
-                ));
-            parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    ..default()
-                })
-                .with_child((
-                    Text::new("Current ServerGameMode: "),
-                    TextFont {
-                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                        ..default()
-                    },
-                ))
-                .with_child((
-                    Text::new("None"),
-                    CurrentServerGameModeText,
-                    TextFont {
-                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                        ..default()
-                    },
-                ));
-            parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    ..default()
-                })
-                .with_child((
-                    Text::new("Current LoadingGameState: "),
-                    TextFont {
-                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                        ..default()
-                    },
-                ))
-                .with_child((
-                    Text::new("None"),
-                    CurrentLoadingGameStateText,
-                    TextFont {
-                        font_size: DEBUG_OVERLAY_TEXT_SIZE,
-                        ..default()
-                    },
-                ));
+            parent.spawn(build_debug_overlay_state_item_text(
+                "MainMenuState",
+                CurrentMainMenuStateText,
+            ));
+
+            parent.spawn(build_debug_overlay_state_item_text(
+                "ServerGameMode",
+                CurrentServerGameModeText,
+            ));
+
+            parent.spawn(build_debug_overlay_state_item_text(
+                "LoadingGameState",
+                CurrentLoadingGameStateText,
+            ));
+
+            parent.spawn(build_debug_overlay_state_item_text(
+                "ConnectionState",
+                CurrentConnectionStateText,
+            ));
         });
+}
+
+fn build_debug_overlay_state_item_text<T: Component>(
+    description: &str,
+    marker_component: T,
+) -> impl Bundle {
+    (
+        Node {
+            flex_direction: FlexDirection::Row,
+            ..default()
+        },
+        children![
+            (
+                Text::new(format!("Current {}: ", description)),
+                TextFont {
+                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                    ..default()
+                },
+            ),
+            (
+                Text::new("None"),
+                marker_component,
+                TextFont {
+                    font_size: DEBUG_OVERLAY_TEXT_SIZE,
+                    ..default()
+                },
+            )
+        ],
+    )
+}
+
+fn update_current_connection_state_text(
+    mut current_app_state_text: Single<&mut Text, With<CurrentAppStateText>>,
+    connection_state: Res<State<ConnectionState>>,
+) {
+    if connection_state.is_changed() {
+        ***current_app_state_text = format!("{:?}", *connection_state.get());
+    }
 }
 
 fn update_current_app_state_text(
@@ -171,7 +139,7 @@ fn update_current_app_state_text(
     app_state: Res<State<AppState>>,
 ) {
     if app_state.is_changed() {
-        **current_app_state_text = Text::new(format!("{:?}", *app_state.get()));
+        ***current_app_state_text = format!("{:?}", *app_state.get());
     }
 }
 

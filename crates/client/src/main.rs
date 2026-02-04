@@ -3,7 +3,6 @@ use std::f32::consts::PI;
 use ::shared::{
     ServerMode, ServerRunMode, SharedPlugin,
     character_controller::LOCAL_FEET_CHARACTER, enemy::components::Enemy,
-    get_auth_backend_socket_addr_client_side,
 };
 use bevy::{
     dev_tools::fps_overlay::FpsOverlayPlugin,
@@ -23,7 +22,6 @@ use bevy_skein::SkeinPlugin;
 
 use crate::{
     audio::AudioPlugin,
-    auth::ConnectTokenRequestTask,
     character_controller::CharacterControllerPlugin,
     enemy::animate::ENEMY_MODEL_PATH,
     game_flow::{GameFlowPlugin, states::AppState},
@@ -63,11 +61,6 @@ fn main() {
     let game_settings = get_or_create_game_settings();
 
     app.insert_resource(game_settings.clone());
-
-    app.insert_resource(ConnectTokenRequestTask {
-        auth_backend_addr: get_auth_backend_socket_addr_client_side(),
-        task: None,
-    });
 
     let window_mode = if game_settings.fullscreen {
         WindowMode::BorderlessFullscreen(MonitorSelection::Current)

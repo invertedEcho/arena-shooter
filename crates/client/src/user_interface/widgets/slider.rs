@@ -10,12 +10,6 @@ use bevy::{
 const DEFAULT_SLIDER_TRACK: Color = Color::srgb(0.05, 0.05, 0.05);
 const DEFAULT_SLIDER_THUMB: Color = Color::srgb(0.35, 0.75, 0.35);
 
-#[derive(Component)]
-pub struct DemoSlider;
-
-#[derive(Component)]
-pub struct DemoSliderThumb;
-
 pub fn build_slider<T: Component>(
     min: f32,
     max: f32,
@@ -34,7 +28,6 @@ pub fn build_slider<T: Component>(
             width: percent(30),
             ..default()
         },
-        DemoSlider,
         Name::new("Slider"),
         Hovered::default(),
         marker_component,
@@ -68,7 +61,6 @@ pub fn build_slider<T: Component>(
                     ..default()
                 },
                 children![(
-                    DemoSliderThumb,
                     SliderThumb,
                     Node {
                         display: Display::Flex,
@@ -102,20 +94,10 @@ pub fn update_slider_style(
             &Hovered,
             &CoreSliderDragState,
         ),
-        (
-            Or<(
-                Changed<SliderValue>,
-                Changed<Hovered>,
-                Changed<CoreSliderDragState>,
-            )>,
-            With<DemoSlider>,
-        ),
+        AnyInteractionWithSlider,
     >,
     children: Query<&Children>,
-    mut thumbs: Query<
-        (&mut Node, &mut BackgroundColor, Has<SliderThumb>),
-        Without<DemoSlider>,
-    >,
+    mut thumbs: Query<(&mut Node, &mut BackgroundColor, Has<SliderThumb>)>,
 ) {
     for (entity, value, range, hovered, drag_state) in sliders.iter() {
         for child in children.iter_descendants(entity) {
