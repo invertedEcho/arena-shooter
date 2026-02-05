@@ -11,6 +11,6 @@ pub const LOCAL_FEET_CHARACTER: f32 = -1.0;
 
 pub const MAX_SLOPE_ANGLE: f32 = 45.0_f32.to_radians();
 
-pub const WALK_VELOCITY: f32 = 2.0;
-pub const RUN_VELOCITY: f32 = 5.0;
+pub const WALK_VELOCITY: f32 = 1.8;
+pub const RUN_VELOCITY: f32 = 3.3;
 pub const JUMP_VELOCITY: f32 = 3.0;

@@ -1,5 +1,6 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use lightyear::prelude::*;
 use shared::{
     GRAVITY, Medkit,
     character_controller::{
@@ -112,7 +113,10 @@ pub fn handle_movement_actions_for_character_controllers(
                     velocity.y = JUMP_VELOCITY;
                 }
             }
-            MovementDirection::Move(world_velocity) => {
+            MovementDirection::Move(desired_velocity) => {
+                velocity.x = desired_velocity.x;
+                velocity.z = desired_velocity.z;
+
                 // exclude medkits because we want to be able to walk through medkits
                 let excluded_entities: Vec<Entity> = medkit_query
                     .iter()
@@ -124,7 +128,7 @@ pub fn handle_movement_actions_for_character_controllers(
 
                 apply_collide_and_slide(
                     &mut velocity,
-                    world_velocity,
+                    desired_velocity,
                     transform,
                     &mut spatial_query,
                     spatial_query_filter,
@@ -234,10 +238,6 @@ fn apply_collide_and_slide(
                 current_hit_count + 1,
             );
         }
-    } else {
-        // no obstacle ahead, free movement
-        current_velocity.x = desired_velocity.x;
-        current_velocity.z = desired_velocity.z;
     }
 }
 
@@ -273,11 +273,18 @@ pub fn apply_gravity_over_time(
 }
 
 pub fn apply_movement_damping(
-    query: Query<&mut LinearVelocity, With<CharacterController>>,
+    player_query: Single<(&mut LinearVelocity, &Grounded), With<Controlled>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
-    for mut velocity in query {
-        velocity.x *= 0.7;
-        velocity.z *= 0.7;
+    let moving = keyboard_input.pressed(KeyCode::KeyW)
+        || keyboard_input.pressed(KeyCode::KeyA)
+        || keyboard_input.pressed(KeyCode::KeyS)
+        || keyboard_input.pressed(KeyCode::KeyD);
+
+    let (mut player_velocity, grounded) = player_query.into_inner();
+    if !moving && grounded.0 {
+        player_velocity.x *= 0.8;
+        player_velocity.z *= 0.8;
     }
 }
 
