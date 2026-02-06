@@ -252,10 +252,11 @@ pub fn handle_chasing_enemies(
         // game mode multiplayer, the character controller for enemies should run on the server and
         // position be synced to all clients
         movement_action_writer.write(MovementAction {
-            direction: MovementDirection::Move(
+            desired_velocity: MovementDirection::Move(
                 agent_desired_velocity.velocity(),
             ),
             character_controller_entity: entity,
+            sprint: false,
         });
     }
 }

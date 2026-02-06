@@ -2,8 +2,9 @@ use bevy::prelude::*;
 
 #[derive(Message)]
 pub struct MovementAction {
-    pub direction: MovementDirection,
+    pub desired_velocity: MovementDirection,
     pub character_controller_entity: Entity,
+    pub sprint: bool,
 }
 
 pub enum MovementDirection {

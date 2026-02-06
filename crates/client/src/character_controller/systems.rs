@@ -1,6 +1,5 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use lightyear::prelude::*;
 use shared::{
     GRAVITY, Medkit,
     character_controller::{
@@ -29,10 +28,10 @@ pub fn handle_keyboard_input_for_player(
         return;
     }
 
-    let shift_pressed = keyboard_input.pressed(KeyCode::ShiftLeft);
+    let sprint = keyboard_input.pressed(KeyCode::ShiftLeft);
     let reloading = player_weapons.reloading;
 
-    let speed = if shift_pressed && !reloading {
+    let speed = if sprint && !reloading {
         RUN_VELOCITY
     } else {
         WALK_VELOCITY
@@ -67,18 +66,18 @@ pub fn handle_keyboard_input_for_player(
 
     if keyboard_input.just_pressed(KeyCode::Space) {
         movement_action_writer.write(MovementAction {
-            direction: MovementDirection::Jump,
+            desired_velocity: MovementDirection::Jump,
             character_controller_entity: player_entity,
+            sprint,
         });
     }
 
-    if velocity == Vec3::ZERO {
-        return;
-    }
-
+    // we always send a movementaction, so move_towards will handle deceleration, because we move
+    // towards zero velocity.
     movement_action_writer.write(MovementAction {
-        direction: MovementDirection::Move(velocity),
+        desired_velocity: MovementDirection::Move(velocity),
         character_controller_entity: player_entity,
+        sprint,
     });
 }
 
@@ -94,7 +93,8 @@ pub fn handle_movement_actions_for_character_controllers(
     medkit_query: Query<Entity, With<Medkit>>,
 ) {
     for movement_action in movement_action_reader.read() {
-        let direction = &movement_action.direction;
+        let sprint = movement_action.sprint;
+        let direction = &movement_action.desired_velocity;
         let character_controller_entity =
             movement_action.character_controller_entity;
         let Ok((mut velocity, grounded, transform)) =
@@ -114,8 +114,28 @@ pub fn handle_movement_actions_for_character_controllers(
                 }
             }
             MovementDirection::Move(desired_velocity) => {
-                velocity.x = desired_velocity.x;
-                velocity.z = desired_velocity.z;
+                const DECELERATION: f32 = 22.0;
+                const ACCELERATION: f32 = 12.0;
+                info!("Desired velocity: {}", desired_velocity);
+
+                let max_delta = if desired_velocity == Vec3::ZERO {
+                    DECELERATION
+                } else {
+                    if sprint {
+                        ACCELERATION * 2.0
+                    } else {
+                        ACCELERATION
+                    }
+                };
+                let new_velocity = move_towards_vec(
+                    velocity.0,
+                    desired_velocity,
+                    max_delta * time.delta_secs(),
+                );
+                info!("New velocity: {}", new_velocity);
+
+                velocity.x = new_velocity.x;
+                velocity.z = new_velocity.z;
 
                 // exclude medkits because we want to be able to walk through medkits
                 let excluded_entities: Vec<Entity> = medkit_query
@@ -241,6 +261,35 @@ fn apply_collide_and_slide(
     }
 }
 
+/// currrent_velocity: Our current velocity
+/// target_velocity: Our target velocity, e.g. the max velocity
+/// max_delta: how fast are we allowed to change per frame. with this, we can control, how fast we
+///            accelerate or deccelerate
+fn move_towards_vec(
+    current_velocity: Vec3,
+    target_velocity: Vec3,
+    max_delta: f32,
+) -> Vec3 {
+    // the difference between our current velocity and the target velocity
+    let delta = target_velocity - current_velocity;
+
+    // remember, the length of the vector is the distance between origin and destination
+    let distance = delta.length();
+
+    if distance <= max_delta || distance == 0.0 {
+        target_velocity
+    } else {
+        // to get normalized vector (which is only direction), we divide difference between our two
+        // vectors with the distance of that vector
+        let normalized_delta = delta / distance;
+
+        // as max_delta says how much we are allowed to change velocity per frame, by multiplying with max_delta,
+        // we get new vector, but only changing it as allowed by max_dellta
+        // normalized vektor = length 1, "stretching" that vector but only upon max_delta.
+        current_velocity + normalized_delta * max_delta
+    }
+}
+
 /// Updates the [`Grounded`] component for character controllers.
 pub fn update_grounded(
     mut query: Query<
@@ -272,21 +321,21 @@ pub fn apply_gravity_over_time(
     }
 }
 
-pub fn apply_movement_damping(
-    player_query: Single<(&mut LinearVelocity, &Grounded), With<Controlled>>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-) {
-    let moving = keyboard_input.pressed(KeyCode::KeyW)
-        || keyboard_input.pressed(KeyCode::KeyA)
-        || keyboard_input.pressed(KeyCode::KeyS)
-        || keyboard_input.pressed(KeyCode::KeyD);
-
-    let (mut player_velocity, grounded) = player_query.into_inner();
-    if !moving && grounded.0 {
-        player_velocity.x *= 0.8;
-        player_velocity.z *= 0.8;
-    }
-}
+// pub fn apply_movement_damping(
+//     player_query: Single<(&mut LinearVelocity, &Grounded), With<Controlled>>,
+//     keyboard_input: Res<ButtonInput<KeyCode>>,
+// ) {
+//     let moving = keyboard_input.pressed(KeyCode::KeyW)
+//         || keyboard_input.pressed(KeyCode::KeyA)
+//         || keyboard_input.pressed(KeyCode::KeyS)
+//         || keyboard_input.pressed(KeyCode::KeyD);
+//
+//     let (mut player_velocity, grounded) = player_query.into_inner();
+//     if !moving && grounded.0 {
+//         player_velocity.x *= 0.8;
+//         player_velocity.z *= 0.8;
+//     }
+// }
 
 pub fn check_above_head(
     query: Query<
