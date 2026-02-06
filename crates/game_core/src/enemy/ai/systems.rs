@@ -256,7 +256,7 @@ pub fn handle_chasing_enemies(
                 agent_desired_velocity.velocity(),
             ),
             character_controller_entity: entity,
-            sprint: false,
+            sprinting: false,
         });
     }
 }

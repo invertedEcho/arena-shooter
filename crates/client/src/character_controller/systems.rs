@@ -68,7 +68,7 @@ pub fn handle_keyboard_input_for_player(
         movement_action_writer.write(MovementAction {
             desired_velocity: MovementDirection::Jump,
             character_controller_entity: player_entity,
-            sprint,
+            sprinting: sprint,
         });
     }
 
@@ -77,7 +77,7 @@ pub fn handle_keyboard_input_for_player(
     movement_action_writer.write(MovementAction {
         desired_velocity: MovementDirection::Move(velocity),
         character_controller_entity: player_entity,
-        sprint,
+        sprinting: sprint,
     });
 }
 
@@ -93,7 +93,7 @@ pub fn handle_movement_actions_for_character_controllers(
     medkit_query: Query<Entity, With<Medkit>>,
 ) {
     for movement_action in movement_action_reader.read() {
-        let sprint = movement_action.sprint;
+        let sprinting = movement_action.sprinting;
         let direction = &movement_action.desired_velocity;
         let character_controller_entity =
             movement_action.character_controller_entity;
@@ -114,19 +114,7 @@ pub fn handle_movement_actions_for_character_controllers(
                 }
             }
             MovementDirection::Move(desired_velocity) => {
-                const DECELERATION: f32 = 22.0;
-                const ACCELERATION: f32 = 12.0;
-                info!("Desired velocity: {}", desired_velocity);
-
-                let max_delta = if desired_velocity == Vec3::ZERO {
-                    DECELERATION
-                } else {
-                    if sprint {
-                        ACCELERATION * 2.0
-                    } else {
-                        ACCELERATION
-                    }
-                };
+                let max_delta = get_max_delta(desired_velocity, sprinting);
                 let new_velocity = move_towards_vec(
                     velocity.0,
                     desired_velocity,
@@ -156,6 +144,25 @@ pub fn handle_movement_actions_for_character_controllers(
                     0,
                 );
             }
+        }
+    }
+}
+
+fn get_max_delta(desired_velocity: Vec3, sprinting: bool) -> f32 {
+    const DECELERATION: f32 = 5.0;
+    const ACCELERATION: f32 = 11.0;
+
+    if sprinting {
+        if desired_velocity == Vec3::ZERO {
+            DECELERATION * 2.0
+        } else {
+            ACCELERATION * 2.0
+        }
+    } else {
+        if desired_velocity == Vec3::ZERO {
+            DECELERATION
+        } else {
+            ACCELERATION
         }
     }
 }

@@ -4,7 +4,7 @@ use bevy::prelude::*;
 pub struct MovementAction {
     pub desired_velocity: MovementDirection,
     pub character_controller_entity: Entity,
-    pub sprint: bool,
+    pub sprinting: bool,
 }
 
 pub enum MovementDirection {
