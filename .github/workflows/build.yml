@@ -55,7 +55,7 @@ jobs:
 
       - name: Build
         run: |
-          cargo build --release --target x86_64-unknown-linux-gnu -p client
+          cargo build --release --target x86_64-unknown-linux-gnu -p client --no-default-features
 
       - name: Prepare package
         run: |
@@ -126,7 +126,7 @@ jobs:
 
       - name: Build
         run: |
-          cargo build --release --target x86_64-pc-windows-msvc -p client
+          cargo build --release --target x86_64-pc-windows-msvc -p client --no-default-features
 
       - name: Prepare package
         run: |
@@ -185,7 +185,7 @@ jobs:
       - name: Build
         run: |
           rustup target add x86_64-apple-darwin
-          cargo build --release --target x86_64-apple-darwin -p client
+          cargo build --release --target x86_64-apple-darwin -p client --no-default-features
 
       - name: Prepare Package
         run: |
@@ -243,7 +243,7 @@ jobs:
 
       - name: Build
         run: |
-          cargo build --release --target aarch64-apple-darwin -p client
+          cargo build --release --target aarch64-apple-darwin -p client --no-default-features
 
       - name: Prepare Package
         run: |

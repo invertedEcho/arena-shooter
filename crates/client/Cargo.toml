@@ -7,13 +7,11 @@ edition = "2024"
 async-compat = { workspace = true }
 avian3d = { workspace = true, features = ["serialize"] }
 bevy = { workspace = true, features = [
-  "bevy_dev_tools",
-  "dynamic_linking",
   "experimental_bevy_ui_widgets",
   "file_watcher",
   "mp3",
-  "track_location",
-  "wayland"
+  "wayland",
+  "bevy_dev_tools",
 ] }
 bevy_embedded_assets = "0.15.0"
 bevy_hanabi = "0.18.0"
@@ -28,3 +26,10 @@ serde = "1.0.228"
 serde_json = { workspace = true }
 shared = { workspace = true }
 tokio = { workspace = true }
+
+[features]
+default = ["debug-build"]
+debug-build = [
+  "bevy/dynamic_linking",
+  "bevy/track_location",
+]
