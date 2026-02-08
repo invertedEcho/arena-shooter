@@ -6,8 +6,8 @@ use crate::{
         game_mode::GameModePlugin,
         score::GameScorePlugin,
         states::{
-            AppDebugState, AppState, ConnectionState, InGameState,
-            LoadingGameState, MainMenuState,
+            AppDebugState, AppState, InGameState, LoadingGameState,
+            MainMenuState,
         },
         systems::{
             check_collider_constructor_hierarchy_ready,
