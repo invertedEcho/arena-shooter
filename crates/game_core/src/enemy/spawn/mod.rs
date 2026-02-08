@@ -14,7 +14,7 @@ use shared::{
     },
     components::Health,
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
-    game_score::{GameScore, PlayerStats, get_random_unused_client_id},
+    game_score::{GameScore, LivingEntityStats},
     protocol::EntityPositionServer,
 };
 
@@ -123,15 +123,6 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                         spawn_location_translation
                     );
 
-                    let client_id = get_random_unused_client_id(&game_score);
-                    game_score.players.insert(
-                        client_id,
-                        PlayerStats {
-                            username: format!("Enemy {}", client_id),
-                            ..default()
-                        },
-                    );
-
                     let enemy_entity = commands
                         .spawn((
                             Name::new("Enemy"),
@@ -167,6 +158,15 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             CharacterController,
                         ))
                         .id();
+
+                    game_score.living_entities.insert(
+                        enemy_entity,
+                        LivingEntityStats {
+                            username: format!("Enemy {}", enemy_entity),
+                            ..default()
+                        },
+                    );
+
                     commands.entity(enemy_entity).with_child((
                         Name::new("Enemy Pathfinding Agent"),
                         Agent3dBundle {

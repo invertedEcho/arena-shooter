@@ -14,7 +14,7 @@ use shared::utils::network::{
 };
 use shared::{ServerMode, ServerRunMode};
 
-use crate::auth::{ClientIds, start_netcode_authentication_task};
+use crate::auth::start_netcode_authentication_task;
 use crate::systems::{spawn_map, spawn_map_colliders};
 use crate::utils::get_run_mode;
 
@@ -111,7 +111,6 @@ fn main() {
         client_ids.clone(),
         get_private_key(&ServerMode::RemoteServer),
     );
-    app.insert_resource(ClientIds(client_ids));
 
     app.run();
 }

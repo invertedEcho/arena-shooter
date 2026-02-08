@@ -174,11 +174,7 @@ pub fn send_shoot_request_on_weapon_fired(
         let direction = world_model_camera_query.1.forward();
 
         shoot_request_sender.send::<OrderedReliableMessageChannel>(
-            ShootRequest {
-                direction,
-                origin,
-                from_enemy: false,
-            },
+            ShootRequest { direction, origin },
         );
     }
 }
@@ -365,16 +361,6 @@ pub fn handle_player_weapon_reload_timer(
             active_weapon_state.loaded_ammo = active_weapon_state.carried_ammo;
             active_weapon_state.carried_ammo = 0;
         }
-    }
-}
-
-// TODO: move to game_flow module
-pub fn handle_player_death_event(
-    mut message_reader: MessageReader<PlayerDeathMessage>,
-    mut next_in_game_state: ResMut<NextState<InGameState>>,
-) {
-    for _ in message_reader.read() {
-        next_in_game_state.set(InGameState::PlayerDead);
     }
 }
 

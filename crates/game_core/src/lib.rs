@@ -18,11 +18,12 @@ use shared::{
     },
     components::Health,
     enemy::components::Enemy,
-    game_score::{GameScore, PlayerStats},
+    game_score::{GameScore, LivingEntityStats},
     player::{Player, PlayerBundle},
     protocol::{
         ClientUpdatePositionMessage, EntityPositionServer, ShootRequest,
     },
+    shooting::MAX_SHOOTING_DISTANCE,
     utils::{
         auth::get_private_key,
         network::{
@@ -62,6 +63,12 @@ pub struct GameStateWave {
     pub enemies_left_from_current_wave: usize,
 }
 
+#[derive(Message)]
+struct LivingEntityKillMessage {
+    shooter_entity: Entity,
+    entity_killed: Entity,
+}
+
 /// This plugin adds all plugins & systems that need to run on the server, regardless if its for
 /// the server binary or the local server that gets started for Singleplayer.
 pub struct GameCorePlugin;
@@ -69,6 +76,8 @@ pub struct GameCorePlugin;
 impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<ServerLoadingState>();
+
+        app.add_message::<LivingEntityKillMessage>();
 
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
@@ -81,7 +90,11 @@ impl Plugin for GameCorePlugin {
 
         app.add_systems(
             Update,
-            (handle_shoot_requests, receive_client_update_position),
+            (
+                handle_shoot_requests,
+                receive_client_update_position,
+                update_game_score_on_killed_message,
+            ),
         );
 
         app.add_systems(
@@ -142,7 +155,7 @@ pub fn start_server(
 fn setup_game_score(mut commands: Commands) {
     commands.spawn((
         GameScore {
-            players: HashMap::new(),
+            living_entities: HashMap::new(),
         },
         Name::new("Game Score"),
     ));
@@ -175,21 +188,13 @@ fn handle_new_client(
             trigger.entity, client_id
         );
 
-        game_score.players.insert(
-            client_id.to_bits(),
-            PlayerStats {
-                username: format!("Player {}", client_id.to_bits()),
-                ..default()
-            },
-        );
-
         // NOTE: The replicate component gets inserted into the player entity, but only registered
         // components will be replicated to all other clients
-        let player = commands
+        let player_entity = commands
             .spawn((
-                Replicate::to_clients(NetworkTarget::All),
-                Name::new("Player"),
                 PlayerBundle::default(),
+                Name::new("Player"),
+                Replicate::to_clients(NetworkTarget::All),
                 // TODO: think we could override replication behaviour for this component and only
                 // replicate to all other clients than the current client
                 EntityPositionServer {
@@ -211,10 +216,18 @@ fn handle_new_client(
             ))
             .id();
 
+        game_score.living_entities.insert(
+            player_entity,
+            LivingEntityStats {
+                username: format!("Player {}", trigger.entity),
+                ..default()
+            },
+        );
+
         if *server_mode == ServerMode::RemoteServer {
             // on headless setup, materials doesnt exist
             if let Some(mut materials) = materials {
-                commands.entity(player).insert((
+                commands.entity(player_entity).insert((
                     Mesh3d(meshes.add(Capsule3d::new(
                         CHARACTER_CAPSULE_RADIUS,
                         CHARACTER_CAPSULE_LENGTH,
@@ -227,7 +240,7 @@ fn handle_new_client(
             }
         }
         if *server_mode == ServerMode::LocalServerSinglePlayer {
-            commands.entity(player).insert(Controlled);
+            commands.entity(player_entity).insert(Controlled);
         }
     }
 }
@@ -268,37 +281,48 @@ fn handle_shoot_requests(
     mut receivers: Query<(&mut MessageReceiver<ShootRequest>, Entity)>,
     mut health_query: Query<&mut Health>,
     spatial_query: SpatialQuery,
-    enemy_query: Query<Entity, With<Enemy>>,
     player_query: Query<(Entity, &ControlledBy), With<Player>>,
+    mut living_entity_kill_message_writer: MessageWriter<
+        LivingEntityKillMessage,
+    >,
 ) {
     for (mut message_receiver, remote_id) in receivers.iter_mut() {
         for message in message_receiver.receive() {
-            let excluded_entities = if message.from_enemy {
-                enemy_query.iter().collect()
-            } else {
-                match player_query
-                    .iter()
-                    .find(|(_, controlled_by)| controlled_by.owner == remote_id)
-                    .map(|(entity, _)| entity)
-                {
-                    None => vec![],
-                    Some(shooter_entity) => vec![shooter_entity],
-                }
+            let Some(shooter_entity) = player_query
+                .iter()
+                .find(|(_, controlled_by)| controlled_by.owner == remote_id)
+                .map(|i| i.0)
+            else {
+                warn!(
+                    "Received a ShootRequest but couldn't determine from \
+                     which player this came from"
+                );
+                continue;
             };
 
             let Some(first_hit) = spatial_query.cast_ray(
                 message.origin,
                 message.direction,
-                200.,
+                MAX_SHOOTING_DISTANCE,
                 false,
                 &SpatialQueryFilter::default()
-                    .with_excluded_entities(excluded_entities),
+                    .with_excluded_entities([shooter_entity]),
             ) else {
                 continue;
             };
 
             if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
                 health.0 -= 8.0;
+
+                if health.0 <= 0.0 {
+                    let entity_killed = first_hit.entity;
+                    living_entity_kill_message_writer.write(
+                        LivingEntityKillMessage {
+                            shooter_entity,
+                            entity_killed,
+                        },
+                    );
+                }
             }
         }
     }
@@ -337,9 +361,31 @@ fn handle_server_loading_state_done(
     };
 }
 
-// TODO: This doesnt work as lightyear inserts Disconnected component by default.
-// we probably just need to check for an additional component present in the entity
-// fn handle_disconnect(trigger: On<Add, Disconnected>, mut commands: Commands) {
-//     info!("Despawning client entity, Disconnected was inserted");
-//     commands.entity(trigger.entity).despawn();
-// }
+fn update_game_score_on_killed_message(
+    mut game_score: Single<&mut GameScore>,
+    mut message_reader: MessageReader<LivingEntityKillMessage>,
+) {
+    for message in message_reader.read() {
+        match game_score.living_entities.get_mut(&message.entity_killed) {
+            Some(killed_entity_score) => {
+                killed_entity_score.deaths += 1;
+            }
+            None => {
+                warn!("Failed to find killed entity in game score");
+            }
+        }
+        match game_score.living_entities.get_mut(&message.shooter_entity) {
+            Some(shooter_entity_score) => {
+                shooter_entity_score.kills += 1;
+            }
+            None => {
+                warn!(
+                    "Failed to find shooter entity in game score. Shooter \
+                     entity: {}\nEntities in game score: {:?}",
+                    message.shooter_entity,
+                    game_score.living_entities.keys()
+                );
+            }
+        }
+    }
+}

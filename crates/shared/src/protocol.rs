@@ -29,9 +29,6 @@ pub struct EntityPositionServer {
 pub struct ShootRequest {
     pub origin: Vec3,
     pub direction: Dir3,
-    /// Whether this ShootRequest is coming from an enemy. We need this as enemies dont have
-    /// "ControlledBy" component, and as such need different handling in handle_shoot_requests
-    pub from_enemy: bool,
     // pub client_tick: u32,
 }
 

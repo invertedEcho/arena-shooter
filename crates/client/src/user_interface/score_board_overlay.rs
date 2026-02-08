@@ -87,7 +87,7 @@ fn update_score_board(
 ) {
     for changed_game_score in changed_game_score {
         commands.entity(*score_board_overlay).despawn_children();
-        for player_stats in changed_game_score.players.values() {
+        for player_stats in changed_game_score.living_entities.values() {
             let res = build_score_board_list_item(
                 &player_stats.username,
                 player_stats.kills,

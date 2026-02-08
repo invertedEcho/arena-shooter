@@ -1,16 +1,18 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use lightyear::prelude::MessageSender;
 use shared::{
     components::{DespawnTimer, Health},
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
     player::Player,
-    protocol::{OrderedReliableMessageChannel, ShootRequest},
+    shooting::MAX_SHOOTING_DISTANCE,
     utils::random::get_random_number_from_range,
 };
 
-use crate::enemy::shooting::{
-    components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
+use crate::{
+    LivingEntityKillMessage,
+    enemy::shooting::{
+        components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
+    },
 };
 
 pub fn enemy_shoot_player(
@@ -22,7 +24,11 @@ pub fn enemy_shoot_player(
         Option<&EnemyShootCooldownTimer>,
     )>,
     player_transforms: Query<&Transform, With<Player>>,
-    mut message_sender_shoot_request: Single<&mut MessageSender<ShootRequest>>,
+    spatial_query: SpatialQuery,
+    mut health_query: Query<&mut Health>,
+    mut living_entity_kill_message_writer: MessageWriter<
+        LivingEntityKillMessage,
+    >,
 ) {
     for (
         enemy_entity,
@@ -84,13 +90,35 @@ pub fn enemy_shoot_player(
             continue;
         };
 
-        message_sender_shoot_request.send::<OrderedReliableMessageChannel>(
-            ShootRequest {
-                origin,
-                direction,
-                from_enemy: true,
-            },
-        );
+        let Some(first_hit) = spatial_query.cast_ray(
+            origin,
+            direction,
+            MAX_SHOOTING_DISTANCE,
+            false,
+            &SpatialQueryFilter::default()
+                .with_excluded_entities([enemy_entity]),
+        ) else {
+            return;
+        };
+
+        if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
+            health.0 -= 8.0;
+
+            if health.0 <= 0.0 {
+                let entity_killed = first_hit.entity;
+                living_entity_kill_message_writer.write(
+                    LivingEntityKillMessage {
+                        shooter_entity: enemy_entity,
+                        entity_killed,
+                    },
+                );
+            }
+        }
+
+        // FIXME: enemy should use normal messages, no need for lightyear messages
+        // message_sender_shoot_request.send::<OrderedReliableMessageChannel>(
+        //     ShootRequest { origin, direction },
+        // );
     }
 }
 

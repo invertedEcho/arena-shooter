@@ -14,6 +14,7 @@ pub mod game_score;
 pub mod messages;
 pub mod player;
 pub mod protocol;
+pub mod shooting;
 pub mod utils;
 
 #[derive(Resource, PartialEq)]
@@ -55,8 +56,6 @@ pub enum MedkitFloatDirection {
 }
 
 pub const GRAVITY: f32 = 9.81;
-
-pub const DEFAULT_BULLET_DAMAGE: f32 = 7.5;
 
 pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
 pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";

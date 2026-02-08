@@ -8,6 +8,7 @@ use shared::ServerMode;
 
 use crate::{
     game_flow::states::{AppState, InGameState, LoadingGameState},
+    player::PlayerDeathMessage,
     user_interface::main_menu::{
         MainMenuCamera, get_main_menu_camera_transform,
     },
@@ -132,5 +133,14 @@ pub fn pause_all_animations(animation_players: Query<&mut AnimationPlayer>) {
 pub fn resume_all_animations(animation_players: Query<&mut AnimationPlayer>) {
     for mut animation_player in animation_players {
         animation_player.resume_all();
+    }
+}
+
+pub fn handle_player_death_event(
+    mut message_reader: MessageReader<PlayerDeathMessage>,
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
+) {
+    for _ in message_reader.read() {
+        next_in_game_state.set(InGameState::PlayerDead);
     }
 }
