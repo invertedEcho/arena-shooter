@@ -1,5 +1,6 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use lightyear::prelude::Controlled;
 use shared::{
     GRAVITY, Medkit,
     character_controller::{
@@ -49,19 +50,19 @@ pub fn handle_keyboard_input_for_player(
         return;
     };
 
-    let mut velocity = Vec3::ZERO;
+    let mut desired_velocity = Vec3::ZERO;
 
     if keyboard_input.pressed(KeyCode::KeyW) {
-        velocity += forward_camera * speed;
+        desired_velocity += forward_camera * speed;
     }
     if keyboard_input.pressed(KeyCode::KeyA) {
-        velocity -= right * speed;
+        desired_velocity -= right * speed;
     }
     if keyboard_input.pressed(KeyCode::KeyD) {
-        velocity += right * speed;
+        desired_velocity += right * speed;
     }
     if keyboard_input.pressed(KeyCode::KeyS) {
-        velocity -= forward_camera * speed;
+        desired_velocity -= forward_camera * speed;
     }
 
     if keyboard_input.just_pressed(KeyCode::Space) {
@@ -75,7 +76,7 @@ pub fn handle_keyboard_input_for_player(
     // we always send a movementaction, so move_towards will handle deceleration, because we move
     // towards zero velocity.
     movement_action_writer.write(MovementAction {
-        desired_velocity: MovementDirection::Move(velocity),
+        desired_velocity: MovementDirection::Move(desired_velocity),
         character_controller_entity: player_entity,
         sprinting: sprint,
     });
@@ -120,7 +121,6 @@ pub fn handle_movement_actions_for_character_controllers(
                     desired_velocity,
                     max_delta * time.delta_secs(),
                 );
-                info!("New velocity: {}", new_velocity);
 
                 velocity.x = new_velocity.x;
                 velocity.z = new_velocity.z;
@@ -328,21 +328,12 @@ pub fn apply_gravity_over_time(
     }
 }
 
-// pub fn apply_movement_damping(
-//     player_query: Single<(&mut LinearVelocity, &Grounded), With<Controlled>>,
-//     keyboard_input: Res<ButtonInput<KeyCode>>,
-// ) {
-//     let moving = keyboard_input.pressed(KeyCode::KeyW)
-//         || keyboard_input.pressed(KeyCode::KeyA)
-//         || keyboard_input.pressed(KeyCode::KeyS)
-//         || keyboard_input.pressed(KeyCode::KeyD);
-//
-//     let (mut player_velocity, grounded) = player_query.into_inner();
-//     if !moving && grounded.0 {
-//         player_velocity.x *= 0.8;
-//         player_velocity.z *= 0.8;
-//     }
-// }
+pub fn zero_player_velocity(
+    mut player_velocity: Single<&mut LinearVelocity, With<Controlled>>,
+) {
+    player_velocity.x = 0.0;
+    player_velocity.z = 0.0;
+}
 
 pub fn check_above_head(
     query: Query<

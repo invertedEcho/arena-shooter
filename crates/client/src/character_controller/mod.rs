@@ -6,6 +6,7 @@ use crate::{
         apply_gravity_over_time, check_above_head,
         handle_keyboard_input_for_player,
         handle_movement_actions_for_character_controllers, update_grounded,
+        zero_player_velocity,
     },
     game_flow::states::{AppState, InGameState},
 };
@@ -24,16 +25,15 @@ impl Plugin for CharacterControllerPlugin {
                     update_grounded,
                     apply_gravity_over_time,
                     check_above_head.after(update_grounded),
+                    handle_movement_actions_for_character_controllers,
                 )
                     .run_if(in_state(AppState::InGame)),
             )
             .add_systems(
                 Update,
-                (
-                    handle_keyboard_input_for_player,
-                    handle_movement_actions_for_character_controllers,
-                )
+                (handle_keyboard_input_for_player,)
                     .run_if(in_state(InGameState::Playing)),
             );
+        app.add_systems(OnEnter(InGameState::Paused), zero_player_velocity);
     }
 }
