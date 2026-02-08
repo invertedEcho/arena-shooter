@@ -152,12 +152,22 @@ pub fn start_server(
     }
 }
 
-fn setup_game_score(mut commands: Commands) {
+// TODO: hah, this is tricky. this should only run if remote server, and if singleplayer is started,
+// and then should be despawned when we exit singleplayer game. then, when we enter
+// multiplayer, the server will send it to client
+fn setup_game_score(
+    mut commands: Commands,
+    server_mode: Res<State<ServerMode>>,
+) {
+    if *server_mode != ServerMode::RemoteServer {
+        return;
+    }
     commands.spawn((
         GameScore {
             living_entities: HashMap::new(),
         },
         Name::new("Game Score"),
+        Replicate::to_clients(NetworkTarget::All),
     ));
 }
 
@@ -216,6 +226,7 @@ fn handle_new_client(
             ))
             .id();
 
+        info!("Inserting a player into game score.living_entities");
         game_score.living_entities.insert(
             player_entity,
             LivingEntityStats {

@@ -11,6 +11,7 @@ use shared::ServerMode;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
+use shared::game_score::InitialGameScoreSyncMessage;
 use shared::player::Player;
 use shared::protocol::{
     ClientUpdatePositionMessage, EntityPositionServer,
@@ -57,6 +58,7 @@ impl Plugin for NetworkPlugin {
             (
                 send_client_update_position,
                 apply_server_position_other_clients,
+                receive_initial_game_score_sync_message,
             )
                 .run_if(in_state(ServerMode::RemoteServer)),
         );
@@ -285,5 +287,18 @@ pub fn handle_disconnect(
                 error
             );
         }
+    }
+}
+
+fn receive_initial_game_score_sync_message(
+    mut message_receiver: Single<
+        &mut MessageReceiver<InitialGameScoreSyncMessage>,
+    >,
+) {
+    for message in message_receiver.receive() {
+        info!(
+            "Received InitialGameScoreSyncMessage! {:?}",
+            message.0.living_entities
+        );
     }
 }

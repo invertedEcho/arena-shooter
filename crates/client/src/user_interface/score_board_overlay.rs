@@ -1,16 +1,6 @@
 use bevy::{color::palettes::css::BLACK, prelude::*};
 use shared::game_score::GameScore;
 
-use crate::game_flow::states::AppState;
-
-#[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
-#[source(AppState = AppState::InGame)]
-enum ScoreBoardOverlayState {
-    #[default]
-    Hidden,
-    Visible,
-}
-
 #[derive(Component)]
 struct ScoreBoardOverlay;
 
@@ -18,7 +8,6 @@ pub struct ScoreBoardOverlayPlugin;
 
 impl Plugin for ScoreBoardOverlayPlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<ScoreBoardOverlayState>();
         app.add_systems(Startup, spawn_score_board_overlay);
         app.add_systems(
             Update,
@@ -82,19 +71,18 @@ fn change_score_board_overlay_visibility(
 
 fn update_score_board(
     mut commands: Commands,
-    changed_game_score: Query<&GameScore, Changed<GameScore>>,
+    changed_game_score: Single<&GameScore, Changed<GameScore>>,
     score_board_overlay: Single<Entity, With<ScoreBoardOverlay>>,
 ) {
-    for changed_game_score in changed_game_score {
-        commands.entity(*score_board_overlay).despawn_children();
-        for player_stats in changed_game_score.living_entities.values() {
-            let res = build_score_board_list_item(
-                &player_stats.username,
-                player_stats.kills,
-                player_stats.deaths,
-            );
-            let id = commands.spawn(res).id();
-            commands.entity(*score_board_overlay).add_child(id);
-        }
+    info!("Game score has changed! Updating UI to reflect new values");
+    commands.entity(*score_board_overlay).despawn_children();
+    for player_stats in changed_game_score.living_entities.values() {
+        let res = build_score_board_list_item(
+            &player_stats.username,
+            player_stats.kills,
+            player_stats.deaths,
+        );
+        let id = commands.spawn(res).id();
+        commands.entity(*score_board_overlay).add_child(id);
     }
 }

@@ -8,6 +8,12 @@ pub struct GameScore {
     pub living_entities: HashMap<Entity, LivingEntityStats>,
 }
 
+/// This message is only sent once, when the connection between client and server is established
+/// The message gets sent from server to client, any further updates will be done via
+/// Diffable<GameScore> singleton entity.
+#[derive(Serialize, Deserialize)]
+pub struct InitialGameScoreSyncMessage(pub GameScore);
+
 #[derive(Serialize, Deserialize, PartialEq, Clone, Reflect, Default, Debug)]
 pub struct LivingEntityStats {
     pub username: String,
@@ -21,6 +27,9 @@ pub struct GameScoreDelta {
 }
 
 impl Diffable<GameScoreDelta> for GameScore {
+    // FIXME: i think this is reason why in real multiplayer, per default it will be empty. so we
+    // need a way to have initial sync for new entities. i guess we can just send a message from
+    // server to client on initial connect
     fn base_value() -> Self {
         Self {
             living_entities: HashMap::new(),

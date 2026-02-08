@@ -8,6 +8,7 @@ use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use lightyear::utils::collections::HashSet;
 use shared::SharedPlugin;
+use shared::game_score::GameScore;
 use shared::utils::auth::get_private_key;
 use shared::utils::network::{
     AUTH_BACKEND_ADDRESS_SERVER_SIDE, get_server_socket_addr_client_side,
@@ -112,5 +113,10 @@ fn main() {
         get_private_key(&ServerMode::RemoteServer),
     );
 
+    app.add_systems(Update, log_game_score);
     app.run();
+}
+
+fn log_game_score(game_score: Single<&mut GameScore>) {
+    info!("Game score: {:?}", game_score.living_entities);
 }
