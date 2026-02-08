@@ -10,6 +10,7 @@ use crate::enemy::animate::{
     },
 };
 
+mod components;
 pub mod messages;
 mod resources;
 pub mod systems;

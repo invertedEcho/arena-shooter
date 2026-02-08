@@ -6,7 +6,7 @@ use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use lightyear::netcode::ConnectToken;
 use lightyear::utils::collections::HashSet;
-use shared::NETCODE_PROTOCOL_VERSION;
+use shared::utils::network::NETCODE_PROTOCOL_VERSION;
 use tokio::io::AsyncWriteExt;
 
 /// This resource will track the list of Netcode client-ids currently in use, so that

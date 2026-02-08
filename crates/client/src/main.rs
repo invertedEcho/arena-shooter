@@ -87,7 +87,7 @@ fn main() {
             }),
     );
 
-    app.add_plugins(game_core::ServerPlugin);
+    app.add_plugins(game_core::GameCorePlugin);
 
     // lightyear plugins
     app.add_plugins(lightyear::prelude::client::ClientPlugins::default());

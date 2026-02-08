@@ -4,10 +4,9 @@ use shared::SelectedMapState;
 use crate::{
     game_flow::{
         game_mode::GameModePlugin,
-        score::GameScorePlugin,
         states::{
-            AppDebugState, AppState, ConnectionState, InGameState,
-            LoadingGameState, MainMenuState,
+            AppDebugState, AppState, InGameState, LoadingGameState,
+            MainMenuState,
         },
         systems::{
             check_collider_constructor_hierarchy_ready,
@@ -21,7 +20,6 @@ use crate::{
 };
 
 pub mod game_mode;
-pub mod score;
 pub mod states;
 pub mod systems;
 
@@ -36,7 +34,6 @@ impl Plugin for GameFlowPlugin {
             .add_sub_state::<MainMenuState>()
             .add_sub_state::<LoadingGameState>()
             .add_message::<PlayerDeathMessage>()
-            .add_plugins(GameScorePlugin)
             .add_plugins(GameModePlugin)
             .add_observer(check_collider_constructor_hierarchy_ready)
             .add_systems(

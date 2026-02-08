@@ -1,0 +1,100 @@
+use bevy::{color::palettes::css::BLACK, prelude::*};
+use shared::game_score::GameScore;
+
+use crate::game_flow::states::AppState;
+
+#[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
+#[source(AppState = AppState::InGame)]
+enum ScoreBoardOverlayState {
+    #[default]
+    Hidden,
+    Visible,
+}
+
+#[derive(Component)]
+struct ScoreBoardOverlay;
+
+pub struct ScoreBoardOverlayPlugin;
+
+impl Plugin for ScoreBoardOverlayPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_state::<ScoreBoardOverlayState>();
+        app.add_systems(Startup, spawn_score_board_overlay);
+        app.add_systems(
+            Update,
+            (change_score_board_overlay_visibility, update_score_board),
+        );
+    }
+}
+
+fn spawn_score_board_overlay(mut commands: Commands) {
+    commands.spawn((
+        Node {
+            width: percent(70.0),
+            height: percent(60.0),
+            align_self: AlignSelf::Center,
+            justify_self: JustifySelf::Center,
+            flex_direction: FlexDirection::Column,
+            padding: UiRect::all(px(16.0)),
+            row_gap: px(16.0),
+            ..default()
+        },
+        BackgroundColor(BLACK.with_alpha(0.7).into()),
+        ScoreBoardOverlay,
+        Visibility::Hidden,
+    ));
+}
+
+fn build_score_board_list_item(
+    player_name: &String,
+    kills: u64,
+    deaths: u64,
+) -> impl Bundle {
+    (
+        Node {
+            width: percent(95),
+            height: px(16.0),
+            column_gap: px(16.0),
+            justify_content: JustifyContent::SpaceBetween,
+            ..default()
+        },
+        children![
+            (Text::new(player_name)),
+            (Text::new(format!("Kills: {}", kills))),
+            (Text::new(format!("Deaths: {}", deaths)))
+        ],
+    )
+}
+
+fn change_score_board_overlay_visibility(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut next_score_board_overlay_state: Single<
+        &mut Visibility,
+        With<ScoreBoardOverlay>,
+    >,
+) {
+    if keyboard_input.just_pressed(KeyCode::Tab) {
+        **next_score_board_overlay_state = Visibility::Visible;
+    } else if keyboard_input.just_released(KeyCode::Tab) {
+        **next_score_board_overlay_state = Visibility::Hidden;
+    }
+}
+
+fn update_score_board(
+    mut commands: Commands,
+    changed_game_score: Query<&GameScore, Changed<GameScore>>,
+    score_board_overlay: Single<Entity, With<ScoreBoardOverlay>>,
+) {
+    for changed_game_score in changed_game_score {
+        commands.entity(*score_board_overlay).despawn_children();
+        for player_stats in changed_game_score.players.values() {
+            let res = build_score_board_list_item(
+                &player_stats.username,
+                player_stats.kills,
+                player_stats.deaths,
+            );
+            let id = commands.spawn(res).id();
+            commands.entity(*score_board_overlay).add_child(id);
+        }
+    }
+}

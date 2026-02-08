@@ -14,6 +14,7 @@ use shared::{
     },
     components::Health,
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
+    game_score::{GameScore, PlayerStats, get_random_unused_client_id},
     protocol::EntityPositionServer,
 };
 
@@ -54,6 +55,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
         With<EnemySpawnLocation>,
     >,
     archipelago_ref: Option<Res<ArchipelagoRef>>,
+    mut game_score: Single<&mut GameScore>,
 ) {
     for event in message_reader.read() {
         let Some(ref archipelago_ref) = archipelago_ref else {
@@ -119,6 +121,15 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                     debug!(
                         "Spawning an enemy at {}",
                         spawn_location_translation
+                    );
+
+                    let client_id = get_random_unused_client_id(&game_score);
+                    game_score.players.insert(
+                        client_id,
+                        PlayerStats {
+                            username: format!("Enemy {}", client_id),
+                            ..default()
+                        },
                     );
 
                     let enemy_entity = commands

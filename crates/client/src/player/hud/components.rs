@@ -13,12 +13,6 @@ pub struct PlayerLoadedAmmoText;
 pub struct PlayerCarriedAmmoText;
 
 #[derive(Component)]
-pub struct PlayerScoreText;
-
-#[derive(Component)]
-pub struct EnemyScoreText;
-
-#[derive(Component)]
 pub struct CurrentWaveText;
 
 #[derive(Component)]

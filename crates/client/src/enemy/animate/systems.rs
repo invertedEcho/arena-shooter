@@ -2,13 +2,14 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 use shared::{
-    components::{AnimationPlayerEntityPointer, Health},
+    components::Health,
     enemy::components::{Enemy, EnemyState},
 };
 
 use crate::enemy::animate::{
     ENEMY_MODEL_NAME, ENEMY_MODEL_PATH, EnemyAnimationType,
-    TOTAL_ENEMY_MODEL_ANIMATIONS, get_animation_index_for_enemy_animation_type,
+    TOTAL_ENEMY_MODEL_ANIMATIONS, components::AnimationPlayerEntityPointer,
+    get_animation_index_for_enemy_animation_type,
     get_animation_type_for_enemy_state, messages::PlayEnemyAnimationMessage,
     resources::EnemyAnimations,
 };

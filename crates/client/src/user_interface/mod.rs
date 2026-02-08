@@ -6,6 +6,7 @@ use crate::user_interface::{
     game_mode_selection::GameModeSelectionUIPlugin,
     loading_screen::LoadingScreenPlugin, main_menu::MainMenuPlugin,
     map_selection::MapSelectionPlugin, pause_menu::PauseMenuPlugin,
+    score_board_overlay::ScoreBoardOverlayPlugin,
     settings_menu::SettingsMenuPlugin,
 };
 
@@ -17,6 +18,7 @@ mod loading_screen;
 pub mod main_menu;
 mod map_selection;
 mod pause_menu;
+mod score_board_overlay;
 mod settings_menu;
 mod widgets;
 
@@ -32,6 +34,7 @@ impl Plugin for UserInterfacePlugin {
             .add_plugins(GameModeSelectionUIPlugin)
             .add_plugins(MapSelectionPlugin)
             .add_plugins(DisconnectScreenPlugin)
-            .add_plugins(LoadingScreenPlugin);
+            .add_plugins(LoadingScreenPlugin)
+            .add_plugins(ScoreBoardOverlayPlugin);
     }
 }

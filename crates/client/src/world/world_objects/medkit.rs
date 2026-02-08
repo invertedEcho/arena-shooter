@@ -3,7 +3,7 @@ use std::time::Duration;
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use shared::{
-    FloatDirection, Medkit,
+    Medkit, MedkitFloatDirection,
     components::{Health, MedkitSpawnLocation},
     player::{DEFAULT_PLAYER_HEALTH, Player},
 };
@@ -35,7 +35,7 @@ pub fn spawn_medkits(
             SceneRoot(medkit_model),
             Collider::cuboid(0.2, 0.2, 0.2),
             Medkit {
-                float_direction: FloatDirection::Down,
+                float_direction: MedkitFloatDirection::Down,
                 health_to_give: DEFAULT_HEALTH_TO_GIVE_MEDKIT,
                 active: true,
                 respawn_timer: Timer::new(
@@ -61,16 +61,16 @@ pub fn rotate_and_float_medkits(
         let current_y = medkit_transform.translation.y;
 
         match medkit.float_direction {
-            FloatDirection::Down => {
+            MedkitFloatDirection::Down => {
                 medkit_transform.translation.y -= 0.2 * time.delta_secs();
                 if ORIGIN_Y - current_y > 0.1 {
-                    medkit.float_direction = FloatDirection::Up;
+                    medkit.float_direction = MedkitFloatDirection::Up;
                 }
             }
-            FloatDirection::Up => {
+            MedkitFloatDirection::Up => {
                 medkit_transform.translation.y += 0.2 * time.delta_secs();
                 if current_y - ORIGIN_Y > 0.1 {
-                    medkit.float_direction = FloatDirection::Down;
+                    medkit.float_direction = MedkitFloatDirection::Down;
                 }
             }
         }

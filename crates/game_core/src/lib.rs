@@ -1,7 +1,9 @@
 use std::time::Duration;
 
 use avian3d::prelude::*;
-use bevy::{color::palettes::css::WHITE, prelude::*};
+use bevy::{
+    color::palettes::css::WHITE, platform::collections::HashMap, prelude::*,
+};
 use lightyear::{
     netcode::NetcodeServer,
     prelude::{
@@ -10,17 +12,23 @@ use lightyear::{
     },
 };
 use shared::{
-    GameModeServer, NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_REMOTE_SERVER,
-    SERVER_SOCKET_ADDR_SINGLEPLAYER, ServerMode, ServerRunMode,
+    GameModeServer, ServerMode, ServerRunMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
     components::Health,
     enemy::components::Enemy,
-    get_private_key,
+    game_score::{GameScore, PlayerStats},
     player::{Player, PlayerBundle},
     protocol::{
         ClientUpdatePositionMessage, EntityPositionServer, ShootRequest,
+    },
+    utils::{
+        auth::get_private_key,
+        network::{
+            NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_REMOTE_SERVER,
+            SERVER_SOCKET_ADDR_SINGLEPLAYER,
+        },
     },
 };
 
@@ -56,9 +64,9 @@ pub struct GameStateWave {
 
 /// This plugin adds all plugins & systems that need to run on the server, regardless if its for
 /// the server binary or the local server that gets started for Singleplayer.
-pub struct ServerPlugin;
+pub struct GameCorePlugin;
 
-impl Plugin for ServerPlugin {
+impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<ServerLoadingState>();
 
@@ -69,6 +77,7 @@ impl Plugin for ServerPlugin {
         app.add_plugins(GameFlowPlugin);
 
         app.add_systems(Startup, start_server);
+        app.add_systems(Startup, setup_game_score);
 
         app.add_systems(
             Update,
@@ -130,6 +139,15 @@ pub fn start_server(
     }
 }
 
+fn setup_game_score(mut commands: Commands) {
+    commands.spawn((
+        GameScore {
+            players: HashMap::new(),
+        },
+        Name::new("Game Score"),
+    ));
+}
+
 fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
     commands
         .entity(trigger.entity)
@@ -147,6 +165,7 @@ fn handle_new_client(
     materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,
     server_mode: Res<State<ServerMode>>,
+    mut game_score: Single<&mut GameScore>,
 ) {
     if let Ok(remote_id) = clients_query.get(trigger.entity) {
         let client_id = remote_id.0;
@@ -154,6 +173,14 @@ fn handle_new_client(
             "Spawning a player for fully connected Client entity: {} | \
              client_id: {}",
             trigger.entity, client_id
+        );
+
+        game_score.players.insert(
+            client_id.to_bits(),
+            PlayerStats {
+                username: format!("Player {}", client_id.to_bits()),
+                ..default()
+            },
         );
 
         // NOTE: The replicate component gets inserted into the player entity, but only registered
