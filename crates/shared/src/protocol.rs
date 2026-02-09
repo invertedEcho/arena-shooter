@@ -6,7 +6,7 @@ use crate::{
     GameModeServer,
     components::Health,
     enemy::components::{Enemy, EnemyState},
-    game_score::{GameScore, InitialGameScoreSyncMessage},
+    game_score::GameScore,
     player::Player,
 };
 
@@ -66,7 +66,6 @@ impl Plugin for ProtocolPlugin {
         app.register_component::<GameModeServer>();
 
         app.register_component::<GameScore>();
-        // app.register_message::<InitialGameScoreSyncMessage>();
 
         // FIXME: medkit should be spawned on server, replicated to clients, and only clients
         // visually rotate them

@@ -159,7 +159,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                         ))
                         .id();
 
-                    game_score.living_entities.insert(
+                    game_score.enemies.insert(
                         enemy_entity,
                         LivingEntityStats {
                             username: format!("Enemy {}", enemy_entity),

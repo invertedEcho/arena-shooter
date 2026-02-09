@@ -86,20 +86,24 @@ impl Plugin for GameCorePlugin {
         app.add_plugins(GameFlowPlugin);
 
         app.add_systems(Startup, start_server);
-        app.add_systems(Startup, setup_game_score);
 
         app.add_systems(
             Update,
             (
                 handle_shoot_requests,
                 receive_client_update_position,
-                update_game_score_on_killed_message,
+                // update_game_score_on_killed_message,
             ),
         );
 
         app.add_systems(
             OnEnter(ServerLoadingState::Done),
             handle_server_loading_state_done,
+        );
+
+        app.add_systems(
+            OnEnter(ServerLoadingState::MapSpawned),
+            setup_game_score,
         );
 
         app.add_observer(handle_new_connection);
@@ -115,7 +119,6 @@ pub fn start_server(
     let entity_name = match server_mode.get() {
         ServerMode::LocalServerSinglePlayer => "Local Server for singleplayer",
         ServerMode::RemoteServer => "Server from server Binary",
-        ServerMode::None => "Server None",
     };
 
     let local_addr =
@@ -152,22 +155,21 @@ pub fn start_server(
     }
 }
 
-// TODO: hah, this is tricky. this should only run if remote server, and if singleplayer is started,
-// and then should be despawned when we exit singleplayer game. then, when we enter
-// multiplayer, the server will send it to client
 fn setup_game_score(
     mut commands: Commands,
     server_mode: Res<State<ServerMode>>,
 ) {
-    if *server_mode != ServerMode::RemoteServer {
+    // if RemoteServer, GameScore was already setup by MultiplayerServerOnlyPlugin.
+    if *server_mode == ServerMode::RemoteServer {
         return;
     }
+
     commands.spawn((
         GameScore {
-            living_entities: HashMap::new(),
+            players: HashMap::new(),
+            enemies: HashMap::new(),
         },
         Name::new("Game Score"),
-        Replicate::to_clients(NetworkTarget::All),
     ));
 }
 
@@ -188,14 +190,13 @@ fn handle_new_client(
     materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,
     server_mode: Res<State<ServerMode>>,
-    mut game_score: Single<&mut GameScore>,
 ) {
     if let Ok(remote_id) = clients_query.get(trigger.entity) {
-        let client_id = remote_id.0;
+        let peer_id = remote_id.0;
         info!(
             "Spawning a player for fully connected Client entity: {} | \
-             client_id: {}",
-            trigger.entity, client_id
+             peer_id: {}",
+            trigger.entity, peer_id
         );
 
         // NOTE: The replicate component gets inserted into the player entity, but only registered
@@ -226,15 +227,6 @@ fn handle_new_client(
             ))
             .id();
 
-        info!("Inserting a player into game score.living_entities");
-        game_score.living_entities.insert(
-            player_entity,
-            LivingEntityStats {
-                username: format!("Player {}", trigger.entity),
-                ..default()
-            },
-        );
-
         if *server_mode == ServerMode::RemoteServer {
             // on headless setup, materials doesnt exist
             if let Some(mut materials) = materials {
@@ -255,6 +247,21 @@ fn handle_new_client(
         }
     }
 }
+
+// fn on_game_score_add(
+//     trigger: On<Add, GameScore>,
+//     mut game_score: Single<&mut GameScore>,
+//     players: Query<Entity, With<Player>>,
+//     enemies: Query<Entity, With<Enemy>>
+// ) {
+//     info!("Game Score was added, adding any existing players and enemies to it");
+//     for player in players {
+//         game_score.players.insert(player, v)
+//     }
+//     for enemy in enemies {
+//
+//     }
+// }
 
 /// This systems receives a message from clients, that their position has changed.
 /// The server will then apply it to the `PlayerPositionServer` component, which then gets
@@ -289,6 +296,7 @@ fn receive_client_update_position(
 }
 
 fn handle_shoot_requests(
+    mut commands: Commands,
     mut receivers: Query<(&mut MessageReceiver<ShootRequest>, Entity)>,
     mut health_query: Query<&mut Health>,
     spatial_query: SpatialQuery,
@@ -296,9 +304,11 @@ fn handle_shoot_requests(
     mut living_entity_kill_message_writer: MessageWriter<
         LivingEntityKillMessage,
     >,
+    mut game_score: Single<&mut GameScore>,
 ) {
     for (mut message_receiver, remote_id) in receivers.iter_mut() {
         for message in message_receiver.receive() {
+            commands.entity(remote_id).log_components();
             let Some(shooter_entity) = player_query
                 .iter()
                 .find(|(_, controlled_by)| controlled_by.owner == remote_id)
@@ -372,31 +382,31 @@ fn handle_server_loading_state_done(
     };
 }
 
-fn update_game_score_on_killed_message(
-    mut game_score: Single<&mut GameScore>,
-    mut message_reader: MessageReader<LivingEntityKillMessage>,
-) {
-    for message in message_reader.read() {
-        match game_score.living_entities.get_mut(&message.entity_killed) {
-            Some(killed_entity_score) => {
-                killed_entity_score.deaths += 1;
-            }
-            None => {
-                warn!("Failed to find killed entity in game score");
-            }
-        }
-        match game_score.living_entities.get_mut(&message.shooter_entity) {
-            Some(shooter_entity_score) => {
-                shooter_entity_score.kills += 1;
-            }
-            None => {
-                warn!(
-                    "Failed to find shooter entity in game score. Shooter \
-                     entity: {}\nEntities in game score: {:?}",
-                    message.shooter_entity,
-                    game_score.living_entities.keys()
-                );
-            }
-        }
-    }
-}
+// fn update_game_score_on_killed_message(
+//     mut game_score: Single<&mut GameScore>,
+//     mut message_reader: MessageReader<LivingEntityKillMessage>,
+// ) {
+//     for message in message_reader.read() {
+//         match game_score.living_entities.get_mut(&message.entity_killed) {
+//             Some(killed_entity_score) => {
+//                 killed_entity_score.deaths += 1;
+//             }
+//             None => {
+//                 warn!("Failed to find killed entity in game score");
+//             }
+//         }
+//         match game_score.living_entities.get_mut(&message.shooter_entity) {
+//             Some(shooter_entity_score) => {
+//                 shooter_entity_score.kills += 1;
+//             }
+//             None => {
+//                 warn!(
+//                     "Failed to find shooter entity in game score. Shooter \
+//                      entity: {}\nEntities in game score: {:?}",
+//                     message.shooter_entity,
+//                     game_score.living_entities.keys()
+//                 );
+//             }
+//         }
+//     }
+// }

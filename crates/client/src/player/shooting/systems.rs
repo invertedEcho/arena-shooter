@@ -9,7 +9,6 @@ use shared::{
 };
 
 use crate::{
-    game_flow::states::InGameState,
     particles::{BulletImpactEffectVariant, SpawnBulletImpactEffectMessage},
     player::{
         Player, PlayerDeathMessage,

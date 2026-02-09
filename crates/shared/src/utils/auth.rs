@@ -33,6 +33,5 @@ pub fn get_private_key(server_mode: &ServerMode) -> [u8; 32] {
     match server_mode {
         ServerMode::RemoteServer => load_private_key_from_env().unwrap(),
         ServerMode::LocalServerSinglePlayer => LOCAL_SERVER_PRIVATE_KEY,
-        ServerMode::None => LOCAL_SERVER_PRIVATE_KEY,
     }
 }

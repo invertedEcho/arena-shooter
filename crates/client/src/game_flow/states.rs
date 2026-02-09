@@ -11,19 +11,19 @@ pub enum AppState {
     Disconnected,
 }
 
-/// The current loading state of a new game.
+/// The current loading state of the client.
 /// Note that upon entering each of these states, the corresponding
 /// systems will be run, e.g. SpawningMap state will spawn the map
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[source(AppState = AppState::LoadingGame)]
-pub enum LoadingGameState {
+pub enum ClientLoadingState {
     #[default]
     ConnectingToServer,
     SpawningMap,
     SpawningColliders,
 }
 
-impl Display for LoadingGameState {
+impl Display for ClientLoadingState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::SpawningMap => f.write_str("Spawning the map"),
@@ -63,12 +63,4 @@ pub enum ConnectionState {
     Connecting,
     Connected,
     Disconnected,
-}
-
-#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
-#[states(scoped_entities)]
-pub enum AppDebugState {
-    #[default]
-    DebugVisible,
-    DebugHidden,
 }

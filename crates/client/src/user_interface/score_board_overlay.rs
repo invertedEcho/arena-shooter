@@ -1,5 +1,6 @@
 use bevy::{color::palettes::css::BLACK, prelude::*};
-use shared::game_score::GameScore;
+use lightyear::prelude::Controlled;
+use shared::{game_score::GameScore, player::Player};
 
 #[derive(Component)]
 struct ScoreBoardOverlay;
@@ -73,16 +74,22 @@ fn update_score_board(
     mut commands: Commands,
     changed_game_score: Single<&GameScore, Changed<GameScore>>,
     score_board_overlay: Single<Entity, With<ScoreBoardOverlay>>,
+    player: Single<Entity, (With<Player>, With<Controlled>)>,
 ) {
-    info!("Game score has changed! Updating UI to reflect new values");
-    commands.entity(*score_board_overlay).despawn_children();
-    for player_stats in changed_game_score.living_entities.values() {
-        let res = build_score_board_list_item(
-            &player_stats.username,
-            player_stats.kills,
-            player_stats.deaths,
-        );
-        let id = commands.spawn(res).id();
-        commands.entity(*score_board_overlay).add_child(id);
-    }
+    // info!("Game score has changed! Updating UI to reflect new values");
+    // commands.entity(*score_board_overlay).despawn_children();
+    // for (entity, player_stats) in &changed_game_score.living_entities {
+    //     let username = if *entity == *player {
+    //         &format!("{} (You)", player_stats.username)
+    //     } else {
+    //         &player_stats.username
+    //     };
+    //     let res = build_score_board_list_item(
+    //         username,
+    //         player_stats.kills,
+    //         player_stats.deaths,
+    //     );
+    //     let id = commands.spawn(res).id();
+    //     commands.entity(*score_board_overlay).add_child(id);
+    // }
 }

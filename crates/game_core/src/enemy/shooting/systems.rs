@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use shared::{
     components::{DespawnTimer, Health},
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
+    game_score::{self, GameScore},
     player::Player,
     shooting::MAX_SHOOTING_DISTANCE,
     utils::random::get_random_number_from_range,
@@ -114,11 +115,6 @@ pub fn enemy_shoot_player(
                 );
             }
         }
-
-        // FIXME: enemy should use normal messages, no need for lightyear messages
-        // message_sender_shoot_request.send::<OrderedReliableMessageChannel>(
-        //     ShootRequest { origin, direction },
-        // );
     }
 }
 
@@ -157,6 +153,7 @@ pub fn handle_enemy_killed_message(
         &mut EnemyState,
         &mut EnemyLastStateUpdate,
     )>,
+    mut game_score: Single<&mut GameScore>,
 ) {
     for message in message_reader.read() {
         let Some((enemy_entity, mut enemy_state, mut enemy_last_state_update)) =
@@ -179,5 +176,7 @@ pub fn handle_enemy_killed_message(
             .remove::<RigidBody>()
             .remove::<Collider>()
             .insert(DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)));
+
+        game_score.enemies.remove(&enemy_entity);
     }
 }

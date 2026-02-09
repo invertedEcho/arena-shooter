@@ -7,7 +7,7 @@ use game_core::ServerLoadingState;
 use shared::ServerMode;
 
 use crate::{
-    game_flow::states::{AppState, InGameState, LoadingGameState},
+    game_flow::states::{AppState, ClientLoadingState, InGameState},
     player::PlayerDeathMessage,
     user_interface::main_menu::{
         MainMenuCamera, get_main_menu_camera_transform,
@@ -91,7 +91,7 @@ pub fn spawn_main_menu_camera(
 pub fn check_world_scene_loaded(
     mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
     maybe_world_scene_handle: Option<Res<WorldSceneHandle>>,
-    mut next_game_loading_state: ResMut<NextState<LoadingGameState>>,
+    mut next_game_loading_state: ResMut<NextState<ClientLoadingState>>,
     mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
 ) {
     for asset_event in asset_event_message_reader.read() {
@@ -103,7 +103,7 @@ pub fn check_world_scene_loaded(
                 "Map fully spawned, setting LoadingGameSubState to \
                  SpawningColliders"
             );
-            next_game_loading_state.set(LoadingGameState::SpawningColliders);
+            next_game_loading_state.set(ClientLoadingState::SpawningColliders);
             next_server_loading_state.set(ServerLoadingState::MapSpawned);
         }
     }
@@ -117,9 +117,14 @@ pub fn check_collider_constructor_hierarchy_ready(
     server_mode: Res<State<ServerMode>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
+    info!("ColliderConstructorHierarchyReady! setting AppState to InGame");
     next_app_state.set(AppState::InGame);
 
     if *server_mode == ServerMode::LocalServerSinglePlayer {
+        info!(
+            "We have LocalServerSinglePlayer, so we set serverloadingstate to \
+             CollidersSpawned"
+        );
         next_server_loading_state.set(ServerLoadingState::CollidersSpawned);
     }
 }

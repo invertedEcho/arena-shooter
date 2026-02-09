@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_flow::states::{AppState, LoadingGameState},
+    game_flow::states::{AppState, ClientLoadingState},
     user_interface::{
         common::{DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP},
         widgets::button::build_common_button,
@@ -18,7 +18,7 @@ impl Plugin for LoadingScreenPlugin {
             Update,
             (
                 update_loading_state_text
-                    .run_if(state_changed::<LoadingGameState>),
+                    .run_if(state_changed::<ClientLoadingState>),
                 handle_loading_screen_button_pressed,
             ),
         );
@@ -68,7 +68,7 @@ pub fn spawn_loading_screen(
 }
 
 fn update_loading_state_text(
-    loading_state: Res<State<LoadingGameState>>,
+    loading_state: Res<State<ClientLoadingState>>,
     mut loading_state_text: Single<&mut Text, With<LoadingStateText>>,
 ) {
     let loading_state = loading_state.get();

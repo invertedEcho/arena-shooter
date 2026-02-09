@@ -2,10 +2,12 @@ use std::sync::{Arc, RwLock};
 
 use bevy::log::LogPlugin;
 use bevy::mesh::MeshPlugin;
+use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 use bevy::state::app::StatesPlugin;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use lightyear::prelude::*;
 use lightyear::utils::collections::HashSet;
 use shared::SharedPlugin;
 use shared::game_score::GameScore;
@@ -40,7 +42,7 @@ impl Plugin for HeadlessServerPlugin {
     }
 }
 
-/// This plugin adds all plugins from bevy necessary to start a headless server
+/// This plugin adds all plugins from bevy necessary to start a headful server
 pub struct HeadfulServerPlugin;
 
 impl Plugin for HeadfulServerPlugin {
@@ -62,9 +64,21 @@ pub struct MultiPlayerServerOnlyPlugin;
 
 impl Plugin for MultiPlayerServerOnlyPlugin {
     fn build(&self, app: &mut App) {
-        // if we would add sharedplugin in ServerPlugin, it would already be added by client
+        // if we would add SharedPlugin in GameCorePlugin, it would already be added by client
         app.add_plugins(SharedPlugin);
+        app.add_systems(Startup, setup_game_score);
     }
+}
+
+fn setup_game_score(mut commands: Commands) {
+    commands.spawn((
+        GameScore {
+            players: HashMap::new(),
+            enemies: HashMap::new(),
+        },
+        Name::new("Game Score"),
+        Replicate::to_clients(NetworkTarget::All),
+    ));
 }
 
 fn main() {

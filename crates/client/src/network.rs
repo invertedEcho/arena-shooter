@@ -11,7 +11,6 @@ use shared::ServerMode;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
-use shared::game_score::InitialGameScoreSyncMessage;
 use shared::player::Player;
 use shared::protocol::{
     ClientUpdatePositionMessage, EntityPositionServer,
@@ -31,7 +30,7 @@ use crate::auth::{
 };
 use crate::character_controller::components::CharacterControllerBundle;
 use crate::game_flow::game_mode::GameModeClient;
-use crate::game_flow::states::{AppState, ConnectionState, LoadingGameState};
+use crate::game_flow::states::{AppState, ClientLoadingState, ConnectionState};
 
 const CLIENT_PORT: u16 = 0;
 
@@ -45,7 +44,7 @@ impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<ConnectionState>();
         app.add_systems(
-            OnEnter(LoadingGameState::ConnectingToServer),
+            OnEnter(ClientLoadingState::ConnectingToServer),
             on_enter_connecting_to_server,
         );
         app.add_systems(
@@ -58,7 +57,6 @@ impl Plugin for NetworkPlugin {
             (
                 send_client_update_position,
                 apply_server_position_other_clients,
-                receive_initial_game_score_sync_message,
             )
                 .run_if(in_state(ServerMode::RemoteServer)),
         );
@@ -153,10 +151,10 @@ pub fn on_enter_connecting_to_server(
 
 fn handle_connected(
     _trigger: On<Add, Connected>,
-    mut next_loading_game_state: ResMut<NextState<LoadingGameState>>,
+    mut next_loading_game_state: ResMut<NextState<ClientLoadingState>>,
 ) {
     debug!("Connected to server, setting LoadingGameState to SpawningMap");
-    next_loading_game_state.set(LoadingGameState::SpawningMap);
+    next_loading_game_state.set(ClientLoadingState::SpawningMap);
 }
 
 fn handle_new_player(
@@ -287,18 +285,5 @@ pub fn handle_disconnect(
                 error
             );
         }
-    }
-}
-
-fn receive_initial_game_score_sync_message(
-    mut message_receiver: Single<
-        &mut MessageReceiver<InitialGameScoreSyncMessage>,
-    >,
-) {
-    for message in message_receiver.receive() {
-        info!(
-            "Received InitialGameScoreSyncMessage! {:?}",
-            message.0.living_entities
-        );
     }
 }

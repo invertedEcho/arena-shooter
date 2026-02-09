@@ -25,10 +25,8 @@ pub enum ServerRunMode {
 
 /// A resource existing to know whether we are using a remote server to connect to,
 /// or a local server is started, e.g. for singleplayer
-#[derive(States, PartialEq, Default, Debug, Hash, Clone, Eq)]
+#[derive(States, PartialEq, Debug, Hash, Clone, Eq)]
 pub enum ServerMode {
-    #[default]
-    None,
     RemoteServer,
     LocalServerSinglePlayer,
 }
