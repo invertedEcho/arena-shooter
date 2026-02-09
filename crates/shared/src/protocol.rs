@@ -40,13 +40,13 @@ impl Plugin for ProtocolPlugin {
             mode: ChannelMode::SequencedUnreliable,
             ..default()
         })
-        .add_direction(NetworkDirection::ClientToServer);
+        .add_direction(NetworkDirection::Bidirectional);
 
         app.add_channel::<OrderedReliableChannel>(ChannelSettings {
             mode: ChannelMode::OrderedReliable(ReliableSettings::default()),
             ..default()
         })
-        .add_direction(NetworkDirection::ClientToServer);
+        .add_direction(NetworkDirection::Bidirectional);
 
         app.register_message::<ClientUpdatePositionMessage>()
             .add_direction(NetworkDirection::ClientToServer);
