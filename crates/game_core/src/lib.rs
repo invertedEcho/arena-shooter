@@ -285,7 +285,6 @@ fn handle_shoot_requests(
 ) {
     for (mut message_receiver, client_entity, remote_id) in receivers {
         for message in message_receiver.receive() {
-            commands.entity(client_entity).log_components();
             let Some(shooter_entity) = player_query
                 .iter()
                 .find(|(_, controlled_by)| controlled_by.owner == client_entity)
@@ -374,12 +373,13 @@ fn handle_server_loading_state_done(
 }
 
 fn handle_client_respawn_requests(
+    mut commands: Commands,
     receivers: Query<(
         &mut MessageReceiver<ClientRespawnRequest>,
         &ControlledByRemote,
         &RemoteId,
     )>,
-    mut player_query: Query<(&mut Health, &mut EntityPositionServer)>,
+    mut player_query: Query<(Entity, &mut Health, &mut EntityPositionServer)>,
     mut server_multi_message_sender: ServerMultiMessageSender,
     server: Single<&Server>,
 ) {
@@ -389,10 +389,19 @@ fn handle_client_respawn_requests(
             match controlled_by.iter().next() {
                 Some(controlling_player) => {
                     match player_query.get_mut(controlling_player) {
-                        Ok((mut player_health, mut entity_position_server)) => {
+                        Ok((
+                            player_entity,
+                            mut player_health,
+                            mut entity_position_server,
+                        )) => {
                             player_health.0 = DEFAULT_PLAYER_HEALTH;
                             entity_position_server.translation =
                                 SPAWN_POINT_MEDIUM_PLASTIC_MAP;
+
+                            commands
+                                .entity(player_entity)
+                                .remove::<ColliderDisabled>();
+
                             server_multi_message_sender
                                 .send::<ConfirmRespawn, OrderedReliableChannel>(
                                     &ConfirmRespawn,
