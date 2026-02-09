@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
     Component, Serialize, Deserialize, PartialEq, Clone, Reflect, Debug,
 )]
 pub struct GameScore {
-    // for players, we use the PeerId converted into bits as entities will differ on client and server
+    // for players, we use remote_id converted into bits (remote_id.to_bits()) as entities will differ on client and server
     pub players: HashMap<u64, LivingEntityStats>,
     // as enemies only exists in singleplayer, we can just use Entity
     pub enemies: HashMap<Entity, LivingEntityStats>,

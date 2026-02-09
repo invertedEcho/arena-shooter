@@ -274,18 +274,23 @@ fn receive_client_update_position(
 
 fn handle_shoot_requests(
     mut commands: Commands,
-    mut receivers: Query<(&mut MessageReceiver<ShootRequest>, Entity)>,
+    mut receivers: Query<(
+        &mut MessageReceiver<ShootRequest>,
+        Entity,
+        &RemoteId,
+    )>,
     mut health_query: Query<&mut Health>,
     spatial_query: SpatialQuery,
     player_query: Query<(Entity, &ControlledBy), With<Player>>,
     mut game_score: Single<&mut GameScore>,
 ) {
-    for (mut message_receiver, remote_id) in receivers.iter_mut() {
+    for (mut message_receiver, client_entity, remote_id) in receivers.iter_mut()
+    {
         for message in message_receiver.receive() {
-            commands.entity(remote_id).log_components();
+            commands.entity(client_entity).log_components();
             let Some(shooter_entity) = player_query
                 .iter()
-                .find(|(_, controlled_by)| controlled_by.owner == remote_id)
+                .find(|(_, controlled_by)| controlled_by.owner == client_entity)
                 .map(|i| i.0)
             else {
                 warn!(
@@ -312,6 +317,24 @@ fn handle_shoot_requests(
                 // FIXME: increase death of entity_killed and increase kills of shooter_entity
                 if health.0 <= 0.0 {
                     let entity_killed = first_hit.entity;
+                    match game_score.players.get_mut(&remote_id.to_bits()) {
+                        Some(player) => {
+                            info!(
+                                "increased kill count of player with \
+                                 remote_id: {}",
+                                remote_id.to_bits()
+                            );
+                            player.kills += 1;
+                        }
+                        None => {
+                            warn!(
+                                "Failed to find player in game score by \
+                                 remote_id {}\nGame score: {:?}",
+                                remote_id.to_bits(),
+                                *game_score
+                            )
+                        }
+                    }
                 }
             }
         }
