@@ -23,6 +23,7 @@ pub struct StartGameModeMessage {
     pub restart: bool,
 }
 
+// The current game mode on the client
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default, Copy)]
 pub enum GameModeClient {
     #[default]

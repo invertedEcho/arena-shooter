@@ -48,6 +48,16 @@ pub struct Medkit {
     pub respawn_timer: Timer,
 }
 
+// A client can send this message to the server indicating that the player requested a respawn.
+// The server will then update the players health and the players position.
+#[derive(Serialize, Deserialize)]
+pub struct ClientRespawnRequest;
+
+// The server will send this message to the client that the respawn was made and the client can now
+// update internal state, such as `InGameState`.
+#[derive(Serialize, Deserialize)]
+pub struct ConfirmRespawn;
+
 pub enum MedkitFloatDirection {
     Up,
     Down,

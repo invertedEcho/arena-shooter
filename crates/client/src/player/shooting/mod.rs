@@ -9,8 +9,8 @@ use crate::{
         },
         systems::{
             add_player_weapons_to_new_players, check_if_player_dead,
-            handle_blood_screen_effect, handle_change_weapon_slot_cooldown,
-            handle_input, handle_player_weapon_reload_timer,
+            handle_change_weapon_slot_cooldown, handle_input,
+            handle_player_weapon_reload_timer,
             handle_reload_player_weapon_message, handle_weapon_slot_change,
             reset_aim_type_on_pause, send_shoot_request_on_weapon_fired,
             spawn_bullet_impact_particle_on_weapon_fired,
@@ -38,7 +38,6 @@ impl Plugin for PlayerShootingPlugin {
                 (
                     handle_input,
                     tick_player_weapon_shoot_cooldown_timer,
-                    handle_blood_screen_effect,
                     handle_reload_player_weapon_message,
                     spawn_bullet_impact_particle_on_weapon_fired,
                     add_player_weapons_to_new_players,

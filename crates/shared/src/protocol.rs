@@ -3,14 +3,14 @@ use lightyear::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    GameModeServer,
+    ClientRespawnRequest, ConfirmRespawn, GameModeServer,
     components::Health,
     enemy::components::{Enemy, EnemyState},
     game_score::GameScore,
     player::Player,
 };
 
-pub struct OrderedReliableMessageChannel;
+pub struct OrderedReliableChannel;
 pub struct SequencedUnreliableChannel;
 
 #[derive(Serialize, Deserialize)]
@@ -42,7 +42,7 @@ impl Plugin for ProtocolPlugin {
         })
         .add_direction(NetworkDirection::ClientToServer);
 
-        app.add_channel::<OrderedReliableMessageChannel>(ChannelSettings {
+        app.add_channel::<OrderedReliableChannel>(ChannelSettings {
             mode: ChannelMode::OrderedReliable(ReliableSettings::default()),
             ..default()
         })
@@ -53,6 +53,11 @@ impl Plugin for ProtocolPlugin {
 
         app.register_message::<ShootRequest>()
             .add_direction(NetworkDirection::ClientToServer);
+
+        app.register_message::<ClientRespawnRequest>()
+            .add_direction(NetworkDirection::ClientToServer);
+        app.register_message::<ConfirmRespawn>()
+            .add_direction(NetworkDirection::ServerToClient);
 
         app.register_component::<Player>();
 

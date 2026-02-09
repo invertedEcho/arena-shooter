@@ -132,10 +132,6 @@ fn main() {
     app.run();
 }
 
-fn log_game_score(game_score: Single<&mut GameScore>) {
-    info!("Game score: {:?}", *game_score);
-}
-
 fn add_new_player_to_game_score(
     trigger: On<Add, Connected>,
     clients_query: Query<&RemoteId, With<ClientOf>>,

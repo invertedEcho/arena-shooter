@@ -7,14 +7,12 @@ use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
-use shared::ServerMode;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
 use shared::player::Player;
 use shared::protocol::{
-    ClientUpdatePositionMessage, EntityPositionServer,
-    OrderedReliableMessageChannel,
+    ClientUpdatePositionMessage, EntityPositionServer, OrderedReliableChannel,
 };
 use shared::utils::lightyear::{
     DisconnectReason, parse_lightyear_disconnect_reason,
@@ -23,6 +21,7 @@ use shared::utils::network::{
     SERVER_PORT, get_auth_backend_socket_addr_client_side,
     get_server_socket_addr_client_side,
 };
+use shared::{ConfirmRespawn, ServerMode};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,
@@ -30,7 +29,9 @@ use crate::auth::{
 };
 use crate::character_controller::components::CharacterControllerBundle;
 use crate::game_flow::game_mode::GameModeClient;
-use crate::game_flow::states::{AppState, ClientLoadingState, ConnectionState};
+use crate::game_flow::states::{
+    AppState, ClientLoadingState, ConnectionState, InGameState,
+};
 
 const CLIENT_PORT: u16 = 0;
 
@@ -60,6 +61,7 @@ impl Plugin for NetworkPlugin {
             )
                 .run_if(in_state(ServerMode::RemoteServer)),
         );
+        app.add_systems(Update, handle_confirm_respawn_message);
         app.add_observer(handle_new_player);
         app.add_observer(handle_connected);
         app.add_observer(handle_disconnect);
@@ -211,7 +213,7 @@ pub fn send_client_update_position(
     >,
     player_transform: Single<&Transform, (With<Player>, With<Controlled>)>,
 ) {
-    message_sender.send::<OrderedReliableMessageChannel>(
+    message_sender.send::<OrderedReliableChannel>(
         ClientUpdatePositionMessage {
             new_translation: player_transform.translation,
         },
@@ -285,5 +287,15 @@ pub fn handle_disconnect(
                 error
             );
         }
+    }
+}
+
+pub fn handle_confirm_respawn_message(
+    mut message_receiver: Single<&mut MessageReceiver<ConfirmRespawn>>,
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
+) {
+    for _ in message_receiver.receive() {
+        info!("Respawn request was confirmed by server!");
+        next_in_game_state.set(InGameState::Playing);
     }
 }

@@ -5,7 +5,7 @@ use shared::{
     components::Health,
     enemy::components::Enemy,
     player::AimType,
-    protocol::{OrderedReliableMessageChannel, ShootRequest},
+    protocol::{OrderedReliableChannel, ShootRequest},
 };
 
 use crate::{
@@ -17,10 +17,7 @@ use crate::{
             weapon_positions::get_position_for_weapon,
         },
         shooting::{
-            components::{
-                BloodScreenEffect, PlayerShootCooldownTimer, PlayerWeapons,
-                Weapon,
-            },
+            components::{PlayerShootCooldownTimer, PlayerWeapons, Weapon},
             messages::{
                 PlayerWeaponFiredMessage, PlayerWeaponSlotChangeMessage,
                 ReloadPlayerWeaponMessage,
@@ -172,9 +169,8 @@ pub fn send_shoot_request_on_weapon_fired(
         let origin = world_model_camera_query.1.translation();
         let direction = world_model_camera_query.1.forward();
 
-        shoot_request_sender.send::<OrderedReliableMessageChannel>(
-            ShootRequest { direction, origin },
-        );
+        shoot_request_sender
+            .send::<OrderedReliableChannel>(ShootRequest { direction, origin });
     }
 }
 
@@ -233,40 +229,6 @@ pub fn tick_player_weapon_shoot_cooldown_timer(
         timer.0.tick(time.delta());
         if timer.0.just_finished() {
             commands.entity(entity).despawn();
-        }
-    }
-}
-
-// TODO: Move to player/hud module
-// TODO: this thing is too much (visually) -> only show it when player dead
-pub fn handle_blood_screen_effect(
-    mut blood_screen_effect_query: Query<(
-        Entity,
-        &mut BloodScreenEffect,
-        &mut ImageNode,
-    )>,
-    mut commands: Commands,
-    time: Res<Time>,
-) {
-    // TODO: hmm i mean theoretically only one instance of blood screen effect should exist, maybe
-    // convert to `Resource`?
-    for (entity, mut blood_screen_effect, mut image_node) in
-        blood_screen_effect_query.iter_mut()
-    {
-        let timer = &mut blood_screen_effect.timer;
-        timer.tick(time.delta());
-        if timer.just_finished() {
-            let new_current_timer_iteration =
-                blood_screen_effect.currrent_timer_iteration + 1;
-            if new_current_timer_iteration as f32
-                > blood_screen_effect.total_timer_iteration_count
-            {
-                commands.entity(entity).despawn();
-                continue;
-            }
-            let current_color = &image_node.color;
-            image_node.color =
-                Color::srgba(1.0, 1.0, 1.0, current_color.alpha() - 0.1);
         }
     }
 }

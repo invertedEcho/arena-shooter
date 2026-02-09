@@ -12,16 +12,18 @@ use lightyear::{
     },
 };
 use shared::{
-    GameModeServer, ServerMode, ServerRunMode,
+    ClientRespawnRequest, ConfirmRespawn, GameModeServer,
+    SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode, ServerRunMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
     components::Health,
     enemy::components::Enemy,
     game_score::GameScore,
-    player::{Player, PlayerBundle},
+    player::{DEFAULT_PLAYER_HEALTH, Player, PlayerBundle},
     protocol::{
-        ClientUpdatePositionMessage, EntityPositionServer, ShootRequest,
+        ClientUpdatePositionMessage, EntityPositionServer,
+        OrderedReliableChannel, ShootRequest,
     },
     shooting::MAX_SHOOTING_DISTANCE,
     utils::{
@@ -84,6 +86,7 @@ impl Plugin for GameCorePlugin {
             (
                 handle_shoot_requests,
                 receive_client_update_position,
+                handle_client_respawn_requests,
                 // update_game_score_on_killed_message,
             ),
         );
@@ -274,18 +277,13 @@ fn receive_client_update_position(
 
 fn handle_shoot_requests(
     mut commands: Commands,
-    mut receivers: Query<(
-        &mut MessageReceiver<ShootRequest>,
-        Entity,
-        &RemoteId,
-    )>,
+    receivers: Query<(&mut MessageReceiver<ShootRequest>, Entity, &RemoteId)>,
     mut health_query: Query<&mut Health>,
     spatial_query: SpatialQuery,
     player_query: Query<(Entity, &ControlledBy), With<Player>>,
     mut game_score: Single<&mut GameScore>,
 ) {
-    for (mut message_receiver, client_entity, remote_id) in receivers.iter_mut()
-    {
+    for (mut message_receiver, client_entity, remote_id) in receivers {
         for message in message_receiver.receive() {
             commands.entity(client_entity).log_components();
             let Some(shooter_entity) = player_query
@@ -373,6 +371,53 @@ fn handle_server_loading_state_done(
             }
         }
     };
+}
+
+fn handle_client_respawn_requests(
+    receivers: Query<(
+        &mut MessageReceiver<ClientRespawnRequest>,
+        &ControlledByRemote,
+        &RemoteId,
+    )>,
+    mut player_query: Query<(&mut Health, &mut EntityPositionServer)>,
+    mut server_multi_message_sender: ServerMultiMessageSender,
+    server: Single<&Server>,
+) {
+    for (mut message_receiver, controlled_by, remote_id) in receivers {
+        for _ in message_receiver.receive() {
+            info!("Received ClientRespawnRequest!");
+            match controlled_by.iter().next() {
+                Some(controlling_player) => {
+                    match player_query.get_mut(controlling_player) {
+                        Ok((mut player_health, mut entity_position_server)) => {
+                            player_health.0 = DEFAULT_PLAYER_HEALTH;
+                            entity_position_server.translation =
+                                SPAWN_POINT_MEDIUM_PLASTIC_MAP;
+                            server_multi_message_sender
+                                .send::<ConfirmRespawn, OrderedReliableChannel>(
+                                    &ConfirmRespawn,
+                                    &server,
+                                    &NetworkTarget::Single(remote_id.0),
+                                )
+                                .ok();
+                        }
+                        Err(error) => {
+                            warn!(
+                                "Failed to find controlling player: {}",
+                                error
+                            );
+                        }
+                    }
+                }
+                None => {
+                    warn!(
+                        "Received a ClientRespawnRequest but no \
+                         'ControlledByRemote' exists"
+                    );
+                }
+            }
+        }
+    }
 }
 
 // fn update_game_score_on_killed_message(
