@@ -317,6 +317,7 @@ fn handle_shoot_requests(
                 // FIXME: increase death of entity_killed and increase kills of shooter_entity
                 if health.0 <= 0.0 {
                     let entity_killed = first_hit.entity;
+                    commands.entity(entity_killed).insert(ColliderDisabled);
                     match game_score.players.get_mut(&remote_id.to_bits()) {
                         Some(player) => {
                             info!(
