@@ -2,7 +2,9 @@ use bevy::{platform::collections::HashMap, prelude::*};
 use lightyear::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Component, Serialize, Deserialize, PartialEq, Clone, Reflect)]
+#[derive(
+    Component, Serialize, Deserialize, PartialEq, Clone, Reflect, Debug,
+)]
 pub struct GameScore {
     // for players, we must use PeerId as entities will differ on client and server
     pub players: HashMap<PeerId, LivingEntityStats>,

@@ -132,5 +132,5 @@ fn main() {
 }
 
 fn log_game_score(game_score: Single<&mut GameScore>) {
-    info!("Game score: {:?}", game_score.living_entities);
+    info!("Game score: {:?}", *game_score);
 }

@@ -3,7 +3,6 @@ use std::f32::consts::PI;
 use ::shared::{
     ServerMode, ServerRunMode, SharedPlugin,
     character_controller::LOCAL_FEET_CHARACTER, enemy::components::Enemy,
-    game_score::GameScore,
 };
 use bevy::{
     dev_tools::fps_overlay::FpsOverlayPlugin,
@@ -145,7 +144,7 @@ fn main() {
         (
             spawn_enemy_model_for_new_enemies,
             handle_egui_context,
-            // log_cameras,
+            log_cameras,
         ),
     );
     app.add_systems(OnExit(AppState::InGame), despawn_enemys_on_exit);
@@ -200,16 +199,14 @@ fn handle_egui_context(
 }
 
 fn log_cameras(mut commands: Commands, query: Query<Entity, With<Camera>>) {
+    info!("Current Camera count: {}", query.count());
     for camera in query {
         info!("Camera found:");
         commands.entity(camera).log_components();
     }
-    info!("\n");
-    info!("\n");
-    info!("\n");
+    println!();
+    println!();
 }
-
-fn log_game_score(game_score: Single<&GameScore>) {}
 
 pub fn despawn_enemys_on_exit(
     mut commands: Commands,
