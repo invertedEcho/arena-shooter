@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
     Component, Serialize, Deserialize, PartialEq, Clone, Reflect, Debug,
 )]
 pub struct GameScore {
-    // for players, we must use PeerId as entities will differ on client and server
-    pub players: HashMap<PeerId, LivingEntityStats>,
+    // for players, we use the PeerId converted into bits as entities will differ on client and server
+    pub players: HashMap<u64, LivingEntityStats>,
     // as enemies only exists in singleplayer, we can just use Entity
     pub enemies: HashMap<Entity, LivingEntityStats>,
 }
@@ -20,8 +20,8 @@ pub struct LivingEntityStats {
 }
 
 pub struct GameScoreDelta {
-    updated_players: HashMap<PeerId, LivingEntityStats>,
-    removed_players: Vec<PeerId>,
+    updated_players: HashMap<u64, LivingEntityStats>,
+    removed_players: Vec<u64>,
     updated_enemies: HashMap<Entity, LivingEntityStats>,
     removed_enemies: Vec<Entity>,
 }

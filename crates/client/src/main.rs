@@ -144,7 +144,7 @@ fn main() {
         (
             spawn_enemy_model_for_new_enemies,
             handle_egui_context,
-            log_cameras,
+            // log_cameras,
         ),
     );
     app.add_systems(OnExit(AppState::InGame), despawn_enemys_on_exit);

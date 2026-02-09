@@ -3,17 +3,14 @@ use bevy::prelude::*;
 use shared::{
     components::{DespawnTimer, Health},
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
-    game_score::{self, GameScore},
+    game_score::GameScore,
     player::Player,
     shooting::MAX_SHOOTING_DISTANCE,
     utils::random::get_random_number_from_range,
 };
 
-use crate::{
-    LivingEntityKillMessage,
-    enemy::shooting::{
-        components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
-    },
+use crate::enemy::shooting::{
+    components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
 };
 
 pub fn enemy_shoot_player(
@@ -27,9 +24,6 @@ pub fn enemy_shoot_player(
     player_transforms: Query<&Transform, With<Player>>,
     spatial_query: SpatialQuery,
     mut health_query: Query<&mut Health>,
-    mut living_entity_kill_message_writer: MessageWriter<
-        LivingEntityKillMessage,
-    >,
 ) {
     for (
         enemy_entity,
@@ -105,14 +99,9 @@ pub fn enemy_shoot_player(
         if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
             health.0 -= 8.0;
 
+            // FIXME: increase player.death and enemy.kill
             if health.0 <= 0.0 {
                 let entity_killed = first_hit.entity;
-                living_entity_kill_message_writer.write(
-                    LivingEntityKillMessage {
-                        shooter_entity: enemy_entity,
-                        entity_killed,
-                    },
-                );
             }
         }
     }

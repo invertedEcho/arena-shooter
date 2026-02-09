@@ -18,7 +18,7 @@ use shared::{
     },
     components::Health,
     enemy::components::Enemy,
-    game_score::{GameScore, LivingEntityStats},
+    game_score::GameScore,
     player::{Player, PlayerBundle},
     protocol::{
         ClientUpdatePositionMessage, EntityPositionServer, ShootRequest,
@@ -63,12 +63,6 @@ pub struct GameStateWave {
     pub enemies_left_from_current_wave: usize,
 }
 
-#[derive(Message)]
-struct LivingEntityKillMessage {
-    shooter_entity: Entity,
-    entity_killed: Entity,
-}
-
 /// This plugin adds all plugins & systems that need to run on the server, regardless if its for
 /// the server binary or the local server that gets started for Singleplayer.
 pub struct GameCorePlugin;
@@ -76,8 +70,6 @@ pub struct GameCorePlugin;
 impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<ServerLoadingState>();
-
-        app.add_message::<LivingEntityKillMessage>();
 
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
@@ -107,7 +99,7 @@ impl Plugin for GameCorePlugin {
         );
 
         app.add_observer(handle_new_connection);
-        app.add_observer(handle_new_client);
+        app.add_observer(spawn_player_on_new_client);
     }
 }
 
@@ -183,7 +175,7 @@ fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
         ),));
 }
 
-fn handle_new_client(
+fn spawn_player_on_new_client(
     trigger: On<Add, Connected>,
     clients_query: Query<&RemoteId, With<ClientOf>>,
     mut commands: Commands,
@@ -248,21 +240,6 @@ fn handle_new_client(
     }
 }
 
-// fn on_game_score_add(
-//     trigger: On<Add, GameScore>,
-//     mut game_score: Single<&mut GameScore>,
-//     players: Query<Entity, With<Player>>,
-//     enemies: Query<Entity, With<Enemy>>
-// ) {
-//     info!("Game Score was added, adding any existing players and enemies to it");
-//     for player in players {
-//         game_score.players.insert(player, v)
-//     }
-//     for enemy in enemies {
-//
-//     }
-// }
-
 /// This systems receives a message from clients, that their position has changed.
 /// The server will then apply it to the `PlayerPositionServer` component, which then gets
 /// replicated to all clients. All clients receive the updates from `PlayerPositionServer`, and
@@ -301,9 +278,6 @@ fn handle_shoot_requests(
     mut health_query: Query<&mut Health>,
     spatial_query: SpatialQuery,
     player_query: Query<(Entity, &ControlledBy), With<Player>>,
-    mut living_entity_kill_message_writer: MessageWriter<
-        LivingEntityKillMessage,
-    >,
     mut game_score: Single<&mut GameScore>,
 ) {
     for (mut message_receiver, remote_id) in receivers.iter_mut() {
@@ -335,14 +309,9 @@ fn handle_shoot_requests(
             if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
                 health.0 -= 8.0;
 
+                // FIXME: increase death of entity_killed and increase kills of shooter_entity
                 if health.0 <= 0.0 {
                     let entity_killed = first_hit.entity;
-                    living_entity_kill_message_writer.write(
-                        LivingEntityKillMessage {
-                            shooter_entity,
-                            entity_killed,
-                        },
-                    );
                 }
             }
         }
