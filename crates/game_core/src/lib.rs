@@ -452,13 +452,35 @@ fn handle_client_respawn_requests(
                                 .entity(player_entity)
                                 .remove::<ColliderDisabled>();
 
-                            server_multi_message_sender
+                            info!(
+                                "Sending confirm respawn message to client \
+                                 with remote_id: {}",
+                                remote_id.0
+                            );
+                            let network_target =
+                                &NetworkTarget::Single(remote_id.0);
+
+                            let message_sent_result = server_multi_message_sender
                                 .send::<ConfirmRespawn, OrderedReliableChannel>(
                                     &ConfirmRespawn,
                                     &server,
-                                    &NetworkTarget::Single(remote_id.0),
-                                )
-                                .ok();
+                                    network_target,
+                                );
+                            match message_sent_result {
+                                Ok(_) => {
+                                    info!(
+                                        "Succesfully sent ConfirmRespawn \
+                                         message to client"
+                                    );
+                                }
+                                Err(error) => {
+                                    error!(
+                                        "Failed to send ConfirmRespawn \
+                                         message to client: {}",
+                                        error
+                                    );
+                                }
+                            }
                         }
                         Err(error) => {
                             warn!(

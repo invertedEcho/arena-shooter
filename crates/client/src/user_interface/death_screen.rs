@@ -1,7 +1,12 @@
 use bevy::prelude::*;
 use game_core::GameStateWave;
-use lightyear::prelude::MessageSender;
-use shared::{ClientRespawnRequest, protocol::OrderedReliableChannel};
+use lightyear::prelude::{Controlled, MessageSender};
+use shared::{
+    ClientRespawnRequest, SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode,
+    components::Health,
+    player::DEFAULT_PLAYER_HEALTH,
+    protocol::{EntityPositionServer, OrderedReliableChannel},
+};
 
 use crate::{
     game_flow::{states::InGameState, systems::free_mouse},
@@ -154,6 +159,12 @@ fn handle_button_press(
     mut respawn_request_message_sender: Single<
         &mut MessageSender<ClientRespawnRequest>,
     >,
+    server_mode: Res<State<ServerMode>>,
+    mut player_query: Single<
+        (&mut Health, &mut EntityPositionServer),
+        With<Controlled>,
+    >,
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
     for (interaction, button) in query {
         if interaction != &Interaction::Pressed {
@@ -161,8 +172,18 @@ fn handle_button_press(
         }
         match button {
             DeathScreenButton::Restart => {
-                respawn_request_message_sender
-                    .send::<OrderedReliableChannel>(ClientRespawnRequest);
+                // TODO: i really hate this
+                // unfortunately in HostClient setup (e.g. LocalServerSinglePlayer) we never
+                // receive the ConfirmRespawn message from server, so we just do the stuff that we
+                // would normally do manually
+                if *server_mode.get() == ServerMode::LocalServerSinglePlayer {
+                    player_query.0.0 = DEFAULT_PLAYER_HEALTH;
+                    player_query.1.translation = SPAWN_POINT_MEDIUM_PLASTIC_MAP;
+                    next_in_game_state.set(InGameState::Playing);
+                } else {
+                    respawn_request_message_sender
+                        .send::<OrderedReliableChannel>(ClientRespawnRequest);
+                }
             }
         }
     }
