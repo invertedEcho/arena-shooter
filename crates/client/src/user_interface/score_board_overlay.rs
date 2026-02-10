@@ -1,4 +1,5 @@
 use bevy::{color::palettes::css::BLACK, prelude::*};
+use lightyear::prelude::*;
 use shared::game_score::GameScore;
 
 #[derive(Component)]
@@ -35,7 +36,7 @@ fn spawn_score_board_overlay(mut commands: Commands) {
 }
 
 fn build_score_board_list_item(
-    player_name: &String,
+    name: &String,
     kills: u64,
     deaths: u64,
 ) -> impl Bundle {
@@ -43,12 +44,11 @@ fn build_score_board_list_item(
         Node {
             width: percent(95),
             height: px(16.0),
-            column_gap: px(16.0),
             justify_content: JustifyContent::SpaceBetween,
             ..default()
         },
         children![
-            (Text::new(player_name)),
+            (Text::new(name)),
             (Text::new(format!("Kills: {}", kills))),
             (Text::new(format!("Deaths: {}", deaths)))
         ],
@@ -73,16 +73,33 @@ fn update_score_board(
     mut commands: Commands,
     changed_game_score: Single<&GameScore, Changed<GameScore>>,
     score_board_overlay: Single<Entity, With<ScoreBoardOverlay>>,
+    own_peer_id: Query<&RemoteId, With<Controlled>>,
 ) {
     info!("Game score has changed! Updating UI to reflect new values");
     commands.entity(*score_board_overlay).despawn_children();
     for (peer_id, player_stats) in &changed_game_score.players {
-        let res = build_score_board_list_item(
+        let is_this_us = own_peer_id
+            .iter()
+            .find(|remote_id| remote_id.0.to_bits() == *peer_id);
+        if is_this_us.is_some() {
+            info!("YAAAAAAAAAAY IT WORKS!!!!11");
+        }
+
+        let score_board_list_item = build_score_board_list_item(
             &player_stats.username,
             player_stats.kills,
             player_stats.deaths,
         );
-        let id = commands.spawn(res).id();
+        let id = commands.spawn(score_board_list_item).id();
+        commands.entity(*score_board_overlay).add_child(id);
+    }
+    for enemy_stats in changed_game_score.enemies.values() {
+        let score_board_list_item = build_score_board_list_item(
+            &enemy_stats.username,
+            enemy_stats.kills,
+            enemy_stats.deaths,
+        );
+        let id = commands.spawn(score_board_list_item).id();
         commands.entity(*score_board_overlay).add_child(id);
     }
 }

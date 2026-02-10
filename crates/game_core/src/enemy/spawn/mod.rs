@@ -159,6 +159,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                         ))
                         .id();
 
+                    info!("Adding spawned enemy to game_score.enemies!");
                     game_score.enemies.insert(
                         enemy_entity,
                         LivingEntityStats {

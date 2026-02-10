@@ -64,3 +64,12 @@ pub enum ConnectionState {
     Connected,
     Disconnected,
 }
+
+// The current game mode on the client
+#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default, Copy)]
+pub enum GameModeClient {
+    #[default]
+    FreeRoam,
+    Waves,
+    Multiplayer,
+}

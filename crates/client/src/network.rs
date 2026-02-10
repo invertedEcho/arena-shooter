@@ -28,9 +28,8 @@ use crate::auth::{
     get_connect_token_from_auth_backend,
 };
 use crate::character_controller::components::CharacterControllerBundle;
-use crate::game_flow::game_mode::GameModeClient;
 use crate::game_flow::states::{
-    AppState, ClientLoadingState, ConnectionState, InGameState,
+    AppState, ClientLoadingState, ConnectionState, GameModeClient, InGameState,
 };
 
 const CLIENT_PORT: u16 = 0;

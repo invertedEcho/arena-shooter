@@ -4,7 +4,7 @@ use shared::{MEDIUM_PLASTIC_MAP_PATH, SelectedMapState, TINY_TOWN_MAP_PATH};
 
 use super::resources::WorldSceneHandle;
 use crate::{
-    game_flow::{game_mode::GameModeClient, states::AppState},
+    game_flow::states::{AppState, GameModeClient},
     world::components::{MapDirectionalLight, MapModel},
 };
 

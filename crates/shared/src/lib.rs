@@ -23,7 +23,7 @@ pub enum ServerRunMode {
     Headful,
 }
 
-/// A resource existing to know whether we are using a remote server to connect to,
+/// A state indicating whether we are using a remote server to connect to,
 /// or a local server is started, e.g. for singleplayer
 #[derive(States, PartialEq, Debug, Hash, Clone, Eq)]
 pub enum ServerMode {

@@ -3,8 +3,10 @@ use shared::SelectedMapState;
 
 use crate::{
     game_flow::{
-        game_mode::GameModePlugin,
-        states::{AppState, ClientLoadingState, InGameState, MainMenuState},
+        states::{
+            AppState, ClientLoadingState, GameModeClient, InGameState,
+            MainMenuState,
+        },
         systems::{
             check_collider_constructor_hierarchy_ready,
             check_world_scene_loaded, free_mouse, grab_mouse,
@@ -17,7 +19,6 @@ use crate::{
     world::resources::WorldSceneHandle,
 };
 
-pub mod game_mode;
 pub mod states;
 pub mod systems;
 
@@ -27,11 +28,11 @@ impl Plugin for GameFlowPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<AppState>()
             .init_state::<SelectedMapState>()
+            .init_state::<GameModeClient>()
             .add_sub_state::<InGameState>()
             .add_sub_state::<MainMenuState>()
             .add_sub_state::<ClientLoadingState>()
             .add_message::<PlayerDeathMessage>()
-            .add_plugins(GameModePlugin)
             .add_observer(check_collider_constructor_hierarchy_ready)
             .add_systems(
                 OnEnter(InGameState::Playing),

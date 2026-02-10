@@ -19,7 +19,7 @@ use shared::{
     },
     components::Health,
     enemy::components::Enemy,
-    game_score::GameScore,
+    game_score::{GameScore, LivingEntityStats},
     player::{DEFAULT_PLAYER_HEALTH, Player, PlayerBundle},
     protocol::{
         ClientUpdatePositionMessage, EntityPositionServer,
@@ -48,10 +48,14 @@ mod enemy;
 mod game_flow;
 mod nav_mesh_pathfinding;
 
+// on client, the state gets reset to Initial when we exit to main menu, as everything gets
+// despawned.
+// for server binary, this will just be used once, at startup
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
 pub enum ServerLoadingState {
     #[default]
     Initial,
+    GameScoreFinishedSetup,
     MapSpawned,
     CollidersSpawned,
     NavMeshReady,
@@ -96,10 +100,7 @@ impl Plugin for GameCorePlugin {
             handle_server_loading_state_done,
         );
 
-        app.add_systems(
-            OnEnter(ServerLoadingState::MapSpawned),
-            setup_game_score,
-        );
+        app.add_systems(OnEnter(ServerLoadingState::Initial), setup_game_score);
 
         app.add_observer(handle_new_connection);
         app.add_observer(spawn_player_on_new_client);
@@ -152,20 +153,25 @@ pub fn start_server(
 
 fn setup_game_score(
     mut commands: Commands,
+    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
     server_mode: Res<State<ServerMode>>,
 ) {
-    // if RemoteServer, GameScore was already setup by MultiplayerServerOnlyPlugin.
-    if *server_mode == ServerMode::RemoteServer {
-        return;
-    }
+    info!("Entered ServerLoadingState::Initial, spawning new game score");
+    commands
+        .spawn((
+            GameScore {
+                players: HashMap::new(),
+                enemies: HashMap::new(),
+            },
+            Name::new("Game Score"),
+        ))
+        .insert_if(Replicate::to_clients(NetworkTarget::All), || {
+            *server_mode.get() == ServerMode::RemoteServer
+        });
 
-    commands.spawn((
-        GameScore {
-            players: HashMap::new(),
-            enemies: HashMap::new(),
-        },
-        Name::new("Game Score"),
-    ));
+    // NOTE: theoretically the game score entity is not necessarily already spawned here, but we
+    // just do it here as spawning such a simple entity is trivial.
+    next_server_loading_state.set(ServerLoadingState::GameScoreFinishedSetup);
 }
 
 fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
@@ -185,9 +191,21 @@ fn spawn_player_on_new_client(
     materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,
     server_mode: Res<State<ServerMode>>,
+    mut game_score: Query<&mut GameScore>,
 ) {
     if let Ok(remote_id) = clients_query.get(trigger.entity) {
         let peer_id = remote_id.0;
+
+        let mut game_score = game_score.single_mut().unwrap();
+
+        game_score.players.insert(
+            peer_id.to_bits(),
+            LivingEntityStats {
+                username: format!("Player {}", peer_id.to_bits()),
+                ..default()
+            },
+        );
+
         info!(
             "Spawning a player for fully connected Client entity: {} | \
              peer_id: {}",

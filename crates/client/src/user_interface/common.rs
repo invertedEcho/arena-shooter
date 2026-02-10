@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use game_core::ServerLoadingState;
 use lightyear::prelude::*;
 use shared::{ServerMode, game_score::GameScore};
 
@@ -79,6 +80,7 @@ fn handle_common_ui_button_press(
     own_client: Query<Entity, With<Client>>,
     server_mode: Res<State<ServerMode>>,
     game_score: Query<Entity, With<GameScore>>,
+    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
 ) {
     for (interaction, common_ui_button) in query {
         let Interaction::Pressed = interaction else {
@@ -103,6 +105,7 @@ fn handle_common_ui_button_press(
                     && let Ok(game_score) = game_score.single()
                 {
                     commands.entity(game_score).despawn();
+                    next_server_loading_state.set(ServerLoadingState::Initial);
                 };
             }
             CommonUiButton::ToGameModeSelection => {

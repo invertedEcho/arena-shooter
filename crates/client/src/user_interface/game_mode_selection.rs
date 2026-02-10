@@ -2,10 +2,7 @@ use bevy::prelude::*;
 use shared::{GameModeServer, ServerMode};
 
 use crate::{
-    game_flow::{
-        game_mode::GameModeClient,
-        states::{AppState, MainMenuState},
-    },
+    game_flow::states::{AppState, GameModeClient, MainMenuState},
     user_interface::{
         common::{
             DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,

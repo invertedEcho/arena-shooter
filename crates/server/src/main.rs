@@ -67,19 +67,7 @@ impl Plugin for MultiPlayerServerOnlyPlugin {
     fn build(&self, app: &mut App) {
         // if we would add SharedPlugin in GameCorePlugin, it would already be added by client
         app.add_plugins(SharedPlugin);
-        app.add_systems(Startup, setup_game_score);
     }
-}
-
-fn setup_game_score(mut commands: Commands) {
-    commands.spawn((
-        GameScore {
-            players: HashMap::new(),
-            enemies: HashMap::new(),
-        },
-        Name::new("Game Score"),
-        Replicate::to_clients(NetworkTarget::All),
-    ));
 }
 
 fn main() {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use game_core::GameStateWave;
 
 use crate::{
-    game_flow::{game_mode::GameModeClient, states::InGameState},
+    game_flow::states::{GameModeClient, InGameState},
     player::hud::systems::{
         spawn_bullet_hit_crosshair, spawn_player_crosshair, spawn_player_hud,
         spawn_wave_hud, update_player_ammo_text,
