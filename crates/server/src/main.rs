@@ -2,7 +2,6 @@ use std::sync::{Arc, RwLock};
 
 use bevy::log::LogPlugin;
 use bevy::mesh::MeshPlugin;
-use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 use bevy::state::app::StatesPlugin;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
@@ -116,24 +115,5 @@ fn main() {
         get_private_key(&ServerMode::RemoteServer),
     );
 
-    app.add_observer(add_new_player_to_game_score);
     app.run();
-}
-
-fn add_new_player_to_game_score(
-    trigger: On<Add, Connected>,
-    clients_query: Query<&RemoteId, With<ClientOf>>,
-    mut game_score: Single<&mut GameScore>,
-) {
-    if let Ok(remote_id) = clients_query.get(trigger.entity) {
-        let peer_id = remote_id.0;
-        info!("Adding new player to game score with key: {}", peer_id);
-        game_score.players.insert(
-            peer_id.to_bits(),
-            LivingEntityStats {
-                username: format!("Player {}", peer_id.to_bits()),
-                ..default()
-            },
-        );
-    }
 }

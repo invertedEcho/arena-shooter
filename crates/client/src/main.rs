@@ -141,11 +141,7 @@ fn main() {
     app.add_observer(apply_render_layers_to_children);
     app.add_systems(
         Update,
-        (
-            spawn_enemy_model_for_new_enemies,
-            handle_egui_context,
-            // log_cameras,
-        ),
+        (spawn_enemy_model_for_new_enemies, handle_egui_context),
     );
     app.add_systems(OnExit(AppState::InGame), despawn_enemys_on_exit);
 
@@ -196,16 +192,6 @@ fn handle_egui_context(
         );
         commands.entity(first_camera).insert(PrimaryEguiContext);
     }
-}
-
-fn log_cameras(mut commands: Commands, query: Query<Entity, With<Camera>>) {
-    info!("Current Camera count: {}", query.count());
-    for camera in query {
-        info!("Camera found:");
-        commands.entity(camera).log_components();
-    }
-    println!();
-    println!();
 }
 
 pub fn despawn_enemys_on_exit(

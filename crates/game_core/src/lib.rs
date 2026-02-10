@@ -20,7 +20,7 @@ use shared::{
     components::Health,
     enemy::components::Enemy,
     game_score::{GameScore, LivingEntityStats},
-    player::{self, DEFAULT_PLAYER_HEALTH, Player, PlayerBundle},
+    player::{DEFAULT_PLAYER_HEALTH, Player, PlayerBundle},
     protocol::{
         ClientUpdatePositionMessage, EntityPositionServer,
         OrderedReliableChannel, ShootRequest,
