@@ -242,59 +242,6 @@ pub fn spawn_bullet_hit_crosshair(
     }
 }
 
-// pub fn spawn_score_hud(mut commands: Commands, game_score: Res<GameScore>) {
-//     commands
-//         .spawn((
-//             Node {
-//                 width: Val::Percent(100.0),
-//                 height: Val::Percent(100.0),
-//                 justify_content: JustifyContent::Center,
-//                 align_items: AlignItems::Start,
-//                 column_gap: Val::Px(32.0),
-//                 padding: UiRect::all(Val::Px(16.0)),
-//                 ..default()
-//             },
-//             DespawnOnExit(AppState::InGame),
-//             Name::new("ScoreHud"),
-//         ))
-//         .with_children(|parent| {
-//             parent
-//                 .spawn((Node { ..default() }, OnlyVisibleInGame))
-//                 .with_child((
-//                     Text::new(game_score.player.to_string()),
-//                     TextColor(BLUE_500.into()),
-//                     PlayerScoreText,
-//                 ));
-//             parent
-//                 .spawn((Node { ..default() }, OnlyVisibleInGame))
-//                 .with_child(Text::new("Score"));
-//             parent
-//                 .spawn((Node { ..default() }, OnlyVisibleInGame))
-//                 .with_child((
-//                     Text::new(game_score.enemy.to_string()),
-//                     TextColor(RED_500.into()),
-//                     EnemyScoreText,
-//                 ));
-//         });
-// }
-//
-// pub fn update_score_hud(
-//     mut player_score_text: Single<
-//         &mut Text,
-//         (With<PlayerScoreText>, Without<EnemyScoreText>),
-//     >,
-//     mut enemy_score_text: Single<
-//         &mut Text,
-//         (With<EnemyScoreText>, Without<PlayerScoreText>),
-//     >,
-//     game_score: Res<GameScore>,
-// ) {
-//     if game_score.is_changed() {
-//         **player_score_text = Text::new(game_score.player.to_string());
-//         **enemy_score_text = Text::new(game_score.enemy.to_string());
-//     }
-// }
-
 pub fn spawn_wave_hud(mut commands: Commands) {
     commands
         .spawn((
