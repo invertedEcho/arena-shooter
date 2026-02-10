@@ -3,13 +3,14 @@ use lightyear::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    GameModeServer,
+    ClientRespawnRequest, ConfirmRespawn, GameModeServer,
     components::Health,
     enemy::components::{Enemy, EnemyState},
+    game_score::GameScore,
     player::Player,
 };
 
-pub struct OrderedReliableMessageChannel;
+pub struct OrderedReliableChannel;
 pub struct SequencedUnreliableChannel;
 
 #[derive(Serialize, Deserialize)]
@@ -28,9 +29,6 @@ pub struct EntityPositionServer {
 pub struct ShootRequest {
     pub origin: Vec3,
     pub direction: Dir3,
-    /// Whether this ShootRequest is coming from an enemy. We need this as enemies dont have
-    /// "ControlledBy" component, and as such need different handling in handle_shoot_requests
-    pub from_enemy: bool,
     // pub client_tick: u32,
 }
 
@@ -42,19 +40,24 @@ impl Plugin for ProtocolPlugin {
             mode: ChannelMode::SequencedUnreliable,
             ..default()
         })
-        .add_direction(NetworkDirection::ClientToServer);
+        .add_direction(NetworkDirection::Bidirectional);
 
-        app.add_channel::<OrderedReliableMessageChannel>(ChannelSettings {
+        app.add_channel::<OrderedReliableChannel>(ChannelSettings {
             mode: ChannelMode::OrderedReliable(ReliableSettings::default()),
             ..default()
         })
-        .add_direction(NetworkDirection::ClientToServer);
+        .add_direction(NetworkDirection::Bidirectional);
 
         app.register_message::<ClientUpdatePositionMessage>()
             .add_direction(NetworkDirection::ClientToServer);
 
         app.register_message::<ShootRequest>()
             .add_direction(NetworkDirection::ClientToServer);
+
+        app.register_message::<ClientRespawnRequest>()
+            .add_direction(NetworkDirection::ClientToServer);
+        app.register_message::<ConfirmRespawn>()
+            .add_direction(NetworkDirection::ServerToClient);
 
         app.register_component::<Player>();
 
@@ -66,6 +69,8 @@ impl Plugin for ProtocolPlugin {
         app.register_component::<EnemyState>();
 
         app.register_component::<GameModeServer>();
+
+        app.register_component::<GameScore>();
 
         // FIXME: medkit should be spawned on server, replicated to clients, and only clients
         // visually rotate them

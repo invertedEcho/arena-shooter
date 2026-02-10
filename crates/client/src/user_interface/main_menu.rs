@@ -2,10 +2,7 @@
 use shared::ServerMode;
 
 use crate::{
-    game_flow::{
-        game_mode::{GameModeClient, StartGameModeMessage},
-        states::MainMenuState,
-    },
+    game_flow::states::{AppState, GameModeClient, MainMenuState},
     user_interface::{
         common::{
             CommonUiButton, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
@@ -103,9 +100,9 @@ fn handle_main_menu_button_pressed(
         Changed<Interaction>,
     >,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
-    mut start_game_mode_message_writer: MessageWriter<StartGameModeMessage>,
     mut next_game_mode_state: ResMut<NextState<GameModeClient>>,
     mut server_run_mode: ResMut<NextState<ServerMode>>,
+    mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
         let Interaction::Pressed = interaction else {
@@ -119,8 +116,7 @@ fn handle_main_menu_button_pressed(
             MainMenuButton::Multiplayer => {
                 server_run_mode.set(ServerMode::RemoteServer);
                 next_game_mode_state.set(GameModeClient::Multiplayer);
-                start_game_mode_message_writer
-                    .write(StartGameModeMessage { restart: false });
+                next_app_state.set(AppState::LoadingGame);
             }
             MainMenuButton::SettingsMainMenu => {
                 next_main_menu_state.set(MainMenuState::Settings);

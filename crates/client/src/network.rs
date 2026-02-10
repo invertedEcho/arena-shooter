@@ -12,24 +12,25 @@ use shared::character_controller::{
 };
 use shared::player::Player;
 use shared::protocol::{
-    ClientUpdatePositionMessage, EntityPositionServer,
-    OrderedReliableMessageChannel,
+    ClientUpdatePositionMessage, EntityPositionServer, OrderedReliableChannel,
 };
 use shared::utils::lightyear::{
     DisconnectReason, parse_lightyear_disconnect_reason,
 };
-use shared::{
-    SERVER_PORT, ServerMode, get_auth_backend_socket_addr_client_side,
+use shared::utils::network::{
+    SERVER_PORT, get_auth_backend_socket_addr_client_side,
     get_server_socket_addr_client_side,
 };
+use shared::{ConfirmRespawn, ServerMode};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,
     get_connect_token_from_auth_backend,
 };
 use crate::character_controller::components::CharacterControllerBundle;
-use crate::game_flow::game_mode::GameModeClient;
-use crate::game_flow::states::{AppState, ConnectionState, LoadingGameState};
+use crate::game_flow::states::{
+    AppState, ClientLoadingState, ConnectionState, GameModeClient, InGameState,
+};
 
 const CLIENT_PORT: u16 = 0;
 
@@ -43,7 +44,7 @@ impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<ConnectionState>();
         app.add_systems(
-            OnEnter(LoadingGameState::ConnectingToServer),
+            OnEnter(ClientLoadingState::ConnectingToServer),
             on_enter_connecting_to_server,
         );
         app.add_systems(
@@ -59,6 +60,7 @@ impl Plugin for NetworkPlugin {
             )
                 .run_if(in_state(ServerMode::RemoteServer)),
         );
+        app.add_systems(Update, handle_confirm_respawn_message);
         app.add_observer(handle_new_player);
         app.add_observer(handle_connected);
         app.add_observer(handle_disconnect);
@@ -150,10 +152,10 @@ pub fn on_enter_connecting_to_server(
 
 fn handle_connected(
     _trigger: On<Add, Connected>,
-    mut next_loading_game_state: ResMut<NextState<LoadingGameState>>,
+    mut next_loading_game_state: ResMut<NextState<ClientLoadingState>>,
 ) {
     debug!("Connected to server, setting LoadingGameState to SpawningMap");
-    next_loading_game_state.set(LoadingGameState::SpawningMap);
+    next_loading_game_state.set(ClientLoadingState::SpawningMap);
 }
 
 fn handle_new_player(
@@ -210,7 +212,7 @@ pub fn send_client_update_position(
     >,
     player_transform: Single<&Transform, (With<Player>, With<Controlled>)>,
 ) {
-    message_sender.send::<OrderedReliableMessageChannel>(
+    message_sender.send::<OrderedReliableChannel>(
         ClientUpdatePositionMessage {
             new_translation: player_transform.translation,
         },
@@ -284,5 +286,15 @@ pub fn handle_disconnect(
                 error
             );
         }
+    }
+}
+
+pub fn handle_confirm_respawn_message(
+    mut message_receiver: Single<&mut MessageReceiver<ConfirmRespawn>>,
+    mut next_in_game_state: ResMut<NextState<InGameState>>,
+) {
+    for _ in message_receiver.receive() {
+        info!("Respawn request was confirmed by server!");
+        next_in_game_state.set(InGameState::Playing);
     }
 }

@@ -14,6 +14,7 @@ use shared::{
     },
     components::Health,
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
+    game_score::{GameScore, LivingEntityStats},
     protocol::EntityPositionServer,
 };
 
@@ -54,6 +55,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
         With<EnemySpawnLocation>,
     >,
     archipelago_ref: Option<Res<ArchipelagoRef>>,
+    mut game_score: Single<&mut GameScore>,
 ) {
     for event in message_reader.read() {
         let Some(ref archipelago_ref) = archipelago_ref else {
@@ -156,6 +158,16 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             CharacterController,
                         ))
                         .id();
+
+                    info!("Adding spawned enemy to game_score.enemies!");
+                    game_score.enemies.insert(
+                        enemy_entity,
+                        LivingEntityStats {
+                            username: format!("Enemy {}", enemy_entity),
+                            ..default()
+                        },
+                    );
+
                     commands.entity(enemy_entity).with_child((
                         Name::new("Enemy Pathfinding Agent"),
                         Agent3dBundle {

@@ -82,7 +82,7 @@ pub fn handle_keyboard_input_for_player(
     });
 }
 
-const MAX_DISTANCE_SHAPE_CAST_MOVEMENT: f32 = 0.3;
+const MAX_DISTANCE_SHAPE_CAST_CHARACTER_CONTROLLER: f32 = 0.3;
 pub fn handle_movement_actions_for_character_controllers(
     mut movement_action_reader: MessageReader<MovementAction>,
     mut character_controller_query: Query<
@@ -200,7 +200,7 @@ fn apply_collide_and_slide(
         origin_transform.rotation,
         direction_from_world_velocity,
         &ShapeCastConfig {
-            max_distance: MAX_DISTANCE_SHAPE_CAST_MOVEMENT,
+            max_distance: MAX_DISTANCE_SHAPE_CAST_CHARACTER_CONTROLLER,
             ..default()
         },
         spatial_query_filter,

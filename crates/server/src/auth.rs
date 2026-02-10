@@ -6,13 +6,8 @@ use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use lightyear::netcode::ConnectToken;
 use lightyear::utils::collections::HashSet;
-use shared::NETCODE_PROTOCOL_VERSION;
+use shared::utils::network::NETCODE_PROTOCOL_VERSION;
 use tokio::io::AsyncWriteExt;
-
-/// This resource will track the list of Netcode client-ids currently in use, so that
-/// we don't have multiple clients with the same id
-#[derive(Resource, Default)]
-pub struct ClientIds(pub Arc<RwLock<HashSet<u64>>>);
 
 /// Start a detached task that listens for incoming TCP connections and sends `ConnectToken`s to clients
 pub fn start_netcode_authentication_task(

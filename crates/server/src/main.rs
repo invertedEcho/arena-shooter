@@ -1,11 +1,5 @@
-use std::f32::consts::PI;
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
 use std::sync::{Arc, RwLock};
 
-use avian3d::prelude::*;
-use bevy::color::palettes;
 use bevy::log::LogPlugin;
 use bevy::mesh::MeshPlugin;
 use bevy::prelude::*;
@@ -13,16 +7,19 @@ use bevy::state::app::StatesPlugin;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use lightyear::utils::collections::HashSet;
-use shared::{
-    AUTH_BACKEND_ADDRESS_SERVER_SIDE, MEDIUM_PLASTIC_MAP_PATH, ServerMode,
-    ServerRunMode, get_server_socket_addr_client_side,
+use shared::SharedPlugin;
+use shared::utils::auth::get_private_key;
+use shared::utils::network::{
+    AUTH_BACKEND_ADDRESS_SERVER_SIDE, get_server_socket_addr_client_side,
 };
-use shared::{SharedPlugin, get_private_key};
+use shared::{ServerMode, ServerRunMode};
 
-use crate::auth::{ClientIds, start_netcode_authentication_task};
+use crate::auth::start_netcode_authentication_task;
+use crate::systems::{spawn_map, spawn_map_colliders};
 use crate::utils::get_run_mode;
 
 mod auth;
+mod systems;
 mod utils;
 
 /// This plugin adds all plugins from bevy necessary to start a headless server
@@ -42,7 +39,7 @@ impl Plugin for HeadlessServerPlugin {
     }
 }
 
-/// This plugin adds all plugins from bevy necessary to start a headless server
+/// This plugin adds all plugins from bevy necessary to start a headful server
 pub struct HeadfulServerPlugin;
 
 impl Plugin for HeadfulServerPlugin {
@@ -64,7 +61,7 @@ pub struct MultiPlayerServerOnlyPlugin;
 
 impl Plugin for MultiPlayerServerOnlyPlugin {
     fn build(&self, app: &mut App) {
-        // if we would add sharedplugin in ServerPlugin, it would already be added by client
+        // if we would add SharedPlugin in GameCorePlugin, it would already be added by client
         app.add_plugins(SharedPlugin);
     }
 }
@@ -88,7 +85,7 @@ fn main() {
     }
 
     app.add_plugins(StatesPlugin);
-    app.add_plugins(game_core::ServerPlugin);
+    app.add_plugins(game_core::GameCorePlugin);
     app.add_plugins(MultiPlayerServerOnlyPlugin);
 
     app.add_systems(Startup, spawn_map_colliders);
@@ -114,84 +111,6 @@ fn main() {
         client_ids.clone(),
         get_private_key(&ServerMode::RemoteServer),
     );
-    app.insert_resource(ClientIds(client_ids));
 
     app.run();
-}
-
-// for now i think i just want to always have a FFA mode on the MediumPlastic map with simple
-// scoreboard
-pub fn spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
-    info!("Spawning map on server");
-
-    let map_path = MEDIUM_PLASTIC_MAP_PATH;
-
-    commands.spawn((
-        Name::new("Map Light"),
-        DirectionalLight {
-            illuminance: 4000.,
-            shadows_enabled: true,
-            color: palettes::css::ANTIQUE_WHITE.into(),
-            ..default()
-        },
-        Transform {
-            translation: Vec3::new(0.0, 12.0, 0.0),
-            rotation: Quat::from_rotation_x(-PI / 4.),
-            ..default()
-        },
-    ));
-
-    let world_scene_handle =
-        asset_server.load(GltfAssetLabel::Scene(0).from_asset(map_path));
-
-    commands.spawn((
-        SceneRoot(world_scene_handle),
-        Name::new("Medium Plastic Map Scene Root"),
-        Visibility::Visible,
-        RigidBody::Static,
-    ));
-}
-
-fn spawn_map_colliders(mut commands: Commands) {
-    let file_path = get_path_to_collider_json();
-
-    let mut file_buffer = String::from("");
-    let mut collider_file =
-        File::open(file_path).expect("Can open medium_plastic_colliders.json");
-
-    collider_file.read_to_string(&mut file_buffer).unwrap();
-
-    let colliders: Result<
-        Vec<(Collider, GlobalTransform)>,
-        serde_json::error::Error,
-    > = serde_json::from_str(&file_buffer);
-
-    match colliders {
-        Ok(colliders_ok) => {
-            info!(
-                "Loaded colliders and their transform from json, spawning \
-                 them."
-            );
-            commands.spawn_batch(colliders_ok);
-        }
-        Err(error) => {
-            panic!(
-                "Failed to load colliders and their transform from json: {}",
-                error
-            );
-        }
-    }
-}
-
-// The server can be started from workspace root via `cargo run -p server` or from server workspace,
-// so we need to ensure we use the correct path
-fn get_path_to_collider_json() -> String {
-    const BASE_PATH: &str =
-        "assets/maps/medium_plastic/medium_plastic_colliders.json";
-    let path = Path::new(BASE_PATH);
-    if path.exists() {
-        BASE_PATH.to_string()
-    } else {
-        "../../".to_owned() + BASE_PATH
-    }
 }

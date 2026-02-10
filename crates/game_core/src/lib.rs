@@ -1,7 +1,9 @@
 use std::time::Duration;
 
 use avian3d::prelude::*;
-use bevy::{color::palettes::css::WHITE, prelude::*};
+use bevy::{
+    color::palettes::css::WHITE, platform::collections::HashMap, prelude::*,
+};
 use lightyear::{
     netcode::NetcodeServer,
     prelude::{
@@ -10,17 +12,26 @@ use lightyear::{
     },
 };
 use shared::{
-    GameModeServer, NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_REMOTE_SERVER,
-    SERVER_SOCKET_ADDR_SINGLEPLAYER, ServerMode, ServerRunMode,
+    ClientRespawnRequest, ConfirmRespawn, GameModeServer,
+    SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode, ServerRunMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
     components::Health,
     enemy::components::Enemy,
-    get_private_key,
-    player::{Player, PlayerBundle},
+    game_score::{GameScore, LivingEntityStats},
+    player::{DEFAULT_PLAYER_HEALTH, Player, PlayerBundle},
     protocol::{
-        ClientUpdatePositionMessage, EntityPositionServer, ShootRequest,
+        ClientUpdatePositionMessage, EntityPositionServer,
+        OrderedReliableChannel, ShootRequest,
+    },
+    shooting::MAX_SHOOTING_DISTANCE,
+    utils::{
+        auth::get_private_key,
+        network::{
+            NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_REMOTE_SERVER,
+            SERVER_SOCKET_ADDR_SINGLEPLAYER,
+        },
     },
 };
 
@@ -37,10 +48,14 @@ mod enemy;
 mod game_flow;
 mod nav_mesh_pathfinding;
 
+// on client, the state gets reset to Initial when we exit to main menu, as everything gets
+// despawned.
+// for server binary, this will just be used once, at startup
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
 pub enum ServerLoadingState {
     #[default]
     Initial,
+    GameScoreFinishedSetup,
     MapSpawned,
     CollidersSpawned,
     NavMeshReady,
@@ -56,9 +71,9 @@ pub struct GameStateWave {
 
 /// This plugin adds all plugins & systems that need to run on the server, regardless if its for
 /// the server binary or the local server that gets started for Singleplayer.
-pub struct ServerPlugin;
+pub struct GameCorePlugin;
 
-impl Plugin for ServerPlugin {
+impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<ServerLoadingState>();
 
@@ -72,7 +87,12 @@ impl Plugin for ServerPlugin {
 
         app.add_systems(
             Update,
-            (handle_shoot_requests, receive_client_update_position),
+            (
+                handle_shoot_requests,
+                receive_client_update_position,
+                handle_client_respawn_requests,
+                // update_game_score_on_killed_message,
+            ),
         );
 
         app.add_systems(
@@ -80,8 +100,10 @@ impl Plugin for ServerPlugin {
             handle_server_loading_state_done,
         );
 
+        app.add_systems(OnEnter(ServerLoadingState::Initial), setup_game_score);
+
         app.add_observer(handle_new_connection);
-        app.add_observer(handle_new_client);
+        app.add_observer(spawn_player_on_new_client);
     }
 }
 
@@ -93,7 +115,6 @@ pub fn start_server(
     let entity_name = match server_mode.get() {
         ServerMode::LocalServerSinglePlayer => "Local Server for singleplayer",
         ServerMode::RemoteServer => "Server from server Binary",
-        ServerMode::None => "Server None",
     };
 
     let local_addr =
@@ -130,6 +151,29 @@ pub fn start_server(
     }
 }
 
+fn setup_game_score(
+    mut commands: Commands,
+    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
+    server_mode: Res<State<ServerMode>>,
+) {
+    info!("Entered ServerLoadingState::Initial, spawning new game score");
+    commands
+        .spawn((
+            GameScore {
+                players: HashMap::new(),
+                enemies: HashMap::new(),
+            },
+            Name::new("Game Score"),
+        ))
+        .insert_if(Replicate::to_clients(NetworkTarget::All), || {
+            *server_mode.get() == ServerMode::RemoteServer
+        });
+
+    // NOTE: theoretically the game score entity is not necessarily already spawned here, but we
+    // just do it here as spawning such a simple entity is trivial.
+    next_server_loading_state.set(ServerLoadingState::GameScoreFinishedSetup);
+}
+
 fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
     commands
         .entity(trigger.entity)
@@ -140,29 +184,41 @@ fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
         ),));
 }
 
-fn handle_new_client(
+fn spawn_player_on_new_client(
     trigger: On<Add, Connected>,
     clients_query: Query<&RemoteId, With<ClientOf>>,
     mut commands: Commands,
     materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,
     server_mode: Res<State<ServerMode>>,
+    mut game_score: Query<&mut GameScore>,
 ) {
     if let Ok(remote_id) = clients_query.get(trigger.entity) {
-        let client_id = remote_id.0;
+        let peer_id = remote_id.0;
+
+        let mut game_score = game_score.single_mut().unwrap();
+
+        game_score.players.insert(
+            peer_id.to_bits(),
+            LivingEntityStats {
+                username: format!("Player {}", peer_id.to_bits()),
+                ..default()
+            },
+        );
+
         info!(
             "Spawning a player for fully connected Client entity: {} | \
-             client_id: {}",
-            trigger.entity, client_id
+             peer_id: {}",
+            trigger.entity, peer_id
         );
 
         // NOTE: The replicate component gets inserted into the player entity, but only registered
         // components will be replicated to all other clients
-        let player = commands
+        let player_entity = commands
             .spawn((
-                Replicate::to_clients(NetworkTarget::All),
-                Name::new("Player"),
                 PlayerBundle::default(),
+                Name::new("Player"),
+                Replicate::to_clients(NetworkTarget::All),
                 // TODO: think we could override replication behaviour for this component and only
                 // replicate to all other clients than the current client
                 EntityPositionServer {
@@ -187,7 +243,7 @@ fn handle_new_client(
         if *server_mode == ServerMode::RemoteServer {
             // on headless setup, materials doesnt exist
             if let Some(mut materials) = materials {
-                commands.entity(player).insert((
+                commands.entity(player_entity).insert((
                     Mesh3d(meshes.add(Capsule3d::new(
                         CHARACTER_CAPSULE_RADIUS,
                         CHARACTER_CAPSULE_LENGTH,
@@ -200,7 +256,7 @@ fn handle_new_client(
             }
         }
         if *server_mode == ServerMode::LocalServerSinglePlayer {
-            commands.entity(player).insert(Controlled);
+            commands.entity(player_entity).insert(Controlled);
         }
     }
 }
@@ -238,40 +294,96 @@ fn receive_client_update_position(
 }
 
 fn handle_shoot_requests(
-    mut receivers: Query<(&mut MessageReceiver<ShootRequest>, Entity)>,
+    mut commands: Commands,
+    receivers: Query<(&mut MessageReceiver<ShootRequest>, Entity, &RemoteId)>,
     mut health_query: Query<&mut Health>,
     spatial_query: SpatialQuery,
-    enemy_query: Query<Entity, With<Enemy>>,
     player_query: Query<(Entity, &ControlledBy), With<Player>>,
+    mut game_score: Single<&mut GameScore>,
+    game_mode_server: Single<&GameModeServer>,
+    client_query: Query<&RemoteId, With<ClientOf>>,
 ) {
-    for (mut message_receiver, remote_id) in receivers.iter_mut() {
+    for (mut message_receiver, client_entity, remote_id) in receivers {
         for message in message_receiver.receive() {
-            let excluded_entities = if message.from_enemy {
-                enemy_query.iter().collect()
-            } else {
-                match player_query
-                    .iter()
-                    .find(|(_, controlled_by)| controlled_by.owner == remote_id)
-                    .map(|(entity, _)| entity)
-                {
-                    None => vec![],
-                    Some(shooter_entity) => vec![shooter_entity],
-                }
+            let Some(shooter_entity) = player_query
+                .iter()
+                .find(|(_, controlled_by)| controlled_by.owner == client_entity)
+                .map(|i| i.0)
+            else {
+                warn!(
+                    "Received a ShootRequest but couldn't determine from \
+                     which player this came from"
+                );
+                continue;
             };
 
             let Some(first_hit) = spatial_query.cast_ray(
                 message.origin,
                 message.direction,
-                200.,
+                MAX_SHOOTING_DISTANCE,
                 false,
                 &SpatialQueryFilter::default()
-                    .with_excluded_entities(excluded_entities),
+                    .with_excluded_entities([shooter_entity]),
             ) else {
                 continue;
             };
 
             if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
                 health.0 -= 8.0;
+
+                // FIXME: increase death of entity_killed and increase kills of shooter_entity
+                if health.0 <= 0.0 {
+                    let entity_killed = first_hit.entity;
+                    commands.entity(entity_killed).insert(ColliderDisabled);
+
+                    match game_score.players.get_mut(&remote_id.to_bits()) {
+                        Some(player) => {
+                            info!(
+                                "increased kill count of player with \
+                                 remote_id: {}",
+                                remote_id.to_bits()
+                            );
+                            player.kills += 1;
+                        }
+                        None => {
+                            warn!(
+                                "Failed to find player in game score by \
+                                 remote_id {}\nGame score: {:?}",
+                                remote_id.to_bits(),
+                                *game_score
+                            )
+                        }
+                    }
+
+                    // if we have game mode wave, the entity killed will always be an enemy. so we
+                    // skip this case
+                    if **game_mode_server == GameModeServer::Waves {
+                        return;
+                    };
+                    match player_query.get(entity_killed) {
+                        Ok((_, controlled_by)) => {
+                            if let Ok(remote_id) =
+                                client_query.get(controlled_by.owner)
+                                && let Some(player_score) = game_score
+                                    .players
+                                    .get_mut(&remote_id.to_bits())
+                            {
+                                player_score.deaths += 1;
+                            } else {
+                                warn!(
+                                    "Failed to find client of player that was \
+                                     killed"
+                                );
+                            };
+                        }
+                        Err(error) => {
+                            warn!(
+                                "Failed to find player that was killed: {}",
+                                error
+                            );
+                        }
+                    }
+                }
             }
         }
     }
@@ -310,9 +422,81 @@ fn handle_server_loading_state_done(
     };
 }
 
-// TODO: This doesnt work as lightyear inserts Disconnected component by default.
-// we probably just need to check for an additional component present in the entity
-// fn handle_disconnect(trigger: On<Add, Disconnected>, mut commands: Commands) {
-//     info!("Despawning client entity, Disconnected was inserted");
-//     commands.entity(trigger.entity).despawn();
-// }
+fn handle_client_respawn_requests(
+    mut commands: Commands,
+    receivers: Query<(
+        &mut MessageReceiver<ClientRespawnRequest>,
+        &ControlledByRemote,
+        &RemoteId,
+    )>,
+    mut player_query: Query<(Entity, &mut Health, &mut EntityPositionServer)>,
+    mut server_multi_message_sender: ServerMultiMessageSender,
+    server: Single<&Server>,
+) {
+    for (mut message_receiver, controlled_by, remote_id) in receivers {
+        for _ in message_receiver.receive() {
+            info!("Received ClientRespawnRequest!");
+            match controlled_by.iter().next() {
+                Some(controlling_player) => {
+                    match player_query.get_mut(controlling_player) {
+                        Ok((
+                            player_entity,
+                            mut player_health,
+                            mut entity_position_server,
+                        )) => {
+                            player_health.0 = DEFAULT_PLAYER_HEALTH;
+                            entity_position_server.translation =
+                                SPAWN_POINT_MEDIUM_PLASTIC_MAP;
+
+                            commands
+                                .entity(player_entity)
+                                .remove::<ColliderDisabled>();
+
+                            info!(
+                                "Sending confirm respawn message to client \
+                                 with remote_id: {}",
+                                remote_id.0
+                            );
+                            let network_target =
+                                &NetworkTarget::Single(remote_id.0);
+
+                            let message_sent_result = server_multi_message_sender
+                                .send::<ConfirmRespawn, OrderedReliableChannel>(
+                                    &ConfirmRespawn,
+                                    &server,
+                                    network_target,
+                                );
+                            match message_sent_result {
+                                Ok(_) => {
+                                    info!(
+                                        "Succesfully sent ConfirmRespawn \
+                                         message to client"
+                                    );
+                                }
+                                Err(error) => {
+                                    error!(
+                                        "Failed to send ConfirmRespawn \
+                                         message to client: {}",
+                                        error
+                                    );
+                                }
+                            }
+                        }
+                        Err(error) => {
+                            warn!(
+                                "Failed to find controlling player: {}",
+                                error
+                            );
+                        }
+                    }
+                }
+                None => {
+                    warn!(
+                        "Received a ClientRespawnRequest but no \
+                         'ControlledByRemote' exists"
+                    );
+                }
+            }
+        }
+    }
+}

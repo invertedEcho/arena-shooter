@@ -2,8 +2,7 @@ use bevy::prelude::*;
 use shared::GameModeServer;
 
 use crate::game_flow::states::{
-    AppDebugState, AppState, ConnectionState, InGameState, LoadingGameState,
-    MainMenuState,
+    AppState, ClientLoadingState, ConnectionState, InGameState, MainMenuState,
 };
 
 const DEBUG_OVERLAY_TEXT_SIZE: f32 = 15.0;
@@ -12,14 +11,10 @@ pub struct DebugOverlayPlugin;
 
 impl Plugin for DebugOverlayPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            OnEnter(AppDebugState::DebugVisible),
-            spawn_debug_overlay,
-        )
-        .add_systems(
+        app.add_systems(Startup, spawn_debug_overlay).add_systems(
             Update,
             (
-                toggle_debug,
+                toggle_debug_visibility,
                 update_current_app_state_text,
                 update_current_in_game_state_text,
                 update_current_main_menu_state,
@@ -49,6 +44,9 @@ struct CurrentLoadingGameStateText;
 #[derive(Component)]
 struct CurrentConnectionStateText;
 
+#[derive(Component)]
+struct DebugOverlayRoot;
+
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
         .spawn((
@@ -60,8 +58,10 @@ fn spawn_debug_overlay(mut commands: Commands) {
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
-            DespawnOnExit(AppDebugState::DebugVisible),
             Name::new("Debug Overlay UI Root"),
+            DebugOverlayRoot,
+            Visibility::Visible,
+            ZIndex(1),
         ))
         .with_children(|parent| {
             parent.spawn(build_debug_overlay_state_item_text(
@@ -194,7 +194,7 @@ fn update_loading_game_state_text(
         &mut Text,
         With<CurrentLoadingGameStateText>,
     >,
-    loading_game_state: Option<Res<State<LoadingGameState>>>,
+    loading_game_state: Option<Res<State<ClientLoadingState>>>,
 ) {
     let Some(loading_game_state) = loading_game_state else {
         **current_loading_game_state_text =
@@ -207,19 +207,18 @@ fn update_loading_game_state_text(
     }
 }
 
-fn toggle_debug(
+fn toggle_debug_visibility(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    current_app_debug_state: Res<State<AppDebugState>>,
-    mut next_app_debug_state: ResMut<NextState<AppDebugState>>,
+    mut debug_overlay_visibility: Single<
+        &mut Visibility,
+        With<DebugOverlayRoot>,
+    >,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyH) {
-        match *current_app_debug_state.get() {
-            AppDebugState::DebugHidden => {
-                next_app_debug_state.set(AppDebugState::DebugVisible);
-            }
-            AppDebugState::DebugVisible => {
-                next_app_debug_state.set(AppDebugState::DebugHidden);
-            }
+        if **debug_overlay_visibility == Visibility::Hidden {
+            **debug_overlay_visibility = Visibility::Visible;
+        } else if **debug_overlay_visibility == Visibility::Visible {
+            **debug_overlay_visibility = Visibility::Hidden;
         }
     }
 }

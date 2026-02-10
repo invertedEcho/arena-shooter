@@ -1,11 +1,12 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use lightyear::prelude::MessageSender;
+use lightyear::prelude::*;
 use shared::{
     components::{DespawnTimer, Health},
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
+    game_score::GameScore,
     player::Player,
-    protocol::{OrderedReliableMessageChannel, ShootRequest},
+    shooting::MAX_SHOOTING_DISTANCE,
     utils::random::get_random_number_from_range,
 };
 
@@ -22,7 +23,10 @@ pub fn enemy_shoot_player(
         Option<&EnemyShootCooldownTimer>,
     )>,
     player_transforms: Query<&Transform, With<Player>>,
-    mut message_sender_shoot_request: Single<&mut MessageSender<ShootRequest>>,
+    spatial_query: SpatialQuery,
+    mut health_query: Query<&mut Health>,
+    client_query: Query<&RemoteId, With<Connected>>,
+    mut game_score: Single<&mut GameScore>,
 ) {
     for (
         enemy_entity,
@@ -84,13 +88,47 @@ pub fn enemy_shoot_player(
             continue;
         };
 
-        message_sender_shoot_request.send::<OrderedReliableMessageChannel>(
-            ShootRequest {
-                origin,
-                direction,
-                from_enemy: true,
-            },
-        );
+        let Some(first_hit) = spatial_query.cast_ray(
+            origin,
+            direction,
+            MAX_SHOOTING_DISTANCE,
+            false,
+            &SpatialQueryFilter::default()
+                .with_excluded_entities([enemy_entity]),
+        ) else {
+            return;
+        };
+
+        let entity_killed = first_hit.entity;
+        if let Ok(mut health) = health_query.get_mut(entity_killed) {
+            health.0 -= 8.0;
+
+            if health.0 <= 0.0 {
+                commands.entity(entity_killed).insert(ColliderDisabled);
+                if let Some(enemy_game_score) =
+                    game_score.enemies.get_mut(&enemy_entity)
+                {
+                    enemy_game_score.kills += 1;
+                };
+
+                match client_query.single() {
+                    Ok(remote_id) => {
+                        if let Some(game_score_player) =
+                            game_score.players.get_mut(&remote_id.to_bits())
+                        {
+                            game_score_player.deaths += 1;
+                        };
+                    }
+                    Err(error) => {
+                        warn!(
+                            "Failed to get game score of player that was \
+                             killed: {}",
+                            error
+                        );
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -129,6 +167,7 @@ pub fn handle_enemy_killed_message(
         &mut EnemyState,
         &mut EnemyLastStateUpdate,
     )>,
+    mut game_score: Single<&mut GameScore>,
 ) {
     for message in message_reader.read() {
         let Some((enemy_entity, mut enemy_state, mut enemy_last_state_update)) =
@@ -151,5 +190,7 @@ pub fn handle_enemy_killed_message(
             .remove::<RigidBody>()
             .remove::<Collider>()
             .insert(DespawnTimer(Timer::from_seconds(3.0, TimerMode::Once)));
+
+        game_score.enemies.remove(&enemy_entity);
     }
 }

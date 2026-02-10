@@ -1,5 +1,7 @@
 use bevy::prelude::*;
+use game_core::ServerLoadingState;
 use lightyear::prelude::*;
+use shared::{ServerMode, game_score::GameScore};
 
 use crate::{
     game_flow::states::{AppState, MainMenuState},
@@ -67,6 +69,8 @@ pub enum CommonUiButton {
     Quit,
 }
 
+// TODO: This system does way too many things and especially things that aren't relevant for
+// `user_interface` module.
 fn handle_common_ui_button_press(
     mut commands: Commands,
     query: Query<(&Interaction, &CommonUiButton), Changed<Interaction>>,
@@ -74,6 +78,9 @@ fn handle_common_ui_button_press(
     mut next_app_state: ResMut<NextState<AppState>>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     own_client: Query<Entity, With<Client>>,
+    server_mode: Res<State<ServerMode>>,
+    game_score: Query<Entity, With<GameScore>>,
+    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
 ) {
     for (interaction, common_ui_button) in query {
         let Interaction::Pressed = interaction else {
@@ -94,6 +101,12 @@ fn handle_common_ui_button_press(
                 debug!("Triggering disconnect and despawning our client");
                 commands.trigger(Disconnect { entity: own_client });
                 commands.entity(own_client).despawn();
+                if *server_mode.get() == ServerMode::LocalServerSinglePlayer
+                    && let Ok(game_score) = game_score.single()
+                {
+                    commands.entity(game_score).despawn();
+                    next_server_loading_state.set(ServerLoadingState::Initial);
+                };
             }
             CommonUiButton::ToGameModeSelection => {
                 next_main_menu_state.set(MainMenuState::GameModeSelection);

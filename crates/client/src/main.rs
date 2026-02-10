@@ -87,7 +87,7 @@ fn main() {
             }),
     );
 
-    app.add_plugins(game_core::ServerPlugin);
+    app.add_plugins(game_core::GameCorePlugin);
 
     // lightyear plugins
     app.add_plugins(lightyear::prelude::client::ClientPlugins::default());
@@ -178,10 +178,10 @@ pub fn spawn_enemy_model_for_new_enemies(
 
 fn handle_egui_context(
     mut commands: Commands,
-    query: Query<&PrimaryEguiContext>,
+    existing_egui_contexts: Query<&PrimaryEguiContext>,
     camera_query: Query<Entity, With<Camera>>,
 ) {
-    if query.count() == 0 {
+    if existing_egui_contexts.count() == 0 {
         let Some(first_camera) = camera_query.iter().next() else {
             return;
         };
