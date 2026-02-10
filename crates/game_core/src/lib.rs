@@ -20,7 +20,7 @@ use shared::{
     components::Health,
     enemy::components::Enemy,
     game_score::{GameScore, LivingEntityStats},
-    player::{DEFAULT_PLAYER_HEALTH, Player, PlayerBundle},
+    player::{self, DEFAULT_PLAYER_HEALTH, Player, PlayerBundle},
     protocol::{
         ClientUpdatePositionMessage, EntityPositionServer,
         OrderedReliableChannel, ShootRequest,
@@ -300,6 +300,8 @@ fn handle_shoot_requests(
     spatial_query: SpatialQuery,
     player_query: Query<(Entity, &ControlledBy), With<Player>>,
     mut game_score: Single<&mut GameScore>,
+    game_mode_server: Single<&GameModeServer>,
+    client_query: Query<&RemoteId, With<ClientOf>>,
 ) {
     for (mut message_receiver, client_entity, remote_id) in receivers {
         for message in message_receiver.receive() {
@@ -333,6 +335,7 @@ fn handle_shoot_requests(
                 if health.0 <= 0.0 {
                     let entity_killed = first_hit.entity;
                     commands.entity(entity_killed).insert(ColliderDisabled);
+
                     match game_score.players.get_mut(&remote_id.to_bits()) {
                         Some(player) => {
                             info!(
@@ -349,6 +352,35 @@ fn handle_shoot_requests(
                                 remote_id.to_bits(),
                                 *game_score
                             )
+                        }
+                    }
+
+                    // if we have game mode wave, the entity killed will always be an enemy. so we
+                    // skip this case
+                    if **game_mode_server == GameModeServer::Waves {
+                        return;
+                    };
+                    match player_query.get(entity_killed) {
+                        Ok((_, controlled_by)) => {
+                            if let Ok(remote_id) =
+                                client_query.get(controlled_by.owner)
+                                && let Some(player_score) = game_score
+                                    .players
+                                    .get_mut(&remote_id.to_bits())
+                            {
+                                player_score.deaths += 1;
+                            } else {
+                                warn!(
+                                    "Failed to find client of player that was \
+                                     killed"
+                                );
+                            };
+                        }
+                        Err(error) => {
+                            warn!(
+                                "Failed to find player that was killed: {}",
+                                error
+                            );
                         }
                     }
                 }
@@ -446,32 +478,3 @@ fn handle_client_respawn_requests(
         }
     }
 }
-
-// fn update_game_score_on_killed_message(
-//     mut game_score: Single<&mut GameScore>,
-//     mut message_reader: MessageReader<LivingEntityKillMessage>,
-// ) {
-//     for message in message_reader.read() {
-//         match game_score.living_entities.get_mut(&message.entity_killed) {
-//             Some(killed_entity_score) => {
-//                 killed_entity_score.deaths += 1;
-//             }
-//             None => {
-//                 warn!("Failed to find killed entity in game score");
-//             }
-//         }
-//         match game_score.living_entities.get_mut(&message.shooter_entity) {
-//             Some(shooter_entity_score) => {
-//                 shooter_entity_score.kills += 1;
-//             }
-//             None => {
-//                 warn!(
-//                     "Failed to find shooter entity in game score. Shooter \
-//                      entity: {}\nEntities in game score: {:?}",
-//                     message.shooter_entity,
-//                     game_score.living_entities.keys()
-//                 );
-//             }
-//         }
-//     }
-// }
