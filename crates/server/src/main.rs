@@ -6,11 +6,8 @@ use bevy::prelude::*;
 use bevy::state::app::StatesPlugin;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use lightyear::prelude::server::*;
-use lightyear::prelude::*;
 use lightyear::utils::collections::HashSet;
 use shared::SharedPlugin;
-use shared::game_score::{GameScore, LivingEntityStats};
 use shared::utils::auth::get_private_key;
 use shared::utils::network::{
     AUTH_BACKEND_ADDRESS_SERVER_SIDE, get_server_socket_addr_client_side,

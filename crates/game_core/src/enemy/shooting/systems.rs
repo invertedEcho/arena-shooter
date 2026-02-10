@@ -1,5 +1,6 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use lightyear::prelude::*;
 use shared::{
     components::{DespawnTimer, Health},
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
@@ -24,6 +25,8 @@ pub fn enemy_shoot_player(
     player_transforms: Query<&Transform, With<Player>>,
     spatial_query: SpatialQuery,
     mut health_query: Query<&mut Health>,
+    client_query: Query<&RemoteId, With<Connected>>,
+    mut game_score: Single<&mut GameScore>,
 ) {
     for (
         enemy_entity,
@@ -96,12 +99,34 @@ pub fn enemy_shoot_player(
             return;
         };
 
-        if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
+        let entity_killed = first_hit.entity;
+        if let Ok(mut health) = health_query.get_mut(entity_killed) {
             health.0 -= 8.0;
 
-            // FIXME: increase player.death and enemy.kill
             if health.0 <= 0.0 {
-                let entity_killed = first_hit.entity;
+                commands.entity(entity_killed).insert(ColliderDisabled);
+                if let Some(enemy_game_score) =
+                    game_score.enemies.get_mut(&enemy_entity)
+                {
+                    enemy_game_score.kills += 1;
+                };
+
+                match client_query.single() {
+                    Ok(remote_id) => {
+                        if let Some(game_score_player) =
+                            game_score.players.get_mut(&remote_id.to_bits())
+                        {
+                            game_score_player.deaths += 1;
+                        };
+                    }
+                    Err(error) => {
+                        warn!(
+                            "Failed to get game score of player that was \
+                             killed: {}",
+                            error
+                        );
+                    }
+                }
             }
         }
     }
