@@ -1,9 +1,7 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::components::Health;
-
-pub const DEFAULT_PLAYER_HEALTH: f32 = 100.0;
+use crate::{DEFAULT_HEALTH, components::Health};
 
 #[derive(Component, Debug, Reflect, Serialize, PartialEq, Deserialize)]
 #[reflect(Component)]
@@ -24,7 +22,7 @@ impl Default for PlayerBundle {
     fn default() -> Self {
         Self {
             player: Player,
-            health: Health(DEFAULT_PLAYER_HEALTH),
+            health: Health(DEFAULT_HEALTH),
             aim_type: AimType::Normal,
         }
     }

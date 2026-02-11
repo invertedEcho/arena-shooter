@@ -20,7 +20,7 @@ mod map_selection;
 mod pause_menu;
 mod score_board_overlay;
 mod settings_menu;
-mod widgets;
+pub mod widgets;
 
 pub struct UserInterfacePlugin;
 

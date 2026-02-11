@@ -172,7 +172,7 @@ fn add_enemy_state_text(
             Mesh3d::default(),
             MeshMaterial3d(mat.clone()),
             Transform {
-                translation: Vec3::new(0.0, 1.0, 0.0),
+                translation: Vec3::new(0.0, 1.3, 0.0),
                 rotation: Quat::from_euler(
                     EulerRot::XYZ,
                     180_f32.to_radians(),

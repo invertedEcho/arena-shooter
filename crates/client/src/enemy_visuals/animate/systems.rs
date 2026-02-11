@@ -6,7 +6,7 @@ use shared::{
     enemy::components::{Enemy, EnemyState},
 };
 
-use crate::enemy::animate::{
+use crate::enemy_visuals::animate::{
     ENEMY_MODEL_NAME, ENEMY_MODEL_PATH, EnemyAnimationType,
     TOTAL_ENEMY_MODEL_ANIMATIONS, components::AnimationPlayerEntityPointer,
     get_animation_index_for_enemy_animation_type,
