@@ -12,7 +12,7 @@ use lightyear::{
     },
 };
 use shared::{
-    ClientRespawnRequest, ConfirmRespawn, GameModeServer,
+    ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH, GameModeServer,
     SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode, ServerRunMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
@@ -20,7 +20,7 @@ use shared::{
     components::Health,
     enemy::components::Enemy,
     game_score::{GameScore, LivingEntityStats},
-    player::{DEFAULT_PLAYER_HEALTH, Player, PlayerBundle},
+    player::{Player, PlayerBundle},
     protocol::{
         ClientUpdatePositionMessage, EntityPositionServer,
         OrderedReliableChannel, ShootRequest,
@@ -444,7 +444,7 @@ fn handle_client_respawn_requests(
                             mut player_health,
                             mut entity_position_server,
                         )) => {
-                            player_health.0 = DEFAULT_PLAYER_HEALTH;
+                            player_health.0 = DEFAULT_HEALTH;
                             entity_position_server.translation =
                                 SPAWN_POINT_MEDIUM_PLASTIC_MAP;
 

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::enemy::animate::EnemyAnimationType;
+use crate::enemy_visuals::animate::EnemyAnimationType;
 
 #[derive(Message)]
 pub struct PlayEnemyAnimationMessage {

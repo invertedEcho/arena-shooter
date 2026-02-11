@@ -7,6 +7,7 @@ use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
 };
 use shared::{
+    DEFAULT_HEALTH,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, RUN_VELOCITY,
         WALK_VELOCITY,
@@ -131,7 +132,7 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             ),
                             Enemy,
                             EnemyLastStateUpdate(Instant::now()),
-                            Health(100.0),
+                            Health(DEFAULT_HEALTH),
                             EnemyState::default(),
                             Grounded::default(),
                             EntityPositionServer {
