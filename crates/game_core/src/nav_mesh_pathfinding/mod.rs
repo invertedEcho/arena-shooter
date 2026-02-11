@@ -1,6 +1,6 @@
 use avian_rerecast::AvianBackendPlugin;
 use bevy::{platform::collections::HashSet, prelude::*};
-use bevy_landmass::prelude::*;
+use bevy_landmass::{debug::Landmass3dDebugPlugin, prelude::*};
 use bevy_rerecast::{Navmesh, prelude::*};
 use landmass_rerecast::{
     Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
@@ -23,7 +23,7 @@ impl Plugin for NavMeshPathfindingPlugin {
         app.add_plugins(NavmeshPlugins::default());
         app.add_plugins(Landmass3dPlugin::default());
         app.add_plugins(LandmassRerecastPlugin::default());
-        // app.add_plugins(Landmass3dDebugPlugin::default());
+        app.add_plugins(Landmass3dDebugPlugin::default());
         app.add_systems(
             OnEnter(ServerLoadingState::CollidersSpawned),
             generate_navmesh_on_map_colliders_ready,

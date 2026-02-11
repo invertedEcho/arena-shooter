@@ -107,9 +107,9 @@ pub fn play_enemy_animation(
         let Ok(animation_player_entity_pointer) = enemy_query.get(event.enemy)
         else {
             warn!(
-                "Tried to play enemy hit animation, but could not find an \
-                 Enemy with the entity from the event {} that contains an \
-                 AnimationPlayerEntityPointer!",
+                "Failed to play enemy animation. Reason: No enemy exists with \
+                 entity id given from PlayerBulletHitEnemy ({}) that contains \
+                 an AnimationPlayerEntityPointer!",
                 event.enemy
             );
             continue;

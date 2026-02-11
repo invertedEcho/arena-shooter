@@ -1,17 +1,20 @@
 use bevy::prelude::*;
-use shared::character_controller::messages::MovementAction;
 
 use crate::{
-    character_controller::systems::{
-        apply_gravity_over_time, check_above_head,
-        handle_keyboard_input_for_player,
-        handle_movement_actions_for_character_controllers, update_grounded,
-        zero_player_velocity,
+    character_controller::{
+        messages::MovementAction,
+        systems::{
+            apply_gravity_over_time, check_above_head,
+            handle_keyboard_input_for_player,
+            handle_movement_actions_for_character_controllers, update_grounded,
+            zero_player_velocity,
+        },
     },
     game_flow::states::{AppState, InGameState},
 };
 
 pub mod components;
+mod messages;
 mod systems;
 
 pub struct CharacterControllerPlugin;
@@ -34,6 +37,6 @@ impl Plugin for CharacterControllerPlugin {
                 (handle_keyboard_input_for_player,)
                     .run_if(in_state(InGameState::Playing)),
             );
-        app.add_systems(OnEnter(InGameState::Paused), zero_player_velocity);
+        app.add_systems(OnExit(InGameState::Playing), zero_player_velocity);
     }
 }

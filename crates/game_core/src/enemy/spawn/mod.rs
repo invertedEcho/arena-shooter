@@ -9,8 +9,7 @@ use bevy_landmass::{
 use shared::{
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, RUN_VELOCITY,
-        WALK_VELOCITY,
-        components::{CharacterController, Grounded},
+        WALK_VELOCITY, components::Grounded,
     },
     components::Health,
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
@@ -155,11 +154,9 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 Dir3::NEG_Y,
                             )
                             .with_max_distance(0.2),
-                            CharacterController,
                         ))
                         .id();
 
-                    info!("Adding spawned enemy to game_score.enemies!");
                     game_score.enemies.insert(
                         enemy_entity,
                         LivingEntityStats {

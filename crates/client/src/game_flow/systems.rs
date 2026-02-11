@@ -4,7 +4,11 @@ use bevy::{
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use game_core::ServerLoadingState;
-use shared::ServerMode;
+use lightyear::prelude::MessageSender;
+use shared::{
+    GameStateServer, ServerMode,
+    protocol::{ChangeGameServerStateRequest, OrderedReliableChannel},
+};
 
 use crate::{
     game_flow::states::{AppState, ClientLoadingState, InGameState},
@@ -147,5 +151,25 @@ pub fn handle_player_death_event(
 ) {
     for _ in message_reader.read() {
         next_in_game_state.set(InGameState::PlayerDead);
+    }
+}
+
+pub fn send_update_game_server_state_request_on_in_game_state_change(
+    current_in_game_state: If<Res<State<InGameState>>>,
+    mut message_sender: Single<
+        &mut MessageSender<ChangeGameServerStateRequest>,
+    >,
+) {
+    match *current_in_game_state.get() {
+        InGameState::Playing => {
+            message_sender.send::<OrderedReliableChannel>(
+                ChangeGameServerStateRequest(GameStateServer::Running),
+            );
+        }
+        InGameState::Paused | InGameState::PlayerDead => {
+            message_sender.send::<OrderedReliableChannel>(
+                ChangeGameServerStateRequest(GameStateServer::Paused),
+            );
+        }
     }
 }

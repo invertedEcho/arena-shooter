@@ -12,7 +12,7 @@ use lightyear::{
     },
 };
 use shared::{
-    ClientRespawnRequest, ConfirmRespawn, GameModeServer,
+    ClientRespawnRequest, ConfirmRespawn, GameModeServer, GameStateServer,
     SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode, ServerRunMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
@@ -22,8 +22,8 @@ use shared::{
     game_score::{GameScore, LivingEntityStats},
     player::{DEFAULT_PLAYER_HEALTH, Player, PlayerBundle},
     protocol::{
-        ClientUpdatePositionMessage, EntityPositionServer,
-        OrderedReliableChannel, ShootRequest,
+        ChangeGameServerStateRequest, ClientUpdatePositionMessage,
+        EntityPositionServer, OrderedReliableChannel, ShootRequest,
     },
     shooting::MAX_SHOOTING_DISTANCE,
     utils::{
@@ -76,6 +76,7 @@ pub struct GameCorePlugin;
 impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<ServerLoadingState>();
+        app.init_state::<GameStateServer>();
 
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
@@ -91,7 +92,7 @@ impl Plugin for GameCorePlugin {
                 handle_shoot_requests,
                 receive_client_update_position,
                 handle_client_respawn_requests,
-                // update_game_score_on_killed_message,
+                handle_game_server_state_update_request,
             ),
         );
 
@@ -498,5 +499,23 @@ fn handle_client_respawn_requests(
                 }
             }
         }
+    }
+}
+
+fn handle_game_server_state_update_request(
+    mut message_receiver: Single<
+        &mut MessageReceiver<ChangeGameServerStateRequest>,
+    >,
+    server_mode: Res<State<ServerMode>>,
+    mut game_state_server: ResMut<NextState<GameStateServer>>,
+) {
+    for message in message_receiver.receive() {
+        if *server_mode.get() != ServerMode::LocalServerSinglePlayer {
+            info!("Ignored ChangeGameServerStateRequest");
+            return;
+        }
+
+        info!("GameStateServer updated to {:?}", message.0);
+        game_state_server.set(message.0);
     }
 }
