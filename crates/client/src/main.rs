@@ -1,8 +1,5 @@
-use std::f32::consts::PI;
-
 use ::shared::{
-    ServerMode, ServerRunMode, SharedPlugin,
-    character_controller::LOCAL_FEET_CHARACTER, enemy::components::Enemy,
+    ServerMode, ServerRunMode, SharedPlugin, enemy::components::Enemy,
 };
 use bevy::{
     dev_tools::fps_overlay::FpsOverlayPlugin,
@@ -23,7 +20,7 @@ use bevy_skein::SkeinPlugin;
 use crate::{
     audio::AudioPlugin,
     character_controller::CharacterControllerPlugin,
-    enemy::animate::ENEMY_MODEL_PATH,
+    enemy_visuals::EnemyVisualsPlugin,
     game_flow::{GameFlowPlugin, states::AppState},
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
@@ -35,12 +32,10 @@ use crate::{
     world::WorldPlugin,
 };
 
-use enemy::animate::AnimateEnemyPlugin;
-
 mod audio;
 mod auth;
 mod character_controller;
-mod enemy;
+mod enemy_visuals;
 mod game_flow;
 mod game_settings;
 mod gameplay_debug;
@@ -131,7 +126,7 @@ fn main() {
         .add_plugins(ParticlesPlugin)
         .add_plugins(CharacterControllerPlugin)
         .add_plugins(AudioPlugin)
-        .add_plugins(AnimateEnemyPlugin);
+        .add_plugins(EnemyVisualsPlugin);
 
     if cfg!(debug_assertions) {
         app.add_plugins(GameplayDebugPlugin);
@@ -139,44 +134,13 @@ fn main() {
 
     // TODO: move elsewhere
     app.add_observer(apply_render_layers_to_children);
-    app.add_systems(
-        Update,
-        (spawn_enemy_model_for_new_enemies, handle_egui_context),
-    );
+    app.add_systems(Update, ensure_egui_context_exists);
     app.add_systems(OnExit(AppState::InGame), despawn_enemys_on_exit);
 
     app.run();
 }
 
-pub fn spawn_enemy_model_for_new_enemies(
-    asset_server: Res<AssetServer>,
-    mut commands: Commands,
-    enemy_query: Query<Entity, Added<Enemy>>,
-) {
-    for added_enemy in enemy_query {
-        let enemy_model = asset_server
-            .load(GltfAssetLabel::Scene(0).from_asset(ENEMY_MODEL_PATH));
-
-        commands.entity(added_enemy).with_child((
-            Transform {
-                translation: Vec3::new(
-                    0.0,
-                    // center enemy model -> in blender, feet are at bottom, so in
-                    // bevy model feet are at center of collider, 0.0
-                    LOCAL_FEET_CHARACTER,
-                    0.0,
-                ),
-                // enemy model needs to be rotated 180 degrees
-                rotation: Quat::from_rotation_y(PI),
-                ..default()
-            },
-            SceneRoot(enemy_model),
-            Visibility::Visible,
-        ));
-    }
-}
-
-fn handle_egui_context(
+fn ensure_egui_context_exists(
     mut commands: Commands,
     existing_egui_contexts: Query<&PrimaryEguiContext>,
     camera_query: Query<Entity, With<Camera>>,

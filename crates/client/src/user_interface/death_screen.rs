@@ -2,9 +2,9 @@ use bevy::prelude::*;
 use game_core::GameStateWave;
 use lightyear::prelude::{Controlled, MessageSender};
 use shared::{
-    ClientRespawnRequest, SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode,
+    ClientRespawnRequest, DEFAULT_HEALTH, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
+    ServerMode,
     components::Health,
-    player::DEFAULT_PLAYER_HEALTH,
     protocol::{EntityPositionServer, OrderedReliableChannel},
 };
 
@@ -177,7 +177,7 @@ fn handle_button_press(
                 // receive the ConfirmRespawn message from server, so we just do the stuff that we
                 // would normally do manually
                 if *server_mode.get() == ServerMode::LocalServerSinglePlayer {
-                    player_query.0.0 = DEFAULT_PLAYER_HEALTH;
+                    player_query.0.0 = DEFAULT_HEALTH;
                     player_query.1.translation = SPAWN_POINT_MEDIUM_PLASTIC_MAP;
                     next_in_game_state.set(InGameState::Playing);
                 } else {

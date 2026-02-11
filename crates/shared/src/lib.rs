@@ -14,6 +14,8 @@ pub mod protocol;
 pub mod shooting;
 pub mod utils;
 
+pub const DEFAULT_HEALTH: f32 = 100.0;
+
 #[derive(Resource, PartialEq)]
 pub enum ServerRunMode {
     Headless,

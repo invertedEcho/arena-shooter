@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use shared::enemy::components::EnemyState;
 
-use crate::enemy::animate::{
+use crate::enemy_visuals::animate::{
     messages::PlayEnemyAnimationMessage,
     systems::{
         link_enemy_animation, load_enemy_animations,

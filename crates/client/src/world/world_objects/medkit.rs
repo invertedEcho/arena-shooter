@@ -3,9 +3,9 @@ use std::time::Duration;
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use shared::{
-    Medkit, MedkitFloatDirection,
+    DEFAULT_HEALTH, Medkit, MedkitFloatDirection,
     components::{Health, MedkitSpawnLocation},
-    player::{DEFAULT_PLAYER_HEALTH, Player},
+    player::Player,
 };
 
 use crate::game_flow::states::AppState;
@@ -83,7 +83,7 @@ pub fn detect_collision_medkit_with_player(
 ) {
     let (player_entity, mut player_health) = player_query.into_inner();
 
-    let player_full_hp = player_health.0 == DEFAULT_PLAYER_HEALTH;
+    let player_full_hp = player_health.0 == DEFAULT_HEALTH;
 
     for (mut medkit, colliding_entities, mut visibility) in medkit_query {
         if !medkit.active {
@@ -95,7 +95,7 @@ pub fn detect_collision_medkit_with_player(
 
         if player_collied_with_medkit && !player_full_hp {
             player_health.0 += medkit.health_to_give;
-            player_health.0 = player_health.0.clamp(0.0, DEFAULT_PLAYER_HEALTH);
+            player_health.0 = player_health.0.clamp(0.0, DEFAULT_HEALTH);
             medkit.active = false;
             *visibility = Visibility::Hidden;
         }
