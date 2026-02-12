@@ -7,7 +7,7 @@ use lightyear::netcode::{CONNECT_TOKEN_BYTES, ConnectToken};
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
 
-use crate::game_flow::states::{AppState, ConnectionState};
+use crate::game_flow::states::AppState;
 
 /// Holds a handle to an io task that is requesting a `ConnectToken` from the backend
 #[derive(Resource)]
@@ -21,7 +21,6 @@ pub fn fetch_connect_token(
     mut connect_token_request: ResMut<ConnectTokenRequestTask>,
     client: Single<Entity, With<Client>>,
     mut commands: Commands,
-    mut next_disconnected_state: ResMut<NextState<ConnectionState>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     if let Some(task) = &mut connect_token_request.task
@@ -32,7 +31,6 @@ pub fn fetch_connect_token(
         let Some(connect_token) = connect_token else {
             warn!("ConnectToken is None, couldnt connect to game server");
             connect_token_request.task = None;
-            next_disconnected_state.set(ConnectionState::Disconnected);
             next_app_state.set(AppState::Disconnected);
             return;
         };

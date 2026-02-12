@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use shared::GameModeServer;
 
 use crate::game_flow::states::{
-    AppState, ClientLoadingState, ConnectionState, InGameState, MainMenuState,
+    AppState, ClientLoadingState, InGameState, MainMenuState,
 };
 
 const DEBUG_OVERLAY_TEXT_SIZE: f32 = 15.0;
@@ -20,7 +20,6 @@ impl Plugin for DebugOverlayPlugin {
                 update_current_main_menu_state,
                 update_loading_game_state_text,
                 update_current_server_game_mode_text,
-                update_current_connection_state_text,
             ),
         );
     }
@@ -123,15 +122,6 @@ fn build_debug_overlay_state_item_text<T: Component>(
             )
         ],
     )
-}
-
-fn update_current_connection_state_text(
-    mut current_app_state_text: Single<&mut Text, With<CurrentAppStateText>>,
-    connection_state: Res<State<ConnectionState>>,
-) {
-    if connection_state.is_changed() {
-        ***current_app_state_text = format!("{:?}", *connection_state.get());
-    }
 }
 
 fn update_current_app_state_text(
