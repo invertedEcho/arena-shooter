@@ -13,7 +13,7 @@ use lightyear::{
 };
 use shared::{
     ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH, GameModeServer,
-    SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode, ServerRunMode,
+    GameStateServer, SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode, ServerRunMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -22,8 +22,8 @@ use shared::{
     game_score::{GameScore, LivingEntityStats},
     player::{Player, PlayerBundle},
     protocol::{
-        ClientUpdatePositionMessage, EntityPositionServer,
-        OrderedReliableChannel, ShootRequest,
+        ChangeGameServerStateRequest, ClientUpdatePositionMessage,
+        EntityPositionServer, OrderedReliableChannel, ShootRequest,
     },
     shooting::MAX_SHOOTING_DISTANCE,
     utils::{
@@ -76,6 +76,7 @@ pub struct GameCorePlugin;
 impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<ServerLoadingState>();
+        app.init_state::<GameStateServer>();
 
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
@@ -91,7 +92,7 @@ impl Plugin for GameCorePlugin {
                 handle_shoot_requests,
                 receive_client_update_position,
                 handle_client_respawn_requests,
-                // update_game_score_on_killed_message,
+                handle_game_server_state_update_request,
             ),
         );
 
@@ -156,7 +157,6 @@ fn setup_game_score(
     mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
     server_mode: Res<State<ServerMode>>,
 ) {
-    info!("Entered ServerLoadingState::Initial, spawning new game score");
     commands
         .spawn((
             GameScore {
@@ -331,7 +331,6 @@ fn handle_shoot_requests(
             if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
                 health.0 -= 8.0;
 
-                // FIXME: increase death of entity_killed and increase kills of shooter_entity
                 if health.0 <= 0.0 {
                     let entity_killed = first_hit.entity;
                     commands.entity(entity_killed).insert(ColliderDisabled);
@@ -498,5 +497,23 @@ fn handle_client_respawn_requests(
                 }
             }
         }
+    }
+}
+
+fn handle_game_server_state_update_request(
+    mut message_receiver: Single<
+        &mut MessageReceiver<ChangeGameServerStateRequest>,
+    >,
+    server_mode: Res<State<ServerMode>>,
+    mut game_state_server: ResMut<NextState<GameStateServer>>,
+) {
+    for message in message_receiver.receive() {
+        if *server_mode.get() != ServerMode::LocalServerSinglePlayer {
+            info!("Ignored ChangeGameServerStateRequest");
+            return;
+        }
+
+        info!("GameStateServer updated to {:?}", message.0);
+        game_state_server.set(message.0);
     }
 }

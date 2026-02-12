@@ -4,7 +4,8 @@ use bevy_landmass::{
     AgentDesiredVelocity3d, AgentState, AgentTarget3d, Velocity3d,
 };
 use shared::{
-    character_controller::messages::{MovementAction, MovementDirection},
+    Medkit,
+    character_controller::apply_collide_and_slide,
     enemy::{
         ENEMY_FOV, ENEMY_VISION_RANGE,
         components::{Enemy, EnemyLastStateUpdate, EnemyState},
@@ -14,7 +15,7 @@ use shared::{
 };
 
 use crate::enemy::{
-    ai::messages::UpdateEnemyAgentTargetMessage, spawn::AgentEnemyEntityPointer,
+    ai::messages::UpdateEnemyAgentTargetMessage, spawn::EnemyAgentEntityPointer,
 };
 
 // TODO: except this is not the case...
@@ -50,6 +51,7 @@ pub fn enemy_state_decision_system(
         if *enemy_state == EnemyState::Dead {
             continue;
         }
+
         let (player_entity, player_transform) = *player_query;
 
         let player_position = player_transform.translation;
@@ -77,7 +79,7 @@ pub fn enemy_state_decision_system(
                 let max_distance = 100.0;
                 let solid = false;
 
-                // // raycast shouldnt hit enemy itself and enemy bullets
+                // raycast shouldnt hit enemy itself
                 let filter = SpatialQueryFilter::default()
                     .with_excluded_entities([enemy_entity]);
 
@@ -118,14 +120,14 @@ pub fn enemy_state_decision_system(
                     }
                 }
             } else {
-                info!("player is not in enemy FOV");
+                debug!("player is not in enemy FOV");
                 enemy_state.update_state(
                     EnemyState::RotateTowardsPlayer,
                     &mut enemy_last_state_update,
                 );
             }
         } else if *enemy_state != EnemyState::GoToAgentTarget {
-            info!("Player is not in range of enemy, > 30m");
+            debug!("Player is not in range of enemy, > 30m");
             enemy_state.update_state(
                 EnemyState::GoToAgentTarget,
                 &mut enemy_last_state_update,
@@ -138,9 +140,10 @@ pub fn enemy_state_decision_system(
 }
 
 pub fn handle_set_new_enemy_agent_target_message(
+    mut commands: Commands,
     mut message_reader: MessageReader<UpdateEnemyAgentTargetMessage>,
     mut enemy_agents_query: Query<(
-        &AgentEnemyEntityPointer,
+        &EnemyAgentEntityPointer,
         &mut AgentTarget3d,
     )>,
     player_query: Single<(Entity, &Transform), With<Player>>,
@@ -174,10 +177,14 @@ pub fn handle_set_new_enemy_agent_target_message(
             &SpatialQueryFilter::default()
                 .with_excluded_entities([player_entity]),
         ) else {
-            warn!(
+            info!(
                 "Could not get a valid new agent target point for chasing \
-                 enemy"
+                 enemy {}, inserting RetryGetNewAgentTarget timer",
+                enemy_entity
             );
+            commands.entity(enemy_entity).insert(RetryGetNewAgentTarget(
+                Timer::from_seconds(1.0, TimerMode::Once),
+            ));
             continue;
         };
 
@@ -190,16 +197,52 @@ pub fn handle_set_new_enemy_agent_target_message(
     }
 }
 
+/// This component gets inserted into enemies which failed to get a new agent target. After the
+/// timer has finished, we write UpdateEnemyAgentTargetMessage to try again.
+/// Failures of getting a valid agent target may be for example: the player is currently not on
+/// the nav mesh
+#[derive(Component)]
+pub struct RetryGetNewAgentTarget(pub Timer);
+
+pub fn retry_get_new_agent_target(
+    mut commands: Commands,
+    query: Query<(Entity, &mut RetryGetNewAgentTarget), With<Enemy>>,
+    time: Res<Time>,
+    mut update_enemy_target_message_writer: MessageWriter<
+        UpdateEnemyAgentTargetMessage,
+    >,
+) {
+    for (enemy_entity, mut timer) in query {
+        timer.0.tick(time.delta());
+        if timer.0.is_finished() {
+            update_enemy_target_message_writer
+                .write(UpdateEnemyAgentTargetMessage(enemy_entity));
+            info!(
+                "RetryGetNewAgentTarget timer has finished, enemy entity {} \
+                 will now try to get new agent target",
+                enemy_entity
+            );
+            commands
+                .entity(enemy_entity)
+                .remove::<RetryGetNewAgentTarget>();
+        }
+    }
+}
+
 pub fn check_if_enemy_agent_reached_target(
-    mut enemy_query: Query<(&mut EnemyState, &mut EnemyLastStateUpdate)>,
-    enemy_agents_query: Query<(&AgentEnemyEntityPointer, &AgentState)>,
+    mut enemy_query: Query<(
+        &mut EnemyState,
+        &mut EnemyLastStateUpdate,
+        &mut LinearVelocity,
+    )>,
+    enemy_agents_query: Query<(&EnemyAgentEntityPointer, &AgentState)>,
 ) {
     for (agent_enemy_entity_pointer, agent_state) in enemy_agents_query {
         if *agent_state != AgentState::ReachedTarget {
             continue;
         }
 
-        let Ok((mut enemy_state, mut enemy_last_state_update)) =
+        let Ok((mut enemy_state, mut enemy_last_state_update, mut velocity)) =
             enemy_query.get_mut(agent_enemy_entity_pointer.0)
         else {
             warn!(
@@ -218,21 +261,29 @@ pub fn check_if_enemy_agent_reached_target(
             EnemyState::EnemyAgentReachedTarget,
             &mut enemy_last_state_update,
         );
+        velocity.0 = Vec3::ZERO;
     }
 }
 
 pub fn handle_chasing_enemies(
-    mut enemy_query: Query<(&EnemyState, Entity)>,
+    mut enemy_query: Query<(
+        &EnemyState,
+        Entity,
+        &mut LinearVelocity,
+        &Transform,
+    )>,
     enemy_agents_query: Query<(
         &AgentDesiredVelocity3d,
-        &AgentEnemyEntityPointer,
+        &EnemyAgentEntityPointer,
     )>,
-    mut movement_action_writer: MessageWriter<MovementAction>,
+    mut spatial_query: SpatialQuery,
+    medkit_query: Query<Entity, With<Medkit>>,
+    time: Res<Time>,
 ) {
     for (agent_desired_velocity, agent_enemy_entity_pointer) in
         enemy_agents_query
     {
-        let Ok((enemy_state, entity)) =
+        let Ok((enemy_state, entity, mut velocity, transform)) =
             enemy_query.get_mut(agent_enemy_entity_pointer.0)
         else {
             warn!(
@@ -244,20 +295,35 @@ pub fn handle_chasing_enemies(
         };
 
         if *enemy_state != EnemyState::GoToAgentTarget {
+            velocity.x = 0.0;
+            velocity.z = 0.0;
             continue;
         }
 
-        // TODO: this is problematic. character controller only runs on client.
-        // this works for now as we only have enemies in singleplayer, but if we start having Waves
-        // game mode multiplayer, the character controller for enemies should run on the server and
-        // position be synced to all clients
-        movement_action_writer.write(MovementAction {
-            desired_velocity: MovementDirection::Move(
-                agent_desired_velocity.velocity(),
-            ),
-            character_controller_entity: entity,
-            sprinting: false,
-        });
+        debug!(
+            "Setting enemy velocity to agent_desired_velocity: {}, ignoring y",
+            agent_desired_velocity.velocity()
+        );
+
+        // we dont apply y from agent velocity as otherwise it would fight our gravity system
+        velocity.x = agent_desired_velocity.velocity().x;
+        velocity.z = agent_desired_velocity.velocity().z;
+
+        let excluded_entities: Vec<Entity> =
+            medkit_query.iter().chain(std::iter::once(entity)).collect();
+
+        let spatial_query_filter = &SpatialQueryFilter::default()
+            .with_excluded_entities(excluded_entities.clone());
+
+        apply_collide_and_slide(
+            &mut velocity,
+            agent_desired_velocity.velocity(),
+            transform,
+            &mut spatial_query,
+            spatial_query_filter,
+            time.delta_secs(),
+            0,
+        );
     }
 }
 
@@ -302,11 +368,11 @@ pub fn rotate_enemies_towards_player_over_time(
     }
 }
 
-pub fn update_enemy_agents_velocity_from_physics_velocity(
+pub fn update_enemy_agents_velocity(
     mut agent_query: Query<(
         &mut Velocity3d,
         &AgentState,
-        &AgentEnemyEntityPointer,
+        &EnemyAgentEntityPointer,
     )>,
     mut enemy_query: Query<(Entity, &LinearVelocity)>,
     mut message_writer: MessageWriter<UpdateEnemyAgentTargetMessage>,
@@ -324,16 +390,20 @@ pub fn update_enemy_agents_velocity_from_physics_velocity(
             continue;
         };
         if *agent_state == AgentState::TargetNotOnNavMesh {
-            // FIXME: if the player is somewhere the enemy cant reach,
-            // the enemy will never be able to get to the player.
-            // we should just try nearby locations instead
-
             // if the target is not on the navmesh, we let our systems make a new Target, until it
             // is on the navmesh again.
             message_writer.write(UpdateEnemyAgentTargetMessage(enemy_entity));
         }
 
         agent_velocity.velocity = enemy_velocity.0;
+    }
+}
+
+pub fn zero_enemy_velocity(
+    enemy_query: Query<&mut LinearVelocity, With<Enemy>>,
+) {
+    for mut enemy in enemy_query {
+        enemy.0 = Vec3::ZERO;
     }
 }
 

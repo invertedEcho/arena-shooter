@@ -5,15 +5,18 @@ use shared::{
     GRAVITY, Medkit,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
-        MAX_SLOPE_ANGLE, RUN_VELOCITY, WALK_VELOCITY,
+        RUN_VELOCITY, WALK_VELOCITY, apply_collide_and_slide,
         components::{CharacterController, Grounded},
-        messages::{MovementAction, MovementDirection},
     },
+    enemy::components::Enemy,
 };
 
-use crate::player::{
-    camera::components::{PlayerCameraState, WorldCamera},
-    shooting::components::PlayerWeapons,
+use crate::{
+    character_controller::messages::{MovementAction, MovementDirection},
+    player::{
+        camera::components::{PlayerCameraState, WorldCamera},
+        shooting::components::PlayerWeapons,
+    },
 };
 
 pub fn handle_keyboard_input_for_player(
@@ -82,7 +85,6 @@ pub fn handle_keyboard_input_for_player(
     });
 }
 
-const MAX_DISTANCE_SHAPE_CAST_CHARACTER_CONTROLLER: f32 = 0.3;
 pub fn handle_movement_actions_for_character_controllers(
     mut movement_action_reader: MessageReader<MovementAction>,
     mut character_controller_query: Query<
@@ -167,107 +169,6 @@ fn get_max_delta(desired_velocity: Vec3, sprinting: bool) -> f32 {
     }
 }
 
-fn apply_collide_and_slide(
-    current_velocity: &mut Vec3,
-    desired_velocity: Vec3,
-    origin_transform: &Transform,
-    spatial_query: &mut SpatialQuery,
-    spatial_query_filter: &SpatialQueryFilter,
-    time_delta_secs: f32,
-    current_hit_count: usize,
-) {
-    const MAX_HITS: usize = 5;
-    let Ok(direction_from_world_velocity) = Dir3::new(desired_velocity) else {
-        return;
-    };
-
-    if desired_velocity.length_squared() < 0.0001 {
-        *current_velocity = Vec3::splat(0.0);
-        return;
-    }
-
-    if current_hit_count > MAX_HITS {
-        *current_velocity = Vec3::splat(0.);
-        return;
-    }
-
-    let ray_origin = origin_transform.translation
-        - direction_from_world_velocity.as_vec3() * 0.025;
-
-    if let Some(hit_ahead) = spatial_query.cast_shape(
-        &Collider::capsule(CHARACTER_CAPSULE_RADIUS, CHARACTER_CAPSULE_LENGTH),
-        ray_origin,
-        origin_transform.rotation,
-        direction_from_world_velocity,
-        &ShapeCastConfig {
-            max_distance: MAX_DISTANCE_SHAPE_CAST_CHARACTER_CONTROLLER,
-            ..default()
-        },
-        spatial_query_filter,
-    ) {
-        // obstacle in the way, check if we can slimb it
-        // a normal is just a direction something is facing
-        let normal = hit_ahead.normal1;
-        let slope_angle = normal.angle_between(Vec3::Y);
-        let slope_climable = slope_angle < MAX_SLOPE_ANGLE;
-
-        if slope_climable {
-            // this is the most important part to make the slope climbing possible.
-            // instead of trying to go straight, we slide along the ground
-            *current_velocity = desired_velocity.reject_from_normalized(normal);
-
-            // slope snapping
-            let ray_down_origin = origin_transform.translation + Vec3::Y * 0.5;
-            let ray_down_direction = Dir3::NEG_Y;
-            let max_down_distance = 1.0;
-
-            if let Some(hit_down) = spatial_query.cast_ray(
-                ray_down_origin,
-                ray_down_direction,
-                max_down_distance,
-                true,
-                spatial_query_filter,
-            ) {
-                let hit_down_point =
-                    ray_down_origin + ray_down_direction * hit_down.distance;
-                let hit_down_y = hit_down_point.y;
-                let player_y = origin_transform.translation.y;
-                let difference_y = hit_down_y - player_y;
-                if difference_y.abs() < 0.3 {
-                    debug!("Snapping character controller to slope");
-                    current_velocity.y = difference_y / time_delta_secs;
-                }
-            }
-        } else {
-            // not climable, e.g. a wall. we want to slide along the wall,
-            // similar to the collide and slide algorithm
-            // the main difference is that we ignore the Y part,
-            // because its too step, so we dont want to climb up
-            let impulse = desired_velocity.reject_from_normalized(normal);
-            // we need to check again if the new velocity (impulse) would also penetrate an
-            // obstacle until we dont or we reach MAX_HITS, where we just zero out velocity
-
-            // update our transform so shape cast origin is correct
-            let new_transform = Transform {
-                translation: origin_transform.translation
-                    + desired_velocity * time_delta_secs,
-                rotation: origin_transform.rotation,
-                scale: origin_transform.scale,
-            };
-
-            apply_collide_and_slide(
-                current_velocity,
-                impulse,
-                &new_transform,
-                spatial_query,
-                spatial_query_filter,
-                time_delta_secs,
-                current_hit_count + 1,
-            );
-        }
-    }
-}
-
 /// currrent_velocity: Our current velocity
 /// target_velocity: Our target velocity, e.g. the max velocity
 /// max_delta: how fast are we allowed to change per frame. with this, we can control, how fast we
@@ -297,11 +198,11 @@ fn move_towards_vec(
     }
 }
 
-/// Updates the [`Grounded`] component for character controllers.
+/// Updates the [`Grounded`] component
 pub fn update_grounded(
     mut query: Query<
         (&ShapeHits, &mut Grounded, &mut LinearVelocity),
-        With<CharacterController>,
+        EntitiesRelevantForGravity,
     >,
 ) {
     for (hits, mut grounded, mut velocity) in &mut query {
@@ -317,8 +218,10 @@ pub fn update_grounded(
     }
 }
 
+type EntitiesRelevantForGravity = Or<(With<Enemy>, With<CharacterController>)>;
+
 pub fn apply_gravity_over_time(
-    query: Query<(&Grounded, &mut LinearVelocity), With<CharacterController>>,
+    query: Query<(&Grounded, &mut LinearVelocity), EntitiesRelevantForGravity>,
     time: Res<Time>,
 ) {
     for (grounded, mut velocity) in query {

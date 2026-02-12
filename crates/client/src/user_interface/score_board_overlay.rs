@@ -1,5 +1,4 @@
 use bevy::{color::palettes::css::BLACK, prelude::*};
-use lightyear::prelude::*;
 use shared::game_score::GameScore;
 
 #[derive(Component)]
@@ -73,18 +72,9 @@ fn update_score_board(
     mut commands: Commands,
     changed_game_score: Single<&GameScore, Changed<GameScore>>,
     score_board_overlay: Single<Entity, With<ScoreBoardOverlay>>,
-    own_peer_id: Query<&RemoteId, With<Controlled>>,
 ) {
-    info!("Game score has changed! Updating UI to reflect new values");
     commands.entity(*score_board_overlay).despawn_children();
-    for (peer_id, player_stats) in &changed_game_score.players {
-        let is_this_us = own_peer_id
-            .iter()
-            .find(|remote_id| remote_id.0.to_bits() == *peer_id);
-        if is_this_us.is_some() {
-            info!("YAAAAAAAAAAY IT WORKS!!!!11");
-        }
-
+    for (_, player_stats) in &changed_game_score.players {
         let score_board_list_item = build_score_board_list_item(
             &player_stats.username,
             player_stats.kills,

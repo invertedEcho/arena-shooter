@@ -12,6 +12,7 @@ use crate::{
             check_world_scene_loaded, free_mouse, grab_mouse,
             handle_escape_in_game, handle_player_death_event,
             manual_free_mouse, pause_all_animations, resume_all_animations,
+            send_update_game_server_state_request_on_in_game_state_change,
             spawn_main_menu_camera,
         },
     },
@@ -57,6 +58,11 @@ impl Plugin for GameFlowPlugin {
                 Update,
                 check_world_scene_loaded
                     .run_if(resource_added::<WorldSceneHandle>),
+            )
+            .add_systems(
+                Update,
+                send_update_game_server_state_request_on_in_game_state_change
+                    .run_if(state_changed::<InGameState>),
             );
     }
 }

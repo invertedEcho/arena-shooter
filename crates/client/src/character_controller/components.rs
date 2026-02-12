@@ -2,6 +2,7 @@ use avian3d::{math::Quaternion, prelude::*};
 use bevy::prelude::*;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
+    MAX_DISTANCE_GROUNDED_SHAPE_CAST,
     components::{CharacterController, Grounded},
 };
 
@@ -38,7 +39,7 @@ impl Default for CharacterControllerBundle {
                 Quaternion::IDENTITY,
                 Dir3::NEG_Y,
             )
-            .with_max_distance(0.1),
+            .with_max_distance(MAX_DISTANCE_GROUNDED_SHAPE_CAST),
         }
     }
 }

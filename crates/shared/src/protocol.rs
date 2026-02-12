@@ -3,7 +3,7 @@ use lightyear::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ClientRespawnRequest, ConfirmRespawn, GameModeServer,
+    ClientRespawnRequest, ConfirmRespawn, GameModeServer, GameStateServer,
     components::Health,
     enemy::components::{Enemy, EnemyState},
     game_score::GameScore,
@@ -32,6 +32,9 @@ pub struct ShootRequest {
     // pub client_tick: u32,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct ChangeGameServerStateRequest(pub GameStateServer);
+
 pub struct ProtocolPlugin;
 
 impl Plugin for ProtocolPlugin {
@@ -58,6 +61,9 @@ impl Plugin for ProtocolPlugin {
             .add_direction(NetworkDirection::ClientToServer);
         app.register_message::<ConfirmRespawn>()
             .add_direction(NetworkDirection::ServerToClient);
+
+        app.register_message::<ChangeGameServerStateRequest>()
+            .add_direction(NetworkDirection::ClientToServer);
 
         app.register_component::<Player>();
 

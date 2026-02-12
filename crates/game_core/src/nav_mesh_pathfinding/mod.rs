@@ -62,16 +62,15 @@ fn generate_navmesh_on_map_colliders_ready(
         info!("Nav mesh already exists, regenerating!");
         generator.regenerate(&existing_nav_mesh.0, nav_mesh_settings);
     } else {
-        let archipelago_id = commands
-            .spawn(Archipelago3d::new(ArchipelagoOptions::from_agent_radius(
-                ENEMY_AGENT_RADIUS,
-            )))
-            .id();
+        let archipelago_options: ArchipelagoOptions<ThreeD> =
+            ArchipelagoOptions::from_agent_radius(ENEMY_AGENT_RADIUS);
+
+        let archipelago_id =
+            commands.spawn(Archipelago3d::new(archipelago_options)).id();
+
         commands.insert_resource(ArchipelagoRef(archipelago_id));
 
         let navmesh = generator.generate(nav_mesh_settings);
-
-        // commands.spawn(DetailNavmeshGizmo::new(&navmesh));
 
         commands.spawn(Island3dBundle {
             island: Island,

@@ -2,10 +2,7 @@ use avian3d::{PhysicsPlugins, prelude::*};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    character_controller::messages::MovementAction, components::DespawnTimer,
-    protocol::ProtocolPlugin,
-};
+use crate::{components::DespawnTimer, protocol::ProtocolPlugin};
 
 pub mod character_controller;
 pub mod components;
@@ -40,6 +37,15 @@ pub enum GameModeServer {
     Waves,
     FreeForAll,
     FreeRoam,
+}
+
+#[derive(
+    States, Clone, PartialEq, Eq, Hash, Debug, Default, Serialize, Deserialize,
+)]
+pub enum GameStateServer {
+    #[default]
+    Running,
+    Paused,
 }
 
 #[derive(Component)]
@@ -77,8 +83,6 @@ pub struct SharedPlugin;
 impl Plugin for SharedPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(ProtocolPlugin);
-
-        app.add_message::<MovementAction>();
 
         app.add_plugins(PhysicsPlugins::default().build())
             // .add_plugins(PhysicsDebugPlugin)

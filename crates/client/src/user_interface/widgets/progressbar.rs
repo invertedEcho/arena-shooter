@@ -21,6 +21,7 @@ pub fn build_progress_bar<T: Component>(
         },
         Name::new("Progress Bar Container"),
         BackgroundColor(WHITE.into()),
+        ProgressBar,
         children![(
             Node {
                 width: percent(100.0),

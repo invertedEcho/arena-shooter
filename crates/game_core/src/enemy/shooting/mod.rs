@@ -10,6 +10,7 @@ use crate::{
     },
 };
 use bevy::prelude::*;
+use shared::GameStateServer;
 
 pub mod components;
 pub mod messages;
@@ -27,7 +28,10 @@ impl Plugin for EnemyShootingPlugin {
                 handle_enemy_killed_message,
                 detect_killed_enemies,
             )
-                .run_if(resource_exists::<GameStateWave>),
+                .run_if(
+                    resource_exists::<GameStateWave>
+                        .and(in_state(GameStateServer::Running)),
+                ),
         );
     }
 }
