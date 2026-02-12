@@ -20,7 +20,9 @@ jobs:
       # TODO: eventuall we should use this cache action in all jobs
       - uses: Swatinem/rust-cache@v2
       - name: Cargo format
-        run: cargo fmt --all -- --check
+        run: |
+          rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
+          cargo fmt --all -- --check
       - name: Cargo check
         run: cargo check
 
