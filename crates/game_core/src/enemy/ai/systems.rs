@@ -295,7 +295,8 @@ pub fn handle_chasing_enemies(
         };
 
         if *enemy_state != EnemyState::GoToAgentTarget {
-            velocity.0 = Vec3::ZERO;
+            velocity.x = 0.0;
+            velocity.z = 0.0;
             continue;
         }
 
