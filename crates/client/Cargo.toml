@@ -7,11 +7,11 @@ edition = "2024"
 async-compat = { workspace = true }
 avian3d = { workspace = true, features = ["serialize"] }
 bevy = { workspace = true, features = [
+  "bevy_dev_tools",
   "experimental_bevy_ui_widgets",
   "file_watcher",
   "mp3",
   "wayland",
-  "bevy_dev_tools",
 ] }
 bevy_embedded_assets = "0.15.0"
 bevy_hanabi = "0.18.0"
@@ -33,3 +33,6 @@ debug-build = [
   "bevy/dynamic_linking",
   "bevy/track_location",
 ]
+
+[lints]
+workspace = true
