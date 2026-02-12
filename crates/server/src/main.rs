@@ -73,6 +73,10 @@ fn main() {
     let run_mode_str = std::env::args().nth(1);
     let run_mode = get_run_mode(run_mode_str.as_ref());
 
+    app.add_plugins(StatesPlugin);
+
+    app.insert_state(ServerMode::RemoteServer);
+
     match run_mode {
         ServerRunMode::Headless => {
             app.add_plugins(HeadlessServerPlugin);
@@ -84,17 +88,15 @@ fn main() {
         }
     }
 
-    app.add_plugins(StatesPlugin);
     app.add_plugins(game_core::GameCorePlugin);
     app.add_plugins(MultiPlayerServerOnlyPlugin);
 
     app.add_systems(Startup, spawn_map_colliders);
 
     if run_mode == ServerRunMode::Headful {
-        app.add_systems(Startup, spawn_map);
+        app.add_systems(Startup, (spawn_map, spawn_camera_if_headful));
     }
 
-    app.insert_state(ServerMode::RemoteServer);
     app.insert_resource(run_mode);
 
     // authentication
@@ -113,4 +115,18 @@ fn main() {
     );
 
     app.run();
+}
+
+fn spawn_camera_if_headful(
+    mut commands: Commands,
+    server_run_mode: Res<ServerRunMode>,
+) {
+    if *server_run_mode == ServerRunMode::Headful {
+        commands.spawn((
+            Camera3d::default(),
+            Transform::from_xyz(10.0, 30.0, 10.0)
+                .looking_at(Vec3::ZERO, Vec3::Y),
+        ));
+        commands.spawn((Node { ..default() }, Text::new("Server")));
+    }
 }

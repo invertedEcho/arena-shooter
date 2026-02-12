@@ -142,14 +142,6 @@ pub fn start_server(
         .id();
 
     commands.trigger(Start { entity: server });
-    if *server_run_mode == ServerRunMode::Headful {
-        commands.spawn((
-            Camera3d::default(),
-            Transform::from_xyz(10.0, 30.0, 10.0)
-                .looking_at(Vec3::ZERO, Vec3::Y),
-        ));
-        commands.spawn((Node { ..default() }, Text::new("Server")));
-    }
 }
 
 fn setup_game_score(

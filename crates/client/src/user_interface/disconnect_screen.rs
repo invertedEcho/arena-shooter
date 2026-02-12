@@ -18,7 +18,7 @@ pub struct DisconnectScreenPlugin;
 impl Plugin for DisconnectScreenPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            OnEnter(ConnectionState::Disconnected),
+            OnEnter(AppState::Disconnected),
             spawn_disconnected_screen,
         );
     }

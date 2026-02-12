@@ -81,7 +81,7 @@ pub fn spawn_main_menu_camera(
             get_main_menu_camera_transform(),
             MainMenuCamera,
             // we still need main menu camera during loading screen
-            DespawnOnExit(AppState::LoadingGame),
+            DespawnOnEnter(AppState::InGame),
         ))
         .id();
 
