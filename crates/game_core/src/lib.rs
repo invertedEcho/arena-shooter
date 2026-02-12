@@ -13,7 +13,7 @@ use lightyear::{
 };
 use shared::{
     ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH, GameModeServer,
-    GameStateServer, SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode, ServerRunMode,
+    GameStateServer, SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
