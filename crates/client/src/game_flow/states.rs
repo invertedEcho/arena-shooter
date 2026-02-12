@@ -56,15 +56,6 @@ pub enum InGameState {
     PlayerDead,
 }
 
-/// The current connection state to the game server.
-#[derive(States, Debug, Hash, Eq, PartialEq, Clone, Default)]
-pub enum ConnectionState {
-    #[default]
-    Connecting,
-    Connected,
-    Disconnected,
-}
-
 // The current game mode on the client
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default, Copy)]
 pub enum GameModeClient {

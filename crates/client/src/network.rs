@@ -29,7 +29,7 @@ use crate::auth::{
 };
 use crate::character_controller::components::CharacterControllerBundle;
 use crate::game_flow::states::{
-    AppState, ClientLoadingState, ConnectionState, GameModeClient, InGameState,
+    AppState, ClientLoadingState, GameModeClient, InGameState,
 };
 
 const CLIENT_PORT: u16 = 0;
@@ -42,7 +42,6 @@ pub struct NetworkPlugin;
 
 impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<ConnectionState>();
         app.add_systems(
             OnEnter(ClientLoadingState::ConnectingToServer),
             on_enter_connecting_to_server,
@@ -244,7 +243,6 @@ pub fn apply_server_position_other_clients(
 pub fn handle_disconnect(
     trigger: On<Add, Disconnected>,
     disconnected: Query<&Disconnected>,
-    mut next_disconnected_state: ResMut<NextState<ConnectionState>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     match disconnected.get(trigger.entity) {
@@ -267,14 +265,7 @@ pub fn handle_disconnect(
                         next_app_state.set(AppState::MainMenu);
                     }
                     DisconnectReason::Unknown => {
-                        // TODO: we also need to set to InGame, in case we are on initial connecting, e.g.
-                        // LoadingScreen -> failed to connect -> wouldnt be in ingame, but in
-                        // AppState::LoadingGame, so we set InGame here to be safe as InGameState only
-                        // exists when AppState is InGame
-                        next_app_state.set(AppState::InGame);
-
-                        next_disconnected_state
-                            .set(ConnectionState::Disconnected);
+                        next_app_state.set(AppState::Disconnected);
                     }
                 }
             }

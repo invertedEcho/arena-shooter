@@ -1,7 +1,7 @@
 use bevy::{color::palettes::css::RED, prelude::*};
 
 use crate::{
-    game_flow::states::{AppState, ConnectionState},
+    game_flow::states::AppState,
     network::GENERIC_NO_CONNECTION_ERROR_MESSAGE,
     user_interface::{
         common::{
@@ -30,7 +30,6 @@ struct DisconnectScreenRoot;
 fn spawn_disconnected_screen(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    disconnect_state: Res<State<ConnectionState>>,
     existing_main_menu_camera: Query<&MainMenuCamera>,
 ) {
     // TODO: optimally this couldnt happen in first place
@@ -39,6 +38,7 @@ fn spawn_disconnected_screen(
             MainMenuCamera,
             Camera3d::default(),
             get_main_menu_camera_transform(),
+            DespawnOnEnter(AppState::InGame),
         ));
     }
 
@@ -56,7 +56,6 @@ fn spawn_disconnected_screen(
             },
             BackgroundColor(UI_BACKGROUND),
             DisconnectScreenRoot,
-            DespawnOnEnter(ConnectionState::Connected),
             DespawnOnExit(AppState::Disconnected),
         ))
         .with_children(|parent| {
@@ -76,20 +75,14 @@ fn spawn_disconnected_screen(
                     },
                     BorderColor::all(RED),
                 ))
-                .with_children(|parent| match disconnect_state.get() {
-                    ConnectionState::Disconnected => {
-                        parent.spawn((
-                            Text::new(GENERIC_NO_CONNECTION_ERROR_MESSAGE),
-                            TextLayout {
-                                linebreak: LineBreak::WordBoundary,
-                                ..default()
-                            },
-                        ));
-                    }
-                    ConnectionState::Connecting => {
-                        parent.spawn(Text::new("Connecting to game server..."));
-                    }
-                    _ => {}
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new(GENERIC_NO_CONNECTION_ERROR_MESSAGE),
+                        TextLayout {
+                            linebreak: LineBreak::WordBoundary,
+                            ..default()
+                        },
+                    ));
                 });
         });
 }
