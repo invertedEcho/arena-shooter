@@ -150,10 +150,7 @@ fn ensure_egui_context_exists(
             return;
         };
 
-        info!(
-            "No PrimaryEguiContext exists in the world, inserting it into \
-             first camera found."
-        );
+        info!("Inserting PrimaryEguiContext into first camera found");
         commands.entity(first_camera).insert(PrimaryEguiContext);
     }
 }

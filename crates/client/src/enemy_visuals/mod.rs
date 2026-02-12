@@ -6,10 +6,7 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureUsages},
 };
-use shared::{
-    character_controller::LOCAL_FEET_CHARACTER, components::Health,
-    enemy::components::Enemy,
-};
+use shared::{components::Health, enemy::components::Enemy};
 
 use crate::{
     enemy_visuals::animate::{AnimateEnemyPlugin, ENEMY_MODEL_PATH},
@@ -163,6 +160,8 @@ fn spawn_enemy_model_for_new_enemies(
     mut commands: Commands,
     enemy_query: Query<Entity, Added<Enemy>>,
 ) {
+    const ENEMY_MODEL_Y_OFFSET: f32 = -1.0;
+
     for added_enemy in enemy_query {
         let enemy_model = asset_server
             .load(GltfAssetLabel::Scene(0).from_asset(ENEMY_MODEL_PATH));
@@ -173,7 +172,7 @@ fn spawn_enemy_model_for_new_enemies(
                     0.0,
                     // center enemy model -> in blender, feet are at bottom, so in
                     // bevy model feet are at center of collider, 0.0
-                    LOCAL_FEET_CHARACTER,
+                    ENEMY_MODEL_Y_OFFSET,
                     0.0,
                 ),
                 // enemy model needs to be rotated 180 degrees

@@ -8,6 +8,7 @@ use shared::{
         RUN_VELOCITY, WALK_VELOCITY, apply_collide_and_slide,
         components::{CharacterController, Grounded},
     },
+    enemy::components::Enemy,
 };
 
 use crate::{
@@ -197,11 +198,11 @@ fn move_towards_vec(
     }
 }
 
-/// Updates the [`Grounded`] component for character controllers.
+/// Updates the [`Grounded`] component
 pub fn update_grounded(
     mut query: Query<
         (&ShapeHits, &mut Grounded, &mut LinearVelocity),
-        With<CharacterController>,
+        EntitiesRelevantForGravity,
     >,
 ) {
     for (hits, mut grounded, mut velocity) in &mut query {
@@ -217,8 +218,10 @@ pub fn update_grounded(
     }
 }
 
+type EntitiesRelevantForGravity = Or<(With<Enemy>, With<CharacterController>)>;
+
 pub fn apply_gravity_over_time(
-    query: Query<(&Grounded, &mut LinearVelocity), With<CharacterController>>,
+    query: Query<(&Grounded, &mut LinearVelocity), EntitiesRelevantForGravity>,
     time: Res<Time>,
 ) {
     for (grounded, mut velocity) in query {

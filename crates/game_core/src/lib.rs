@@ -157,7 +157,6 @@ fn setup_game_score(
     mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
     server_mode: Res<State<ServerMode>>,
 ) {
-    info!("Entered ServerLoadingState::Initial, spawning new game score");
     commands
         .spawn((
             GameScore {
@@ -332,7 +331,6 @@ fn handle_shoot_requests(
             if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
                 health.0 -= 8.0;
 
-                // FIXME: increase death of entity_killed and increase kills of shooter_entity
                 if health.0 <= 0.0 {
                     let entity_killed = first_hit.entity;
                     commands.entity(entity_killed).insert(ColliderDisabled);

@@ -9,8 +9,9 @@ use bevy_landmass::{
 use shared::{
     DEFAULT_HEALTH,
     character_controller::{
-        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, RUN_VELOCITY,
-        WALK_VELOCITY, components::Grounded,
+        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, CHARACTER_FEET,
+        MAX_DISTANCE_GROUNDED_SHAPE_CAST, RUN_VELOCITY, WALK_VELOCITY,
+        components::Grounded,
     },
     components::Health,
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
@@ -39,8 +40,10 @@ pub struct SpawnEnemiesMessage {
     pub spawn_strategy: EnemySpawnStrategy,
 }
 
+/// Inserted into the pathfinding agent of an enemy, pointing towards the enemy entity that its
+/// inserted into
 #[derive(Component)]
-pub struct AgentEnemyEntityPointer(pub Entity);
+pub struct EnemyAgentEntityPointer(pub Entity);
 
 pub enum EnemySpawnStrategy {
     /// Enemies will be spawned at randomly picked EnemySpawnLocations
@@ -154,7 +157,9 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                                 Quaternion::default(),
                                 Dir3::NEG_Y,
                             )
-                            .with_max_distance(0.2),
+                            .with_max_distance(
+                                MAX_DISTANCE_GROUNDED_SHAPE_CAST,
+                            ),
                         ))
                         .id();
 
@@ -180,8 +185,9 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
                             },
                         },
                         AgentTarget3d::None,
-                        Transform::from_xyz(0.0, -0.8, 0.0),
-                        AgentEnemyEntityPointer(enemy_entity),
+                        // the pathfinding agent must be exacly at the feet of the collider
+                        Transform::from_xyz(0.0, CHARACTER_FEET, 0.0),
+                        EnemyAgentEntityPointer(enemy_entity),
                     ));
                 }
             }

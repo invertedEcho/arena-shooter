@@ -15,7 +15,7 @@ use shared::{
 };
 
 use crate::enemy::{
-    ai::messages::UpdateEnemyAgentTargetMessage, spawn::AgentEnemyEntityPointer,
+    ai::messages::UpdateEnemyAgentTargetMessage, spawn::EnemyAgentEntityPointer,
 };
 
 // TODO: except this is not the case...
@@ -51,6 +51,7 @@ pub fn enemy_state_decision_system(
         if *enemy_state == EnemyState::Dead {
             continue;
         }
+
         let (player_entity, player_transform) = *player_query;
 
         let player_position = player_transform.translation;
@@ -78,7 +79,7 @@ pub fn enemy_state_decision_system(
                 let max_distance = 100.0;
                 let solid = false;
 
-                // // raycast shouldnt hit enemy itself and enemy bullets
+                // raycast shouldnt hit enemy itself
                 let filter = SpatialQueryFilter::default()
                     .with_excluded_entities([enemy_entity]);
 
@@ -119,14 +120,14 @@ pub fn enemy_state_decision_system(
                     }
                 }
             } else {
-                info!("player is not in enemy FOV");
+                debug!("player is not in enemy FOV");
                 enemy_state.update_state(
                     EnemyState::RotateTowardsPlayer,
                     &mut enemy_last_state_update,
                 );
             }
         } else if *enemy_state != EnemyState::GoToAgentTarget {
-            info!("Player is not in range of enemy, > 30m");
+            debug!("Player is not in range of enemy, > 30m");
             enemy_state.update_state(
                 EnemyState::GoToAgentTarget,
                 &mut enemy_last_state_update,
@@ -142,7 +143,7 @@ pub fn handle_set_new_enemy_agent_target_message(
     mut commands: Commands,
     mut message_reader: MessageReader<UpdateEnemyAgentTargetMessage>,
     mut enemy_agents_query: Query<(
-        &AgentEnemyEntityPointer,
+        &EnemyAgentEntityPointer,
         &mut AgentTarget3d,
     )>,
     player_query: Single<(Entity, &Transform), With<Player>>,
@@ -234,7 +235,7 @@ pub fn check_if_enemy_agent_reached_target(
         &mut EnemyLastStateUpdate,
         &mut LinearVelocity,
     )>,
-    enemy_agents_query: Query<(&AgentEnemyEntityPointer, &AgentState)>,
+    enemy_agents_query: Query<(&EnemyAgentEntityPointer, &AgentState)>,
 ) {
     for (agent_enemy_entity_pointer, agent_state) in enemy_agents_query {
         if *agent_state != AgentState::ReachedTarget {
@@ -260,7 +261,7 @@ pub fn check_if_enemy_agent_reached_target(
             EnemyState::EnemyAgentReachedTarget,
             &mut enemy_last_state_update,
         );
-        velocity.0 = Vec3::splat(0.0);
+        velocity.0 = Vec3::ZERO;
     }
 }
 
@@ -273,7 +274,7 @@ pub fn handle_chasing_enemies(
     )>,
     enemy_agents_query: Query<(
         &AgentDesiredVelocity3d,
-        &AgentEnemyEntityPointer,
+        &EnemyAgentEntityPointer,
     )>,
     mut spatial_query: SpatialQuery,
     medkit_query: Query<Entity, With<Medkit>>,
@@ -299,11 +300,13 @@ pub fn handle_chasing_enemies(
         }
 
         debug!(
-            "Setting enemy velocity to agent_desired_velocity: {}",
+            "Setting enemy velocity to agent_desired_velocity: {}, ignoring y",
             agent_desired_velocity.velocity()
         );
 
-        velocity.0 = agent_desired_velocity.velocity();
+        // we dont apply y from agent velocity as otherwise it would fight our gravity system
+        velocity.x = agent_desired_velocity.velocity().x;
+        velocity.z = agent_desired_velocity.velocity().z;
 
         let excluded_entities: Vec<Entity> =
             medkit_query.iter().chain(std::iter::once(entity)).collect();
@@ -364,11 +367,11 @@ pub fn rotate_enemies_towards_player_over_time(
     }
 }
 
-pub fn update_enemy_agents_velocity_from_physics_velocity(
+pub fn update_enemy_agents_velocity(
     mut agent_query: Query<(
         &mut Velocity3d,
         &AgentState,
-        &AgentEnemyEntityPointer,
+        &EnemyAgentEntityPointer,
     )>,
     mut enemy_query: Query<(Entity, &LinearVelocity)>,
     mut message_writer: MessageWriter<UpdateEnemyAgentTargetMessage>,
@@ -386,10 +389,6 @@ pub fn update_enemy_agents_velocity_from_physics_velocity(
             continue;
         };
         if *agent_state == AgentState::TargetNotOnNavMesh {
-            // FIXME: if the player is somewhere the enemy cant reach,
-            // the enemy will never be able to get to the player.
-            // we should just try nearby locations instead
-
             // if the target is not on the navmesh, we let our systems make a new Target, until it
             // is on the navmesh again.
             message_writer.write(UpdateEnemyAgentTargetMessage(enemy_entity));

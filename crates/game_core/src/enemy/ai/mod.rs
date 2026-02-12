@@ -7,8 +7,7 @@ use crate::enemy::ai::{
         check_if_enemy_agent_reached_target, enemy_state_decision_system,
         handle_chasing_enemies, handle_set_new_enemy_agent_target_message,
         retry_get_new_agent_target, rotate_enemies_towards_player_over_time,
-        update_enemy_agents_velocity_from_physics_velocity,
-        zero_enemy_velocity,
+        update_enemy_agents_velocity, zero_enemy_velocity,
     },
 };
 
@@ -35,7 +34,7 @@ impl Plugin for EnemyAiPlugin {
         app.add_systems(
             FixedUpdate,
             (
-                update_enemy_agents_velocity_from_physics_velocity,
+                update_enemy_agents_velocity,
                 enemy_state_decision_system,
                 handle_chasing_enemies,
                 check_if_enemy_agent_reached_target,
