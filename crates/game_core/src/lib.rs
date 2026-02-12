@@ -110,7 +110,6 @@ impl Plugin for GameCorePlugin {
 
 pub fn start_server(
     mut commands: Commands,
-    server_run_mode: Res<ServerRunMode>,
     server_mode: Res<State<ServerMode>>,
 ) {
     let entity_name = match server_mode.get() {
