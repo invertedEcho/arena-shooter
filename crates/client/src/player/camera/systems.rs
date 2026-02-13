@@ -42,12 +42,7 @@ pub fn setup_player_cameras(
     added_players: Query<Entity, (Added<Player>, With<Controlled>)>,
 ) {
     for added_player in added_players {
-        debug!(
-            "A new player was added and it has Controlled, e.g. its our \
-             player. Spawning cameras as children..."
-        );
-
-        debug!("Inserting PlayerCameraState into player");
+        info!("Spawning new player camera, Player was added with Controlled");
         commands
             .entity(added_player)
             .insert(PlayerCameraState::Normal);

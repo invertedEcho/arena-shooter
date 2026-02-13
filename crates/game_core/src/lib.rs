@@ -13,7 +13,7 @@ use lightyear::{
 };
 use shared::{
     ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH, GameModeServer,
-    GameStateServer, SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode, ServerRunMode,
+    GameStateServer, SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -110,7 +110,6 @@ impl Plugin for GameCorePlugin {
 
 pub fn start_server(
     mut commands: Commands,
-    server_run_mode: Res<ServerRunMode>,
     server_mode: Res<State<ServerMode>>,
 ) {
     let entity_name = match server_mode.get() {
@@ -142,14 +141,6 @@ pub fn start_server(
         .id();
 
     commands.trigger(Start { entity: server });
-    if *server_run_mode == ServerRunMode::Headful {
-        commands.spawn((
-            Camera3d::default(),
-            Transform::from_xyz(10.0, 30.0, 10.0)
-                .looking_at(Vec3::ZERO, Vec3::Y),
-        ));
-        commands.spawn((Node { ..default() }, Text::new("Server")));
-    }
 }
 
 fn setup_game_score(
