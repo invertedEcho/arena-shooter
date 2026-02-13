@@ -44,6 +44,7 @@ pub enum MainMenuState {
     Settings,
     MapSelection,
     GameModeSelection,
+    Credits,
 }
 
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]

@@ -33,6 +33,7 @@ enum MainMenuButton {
     Singleplayer,
     Multiplayer,
     SettingsMainMenu,
+    Credits,
 }
 
 fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
@@ -87,6 +88,11 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                 MainMenuButton::SettingsMainMenu,
             ));
             parent.spawn(build_common_button(
+                "Credits",
+                asset_server.load(DEFAULT_GAME_FONT_PATH),
+                MainMenuButton::Credits,
+            ));
+            parent.spawn(build_common_button(
                 "Quit",
                 asset_server.load(DEFAULT_GAME_FONT_PATH),
                 CommonUiButton::Quit,
@@ -120,6 +126,9 @@ fn handle_main_menu_button_pressed(
             }
             MainMenuButton::SettingsMainMenu => {
                 next_main_menu_state.set(MainMenuState::Settings);
+            }
+            MainMenuButton::Credits => {
+                next_main_menu_state.set(MainMenuState::Credits);
             }
         }
     }
