@@ -53,7 +53,7 @@ impl Plugin for CommonUiPlugin {
             Update,
             (
                 handle_common_ui_button_press,
-                handle_any_button_hover,
+                handle_button_hover_text_color,
                 update_slider_style,
                 update_checkbox_style,
                 update_checkbox_style2,
@@ -115,7 +115,7 @@ fn handle_common_ui_button_press(
     }
 }
 
-type AnyButtonHoveredQuery<'w, 's> = Query<
+pub type AnyButtonInteractionQuery<'w, 's> = Query<
     'w,
     's,
     (&'static Interaction, &'static Children),
@@ -127,8 +127,8 @@ type AnyButtonHoveredQuery<'w, 's> = Query<
     ),
 >;
 
-fn handle_any_button_hover(
-    query: AnyButtonHoveredQuery,
+fn handle_button_hover_text_color(
+    query: AnyButtonInteractionQuery,
     mut text_color_query: Query<&mut TextColor>,
 ) {
     for (interaction, children) in query {
