@@ -19,6 +19,7 @@ pub const DEFAULT_GAME_FONT_PATH: &str = "fonts/Exo_2/static/Exo2-Regular.ttf";
 pub const ITALIC_GAME_FONT_PATH: &str = "fonts/Exo_2/static/Exo2-Italic.ttf";
 pub const TITLE_FONT_SIZE: f32 = 64.0;
 pub const DEFAULT_FONT_SIZE: f32 = 32.0;
+pub const SMALL_FONT_SIZE: f32 = 16.0;
 
 pub const ELEMENT_OUTLINE: Color = Color::srgb(0.45, 0.45, 0.45);
 pub const ELEMENT_FILL: Color = Color::srgb(0.35, 0.75, 0.35);

@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
 use crate::user_interface::{
-    common::CommonUiPlugin, death_screen::DeathScreenPlugin,
-    disconnect_screen::DisconnectScreenPlugin,
+    common::CommonUiPlugin, credits_screen::CreditsScreenPlugin,
+    death_screen::DeathScreenPlugin, disconnect_screen::DisconnectScreenPlugin,
     game_mode_selection::GameModeSelectionUIPlugin,
     loading_screen::LoadingScreenPlugin, main_menu::MainMenuPlugin,
     map_selection::MapSelectionPlugin, pause_menu::PauseMenuPlugin,
@@ -11,6 +11,7 @@ use crate::user_interface::{
 };
 
 pub mod common;
+mod credits_screen;
 mod death_screen;
 mod disconnect_screen;
 mod game_mode_selection;
@@ -35,6 +36,7 @@ impl Plugin for UserInterfacePlugin {
             .add_plugins(MapSelectionPlugin)
             .add_plugins(DisconnectScreenPlugin)
             .add_plugins(LoadingScreenPlugin)
-            .add_plugins(ScoreBoardOverlayPlugin);
+            .add_plugins(ScoreBoardOverlayPlugin)
+            .add_plugins(CreditsScreenPlugin);
     }
 }
