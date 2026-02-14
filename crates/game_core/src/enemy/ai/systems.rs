@@ -68,12 +68,9 @@ pub fn enemy_state_decision_system(
         let player_in_range = distance_to_player < ENEMY_VISION_RANGE;
 
         if player_in_range {
-            info!("Player is in 30m range of enemy");
             // we need to check if player is in radius of current enemy -> ENEMY_FOV
             let enemy_forward = enemy_transform.forward();
-            info!("to_player: {}", to_player);
             let Some(direction_to_player) = to_player.try_normalize() else {
-                warn!("Failed to normalize to_player vector");
                 continue;
             };
             let angle_between_enemy_and_player =
@@ -86,11 +83,9 @@ pub fn enemy_state_decision_system(
                 let Ok(direction_to_player_as_dir) =
                     Dir3::new(direction_to_player)
                 else {
-                    warn!("Failed to convert direction_to_player to Dir3");
                     continue;
                 };
 
-                info!("Player is in enemy fov, e.g. 30 degrees");
                 let max_distance = 100.0;
                 let solid = false;
 
@@ -98,12 +93,6 @@ pub fn enemy_state_decision_system(
                 let filter = SpatialQueryFilter::default()
                     .with_excluded_entities([enemy_entity]);
 
-                info!("Casting ray in direction to player");
-
-                info!(
-                    "Direction to player as dir: {}",
-                    direction_to_player_as_dir
-                );
                 let ray_cast_result = spatial_query.cast_ray(
                     enemy_transform.translation,
                     direction_to_player_as_dir,
@@ -115,37 +104,22 @@ pub fn enemy_state_decision_system(
                 if let Some(first_hit) = ray_cast_result {
                     let enemy_can_see_player =
                         first_hit.entity == player_entity;
-                    info!("Enemy can see player!");
                     if enemy_can_see_player {
                         if is_facing_target_without_y(
                             enemy_transform,
                             player_transform,
                         ) {
-                            info!(
-                                "Enemy already facing target, updating to \
-                                 AttackPlayer"
-                            );
                             enemy_state.update_state(
                                 EnemyState::AttackPlayer,
                                 &mut enemy_last_state_update,
                             );
                         } else {
-                            info!(
-                                "Enemy can see the player, but is not yet \
-                                 fully rotated to the player. Updating to \
-                                 RotateTowardsPlayer"
-                            );
                             enemy_state.update_state(
                                 EnemyState::RotateTowardsPlayer,
                                 &mut enemy_last_state_update,
                             );
                         }
                     } else if *enemy_state != EnemyState::GoToAgentTarget {
-                        info!(
-                            "The enemy cant directly see the player, \
-                             something is in the way, sending \
-                             UpdateEnemyAgentTargetMessage"
-                        );
                         // the player is in range of the enemy, also in the fov cone of the enemy, but
                         // there is a obstacle in the way, so we need to give the enemy agent a new
                         // location to go to
@@ -156,18 +130,14 @@ pub fn enemy_state_decision_system(
                             &mut enemy_last_state_update,
                         );
                     }
-                } else if ray_cast_result.is_none() {
-                    info!("It can only be this right?");
                 }
             } else {
-                info!("player is not in enemy FOV");
                 enemy_state.update_state(
                     EnemyState::RotateTowardsPlayer,
                     &mut enemy_last_state_update,
                 );
             }
         } else if *enemy_state != EnemyState::GoToAgentTarget {
-            debug!("Player is not in range of enemy, > 30m");
             enemy_state.update_state(
                 EnemyState::GoToAgentTarget,
                 &mut enemy_last_state_update,

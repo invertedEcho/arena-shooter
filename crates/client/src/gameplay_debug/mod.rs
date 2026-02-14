@@ -1,10 +1,7 @@
 use std::num::NonZero;
 
 use bevy::{
-    color::palettes::{
-        css::RED,
-        tailwind::{BLUE_700, GREEN_700, RED_700},
-    },
+    color::palettes::{css::RED, tailwind::BLUE_700},
     prelude::*,
 };
 use bevy_inspector_egui::{
@@ -22,10 +19,7 @@ use shared::{
     player::Player,
 };
 
-use crate::{
-    gameplay_debug::debug_overlay::DebugOverlayPlugin,
-    player::camera::components::{ViewModelCamera, WorldCamera},
-};
+use crate::gameplay_debug::debug_overlay::DebugOverlayPlugin;
 
 mod debug_overlay;
 
@@ -60,7 +54,6 @@ impl Plugin for GameplayDebugPlugin {
                 handle_spawn_debug_points_message,
                 update_app_debug_state,
                 update_landmass_debug_enabled,
-                draw_player_fov,
             ),
         );
         // app.add_systems(EguiPrimaryContextPass, player_inspector);
@@ -133,30 +126,6 @@ pub fn draw_enemy_fov(
 
         gizmos.ray(pos, left_dir * range, BLUE_700.with_alpha(0.5));
         gizmos.ray(pos, right_dir * range, BLUE_700.with_alpha(0.5));
-    }
-}
-
-// TODO: this type already exists in player/camera/systems
-type AnyCamera = Or<(With<WorldCamera>, With<ViewModelCamera>)>;
-// TODO: merge this into other system draw_enemy_fov
-pub fn draw_player_fov(
-    player_transforms: Query<&GlobalTransform, With<WorldCamera>>,
-    mut gizmos: Gizmos,
-) {
-    for transform in player_transforms {
-        let pos = transform.translation();
-        let forward = transform.forward();
-        let range = ENEMY_VISION_RANGE;
-
-        // Cone edges
-        let half_angle = ENEMY_FOV.to_radians() / 2.0;
-        let left_dir: Vec3 =
-            (Quat::from_rotation_y(half_angle) * forward).normalize();
-        let right_dir: Vec3 =
-            (Quat::from_rotation_y(-half_angle) * forward).normalize();
-
-        gizmos.ray(pos, left_dir * range, RED.with_alpha(1.0));
-        gizmos.ray(pos, right_dir * range, RED.with_alpha(1.0));
     }
 }
 

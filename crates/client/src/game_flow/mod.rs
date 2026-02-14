@@ -4,8 +4,8 @@ use shared::SelectedMapState;
 use crate::{
     game_flow::{
         states::{
-            AppDebugState, AppState, ClientLoadingState, GameModeClient,
-            InGameState, MainMenuState,
+            AppState, ClientLoadingState, GameModeClient, InGameState,
+            MainMenuState,
         },
         systems::{
             check_collider_constructor_hierarchy_ready,
@@ -30,7 +30,6 @@ impl Plugin for GameFlowPlugin {
         app.init_state::<AppState>()
             .init_state::<SelectedMapState>()
             .init_state::<GameModeClient>()
-            .init_state::<AppDebugState>()
             .add_sub_state::<InGameState>()
             .add_sub_state::<MainMenuState>()
             .add_sub_state::<ClientLoadingState>()

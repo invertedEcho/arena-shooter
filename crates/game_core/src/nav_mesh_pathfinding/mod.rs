@@ -32,7 +32,7 @@ impl Plugin for NavMeshPathfindingPlugin {
             generate_navmesh_on_map_colliders_ready,
         );
         app.add_observer(on_navmesh_ready);
-        app.add_systems(Update, log_agent_state);
+        // app.add_systems(Update, log_agent_state);
     }
 }
 
@@ -103,8 +103,8 @@ fn on_navmesh_ready(
     commands.insert_resource(NavMeshHandle(nav_mesh_handle));
 }
 
-fn log_agent_state(agent_state: Query<&AgentState>) {
-    for agent_state in agent_state {
-        info!("Agent state: {:?}", agent_state);
-    }
-}
+// fn log_agent_state(agent_state: Query<&AgentState>) {
+//     for agent_state in agent_state {
+//         info!("Agent state: {:?}", agent_state);
+//     }
+// }
