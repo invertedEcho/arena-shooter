@@ -85,7 +85,7 @@ impl Plugin for SharedPlugin {
         app.add_plugins(ProtocolPlugin);
 
         app.add_plugins(PhysicsPlugins::default().build())
-            // .add_plugins(PhysicsDebugPlugin)
+            .add_plugins(PhysicsDebugPlugin)
             .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
         app.add_systems(Update, handle_despawn_timer);
     }

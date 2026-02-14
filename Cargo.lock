@@ -2565,6 +2565,7 @@ dependencies = [
  "bevy-inspector-egui",
  "bevy_embedded_assets",
  "bevy_hanabi",
+ "bevy_landmass",
  "bevy_rich_text3d",
  "bevy_skein",
  "dirs",

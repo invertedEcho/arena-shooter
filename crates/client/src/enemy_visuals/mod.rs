@@ -200,10 +200,20 @@ fn rotate_enemy_toward_direction(
         if *enemy_state != EnemyState::GoToAgentTarget {
             continue;
         }
-        info!("Velocity: {}", velocity.0);
-        if let Some(direction) = velocity.0.try_normalize() {
-            info!("Direction: {}", direction);
-            transform.rotation = Quat::look_to_rh(direction, Vec3::Y);
+        if velocity.length_squared() < 0.0001 {
+            continue;
+        }
+        if let Some(mut direction) = velocity.0.try_normalize() {
+            direction.y = 0.0;
+            let yaw = direction.x.atan2(direction.z);
+
+            // i really dont get this. the enemy model is initially rotated 180 degree, so the
+            // models forward matches the bevy forward. and when using draw_enemy_fov debug gizmo
+            // system, we can also see the forward is now correct. but here we need to rotate again
+            // 180 degrees? if we remove this + 180 degree and the initial 180 degree rotation in
+            // enemy model, then this would match but all usages of transform.forward(), like in
+            // RotateTowardsPlayer and draw_enemy_fov would be wrong way around.
+            transform.rotation = Quat::from_rotation_y(yaw + PI);
         }
     }
 }

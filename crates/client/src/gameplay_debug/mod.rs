@@ -1,13 +1,17 @@
 use std::num::NonZero;
 
 use bevy::{
-    color::palettes::{css::RED, tailwind::BLUE_700},
+    color::palettes::{
+        css::RED,
+        tailwind::{BLUE_700, GREEN_700, RED_700},
+    },
     prelude::*,
 };
 use bevy_inspector_egui::{
     bevy_egui::{EguiContext, PrimaryEguiContext},
     egui,
 };
+use bevy_landmass::debug::EnableLandmassDebug;
 use bevy_rich_text3d::{Text3d, Text3dPlugin, Text3dStyling, TextAtlas};
 use shared::{
     components::Health,
@@ -18,14 +22,25 @@ use shared::{
     player::Player,
 };
 
-use crate::gameplay_debug::debug_overlay::DebugOverlayPlugin;
+use crate::{
+    gameplay_debug::debug_overlay::DebugOverlayPlugin,
+    player::camera::components::{ViewModelCamera, WorldCamera},
+};
 
 mod debug_overlay;
+
+#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default, Copy)]
+pub enum AppDebugState {
+    #[default]
+    Disabled,
+    Enabled,
+}
 
 pub struct GameplayDebugPlugin;
 
 impl Plugin for GameplayDebugPlugin {
     fn build(&self, app: &mut App) {
+        app.init_state::<AppDebugState>();
         app.add_plugins(DebugOverlayPlugin);
         app.add_plugins(Text3dPlugin {
             load_system_fonts: true,
@@ -38,11 +53,14 @@ impl Plugin for GameplayDebugPlugin {
             Update,
             (
                 draw_gizmos,
-                // draw_enemy_fov,
+                draw_enemy_fov,
                 add_enemy_state_text,
                 update_enemy_debug_text,
                 tick_despawn_timer_debug_gizmo_lines,
                 handle_spawn_debug_points_message,
+                update_app_debug_state,
+                update_landmass_debug_enabled,
+                draw_player_fov,
             ),
         );
         // app.add_systems(EguiPrimaryContextPass, player_inspector);
@@ -78,7 +96,7 @@ pub struct DebugGizmoLine {
 #[derive(Resource)]
 pub struct DebugGizmos(pub Vec<DebugGizmoLine>);
 
-pub fn draw_gizmos(mut gizmos: Gizmos, debug_gizmos: Res<DebugGizmos>) {
+fn draw_gizmos(mut gizmos: Gizmos, debug_gizmos: Res<DebugGizmos>) {
     for gizmo in debug_gizmos.0.iter() {
         let start = gizmo.start;
         let end = gizmo.end;
@@ -115,6 +133,30 @@ pub fn draw_enemy_fov(
 
         gizmos.ray(pos, left_dir * range, BLUE_700.with_alpha(0.5));
         gizmos.ray(pos, right_dir * range, BLUE_700.with_alpha(0.5));
+    }
+}
+
+// TODO: this type already exists in player/camera/systems
+type AnyCamera = Or<(With<WorldCamera>, With<ViewModelCamera>)>;
+// TODO: merge this into other system draw_enemy_fov
+pub fn draw_player_fov(
+    player_transforms: Query<&GlobalTransform, With<WorldCamera>>,
+    mut gizmos: Gizmos,
+) {
+    for transform in player_transforms {
+        let pos = transform.translation();
+        let forward = transform.forward();
+        let range = ENEMY_VISION_RANGE;
+
+        // Cone edges
+        let half_angle = ENEMY_FOV.to_radians() / 2.0;
+        let left_dir: Vec3 =
+            (Quat::from_rotation_y(half_angle) * forward).normalize();
+        let right_dir: Vec3 =
+            (Quat::from_rotation_y(-half_angle) * forward).normalize();
+
+        gizmos.ray(pos, left_dir * range, RED.with_alpha(1.0));
+        gizmos.ray(pos, right_dir * range, RED.with_alpha(1.0));
     }
 }
 
@@ -212,7 +254,7 @@ fn _player_inspector(world: &mut World) {
     });
 }
 
-pub fn handle_spawn_debug_points_message(
+fn handle_spawn_debug_points_message(
     mut commands: Commands,
     mut message_reader: MessageReader<SpawnDebugPointMessage>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -229,4 +271,27 @@ pub fn handle_spawn_debug_points_message(
             DebugPoint,
         ));
     }
+}
+
+fn update_app_debug_state(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    current_app_debug_state: Res<State<AppDebugState>>,
+    mut next_app_debug_state: ResMut<NextState<AppDebugState>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyH) {
+        if *current_app_debug_state.get() == AppDebugState::Disabled {
+            next_app_debug_state.set(AppDebugState::Enabled);
+        } else if *current_app_debug_state.get() == AppDebugState::Enabled {
+            next_app_debug_state.set(AppDebugState::Disabled);
+        }
+    }
+}
+
+fn update_landmass_debug_enabled(
+    mut land_mass_debug: ResMut<EnableLandmassDebug>,
+    new_app_debug_state: Res<State<AppDebugState>>,
+) {
+    let app_debug_state_enabled =
+        *new_app_debug_state.get() == AppDebugState::Enabled;
+    land_mass_debug.0 = app_debug_state_enabled;
 }

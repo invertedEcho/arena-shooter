@@ -399,7 +399,8 @@ fn handle_server_loading_state_done(
                 enemies_left_from_current_wave: 3,
             });
             spawn_enemies.write(SpawnEnemiesMessage {
-                enemy_count: 3,
+                // FIXME: revert
+                enemy_count: 1,
                 spawn_strategy: EnemySpawnStrategy::RandomSelection,
             });
         }

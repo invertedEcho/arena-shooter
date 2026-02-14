@@ -1,8 +1,11 @@
 use bevy::prelude::*;
 use shared::GameModeServer;
 
-use crate::game_flow::states::{
-    AppState, ClientLoadingState, InGameState, MainMenuState,
+use crate::{
+    game_flow::states::{
+        AppState, ClientLoadingState, InGameState, MainMenuState,
+    },
+    gameplay_debug::AppDebugState,
 };
 
 const DEBUG_OVERLAY_TEXT_SIZE: f32 = 15.0;
@@ -14,7 +17,8 @@ impl Plugin for DebugOverlayPlugin {
         app.add_systems(Startup, spawn_debug_overlay).add_systems(
             Update,
             (
-                toggle_debug_visibility,
+                update_debug_overlay_visibility
+                    .run_if(state_changed::<AppDebugState>),
                 update_current_app_state_text,
                 update_current_in_game_state_text,
                 update_current_main_menu_state,
@@ -197,18 +201,16 @@ fn update_loading_game_state_text(
     }
 }
 
-fn toggle_debug_visibility(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
+fn update_debug_overlay_visibility(
     mut debug_overlay_visibility: Single<
         &mut Visibility,
         With<DebugOverlayRoot>,
     >,
+    app_debug_state: Res<State<AppDebugState>>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::KeyH) {
-        if **debug_overlay_visibility == Visibility::Hidden {
-            **debug_overlay_visibility = Visibility::Visible;
-        } else if **debug_overlay_visibility == Visibility::Visible {
-            **debug_overlay_visibility = Visibility::Hidden;
-        }
+    if *app_debug_state.get() == AppDebugState::Enabled {
+        **debug_overlay_visibility = Visibility::Visible;
+    } else if *app_debug_state.get() == AppDebugState::Disabled {
+        **debug_overlay_visibility = Visibility::Hidden;
     }
 }

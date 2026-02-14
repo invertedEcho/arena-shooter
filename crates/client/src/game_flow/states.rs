@@ -65,3 +65,10 @@ pub enum GameModeClient {
     Waves,
     Multiplayer,
 }
+
+#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default, Copy)]
+pub enum AppDebugState {
+    #[default]
+    Disabled,
+    Enabled,
+}
