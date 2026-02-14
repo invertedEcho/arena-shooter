@@ -37,6 +37,7 @@ pub fn enemy_state_decision_system(
         UpdateEnemyAgentTargetMessage,
     >,
 ) {
+    const UPDATE_ENEMY_STATE_COOLDOWN: u64 = 2;
     for (
         enemy_entity,
         enemy_transform,
@@ -44,11 +45,14 @@ pub fn enemy_state_decision_system(
         mut enemy_last_state_update,
     ) in enemy_query
     {
-        if enemy_last_state_update.0.elapsed().as_millis() < 1000 {
+        if enemy_last_state_update.0.elapsed().as_secs()
+            < UPDATE_ENEMY_STATE_COOLDOWN
+        {
             continue;
         }
 
-        if *enemy_state == EnemyState::Dead {
+        let enemy_is_dead = *enemy_state == EnemyState::Dead;
+        if enemy_is_dead {
             continue;
         }
 
@@ -66,13 +70,19 @@ pub fn enemy_state_decision_system(
         if player_in_range {
             // we need to check if player is in radius of current enemy -> ENEMY_FOV
             let enemy_forward = enemy_transform.forward();
-            let direction = to_player.normalize();
-            let angle_in_radians = enemy_forward.dot(direction);
+            let Some(direction_to_player) = to_player.try_normalize() else {
+                continue;
+            };
+            let angle_between_enemy_and_player =
+                enemy_forward.dot(direction_to_player);
 
-            let player_in_enemy_fov = angle_in_radians < ENEMY_FOV.to_radians();
+            let player_in_enemy_fov =
+                angle_between_enemy_and_player < ENEMY_FOV.to_radians();
 
             if player_in_enemy_fov {
-                let Ok(direction_normalized) = Dir3::new(to_player) else {
+                let Ok(direction_to_player_as_dir) =
+                    Dir3::new(direction_to_player)
+                else {
                     continue;
                 };
 
@@ -83,13 +93,15 @@ pub fn enemy_state_decision_system(
                 let filter = SpatialQueryFilter::default()
                     .with_excluded_entities([enemy_entity]);
 
-                if let Some(first_hit) = spatial_query.cast_ray(
+                let ray_cast_result = spatial_query.cast_ray(
                     enemy_transform.translation,
-                    direction_normalized,
+                    direction_to_player_as_dir,
                     max_distance,
                     solid,
                     &filter,
-                ) {
+                );
+
+                if let Some(first_hit) = ray_cast_result {
                     let enemy_can_see_player =
                         first_hit.entity == player_entity;
                     if enemy_can_see_player {
@@ -120,21 +132,18 @@ pub fn enemy_state_decision_system(
                     }
                 }
             } else {
-                debug!("player is not in enemy FOV");
                 enemy_state.update_state(
                     EnemyState::RotateTowardsPlayer,
                     &mut enemy_last_state_update,
                 );
             }
         } else if *enemy_state != EnemyState::GoToAgentTarget {
-            debug!("Player is not in range of enemy, > 30m");
             enemy_state.update_state(
                 EnemyState::GoToAgentTarget,
                 &mut enemy_last_state_update,
             );
             set_new_enemy_agent_message_writer
                 .write(UpdateEnemyAgentTargetMessage(enemy_entity));
-            continue;
         }
     }
 }
@@ -235,9 +244,15 @@ pub fn check_if_enemy_agent_reached_target(
         &mut EnemyLastStateUpdate,
         &mut LinearVelocity,
     )>,
-    enemy_agents_query: Query<(&EnemyAgentEntityPointer, &AgentState)>,
+    enemy_agents_query: Query<(
+        &EnemyAgentEntityPointer,
+        &AgentState,
+        &mut AgentTarget3d,
+    )>,
 ) {
-    for (agent_enemy_entity_pointer, agent_state) in enemy_agents_query {
+    for (agent_enemy_entity_pointer, agent_state, mut agent_target) in
+        enemy_agents_query
+    {
         if *agent_state != AgentState::ReachedTarget {
             continue;
         }
@@ -262,6 +277,7 @@ pub fn check_if_enemy_agent_reached_target(
             &mut enemy_last_state_update,
         );
         velocity.0 = Vec3::ZERO;
+        *agent_target = AgentTarget3d::None;
     }
 }
 
@@ -406,41 +422,3 @@ pub fn zero_enemy_velocity(
         enemy.0 = Vec3::ZERO;
     }
 }
-
-// pub fn enemy_face_velocity_direction(
-//     mut query: Query<(&LinearVelocity, &mut Transform, &Enemy), With<Enemy>>,
-//     time: Res<Time>,
-// ) {
-//     for (velocity, mut transform, enemy) in &mut query {
-//         continue;
-//         if enemy.state == EnemyState::RotateTowardsPlayer {
-//             continue;
-//         }
-//
-//         let vel = velocity.0;
-//
-//         // Don’t rotate if velocity is extremely small
-//         if vel.length_squared() < 0.0001 {
-//             continue;
-//         }
-//
-//         let mut dir = vel;
-//         dir.y = 0.0;
-//
-//         if dir.length_squared() < 0.0001 {
-//             continue;
-//         }
-//
-//         // Calculate direction the enemy should face
-//         let target_dir = dir.normalize();
-//
-//         // Create a quaternion facing that direction (Y-up)
-//         let target_rotation = Quat::from_rotation_arc(Vec3::X, target_dir); // or Vec3::X depending on your model
-//
-//         // Smooth rotation (slerp)
-//         let rotate_speed = 6.0; // adjust to taste
-//         transform.rotation = transform
-//             .rotation
-//             .slerp(target_rotation, rotate_speed * time.delta_secs());
-//     }
-// }

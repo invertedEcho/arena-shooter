@@ -78,7 +78,7 @@ impl Plugin for ProtocolPlugin {
 
         app.register_component::<GameScore>();
 
-        // FIXME: medkit should be spawned on server, replicated to clients, and only clients
+        // TODO: medkit should be spawned on server, replicated to clients, and only clients
         // visually rotate them
         // app.register_component::<Medkit>();
     }
