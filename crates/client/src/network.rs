@@ -184,10 +184,21 @@ fn handle_new_player(
             Visibility::Visible,
             Transform::from_translation(vec3(0.0, 20.0, 0.0)),
             Name::new("Our Player"),
+            Mesh3d(meshes.add(Capsule3d::new(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: WHITE.into(),
+                ..Default::default()
+            })),
         ));
     } else if is_remote_server && !has_controlled {
         commands.entity(trigger.entity).insert((
-            Mesh3d(meshes.add(Capsule3d::new(0.2, 1.3))),
+            Mesh3d(meshes.add(Capsule3d::new(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ))),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: WHITE.into(),
                 ..Default::default()
