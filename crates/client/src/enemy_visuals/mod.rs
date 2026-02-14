@@ -1,12 +1,16 @@
 use std::f32::consts::{FRAC_PI_2, PI};
 
+use avian3d::prelude::LinearVelocity;
 use bevy::{
     asset::RenderAssetUsages,
     camera::RenderTarget,
     prelude::*,
     render::render_resource::{Extent3d, TextureUsages},
 };
-use shared::{components::Health, enemy::components::Enemy};
+use shared::{
+    components::Health,
+    enemy::components::{Enemy, EnemyState},
+};
 
 use crate::{
     enemy_visuals::animate::{AnimateEnemyPlugin, ENEMY_MODEL_PATH},
@@ -26,6 +30,7 @@ impl Plugin for EnemyVisualsPlugin {
                 spawn_health_bar_for_new_enemy,
                 spawn_enemy_model_for_new_enemies,
                 update_health_bar_of_enemies,
+                rotate_enemy_toward_direction,
             ),
         );
     }
@@ -182,5 +187,23 @@ fn spawn_enemy_model_for_new_enemies(
             SceneRoot(enemy_model),
             Visibility::Visible,
         ));
+    }
+}
+
+fn rotate_enemy_toward_direction(
+    enemy_query: Query<
+        (&mut Transform, &LinearVelocity, &EnemyState),
+        With<Enemy>,
+    >,
+) {
+    for (mut transform, velocity, enemy_state) in enemy_query {
+        if *enemy_state != EnemyState::GoToAgentTarget {
+            continue;
+        }
+        info!("Velocity: {}", velocity.0);
+        if let Some(direction) = velocity.0.try_normalize() {
+            info!("Direction: {}", direction);
+            transform.rotation = Quat::look_to_rh(direction, Vec3::Y);
+        }
     }
 }

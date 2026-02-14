@@ -38,7 +38,7 @@ impl Plugin for GameplayDebugPlugin {
             Update,
             (
                 draw_gizmos,
-                draw_enemy_fov,
+                // draw_enemy_fov,
                 add_enemy_state_text,
                 update_enemy_debug_text,
                 tick_despawn_timer_debug_gizmo_lines,
