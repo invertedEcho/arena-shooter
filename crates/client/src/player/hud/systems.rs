@@ -1,8 +1,10 @@
-use bevy::prelude::*;
+use avian3d::math::FRAC_PI_2;
+use bevy::{color::palettes::css::WHITE, math::NormedVectorSpace, prelude::*};
 use game_core::GameStateWave;
 use lightyear::prelude::Controlled;
 use shared::{
     components::{DespawnTimer, Health},
+    enemy::{EnemyShotPlayer, components::Enemy},
     player::AimType,
 };
 
@@ -10,12 +12,13 @@ use crate::{
     game_flow::states::AppState,
     player::{
         Player, PlayerReady,
+        camera::components::WorldCamera,
         hud::{
             CROSSHAIR_BULLET_HIT_PATH, MAIN_CROSSHAIR_PATH,
             components::{
-                CurrentWaveText, EnemiesLeftText, PlayerCarriedAmmoText,
-                PlayerCrosshair, PlayerHealthText, PlayerHud,
-                PlayerLoadedAmmoText, PlayerWeaponText,
+                CurrentWaveText, DamageIndicator, EnemiesLeftText,
+                PlayerCarriedAmmoText, PlayerCrosshair, PlayerHealthText,
+                PlayerHud, PlayerLoadedAmmoText, PlayerWeaponText,
             },
         },
         shooting::{
@@ -279,6 +282,7 @@ pub fn update_wave_hud(
         Text::new(game_state_wave.enemies_left_from_current_wave.to_string());
 }
 
+// TODO: do we need a message for this? cant we just watch for change in PlayerWeapons?
 pub fn update_selected_weapon(
     mut message_reader: MessageReader<PlayerWeaponSlotChangeMessage>,
     mut player_weapon_texts: Query<(&mut TextColor, &PlayerWeaponText)>,
@@ -293,6 +297,82 @@ pub fn update_selected_weapon(
             } else {
                 text_color.0 = UI_TEXT;
             }
+        }
+    }
+}
+
+pub fn spawn_damage_indicator(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut message_reader: MessageReader<EnemyShotPlayer>,
+    enemy_transforms: Query<&Transform, With<Enemy>>,
+    player_transform: Single<&Transform, With<Player>>,
+    camera_transform: Single<&Transform, With<WorldCamera>>,
+) {
+    for message in message_reader.read() {
+        let Ok(enemy_transform) = enemy_transforms.get(message.0) else {
+            continue;
+        };
+        if let Some(world_direction) = (enemy_transform.translation
+            - player_transform.translation)
+            .try_normalize()
+        {
+            let direction_flat =
+                Vec3::new(world_direction.x, 0.0, world_direction.z)
+                    .normalize();
+            let forward = camera_transform.forward();
+            let forward_flat = Vec3::new(forward.x, 0.0, forward.z).normalize();
+
+            let angle = forward_flat.angle_between(direction_flat);
+
+            // the cross product gives us the area of the parallelogram, that we get after applying
+            // the transformation on two given vectors.
+            // but the cross product actually gives a vector. the length of that vector is the said
+            // area
+            // and the resulting vector will be a vector which is perpendicular to the
+            // parallelogram
+            let cross = forward_flat.cross(direction_flat);
+
+            // this is relevant as if the cross product is negative, it means the orienation
+            // changed during the transformation
+            let signed_angle = if cross.y < 0.0 { -angle } else { angle };
+
+            commands.spawn((
+                Node {
+                    justify_self: JustifySelf::Center,
+                    align_self: AlignSelf::Center,
+                    ..default()
+                },
+                ImageNode {
+                    image: asset_server.load("hud/damage_indicator.png"),
+                    color: WHITE.with_alpha(0.7).into(),
+                    ..default()
+                },
+                UiTransform::from_rotation(Rot2::radians(-signed_angle)),
+                DamageIndicator(Timer::from_seconds(
+                    0.05,
+                    TimerMode::Repeating,
+                )),
+            ));
+        }
+    }
+}
+
+pub fn fade_out_damage_indicator(
+    mut commands: Commands,
+    time: Res<Time>,
+    damage_indicators: Query<(&mut DamageIndicator, &mut ImageNode, Entity)>,
+) {
+    for (mut damage_indicator, mut image_node, entity) in damage_indicators {
+        damage_indicator.0.tick(time.delta());
+        if damage_indicator.0.is_finished() {
+            let current_alpha = image_node.color.alpha();
+            let new_alpha = current_alpha - 0.05;
+            if new_alpha == 0.0 {
+                commands.entity(entity).despawn();
+                continue;
+            }
+            image_node.color = WHITE.with_alpha(new_alpha).into();
         }
     }
 }

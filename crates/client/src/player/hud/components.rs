@@ -23,3 +23,7 @@ pub struct PlayerCrosshair;
 
 #[derive(Component)]
 pub struct PlayerWeaponText(pub usize);
+
+/// Each DamageIndicator has a Timer, so we can decrease alpha of the image each X seconds
+#[derive(Component)]
+pub struct DamageIndicator(pub Timer);

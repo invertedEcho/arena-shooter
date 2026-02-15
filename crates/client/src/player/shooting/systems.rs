@@ -6,6 +6,7 @@ use shared::{
     enemy::components::Enemy,
     player::AimType,
     protocol::{OrderedReliableChannel, ShootRequest},
+    shooting::MAX_SHOOTING_DISTANCE,
 };
 
 use crate::{
@@ -190,32 +191,34 @@ pub fn spawn_bullet_impact_particle_on_weapon_fired(
         let origin = world_model_camera_query.1.translation();
         let direction = world_model_camera_query.1.forward();
 
-        if let Some(first_hit) = spatial_query.cast_ray(
+        let Some(first_hit) = spatial_query.cast_ray(
             origin,
             direction,
-            500.0,
+            MAX_SHOOTING_DISTANCE,
             false,
             &SpatialQueryFilter::default()
                 .with_excluded_entities([player_entity]),
-        ) {
-            let spawn_location = origin + direction * first_hit.distance;
+        ) else {
+            continue;
+        };
 
-            let player_or_enemy_hit =
-                player_and_enemies.get(first_hit.entity).is_ok();
+        let spawn_location = origin + direction * first_hit.distance;
 
-            let bullet_impact_effect_variant = if player_or_enemy_hit {
-                BulletImpactEffectVariant::Enemy
-            } else {
-                BulletImpactEffectVariant::World
-            };
+        let player_or_enemy_hit =
+            player_and_enemies.get(first_hit.entity).is_ok();
 
-            spawn_bullet_impact_effect_message_writer.write(
-                SpawnBulletImpactEffectMessage {
-                    spawn_location,
-                    variant: bullet_impact_effect_variant,
-                },
-            );
-        }
+        let bullet_impact_effect_variant = if player_or_enemy_hit {
+            BulletImpactEffectVariant::Enemy
+        } else {
+            BulletImpactEffectVariant::World
+        };
+
+        spawn_bullet_impact_effect_message_writer.write(
+            SpawnBulletImpactEffectMessage {
+                spawn_location,
+                variant: bullet_impact_effect_variant,
+            },
+        );
     }
 }
 
