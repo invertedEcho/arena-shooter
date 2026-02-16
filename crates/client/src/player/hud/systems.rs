@@ -1,5 +1,4 @@
-use avian3d::math::FRAC_PI_2;
-use bevy::{color::palettes::css::WHITE, math::NormedVectorSpace, prelude::*};
+use bevy::{color::palettes::css::WHITE, prelude::*};
 use game_core::GameStateWave;
 use lightyear::prelude::Controlled;
 use shared::{

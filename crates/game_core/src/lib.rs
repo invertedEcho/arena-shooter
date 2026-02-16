@@ -81,7 +81,9 @@ impl Plugin for GameCorePlugin {
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
         app.add_plugins(EnemyPlugin);
+
         app.add_plugins(NavMeshPathfindingPlugin);
+
         app.add_plugins(GameFlowPlugin);
 
         app.add_systems(Startup, start_server);
@@ -295,6 +297,7 @@ fn handle_shoot_requests(
     client_query: Query<&RemoteId, With<ClientOf>>,
     mut server_multi_message_sender: ServerMultiMessageSender,
     server: Single<&Server>,
+    enemy_query: Query<Entity, With<Enemy>>,
 ) {
     for (mut message_receiver, client_entity_server_side, remote_id) in
         receivers
@@ -327,22 +330,27 @@ fn handle_shoot_requests(
 
             if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
                 health.0 -= 8.0;
-                if let Ok(client_entity_that_was_hit) =
-                    player_query.get(first_hit.entity).map(|i| i.1)
-                    && let Ok(client) =
-                        client_query.get(client_entity_that_was_hit.owner)
-                {
-                    server_multi_message_sender
-                        .send::<HitMessage, OrderedReliableChannel>(
-                            &HitMessage {
-                                origin: message.origin,
-                            },
-                            &server,
-                            &NetworkTarget::Single(client.0),
-                        )
-                        .ok();
-                } else {
-                    error!("Could not find client that was hit by the bullet");
+                let is_enemy = enemy_query.get(first_hit.entity).is_ok();
+                if !is_enemy {
+                    if let Ok(client_entity_that_was_hit) =
+                        player_query.get(first_hit.entity).map(|i| i.1)
+                        && let Ok(client) =
+                            client_query.get(client_entity_that_was_hit.owner)
+                    {
+                        server_multi_message_sender
+                            .send::<HitMessage, OrderedReliableChannel>(
+                                &HitMessage {
+                                    origin: message.origin,
+                                },
+                                &server,
+                                &NetworkTarget::Single(client.0),
+                            )
+                            .ok();
+                    } else {
+                        error!(
+                            "Could not find client that was hit by the bullet"
+                        );
+                    }
                 }
 
                 if health.0 <= 0.0 {

@@ -8,7 +8,7 @@ use bevy_inspector_egui::{
     bevy_egui::{EguiContext, PrimaryEguiContext},
     egui,
 };
-use bevy_landmass::debug::EnableLandmassDebug;
+use bevy_landmass::debug::{EnableLandmassDebug, Landmass3dDebugPlugin};
 use bevy_rich_text3d::{Text3d, Text3dPlugin, Text3dStyling, TextAtlas};
 use shared::{
     components::Health,
@@ -34,6 +34,11 @@ pub struct GameplayDebugPlugin;
 
 impl Plugin for GameplayDebugPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(Landmass3dDebugPlugin {
+            draw_on_start: false,
+            ..default()
+        });
+
         app.init_state::<AppDebugState>();
         app.add_plugins(DebugOverlayPlugin);
         app.add_plugins(Text3dPlugin {
