@@ -10,7 +10,6 @@ use lightyear::prelude::*;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
-use shared::enemy::PlayerHitMessage;
 use shared::player::Player;
 use shared::protocol::{
     ClientUpdatePositionMessage, EntityPositionServer, OrderedReliableChannel,
@@ -22,7 +21,7 @@ use shared::utils::network::{
     SERVER_PORT, get_auth_backend_socket_addr_client_side,
     get_server_socket_addr_client_side,
 };
-use shared::{ConfirmRespawn, HitMessage, ServerMode};
+use shared::{ConfirmRespawn, PlayerHitMessage, ServerMode};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,
@@ -60,7 +59,10 @@ impl Plugin for NetworkPlugin {
             )
                 .run_if(in_state(ServerMode::RemoteServer)),
         );
-        app.add_systems(Update, handle_confirm_respawn_message);
+        app.add_systems(
+            Update,
+            (handle_confirm_respawn_message, handle_hit_message),
+        );
         app.add_observer(handle_new_player);
         app.add_observer(handle_connected);
         app.add_observer(handle_disconnect);
@@ -303,7 +305,7 @@ pub fn handle_confirm_respawn_message(
 }
 
 pub fn handle_hit_message(
-    mut message_receiver: Single<&mut MessageReceiver<HitMessage>>,
+    mut message_receiver: Single<&mut MessageReceiver<PlayerHitMessage>>,
     mut message_sender: MessageWriter<PlayerHitMessage>,
 ) {
     for message in message_receiver.receive() {

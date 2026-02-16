@@ -61,8 +61,8 @@ pub struct Medkit {
 pub struct ClientRespawnRequest;
 
 /// This message is sent from server to client, so the client can spawn the damage indicator
-#[derive(Serialize, Deserialize)]
-pub struct HitMessage {
+#[derive(Serialize, Deserialize, Message, Copy, Clone)]
+pub struct PlayerHitMessage {
     pub origin: Vec3,
 }
 

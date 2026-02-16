@@ -13,7 +13,8 @@ use lightyear::{
 };
 use shared::{
     ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH, GameModeServer,
-    GameStateServer, HitMessage, SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode,
+    GameStateServer, PlayerHitMessage, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
+    ServerMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -338,8 +339,8 @@ fn handle_shoot_requests(
                             client_query.get(client_entity_that_was_hit.owner)
                     {
                         server_multi_message_sender
-                            .send::<HitMessage, OrderedReliableChannel>(
-                                &HitMessage {
+                            .send::<PlayerHitMessage, OrderedReliableChannel>(
+                                &PlayerHitMessage {
                                     origin: message.origin,
                                 },
                                 &server,

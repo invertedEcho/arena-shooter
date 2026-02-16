@@ -2,11 +2,9 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 use lightyear::prelude::*;
 use shared::{
+    PlayerHitMessage,
     components::{DespawnTimer, Health},
-    enemy::{
-        PlayerHitMessage,
-        components::{Enemy, EnemyLastStateUpdate, EnemyState},
-    },
+    enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
     game_score::GameScore,
     player::Player,
     shooting::MAX_SHOOTING_DISTANCE,

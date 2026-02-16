@@ -10,7 +10,7 @@ use crate::{
     },
 };
 use bevy::prelude::*;
-use shared::{GameStateServer, enemy::PlayerHitMessage};
+use shared::{GameStateServer, PlayerHitMessage};
 
 pub mod components;
 pub mod messages;

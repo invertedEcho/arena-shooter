@@ -1,9 +1,9 @@
 use bevy::{color::palettes::css::WHITE, prelude::*};
 use game_core::GameStateWave;
-use lightyear::prelude::Controlled;
+use lightyear::prelude::{Controlled, MessageReceiver};
 use shared::{
+    PlayerHitMessage,
     components::{DespawnTimer, Health},
-    enemy::{PlayerHitMessage, components::Enemy},
     player::AimType,
 };
 
@@ -306,8 +306,14 @@ pub fn spawn_damage_indicator(
     mut message_reader: MessageReader<PlayerHitMessage>,
     player_transform: Single<&Transform, With<Player>>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
+    mut network_message_reader: Single<&mut MessageReceiver<PlayerHitMessage>>,
 ) {
-    for message in message_reader.read() {
+    let internal_messages = message_reader.read().copied();
+    let network_messages = network_message_reader.receive();
+
+    let combined_messages = internal_messages.chain(network_messages);
+
+    for message in combined_messages {
         if let Some(world_direction) =
             (message.origin - player_transform.translation).try_normalize()
         {
