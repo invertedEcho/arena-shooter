@@ -6,6 +6,8 @@ pub const ENEMY_VISION_RANGE: f32 = 30.0;
 pub const ENEMY_FOV: f32 = 70.0;
 
 // TODO: move somewhere else
-/// 0: The enemy entity that shot the player
+/// 0: From which the player was hit
 #[derive(Message)]
-pub struct EnemyShotPlayer(pub Entity);
+pub struct PlayerHitMessage {
+    pub origin: Vec3,
+}

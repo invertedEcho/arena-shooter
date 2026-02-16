@@ -10,6 +10,7 @@ use lightyear::prelude::*;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
+use shared::enemy::PlayerHitMessage;
 use shared::player::Player;
 use shared::protocol::{
     ClientUpdatePositionMessage, EntityPositionServer, OrderedReliableChannel,
@@ -21,7 +22,7 @@ use shared::utils::network::{
     SERVER_PORT, get_auth_backend_socket_addr_client_side,
     get_server_socket_addr_client_side,
 };
-use shared::{ConfirmRespawn, ServerMode};
+use shared::{ConfirmRespawn, HitMessage, ServerMode};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,
@@ -298,5 +299,16 @@ pub fn handle_confirm_respawn_message(
     for _ in message_receiver.receive() {
         info!("Respawn request was confirmed by server!");
         next_in_game_state.set(InGameState::Playing);
+    }
+}
+
+pub fn handle_hit_message(
+    mut message_receiver: Single<&mut MessageReceiver<HitMessage>>,
+    mut message_sender: MessageWriter<PlayerHitMessage>,
+) {
+    for message in message_receiver.receive() {
+        message_sender.write(PlayerHitMessage {
+            origin: message.origin,
+        });
     }
 }

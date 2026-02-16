@@ -4,7 +4,7 @@ use lightyear::prelude::*;
 use shared::{
     components::{DespawnTimer, Health},
     enemy::{
-        EnemyShotPlayer,
+        PlayerHitMessage,
         components::{Enemy, EnemyLastStateUpdate, EnemyState},
     },
     game_score::GameScore,
@@ -30,7 +30,7 @@ pub fn enemy_shoot_player(
     mut health_query: Query<&mut Health>,
     client_query: Query<&RemoteId, With<Connected>>,
     mut game_score: Single<&mut GameScore>,
-    mut message_writer: MessageWriter<EnemyShotPlayer>,
+    mut message_writer: MessageWriter<PlayerHitMessage>,
 ) {
     for (
         enemy_entity,
@@ -86,7 +86,9 @@ pub fn enemy_shoot_player(
         if let Ok(mut health) = health_query.get_mut(entity_killed) {
             health.0 -= 8.0;
 
-            message_writer.write(EnemyShotPlayer(enemy_entity));
+            message_writer.write(PlayerHitMessage {
+                origin: enemy_transform.translation,
+            });
 
             if health.0 <= 0.0 {
                 commands.entity(entity_killed).insert(ColliderDisabled);

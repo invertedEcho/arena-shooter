@@ -3,7 +3,7 @@ use game_core::GameStateWave;
 use lightyear::prelude::Controlled;
 use shared::{
     components::{DespawnTimer, Health},
-    enemy::{EnemyShotPlayer, components::Enemy},
+    enemy::{PlayerHitMessage, components::Enemy},
     player::AimType,
 };
 
@@ -303,18 +303,13 @@ pub fn update_selected_weapon(
 pub fn spawn_damage_indicator(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut message_reader: MessageReader<EnemyShotPlayer>,
-    enemy_transforms: Query<&Transform, With<Enemy>>,
+    mut message_reader: MessageReader<PlayerHitMessage>,
     player_transform: Single<&Transform, With<Player>>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
 ) {
     for message in message_reader.read() {
-        let Ok(enemy_transform) = enemy_transforms.get(message.0) else {
-            continue;
-        };
-        if let Some(world_direction) = (enemy_transform.translation
-            - player_transform.translation)
-            .try_normalize()
+        if let Some(world_direction) =
+            (message.origin - player_transform.translation).try_normalize()
         {
             let direction_flat =
                 Vec3::new(world_direction.x, 0.0, world_direction.z)
