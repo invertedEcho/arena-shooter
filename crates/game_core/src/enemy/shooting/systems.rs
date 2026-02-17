@@ -2,6 +2,7 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 use lightyear::prelude::*;
 use shared::{
+    PlayerHitMessage,
     components::{DespawnTimer, Health},
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
     game_score::GameScore,
@@ -22,11 +23,12 @@ pub fn enemy_shoot_player(
         &Transform,
         Option<&EnemyShootCooldownTimer>,
     )>,
-    player_transforms: Query<&Transform, With<Player>>,
+    player_transform: Single<&Transform, With<Player>>,
     spatial_query: SpatialQuery,
     mut health_query: Query<&mut Health>,
     client_query: Query<&RemoteId, With<Connected>>,
     mut game_score: Single<&mut GameScore>,
+    mut message_writer: MessageWriter<PlayerHitMessage>,
 ) {
     for (
         enemy_entity,
@@ -43,26 +45,6 @@ pub fn enemy_shoot_player(
             continue;
         }
 
-        let Some(mut closest_player_transform) =
-            player_transforms.iter().next()
-        else {
-            return;
-        };
-
-        // for a position X, and an array of positions Y, find the closest position Y to x.
-        // TODO: This should be an util
-        for player_transform in player_transforms {
-            let old_distance = closest_player_transform
-                .translation
-                .distance(enemy_transform.translation);
-            let new_distance = player_transform
-                .translation
-                .distance(enemy_transform.translation);
-            if new_distance < old_distance {
-                closest_player_transform = player_transform;
-            }
-        }
-
         let random_cooldown = get_random_number_from_range(0.5..1.5);
 
         commands
@@ -77,10 +59,9 @@ pub fn enemy_shoot_player(
 
         let random_x_offset = get_random_number_from_range(-0.5..0.5);
 
-        let player_location_random_x_offset =
-            closest_player_transform.translation.with_x(
-                closest_player_transform.translation.x + random_x_offset as f32,
-            );
+        let player_location_random_x_offset = player_transform
+            .translation
+            .with_x(player_transform.translation.x + random_x_offset as f32);
 
         let Ok(direction) = Dir3::new(
             player_location_random_x_offset - enemy_transform.translation,
@@ -102,6 +83,10 @@ pub fn enemy_shoot_player(
         let entity_killed = first_hit.entity;
         if let Ok(mut health) = health_query.get_mut(entity_killed) {
             health.0 -= 8.0;
+
+            message_writer.write(PlayerHitMessage {
+                origin: enemy_transform.translation,
+            });
 
             if health.0 <= 0.0 {
                 commands.entity(entity_killed).insert(ColliderDisabled);

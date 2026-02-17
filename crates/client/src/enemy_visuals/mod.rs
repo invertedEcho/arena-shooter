@@ -1,12 +1,16 @@
 use std::f32::consts::{FRAC_PI_2, PI};
 
+use avian3d::prelude::LinearVelocity;
 use bevy::{
     asset::RenderAssetUsages,
     camera::RenderTarget,
     prelude::*,
     render::render_resource::{Extent3d, TextureUsages},
 };
-use shared::{components::Health, enemy::components::Enemy};
+use shared::{
+    components::Health,
+    enemy::components::{Enemy, EnemyState},
+};
 
 use crate::{
     enemy_visuals::animate::{AnimateEnemyPlugin, ENEMY_MODEL_PATH},
@@ -26,6 +30,7 @@ impl Plugin for EnemyVisualsPlugin {
                 spawn_health_bar_for_new_enemy,
                 spawn_enemy_model_for_new_enemies,
                 update_health_bar_of_enemies,
+                rotate_enemy_toward_direction,
             ),
         );
     }
@@ -182,5 +187,33 @@ fn spawn_enemy_model_for_new_enemies(
             SceneRoot(enemy_model),
             Visibility::Visible,
         ));
+    }
+}
+
+fn rotate_enemy_toward_direction(
+    enemy_query: Query<
+        (&mut Transform, &LinearVelocity, &EnemyState),
+        With<Enemy>,
+    >,
+) {
+    for (mut transform, velocity, enemy_state) in enemy_query {
+        if *enemy_state != EnemyState::GoToAgentTarget {
+            continue;
+        }
+        if velocity.length_squared() < 0.0001 {
+            continue;
+        }
+        if let Some(mut direction) = velocity.0.try_normalize() {
+            direction.y = 0.0;
+            let yaw = direction.x.atan2(direction.z);
+
+            // i really dont get this. the enemy model is initially rotated 180 degree, so the
+            // models forward matches the bevy forward. and when using draw_enemy_fov debug gizmo
+            // system, we can also see the forward is now correct. but here we need to rotate again
+            // 180 degrees? if we remove this + 180 degree and the initial 180 degree rotation in
+            // enemy model, then this would match but all usages of transform.forward(), like in
+            // RotateTowardsPlayer and draw_enemy_fov would be wrong way around.
+            transform.rotation = Quat::from_rotation_y(yaw + PI);
+        }
     }
 }

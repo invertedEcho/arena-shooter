@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     ClientRespawnRequest, ConfirmRespawn, GameModeServer, GameStateServer,
+    PlayerHitMessage,
     components::Health,
     enemy::components::{Enemy, EnemyState},
     game_score::GameScore,
@@ -65,6 +66,9 @@ impl Plugin for ProtocolPlugin {
         app.register_message::<ChangeGameServerStateRequest>()
             .add_direction(NetworkDirection::ClientToServer);
 
+        app.register_message::<PlayerHitMessage>()
+            .add_direction(NetworkDirection::ServerToClient);
+
         app.register_component::<Player>();
 
         app.register_component::<EntityPositionServer>();
@@ -78,7 +82,7 @@ impl Plugin for ProtocolPlugin {
 
         app.register_component::<GameScore>();
 
-        // FIXME: medkit should be spawned on server, replicated to clients, and only clients
+        // TODO: medkit should be spawned on server, replicated to clients, and only clients
         // visually rotate them
         // app.register_component::<Medkit>();
     }
