@@ -88,6 +88,11 @@ fn spawn_credits_screen(
                         font_handle.clone(),
                         SMALL_FONT_SIZE
                     )),
+                    (build_normal_text_block(
+                        "Sounds by JDSherbert – https://jdsherbert.itch.io",
+                        font_handle.clone(),
+                        SMALL_FONT_SIZE
+                    )),
                 ],
             ));
 
