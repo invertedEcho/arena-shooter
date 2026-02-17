@@ -3,17 +3,26 @@ use lightyear::prelude::Controlled;
 use rand::seq::IndexedRandom;
 use shared::{
     character_controller::components::Grounded, components::DespawnTimer,
+    player::AimType,
 };
 
 use crate::{
     game_flow::states::AppState,
     game_settings::GameSettings,
     player::shooting::{
-        components::PlayerWeapons, messages::PlayerWeaponFiredMessage,
+        components::PlayerWeapons,
+        messages::{
+            PlayerWeaponFiredMessage, PlayerWeaponSlotChangeMessage,
+            ReloadPlayerWeaponMessage,
+        },
     },
     shared::WeaponType,
     user_interface::common::AnyButtonInteractionQuery,
 };
+
+const BASE_PATH_TO_RIFLE_SOUNDS: &str =
+    "sfx/weapons/Snake's Authentic Gun Sounds/Reloads, Cycling & More/MP3/";
+const BASE_PATH_TO_PISTOL_SOUNDS: &str = "sfx/weapons/pistol_walther_p38/";
 
 pub struct AudioPlugin;
 
@@ -35,6 +44,9 @@ impl Plugin for AudioPlugin {
                 play_sound_on_player_weapon_fired,
                 play_button_sound,
                 play_footstep_sound,
+                play_weapon_slot_change_audio,
+                play_aim_sound_on_changed_aim_type,
+                play_reload_sound,
             ),
         );
         app.add_systems(
@@ -110,10 +122,10 @@ pub fn play_sound_on_player_weapon_fired(
 
         let shoot_sound =
             if current_weapon.stats.weapon_type == WeaponType::AssaultRifle {
-                "sfx/Snake's Authentic Gun Sounds/Full Sound/5.56/MP3/556 \
-                 Single MP3.mp3"
+                "sfx/weapons/Snake's Authentic Gun Sounds/Full \
+                 Sound/5.56/MP3/556 Single MP3.mp3"
             } else {
-                "sfx/weapons/pistol/pistol-shoot.ogg"
+                &(BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "shoot.ogg")
             };
         play_sound_message_writer.write(PlaySoundMessage {
             path_to_audio: shoot_sound.to_string(),
@@ -148,25 +160,12 @@ fn play_button_sound(
 }
 
 fn play_error_sound(
-    asset_server: Res<AssetServer>,
-    mut commands: Commands,
-    game_settings: Res<GameSettings>,
-    audio_player_container: Single<Entity, With<AudioPlayerContainer>>,
+    mut play_sound_message_writer: MessageWriter<PlaySoundMessage>,
 ) {
     const ERROR_UI_SFX: &str = "sfx/ui/Error - 1.ogg";
-
-    commands.entity(*audio_player_container).with_child((
-        AudioPlayer::new(asset_server.load(ERROR_UI_SFX)),
-        PlaybackSettings {
-            mode: bevy::audio::PlaybackMode::Once,
-            volume: game_settings_volume_to_bevy_volume(
-                game_settings.sounds_volume,
-            ),
-            ..default()
-        },
-        Name::new("error audio player"),
-        DespawnTimer(Timer::from_seconds(2.0, TimerMode::Once)),
-    ));
+    play_sound_message_writer.write(PlaySoundMessage {
+        path_to_audio: ERROR_UI_SFX.to_string(),
+    });
 }
 
 fn play_footstep_sound(
@@ -227,8 +226,75 @@ fn handle_play_sound_message(
                 ),
                 ..default()
             },
-            Name::new("error audio player"),
-            DespawnTimer(Timer::from_seconds(2.0, TimerMode::Once)),
+            DespawnTimer(Timer::from_seconds(5.0, TimerMode::Once)),
         ));
+    }
+}
+
+fn play_weapon_slot_change_audio(
+    mut message_reader: MessageReader<PlayerWeaponSlotChangeMessage>,
+    mut play_sound_message_writer: MessageWriter<PlaySoundMessage>,
+    player_weapons: Single<&PlayerWeapons>,
+) {
+    for message in message_reader.read() {
+        let new_weapon = &player_weapons.weapons[message.0];
+        let path = match new_weapon.stats.weapon_type {
+            WeaponType::Pistol => {
+                BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "equip.ogg"
+            }
+            WeaponType::AssaultRifle => {
+                BASE_PATH_TO_RIFLE_SOUNDS.to_string() + "AK Rack MP3.mp3"
+            }
+        };
+
+        play_sound_message_writer.write(PlaySoundMessage {
+            path_to_audio: path,
+        });
+    }
+}
+
+fn play_aim_sound_on_changed_aim_type(
+    mut play_sound_message_writer: MessageWriter<PlaySoundMessage>,
+    new_aim_type: Single<&AimType, Changed<AimType>>,
+    player_weapons: Single<&PlayerWeapons>,
+) {
+    if **new_aim_type != AimType::Scoped {
+        return;
+    }
+
+    let current_weapon_stats = player_weapons.weapons
+        [player_weapons.active_slot]
+        .stats
+        .clone();
+
+    if current_weapon_stats.weapon_type == WeaponType::Pistol {
+        play_sound_message_writer.write(PlaySoundMessage {
+            path_to_audio: BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "aim.ogg",
+        });
+    }
+}
+
+fn play_reload_sound(
+    mut play_sound_message_writer: MessageWriter<PlaySoundMessage>,
+    mut message_reader: MessageReader<ReloadPlayerWeaponMessage>,
+    player_weapon: Single<&PlayerWeapons>,
+) {
+    for _ in message_reader.read() {
+        let current_weapon_type = player_weapon.weapons
+            [player_weapon.active_slot]
+            .stats
+            .weapon_type
+            .clone();
+        let path = match current_weapon_type {
+            WeaponType::Pistol => {
+                BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "reload.ogg"
+            }
+            WeaponType::AssaultRifle => {
+                BASE_PATH_TO_RIFLE_SOUNDS.to_string() + "AK Reload Full MP3.mp3"
+            }
+        };
+        play_sound_message_writer.write(PlaySoundMessage {
+            path_to_audio: path,
+        });
     }
 }
