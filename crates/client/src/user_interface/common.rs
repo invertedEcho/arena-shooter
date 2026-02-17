@@ -58,6 +58,7 @@ impl Plugin for CommonUiPlugin {
                 update_slider_style,
                 update_checkbox_style,
                 update_checkbox_style2,
+                handle_escape_press_back.run_if(state_exists::<MainMenuState>),
             ),
         );
     }
@@ -141,5 +142,23 @@ fn handle_any_button_hover(
             Interaction::None => **text_color = UI_TEXT,
             _ => {}
         }
+    }
+}
+
+fn handle_escape_press_back(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    main_menu_state: ResMut<State<MainMenuState>>,
+    mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        let new_state = match *main_menu_state.get() {
+            MainMenuState::Root => MainMenuState::Root,
+            MainMenuState::Settings => MainMenuState::Root,
+            MainMenuState::Credits => MainMenuState::Root,
+            MainMenuState::GameModeSelection => MainMenuState::MapSelection,
+            MainMenuState::MapSelection => MainMenuState::Root,
+        };
+
+        next_main_menu_state.set(new_state);
     }
 }
