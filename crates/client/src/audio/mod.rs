@@ -20,8 +20,7 @@ use crate::{
     user_interface::common::AnyButtonInteractionQuery,
 };
 
-const BASE_PATH_TO_RIFLE_SOUNDS: &str =
-    "sfx/weapons/Snake's Authentic Gun Sounds/Reloads, Cycling & More/MP3/";
+const BASE_PATH_TO_ASSAULT_RIFLE_SOUNDS: &str = "sfx/weapons/assault_rifle/";
 const BASE_PATH_TO_PISTOL_SOUNDS: &str = "sfx/weapons/pistol_walther_p38/";
 
 pub struct AudioPlugin;
@@ -120,13 +119,14 @@ pub fn play_sound_on_player_weapon_fired(
     for _ in message_reader.read() {
         let current_weapon = &player_weapon.weapons[player_weapon.active_slot];
 
-        let shoot_sound =
-            if current_weapon.stats.weapon_type == WeaponType::AssaultRifle {
-                "sfx/weapons/Snake's Authentic Gun Sounds/Full \
-                 Sound/5.56/MP3/556 Single MP3.mp3"
-            } else {
+        let shoot_sound = match current_weapon.stats.weapon_type {
+            WeaponType::AssaultRifle => {
+                &(BASE_PATH_TO_ASSAULT_RIFLE_SOUNDS.to_string() + "shoot.mp3")
+            }
+            WeaponType::Pistol => {
                 &(BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "shoot.ogg")
-            };
+            }
+        };
         play_sound_message_writer.write(PlaySoundMessage {
             path_to_audio: shoot_sound.to_string(),
         });
@@ -243,7 +243,7 @@ fn play_weapon_slot_change_audio(
                 BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "equip.ogg"
             }
             WeaponType::AssaultRifle => {
-                BASE_PATH_TO_RIFLE_SOUNDS.to_string() + "AK Rack MP3.mp3"
+                BASE_PATH_TO_ASSAULT_RIFLE_SOUNDS.to_string() + "equip.mp3"
             }
         };
 
@@ -290,7 +290,7 @@ fn play_reload_sound(
                 BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "reload.ogg"
             }
             WeaponType::AssaultRifle => {
-                BASE_PATH_TO_RIFLE_SOUNDS.to_string() + "AK Reload Full MP3.mp3"
+                BASE_PATH_TO_ASSAULT_RIFLE_SOUNDS.to_string() + "reload.mp3"
             }
         };
         play_sound_message_writer.write(PlaySoundMessage {
