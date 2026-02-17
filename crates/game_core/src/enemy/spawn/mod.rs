@@ -7,11 +7,11 @@ use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
 };
 use shared::{
-    DEFAULT_HEALTH,
+    DEFAULT_HEALTH, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, CHARACTER_FEET,
-        MAX_DISTANCE_GROUNDED_SHAPE_CAST, RUN_VELOCITY, WALK_VELOCITY,
-        components::Grounded,
+        MAX_DISTANCE_GROUND_SHAPE_CAST, RUN_VELOCITY, WALK_VELOCITY,
+        components::{Grounded, KinematicEntity},
     },
     components::Health,
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
@@ -30,14 +30,9 @@ impl Plugin for EnemySpawnPlugin {
     }
 }
 
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-pub struct EnemySpawnLocation;
-
 #[derive(Message)]
 pub struct SpawnEnemiesMessage {
     pub enemy_count: usize,
-    pub spawn_strategy: EnemySpawnStrategy,
 }
 
 /// Inserted into the pathfinding agent of an enemy, pointing towards the enemy entity that its
@@ -45,18 +40,9 @@ pub struct SpawnEnemiesMessage {
 #[derive(Component)]
 pub struct EnemyAgentEntityPointer(pub Entity);
 
-pub enum EnemySpawnStrategy {
-    /// Enemies will be spawned at randomly picked EnemySpawnLocations
-    RandomSelection,
-}
-
 fn handle_spawn_enemies_at_enemy_spawn_locations_message(
     mut message_reader: MessageReader<SpawnEnemiesMessage>,
     mut commands: Commands,
-    enemy_spawn_locations: Query<
-        (Entity, &Transform),
-        With<EnemySpawnLocation>,
-    >,
     archipelago_ref: Option<Res<ArchipelagoRef>>,
     mut game_score: Single<&mut GameScore>,
 ) {
@@ -69,128 +55,70 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
             return;
         };
 
-        if enemy_spawn_locations.is_empty() {
-            error!("Requested enemy spawn but no spawn locations exist!");
-            continue;
-        }
+        let spawn_enemy_count = event.enemy_count;
+        let spawn_location_translation = SPAWN_POINT_MEDIUM_PLASTIC_MAP;
 
-        let mut spawn_enemy_count = event.enemy_count;
-        let spawn_method = &event.spawn_strategy;
+        for _ in 0..spawn_enemy_count {
+            debug!("Spawning an enemy at {}", spawn_location_translation);
 
-        match spawn_method {
-            EnemySpawnStrategy::RandomSelection => {
-                if spawn_enemy_count > enemy_spawn_locations.iter().len() {
-                    warn!(
-                        "Requested more enemy spawns than available \
-                         EnemySpawnLocations, decreasing. This will mean \
-                         losing enemy spawns"
-                    );
-                    spawn_enemy_count -= enemy_spawn_locations
-                        .iter()
-                        .len()
-                        .abs_diff(spawn_enemy_count);
-                    warn!(
-                        "Original enemy spawn count: {} | New \
-                         spawn_enemy_count: {}",
-                        event.enemy_count, spawn_enemy_count
-                    );
-                }
+            let enemy_entity = commands
+                .spawn((
+                    Name::new("Enemy"),
+                    Transform::from_translation(spawn_location_translation),
+                    Enemy,
+                    EnemyLastStateUpdate(Instant::now()),
+                    Health(DEFAULT_HEALTH),
+                    EnemyState::default(),
+                    Grounded::default(),
+                    EntityPositionServer {
+                        translation: spawn_location_translation,
+                    },
+                    RigidBody::Kinematic,
+                    Collider::capsule(
+                        CHARACTER_CAPSULE_RADIUS,
+                        CHARACTER_CAPSULE_LENGTH,
+                    ),
+                    KinematicEntity,
+                    Visibility::Visible,
+                    LinearVelocity::ZERO,
+                    CollidingEntities::default(),
+                    ShapeCaster::new(
+                        Collider::capsule(
+                            CHARACTER_CAPSULE_RADIUS,
+                            CHARACTER_CAPSULE_LENGTH,
+                        ),
+                        Vec3::ZERO,
+                        Quaternion::default(),
+                        Dir3::NEG_Y,
+                    )
+                    .with_max_distance(MAX_DISTANCE_GROUND_SHAPE_CAST),
+                ))
+                .id();
 
-                let mut already_used_spawn_locations: Vec<Entity> = Vec::new();
-                // i kinda dont like while loops as its very easy to cause infinite loops with them
-                while already_used_spawn_locations.len() != spawn_enemy_count {
-                    let chosen_spawn_location_index = rand::random_range(
-                        0..enemy_spawn_locations.iter().len(),
-                    );
-                    if already_used_spawn_locations.contains(
-                        &enemy_spawn_locations
-                            .iter()
-                            .collect::<Vec<(Entity, &Transform)>>()
-                            [chosen_spawn_location_index]
-                            .0,
-                    ) {
-                        continue;
-                    }
+            game_score.enemies.insert(
+                enemy_entity,
+                LivingEntityStats {
+                    username: format!("Enemy {}", enemy_entity),
+                    ..default()
+                },
+            );
 
-                    let chosen_spawn_location = enemy_spawn_locations
-                        .iter()
-                        .collect::<Vec<(Entity, &Transform)>>()
-                        [chosen_spawn_location_index];
-                    already_used_spawn_locations.push(chosen_spawn_location.0);
-
-                    let spawn_location_translation =
-                        chosen_spawn_location.1.translation;
-
-                    debug!(
-                        "Spawning an enemy at {}",
-                        spawn_location_translation
-                    );
-
-                    let enemy_entity = commands
-                        .spawn((
-                            Name::new("Enemy"),
-                            Transform::from_translation(
-                                spawn_location_translation,
-                            ),
-                            Enemy,
-                            EnemyLastStateUpdate(Instant::now()),
-                            Health(DEFAULT_HEALTH),
-                            EnemyState::default(),
-                            Grounded::default(),
-                            EntityPositionServer {
-                                translation: spawn_location_translation,
-                            },
-                            RigidBody::Kinematic,
-                            Collider::capsule(
-                                CHARACTER_CAPSULE_RADIUS,
-                                CHARACTER_CAPSULE_LENGTH,
-                            ),
-                            Visibility::Visible,
-                            LinearVelocity::ZERO,
-                            CollidingEntities::default(),
-                            ShapeCaster::new(
-                                Collider::capsule(
-                                    CHARACTER_CAPSULE_RADIUS,
-                                    CHARACTER_CAPSULE_LENGTH,
-                                ),
-                                Vec3::ZERO,
-                                Quaternion::default(),
-                                Dir3::NEG_Y,
-                            )
-                            .with_max_distance(
-                                MAX_DISTANCE_GROUNDED_SHAPE_CAST,
-                            ),
-                        ))
-                        .id();
-
-                    game_score.enemies.insert(
-                        enemy_entity,
-                        LivingEntityStats {
-                            username: format!("Enemy {}", enemy_entity),
-                            ..default()
-                        },
-                    );
-
-                    commands.entity(enemy_entity).with_child((
-                        Name::new("Enemy Pathfinding Agent"),
-                        Agent3dBundle {
-                            agent: Agent::default(),
-                            archipelago_ref: ArchipelagoRef3d::new(
-                                archipelago_ref.0,
-                            ),
-                            settings: AgentSettings {
-                                desired_speed: WALK_VELOCITY,
-                                max_speed: RUN_VELOCITY,
-                                radius: ENEMY_AGENT_RADIUS,
-                            },
-                        },
-                        AgentTarget3d::None,
-                        // the pathfinding agent must be exacly at the feet of the collider
-                        Transform::from_xyz(0.0, CHARACTER_FEET, 0.0),
-                        EnemyAgentEntityPointer(enemy_entity),
-                    ));
-                }
-            }
+            commands.entity(enemy_entity).with_child((
+                Name::new("Enemy Pathfinding Agent"),
+                Agent3dBundle {
+                    agent: Agent::default(),
+                    archipelago_ref: ArchipelagoRef3d::new(archipelago_ref.0),
+                    settings: AgentSettings {
+                        desired_speed: WALK_VELOCITY,
+                        max_speed: RUN_VELOCITY,
+                        radius: ENEMY_AGENT_RADIUS,
+                    },
+                },
+                AgentTarget3d::None,
+                // the pathfinding agent must be exacly at the feet of the collider
+                Transform::from_xyz(0.0, CHARACTER_FEET, 0.0),
+                EnemyAgentEntityPointer(enemy_entity),
+            ));
         }
     }
 }

@@ -6,6 +6,7 @@ use shared::{
     enemy::components::Enemy,
     player::AimType,
     protocol::{OrderedReliableChannel, ShootRequest},
+    query::OurPlayerQueryFilter,
     shooting::MAX_SHOOTING_DISTANCE,
 };
 
@@ -94,10 +95,7 @@ pub fn handle_input(
         ReloadPlayerWeaponMessage,
     >,
     player_weapon_shoot_cooldown_timer_query: Query<&PlayerShootCooldownTimer>,
-    mut player_weapons: Single<
-        &mut PlayerWeapons,
-        (With<Player>, With<Controlled>),
-    >,
+    mut player_weapons: Single<&mut PlayerWeapons, OurPlayerQueryFilter>,
 ) {
     let current_weapon_secondary = player_weapons.weapons
         [player_weapons.active_slot]
@@ -182,7 +180,7 @@ pub fn spawn_bullet_impact_particle_on_weapon_fired(
         SpawnBulletImpactEffectMessage,
     >,
     world_model_camera_query: WorldModelCameraQuery,
-    player_query: Single<Entity, (With<Player>, With<Controlled>)>,
+    player_query: Single<Entity, OurPlayerQueryFilter>,
     spatial_query: SpatialQuery,
     player_and_enemies: Query<Entity, PlayerOrEnemy>,
 ) {

@@ -7,6 +7,7 @@ use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
+use shared::character_controller::components::KinematicEntity;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
@@ -14,6 +15,7 @@ use shared::player::Player;
 use shared::protocol::{
     ClientUpdatePositionMessage, EntityPositionServer, OrderedReliableChannel,
 };
+use shared::query::OurPlayerQueryFilter;
 use shared::utils::lightyear::{
     DisconnectReason, parse_lightyear_disconnect_reason,
 };
@@ -195,6 +197,7 @@ fn handle_new_player(
                 base_color: WHITE.into(),
                 ..Default::default()
             })),
+            KinematicEntity,
         ));
     } else if is_remote_server && !has_controlled {
         commands.entity(trigger.entity).insert((
@@ -212,6 +215,7 @@ fn handle_new_player(
                 CHARACTER_CAPSULE_RADIUS,
                 CHARACTER_CAPSULE_LENGTH,
             ),
+            KinematicEntity,
         ));
     }
 }
@@ -223,7 +227,7 @@ pub fn send_client_update_position(
         &mut MessageSender<ClientUpdatePositionMessage>,
         With<Client>,
     >,
-    player_transform: Single<&Transform, (With<Player>, With<Controlled>)>,
+    player_transform: Single<&Transform, OurPlayerQueryFilter>,
 ) {
     message_sender.send::<OrderedReliableChannel>(
         ClientUpdatePositionMessage {

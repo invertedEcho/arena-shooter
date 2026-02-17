@@ -5,6 +5,7 @@ use shared::{
     PlayerHitMessage,
     components::{DespawnTimer, Health},
     player::AimType,
+    query::OurPlayerQueryFilter,
 };
 
 use crate::{
@@ -303,7 +304,7 @@ pub fn spawn_damage_indicator(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut message_reader: MessageReader<PlayerHitMessage>,
-    player_transform: Single<&Transform, (With<Player>, With<Controlled>)>,
+    player_transform: Single<&Transform, OurPlayerQueryFilter>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
     mut network_message_reader: Single<&mut MessageReceiver<PlayerHitMessage>>,
 ) {

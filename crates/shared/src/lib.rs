@@ -10,6 +10,7 @@ pub mod enemy;
 pub mod game_score;
 pub mod player;
 pub mod protocol;
+pub mod query;
 pub mod shooting;
 pub mod utils;
 

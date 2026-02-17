@@ -5,10 +5,11 @@ use shared::{
     GRAVITY, Medkit,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
-        RUN_VELOCITY, WALK_VELOCITY, apply_collide_and_slide,
-        components::{CharacterController, Grounded},
+        MAX_DISTANCE_GROUND_SHAPE_CAST, RUN_VELOCITY, WALK_VELOCITY,
+        apply_collide_and_slide,
+        components::{CharacterController, Grounded, KinematicEntity},
     },
-    enemy::components::Enemy,
+    query::OurPlayerQueryFilter,
 };
 
 use crate::{
@@ -22,11 +23,10 @@ use crate::{
 pub fn handle_keyboard_input_for_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut movement_action_writer: MessageWriter<MovementAction>,
-    player_query: Single<(Entity, &PlayerWeapons, &PlayerCameraState)>,
+    player_query: Single<(&PlayerWeapons, &PlayerCameraState)>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
 ) {
-    let (player_entity, player_weapons, player_camera_state) =
-        player_query.into_inner();
+    let (player_weapons, player_camera_state) = player_query.into_inner();
 
     if *player_camera_state == PlayerCameraState::FreeCam {
         return;
@@ -71,7 +71,6 @@ pub fn handle_keyboard_input_for_player(
     if keyboard_input.just_pressed(KeyCode::Space) {
         movement_action_writer.write(MovementAction {
             desired_velocity: MovementDirection::Jump,
-            character_controller_entity: player_entity,
             sprinting: sprint,
         });
     }
@@ -80,35 +79,26 @@ pub fn handle_keyboard_input_for_player(
     // towards zero velocity.
     movement_action_writer.write(MovementAction {
         desired_velocity: MovementDirection::Move(desired_velocity),
-        character_controller_entity: player_entity,
         sprinting: sprint,
     });
 }
 
 pub fn handle_movement_actions_for_character_controllers(
     mut movement_action_reader: MessageReader<MovementAction>,
-    mut character_controller_query: Query<
+    player_query: Single<
         (&mut LinearVelocity, &Grounded, &Transform),
-        With<CharacterController>,
+        OurPlayerQueryFilter,
     >,
     mut spatial_query: SpatialQuery,
     time: Res<Time>,
     medkit_query: Query<Entity, With<Medkit>>,
+    kinematic_entities: Query<Entity, With<KinematicEntity>>,
 ) {
+    let (mut velocity, grounded, transform) = player_query.into_inner();
+
     for movement_action in movement_action_reader.read() {
         let sprinting = movement_action.sprinting;
         let direction = &movement_action.desired_velocity;
-        let character_controller_entity =
-            movement_action.character_controller_entity;
-        let Ok((mut velocity, grounded, transform)) =
-            character_controller_query.get_mut(character_controller_entity)
-        else {
-            warn!(
-                "Failed to find Character Controller by Entity {}",
-                character_controller_entity
-            );
-            continue;
-        };
 
         match *direction {
             MovementDirection::Jump => {
@@ -128,10 +118,8 @@ pub fn handle_movement_actions_for_character_controllers(
                 velocity.z = new_velocity.z;
 
                 // exclude medkits because we want to be able to walk through medkits
-                let excluded_entities: Vec<Entity> = medkit_query
-                    .iter()
-                    .chain(std::iter::once(character_controller_entity))
-                    .collect();
+                let excluded_entities: Vec<Entity> =
+                    medkit_query.iter().chain(kinematic_entities).collect();
 
                 let spatial_query_filter = &SpatialQueryFilter::default()
                     .with_excluded_entities(excluded_entities.clone());
@@ -201,12 +189,27 @@ fn move_towards_vec(
 /// Updates the [`Grounded`] component
 pub fn update_grounded(
     mut query: Query<
-        (&ShapeHits, &mut Grounded, &mut LinearVelocity),
-        EntitiesRelevantForGravity,
+        (&mut Grounded, &mut LinearVelocity, &Transform),
+        With<KinematicEntity>,
     >,
+    kinematic_entities: Query<Entity, With<KinematicEntity>>,
+    spatial_query: SpatialQuery,
 ) {
-    for (hits, mut grounded, mut velocity) in &mut query {
-        let on_ground = !hits.0.is_empty();
+    for (mut grounded, mut velocity, transform) in &mut query {
+        let first_hit = spatial_query.cast_shape(
+            &Collider::capsule(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ),
+            transform.translation,
+            Quat::IDENTITY,
+            Dir3::NEG_Y,
+            &ShapeCastConfig::default()
+                .with_max_distance(MAX_DISTANCE_GROUND_SHAPE_CAST),
+            &SpatialQueryFilter::default()
+                .with_excluded_entities(kinematic_entities),
+        );
+        let on_ground = first_hit.is_some();
 
         if grounded.0 != on_ground {
             grounded.0 = on_ground;
@@ -218,10 +221,8 @@ pub fn update_grounded(
     }
 }
 
-type EntitiesRelevantForGravity = Or<(With<Enemy>, With<CharacterController>)>;
-
 pub fn apply_gravity_over_time(
-    query: Query<(&Grounded, &mut LinearVelocity), EntitiesRelevantForGravity>,
+    query: Query<(&Grounded, &mut LinearVelocity), With<KinematicEntity>>,
     time: Res<Time>,
 ) {
     for (grounded, mut velocity) in query {
@@ -238,14 +239,16 @@ pub fn zero_player_velocity(
     player_velocity.z = 0.0;
 }
 
+// TODO: optimally this would only run when player wants to jump
 pub fn check_above_head(
     query: Query<
-        (Entity, &mut LinearVelocity, &Transform, &Grounded),
+        (&mut LinearVelocity, &Transform, &Grounded),
         With<CharacterController>,
     >,
     spatial_query: SpatialQuery,
+    kinematic_entities: Query<Entity, With<KinematicEntity>>,
 ) {
-    for (entity_itself, mut velocity, transform, grounded) in query {
+    for (mut velocity, transform, grounded) in query {
         if grounded.0 {
             continue;
         };
@@ -260,13 +263,14 @@ pub fn check_above_head(
             // TODO: investigate whether we can further decrease this value
             &ShapeCastConfig::default().with_max_distance(0.1),
             &SpatialQueryFilter::default()
-                .with_excluded_entities([entity_itself]),
+                .with_excluded_entities(kinematic_entities),
         ) else {
             continue;
         };
 
         // if there is something above the current shape, stop vertical movement, to prevent
         // clipping into ceilings
+        // FIXME: this is incorrect, should probably be negative velocity instead of just decreasing
         velocity.y -= 0.5;
     }
 }

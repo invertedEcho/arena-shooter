@@ -3,8 +3,7 @@ use bevy::prelude::*;
 use crate::{
     GameStateWave,
     enemy::{
-        shooting::messages::EnemyKilledMessage,
-        spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
+        shooting::messages::EnemyKilledMessage, spawn::SpawnEnemiesMessage,
     },
 };
 
@@ -32,6 +31,7 @@ fn handle_enemy_killed_message(
 
         let new_enemies_left_count =
             game_state_wave.enemies_left_from_current_wave - 1;
+
         **game_state_wave = GameStateWave {
             current_wave: game_state_wave.current_wave,
             enemies_left_from_current_wave: new_enemies_left_count,
@@ -39,7 +39,6 @@ fn handle_enemy_killed_message(
         };
 
         if new_enemies_left_count == 0 {
-            info!("no enemies left, spawning new wave!");
             let new_wave = game_state_wave.current_wave + 1;
             let enemy_count = get_enemy_count_per_wave(new_wave);
 
@@ -49,10 +48,8 @@ fn handle_enemy_killed_message(
                 enemies_killed: game_state_wave.enemies_killed,
             };
 
-            spawn_enemies_event_writer.write(SpawnEnemiesMessage {
-                enemy_count,
-                spawn_strategy: EnemySpawnStrategy::RandomSelection,
-            });
+            spawn_enemies_event_writer
+                .write(SpawnEnemiesMessage { enemy_count });
         }
     }
 }

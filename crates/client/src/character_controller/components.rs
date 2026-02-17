@@ -1,8 +1,7 @@
-use avian3d::{math::Quaternion, prelude::*};
+use avian3d::prelude::*;
 use bevy::prelude::*;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
-    MAX_DISTANCE_GROUNDED_SHAPE_CAST,
     components::{CharacterController, Grounded},
 };
 
@@ -13,7 +12,6 @@ pub struct CharacterControllerBundle {
     collider: Collider,
     locked_axes: LockedAxes,
     grounded: Grounded,
-    ground_caster: ShapeCaster,
 }
 
 impl Default for CharacterControllerBundle {
@@ -30,16 +28,6 @@ impl Default for CharacterControllerBundle {
                 .lock_rotation_y()
                 .lock_rotation_z(),
             grounded: Grounded(false),
-            ground_caster: ShapeCaster::new(
-                Collider::capsule(
-                    CHARACTER_CAPSULE_RADIUS,
-                    CHARACTER_CAPSULE_LENGTH,
-                ),
-                Vec3::ZERO,
-                Quaternion::IDENTITY,
-                Dir3::NEG_Y,
-            )
-            .with_max_distance(MAX_DISTANCE_GROUNDED_SHAPE_CAST),
         }
     }
 }

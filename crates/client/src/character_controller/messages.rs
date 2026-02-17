@@ -3,7 +3,6 @@ use bevy::prelude::*;
 #[derive(Message)]
 pub struct MovementAction {
     pub desired_velocity: MovementDirection,
-    pub character_controller_entity: Entity,
     pub sprinting: bool,
 }
 

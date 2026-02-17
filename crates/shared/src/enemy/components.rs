@@ -24,7 +24,9 @@ impl EnemyState {
     }
 }
 
-#[derive(Default, PartialEq, Debug, Component, Serialize, Deserialize)]
+#[derive(
+    Default, PartialEq, Debug, Component, Serialize, Deserialize, Reflect,
+)]
 pub enum EnemyState {
     #[default]
     Idle,

@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
-use lightyear::prelude::Controlled;
-use shared::{player::Player, utils::random::get_random_number_from_range};
+use shared::{
+    query::OurPlayerQueryFilter, utils::random::get_random_number_from_range,
+};
 
 use ::shared::components::DespawnTimer;
 
@@ -117,7 +118,7 @@ fn handle_spawn_bullet_impact_effect(
     bullet_impact_body_effect_resource: Res<
         PlayerBulletHitEnemyImpactEffectHandle,
     >,
-    player_transform: Single<&Transform, (With<Player>, With<Controlled>)>,
+    player_transform: Single<&Transform, OurPlayerQueryFilter>,
 ) {
     for message in message_reader.read() {
         let Some(bullet_impact_effect_handle) = (match message.variant {

@@ -5,7 +5,9 @@ use bevy_landmass::{
 };
 use shared::{
     Medkit,
-    character_controller::apply_collide_and_slide,
+    character_controller::{
+        apply_collide_and_slide, components::KinematicEntity,
+    },
     enemy::{
         ENEMY_FOV, ENEMY_VISION_RANGE,
         components::{Enemy, EnemyLastStateUpdate, EnemyState},
@@ -282,12 +284,7 @@ pub fn check_if_enemy_agent_reached_target(
 }
 
 pub fn handle_chasing_enemies(
-    mut enemy_query: Query<(
-        &EnemyState,
-        Entity,
-        &mut LinearVelocity,
-        &Transform,
-    )>,
+    mut enemy_query: Query<(&EnemyState, &mut LinearVelocity, &Transform)>,
     enemy_agents_query: Query<(
         &AgentDesiredVelocity3d,
         &EnemyAgentEntityPointer,
@@ -295,11 +292,12 @@ pub fn handle_chasing_enemies(
     mut spatial_query: SpatialQuery,
     medkit_query: Query<Entity, With<Medkit>>,
     time: Res<Time>,
+    kinematic_entities: Query<Entity, With<KinematicEntity>>,
 ) {
     for (agent_desired_velocity, agent_enemy_entity_pointer) in
         enemy_agents_query
     {
-        let Ok((enemy_state, entity, mut velocity, transform)) =
+        let Ok((enemy_state, mut velocity, transform)) =
             enemy_query.get_mut(agent_enemy_entity_pointer.0)
         else {
             warn!(
@@ -326,7 +324,7 @@ pub fn handle_chasing_enemies(
         velocity.z = agent_desired_velocity.velocity().z;
 
         let excluded_entities: Vec<Entity> =
-            medkit_query.iter().chain(std::iter::once(entity)).collect();
+            medkit_query.iter().chain(kinematic_entities).collect();
 
         let spatial_query_filter = &SpatialQueryFilter::default()
             .with_excluded_entities(excluded_entities.clone());

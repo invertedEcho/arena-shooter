@@ -37,11 +37,8 @@ use shared::{
 };
 
 use crate::{
-    enemy::{
-        EnemyPlugin,
-        spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
-    },
-    game_flow::GameFlowPlugin,
+    enemy::{EnemyPlugin, spawn::SpawnEnemiesMessage},
+    game_flow::{GameFlowPlugin, get_enemy_count_per_wave},
     nav_mesh_pathfinding::NavMeshPathfindingPlugin,
 };
 
@@ -63,7 +60,7 @@ pub enum ServerLoadingState {
     Done,
 }
 
-#[derive(Resource)]
+#[derive(Resource, Debug)]
 pub struct GameStateWave {
     pub current_wave: usize,
     pub enemies_killed: usize,
@@ -360,11 +357,6 @@ fn handle_shoot_requests(
 
                     match game_score.players.get_mut(&remote_id.to_bits()) {
                         Some(player) => {
-                            info!(
-                                "increased kill count of player with \
-                                 remote_id: {}",
-                                remote_id.to_bits()
-                            );
                             player.kills += 1;
                         }
                         None => {
@@ -425,19 +417,22 @@ fn handle_server_loading_state_done(
 
     match *game_mode_server {
         GameModeServer::Waves => {
+            let wave = 1;
+            let enemy_count = get_enemy_count_per_wave(wave);
             commands.insert_resource(GameStateWave {
-                current_wave: 1,
+                current_wave: wave,
                 enemies_killed: 0,
-                enemies_left_from_current_wave: 3,
+                enemies_left_from_current_wave: enemy_count,
             });
+            info!("Requesting spawning {} enemies", enemy_count);
             spawn_enemies.write(SpawnEnemiesMessage {
-                enemy_count: 3,
-                spawn_strategy: EnemySpawnStrategy::RandomSelection,
+                enemy_count: get_enemy_count_per_wave(wave),
             });
         }
         GameModeServer::FreeForAll | GameModeServer::FreeRoam => {
             commands.remove_resource::<GameStateWave>();
             for enemy in enemy_query {
+                info!("Despawning an enemy");
                 commands.entity(enemy).despawn();
             }
         }
