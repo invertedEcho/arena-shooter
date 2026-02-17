@@ -21,7 +21,7 @@ use shared::utils::network::{
     SERVER_PORT, get_auth_backend_socket_addr_client_side,
     get_server_socket_addr_client_side,
 };
-use shared::{ConfirmRespawn, ServerMode};
+use shared::{ConfirmRespawn, PlayerHitMessage, ServerMode};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,
@@ -59,7 +59,10 @@ impl Plugin for NetworkPlugin {
             )
                 .run_if(in_state(ServerMode::RemoteServer)),
         );
-        app.add_systems(Update, handle_confirm_respawn_message);
+        app.add_systems(
+            Update,
+            (handle_confirm_respawn_message, handle_hit_message),
+        );
         app.add_observer(handle_new_player);
         app.add_observer(handle_connected);
         app.add_observer(handle_disconnect);
@@ -298,5 +301,16 @@ pub fn handle_confirm_respawn_message(
     for _ in message_receiver.receive() {
         info!("Respawn request was confirmed by server!");
         next_in_game_state.set(InGameState::Playing);
+    }
+}
+
+pub fn handle_hit_message(
+    mut message_receiver: Single<&mut MessageReceiver<PlayerHitMessage>>,
+    mut message_sender: MessageWriter<PlayerHitMessage>,
+) {
+    for message in message_receiver.receive() {
+        message_sender.write(PlayerHitMessage {
+            origin: message.origin,
+        });
     }
 }

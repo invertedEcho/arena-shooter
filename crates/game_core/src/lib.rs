@@ -13,7 +13,8 @@ use lightyear::{
 };
 use shared::{
     ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH, GameModeServer,
-    GameStateServer, SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode,
+    GameStateServer, PlayerHitMessage, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
+    ServerMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -81,7 +82,9 @@ impl Plugin for GameCorePlugin {
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
         app.add_plugins(EnemyPlugin);
+
         app.add_plugins(NavMeshPathfindingPlugin);
+
         app.add_plugins(GameFlowPlugin);
 
         app.add_systems(Startup, start_server);
@@ -293,12 +296,19 @@ fn handle_shoot_requests(
     mut game_score: Single<&mut GameScore>,
     game_mode_server: Single<&GameModeServer>,
     client_query: Query<&RemoteId, With<ClientOf>>,
+    mut server_multi_message_sender: ServerMultiMessageSender,
+    server: Single<&Server>,
+    enemy_query: Query<Entity, With<Enemy>>,
 ) {
-    for (mut message_receiver, client_entity, remote_id) in receivers {
+    for (mut message_receiver, client_entity_server_side, remote_id) in
+        receivers
+    {
         for message in message_receiver.receive() {
             let Some(shooter_entity) = player_query
                 .iter()
-                .find(|(_, controlled_by)| controlled_by.owner == client_entity)
+                .find(|(_, controlled_by)| {
+                    controlled_by.owner == client_entity_server_side
+                })
                 .map(|i| i.0)
             else {
                 warn!(
@@ -321,6 +331,28 @@ fn handle_shoot_requests(
 
             if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
                 health.0 -= 8.0;
+                let is_enemy = enemy_query.get(first_hit.entity).is_ok();
+                if !is_enemy {
+                    if let Ok(client_entity_that_was_hit) =
+                        player_query.get(first_hit.entity).map(|i| i.1)
+                        && let Ok(client) =
+                            client_query.get(client_entity_that_was_hit.owner)
+                    {
+                        server_multi_message_sender
+                            .send::<PlayerHitMessage, OrderedReliableChannel>(
+                                &PlayerHitMessage {
+                                    origin: message.origin,
+                                },
+                                &server,
+                                &NetworkTarget::Single(client.0),
+                            )
+                            .ok();
+                    } else {
+                        error!(
+                            "Could not find client that was hit by the bullet"
+                        );
+                    }
+                }
 
                 if health.0 <= 0.0 {
                     let entity_killed = first_hit.entity;

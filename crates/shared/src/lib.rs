@@ -8,7 +8,6 @@ pub mod character_controller;
 pub mod components;
 pub mod enemy;
 pub mod game_score;
-pub mod messages;
 pub mod player;
 pub mod protocol;
 pub mod shooting;
@@ -60,6 +59,12 @@ pub struct Medkit {
 // The server will then update the players health and the players position.
 #[derive(Serialize, Deserialize)]
 pub struct ClientRespawnRequest;
+
+/// This message is sent from server to client, so the client can spawn the damage indicator
+#[derive(Serialize, Deserialize, Message, Copy, Clone)]
+pub struct PlayerHitMessage {
+    pub origin: Vec3,
+}
 
 // The server will send this message to the client that the respawn was made and the client can now
 // update internal state, such as `InGameState`.
