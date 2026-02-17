@@ -1,6 +1,6 @@
 use avian_rerecast::AvianBackendPlugin;
 use bevy::{platform::collections::HashSet, prelude::*};
-use bevy_landmass::{debug::Landmass3dDebugPlugin, prelude::*};
+use bevy_landmass::prelude::*;
 use bevy_rerecast::{Navmesh, prelude::*};
 use landmass_rerecast::{
     Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,

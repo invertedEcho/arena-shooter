@@ -304,7 +304,7 @@ pub fn spawn_damage_indicator(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut message_reader: MessageReader<PlayerHitMessage>,
-    player_transform: Single<&Transform, With<Player>>,
+    player_transform: Single<&Transform, (With<Player>, With<Controlled>)>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
     mut network_message_reader: Single<&mut MessageReceiver<PlayerHitMessage>>,
 ) {
