@@ -83,8 +83,7 @@ pub fn spawn_player_hud(
                         Text::new(player_health.0.to_string()),
                         PlayerHealthText,
                         TextFont {
-                            font: asset_server
-                                .load("fonts/Exo_2/static/Exo2-Italic.ttf"),
+                            font: asset_server.load(ITALIC_GAME_FONT_PATH),
                             ..default()
                         },
                     ));

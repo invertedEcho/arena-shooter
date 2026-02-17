@@ -405,7 +405,9 @@ pub fn spawn_muzzle_flash(
                 normal: Dir3::Z,
             })),
             MeshMaterial3d(materials.add(StandardMaterial {
-                base_color_texture: Some(asset_server.load("muzzle_flash.png")),
+                base_color_texture: Some(
+                    asset_server.load("hud/muzzle_flash.png"),
+                ),
                 alpha_mode: AlphaMode::Blend,
                 unlit: true,
                 ..default()
