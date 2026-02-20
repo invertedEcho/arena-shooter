@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
 };
+use rand::Rng;
 use shared::{
     DEFAULT_HEALTH,
     character_controller::{
@@ -23,16 +24,10 @@ pub struct EnemySpawnPlugin;
 
 impl Plugin for EnemySpawnPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<SpawnEnemiesMessage>().add_systems(
-            Update,
-            (handle_spawn_enemies_at_enemy_spawn_locations_message,),
-        );
+        app.add_message::<SpawnEnemiesMessage>()
+            .add_systems(Update, (handle_spawn_enemies_message,));
     }
 }
-
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-pub struct EnemySpawnLocation;
 
 #[derive(Message)]
 pub struct SpawnEnemiesMessage {
@@ -50,15 +45,55 @@ pub enum EnemySpawnStrategy {
     RandomSelection,
 }
 
-fn handle_spawn_enemies_at_enemy_spawn_locations_message(
+// first corner is at: 10, 7, 20
+// second corner is at: -10, 7, 20
+// third corner is at -10, 7, -20
+// third corner is at 10, 7, -20
+
+fn get_random_enemy_spawn_locations(
+    enemy_spawn_count: usize,
+    spatial_query: &mut SpatialQuery,
+) -> Vec<Vec3> {
+    const Y: f32 = 7.0;
+    let mut rng = rand::rng();
+
+    let mut enemy_spawn_locations: Vec<Vec3> = vec![];
+
+    while enemy_spawn_locations.len() < enemy_spawn_count {
+        let random_x = rng.random_range(-10.0..10.0);
+        let random_z = rng.random_range(-20.0..20.0);
+        let hit = spatial_query.cast_shape(
+            &Collider::capsule(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ),
+            vec3(random_x, Y, random_z),
+            Quat::IDENTITY,
+            Dir3::NEG_Y,
+            // max distance is just something a bit higher than Y
+            &ShapeCastConfig::default().with_max_distance(10.0),
+            // only include colliders that are on the given LayerMask, this specified LayerMask is
+            // the one where only the collider of the navmesh is in
+            &SpatialQueryFilter::default().with_mask(LayerMask(0b0010)),
+        );
+        if let Some(hit) = hit {
+            let mut enemy_spawn_location = hit.point1;
+            // elevate the y coordinate so they dont get spawned exactly at hit point, which would
+            // be surface of the collider
+            enemy_spawn_location.y += CHARACTER_FEET.abs() + 0.5;
+            info!("Found valid spawn point at {}", enemy_spawn_location);
+            enemy_spawn_locations.push(enemy_spawn_location);
+        }
+    }
+    enemy_spawn_locations
+}
+
+fn handle_spawn_enemies_message(
     mut message_reader: MessageReader<SpawnEnemiesMessage>,
     mut commands: Commands,
-    enemy_spawn_locations: Query<
-        (Entity, &Transform),
-        With<EnemySpawnLocation>,
-    >,
     archipelago_ref: Option<Res<ArchipelagoRef>>,
     mut game_score: Single<&mut GameScore>,
+    mut spatial_query: SpatialQuery,
 ) {
     for event in message_reader.read() {
         let Some(ref archipelago_ref) = archipelago_ref else {
@@ -69,76 +104,30 @@ fn handle_spawn_enemies_at_enemy_spawn_locations_message(
             return;
         };
 
-        if enemy_spawn_locations.is_empty() {
-            error!("Requested enemy spawn but no spawn locations exist!");
-            continue;
-        }
-
-        let mut spawn_enemy_count = event.enemy_count;
+        let enemy_spawn_count = event.enemy_count;
         let spawn_method = &event.spawn_strategy;
 
         match spawn_method {
             EnemySpawnStrategy::RandomSelection => {
-                if spawn_enemy_count > enemy_spawn_locations.iter().len() {
-                    warn!(
-                        "Requested more enemy spawns than available \
-                         EnemySpawnLocations, decreasing. This will mean \
-                         losing enemy spawns"
-                    );
-                    spawn_enemy_count -= enemy_spawn_locations
-                        .iter()
-                        .len()
-                        .abs_diff(spawn_enemy_count);
-                    warn!(
-                        "Original enemy spawn count: {} | New \
-                         spawn_enemy_count: {}",
-                        event.enemy_count, spawn_enemy_count
-                    );
-                }
+                let enemy_spawn_locations = get_random_enemy_spawn_locations(
+                    enemy_spawn_count,
+                    &mut spatial_query,
+                );
 
-                let mut already_used_spawn_locations: Vec<Entity> = Vec::new();
-                // i kinda dont like while loops as its very easy to cause infinite loops with them
-                while already_used_spawn_locations.len() != spawn_enemy_count {
-                    let chosen_spawn_location_index = rand::random_range(
-                        0..enemy_spawn_locations.iter().len(),
-                    );
-                    if already_used_spawn_locations.contains(
-                        &enemy_spawn_locations
-                            .iter()
-                            .collect::<Vec<(Entity, &Transform)>>()
-                            [chosen_spawn_location_index]
-                            .0,
-                    ) {
-                        continue;
-                    }
-
-                    let chosen_spawn_location = enemy_spawn_locations
-                        .iter()
-                        .collect::<Vec<(Entity, &Transform)>>()
-                        [chosen_spawn_location_index];
-                    already_used_spawn_locations.push(chosen_spawn_location.0);
-
-                    let spawn_location_translation =
-                        chosen_spawn_location.1.translation;
-
-                    debug!(
-                        "Spawning an enemy at {}",
-                        spawn_location_translation
-                    );
+                for enemy_spawn_location in enemy_spawn_locations {
+                    info!("Spawning an enemy at {}", enemy_spawn_location);
 
                     let enemy_entity = commands
                         .spawn((
                             Name::new("Enemy"),
-                            Transform::from_translation(
-                                spawn_location_translation,
-                            ),
+                            Transform::from_translation(enemy_spawn_location),
                             Enemy,
                             EnemyLastStateUpdate(Instant::now()),
                             Health(DEFAULT_HEALTH),
                             EnemyState::default(),
                             Grounded::default(),
                             EntityPositionServer {
-                                translation: spawn_location_translation,
+                                translation: enemy_spawn_location,
                             },
                             RigidBody::Kinematic,
                             Collider::capsule(

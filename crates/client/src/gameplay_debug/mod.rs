@@ -1,5 +1,6 @@
 use std::num::NonZero;
 
+use avian3d::prelude::*;
 use bevy::{
     color::palettes::{css::RED, tailwind::BLUE_700},
     prelude::*,
@@ -30,6 +31,25 @@ pub enum AppDebugState {
     Enabled,
 }
 
+fn color_colliders_by_layer(
+    mut commands: Commands,
+    query: Query<
+        (Entity, &CollisionLayers),
+        (With<Collider>, Without<DebugRender>),
+    >,
+) {
+    for (entity, layers) in query {
+        let color = if layers.memberships == LayerMask(0b0010) {
+            Color::srgb(1.0, 0.0, 0.0) // red for colliders of our layermask for navmesh
+        } else {
+            Color::srgb(1.0, 0.5, 0.0) // orange per default
+        };
+        commands
+            .entity(entity)
+            .insert(DebugRender::default().with_collider_color(color));
+    }
+}
+
 pub struct GameplayDebugPlugin;
 
 impl Plugin for GameplayDebugPlugin {
@@ -38,6 +58,7 @@ impl Plugin for GameplayDebugPlugin {
             draw_on_start: false,
             ..default()
         });
+        app.add_plugins(PhysicsDebugPlugin);
 
         app.init_state::<AppDebugState>();
         app.add_plugins(DebugOverlayPlugin);
@@ -45,6 +66,8 @@ impl Plugin for GameplayDebugPlugin {
             load_system_fonts: true,
             ..Default::default()
         });
+
+        app.add_systems(PreUpdate, color_colliders_by_layer);
 
         app.add_message::<SpawnDebugPointMessage>();
 
