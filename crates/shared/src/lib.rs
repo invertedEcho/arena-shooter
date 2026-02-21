@@ -55,6 +55,32 @@ pub struct Medkit {
     pub respawn_timer: Timer,
 }
 
+pub enum MedkitFloatDirection {
+    Up,
+    Down,
+}
+
+#[derive(Message)]
+pub struct SpawnDebugSphereMessage {
+    pub location: Vec3,
+    pub color: Color,
+    pub radius: f32,
+}
+
+impl SpawnDebugSphereMessage {
+    pub fn _new<T: Into<Vec3>, U: Into<Color>>(
+        point: T,
+        color: U,
+        radius: f32,
+    ) -> Self {
+        Self {
+            location: point.into(),
+            color: color.into(),
+            radius,
+        }
+    }
+}
+
 // A client can send this message to the server indicating that the player requested a respawn.
 // The server will then update the players health and the players position.
 #[derive(Serialize, Deserialize)]
@@ -71,11 +97,6 @@ pub struct PlayerHitMessage {
 #[derive(Serialize, Deserialize)]
 pub struct ConfirmRespawn;
 
-pub enum MedkitFloatDirection {
-    Up,
-    Down,
-}
-
 pub const GRAVITY: f32 = 9.81;
 
 pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
@@ -90,7 +111,6 @@ impl Plugin for SharedPlugin {
         app.add_plugins(ProtocolPlugin);
 
         app.add_plugins(PhysicsPlugins::default().build())
-            // .add_plugins(PhysicsDebugPlugin)
             .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
         app.add_systems(Update, handle_despawn_timer);
     }

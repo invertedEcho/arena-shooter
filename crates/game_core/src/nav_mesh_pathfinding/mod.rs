@@ -5,7 +5,6 @@ use bevy_rerecast::{Navmesh, prelude::*};
 use landmass_rerecast::{
     Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
 };
-
 use shared::{
     Medkit,
     character_controller::{CHARACTER_HEIGHT, MAX_SLOPE_ANGLE},
@@ -14,6 +13,9 @@ use shared::{
 use crate::ServerLoadingState;
 
 pub const ENEMY_AGENT_RADIUS: f32 = 0.4;
+
+// island: a disconnected isolated group of walkable areas
+// archipelago: a group of these islands, that are close to each other but still seperated
 
 pub struct NavMeshPathfindingPlugin;
 
@@ -32,7 +34,7 @@ impl Plugin for NavMeshPathfindingPlugin {
     }
 }
 
-// We store the NavMesh handle in a resource so we can regenerate the navmesh when needed
+/// We store the NavMesh handle in a resource so we can regenerate the navmesh when needed
 #[derive(Resource)]
 pub struct NavMeshHandle(pub Handle<Navmesh>);
 
@@ -93,10 +95,10 @@ fn on_navmesh_ready(
         );
     };
 
+    commands.insert_resource(NavMeshHandle(nav_mesh_handle));
+
     info!("NavMesh is now ready, updating ServerLoadingState to Done");
     next_server_loading_state.set(ServerLoadingState::Done);
-
-    commands.insert_resource(NavMeshHandle(nav_mesh_handle));
 }
 
 // fn log_agent_state(agent_state: Query<&AgentState>) {
