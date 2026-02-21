@@ -267,6 +267,6 @@ pub fn check_above_head(
 
         // if there is something above the current shape, stop vertical movement, to prevent
         // clipping into ceilings
-        velocity.y -= 0.5;
+        velocity.y = -JUMP_VELOCITY;
     }
 }
