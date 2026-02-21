@@ -21,7 +21,7 @@ use shared::utils::network::{
     SERVER_PORT, get_auth_backend_socket_addr_client_side,
     get_server_socket_addr_client_side,
 };
-use shared::{ConfirmRespawn, ServerMode};
+use shared::{ConfirmRespawn, PlayerHitMessage, ServerMode};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,
@@ -29,7 +29,7 @@ use crate::auth::{
 };
 use crate::character_controller::components::CharacterControllerBundle;
 use crate::game_flow::states::{
-    AppState, ClientLoadingState, ConnectionState, GameModeClient, InGameState,
+    AppState, ClientLoadingState, GameModeClient, InGameState,
 };
 
 const CLIENT_PORT: u16 = 0;
@@ -42,7 +42,6 @@ pub struct NetworkPlugin;
 
 impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<ConnectionState>();
         app.add_systems(
             OnEnter(ClientLoadingState::ConnectingToServer),
             on_enter_connecting_to_server,
@@ -60,7 +59,10 @@ impl Plugin for NetworkPlugin {
             )
                 .run_if(in_state(ServerMode::RemoteServer)),
         );
-        app.add_systems(Update, handle_confirm_respawn_message);
+        app.add_systems(
+            Update,
+            (handle_confirm_respawn_message, handle_hit_message),
+        );
         app.add_observer(handle_new_player);
         app.add_observer(handle_connected);
         app.add_observer(handle_disconnect);
@@ -185,10 +187,21 @@ fn handle_new_player(
             Visibility::Visible,
             Transform::from_translation(vec3(0.0, 20.0, 0.0)),
             Name::new("Our Player"),
+            Mesh3d(meshes.add(Capsule3d::new(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: WHITE.into(),
+                ..Default::default()
+            })),
         ));
     } else if is_remote_server && !has_controlled {
         commands.entity(trigger.entity).insert((
-            Mesh3d(meshes.add(Capsule3d::new(0.2, 1.3))),
+            Mesh3d(meshes.add(Capsule3d::new(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ))),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: WHITE.into(),
                 ..Default::default()
@@ -244,7 +257,6 @@ pub fn apply_server_position_other_clients(
 pub fn handle_disconnect(
     trigger: On<Add, Disconnected>,
     disconnected: Query<&Disconnected>,
-    mut next_disconnected_state: ResMut<NextState<ConnectionState>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     match disconnected.get(trigger.entity) {
@@ -267,14 +279,7 @@ pub fn handle_disconnect(
                         next_app_state.set(AppState::MainMenu);
                     }
                     DisconnectReason::Unknown => {
-                        // TODO: we also need to set to InGame, in case we are on initial connecting, e.g.
-                        // LoadingScreen -> failed to connect -> wouldnt be in ingame, but in
-                        // AppState::LoadingGame, so we set InGame here to be safe as InGameState only
-                        // exists when AppState is InGame
-                        next_app_state.set(AppState::InGame);
-
-                        next_disconnected_state
-                            .set(ConnectionState::Disconnected);
+                        next_app_state.set(AppState::Disconnected);
                     }
                 }
             }
@@ -296,5 +301,16 @@ pub fn handle_confirm_respawn_message(
     for _ in message_receiver.receive() {
         info!("Respawn request was confirmed by server!");
         next_in_game_state.set(InGameState::Playing);
+    }
+}
+
+pub fn handle_hit_message(
+    mut message_receiver: Single<&mut MessageReceiver<PlayerHitMessage>>,
+    mut message_sender: MessageWriter<PlayerHitMessage>,
+) {
+    for message in message_receiver.receive() {
+        message_sender.write(PlayerHitMessage {
+            origin: message.origin,
+        });
     }
 }

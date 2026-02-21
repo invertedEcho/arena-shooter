@@ -19,6 +19,7 @@ pub const DEFAULT_GAME_FONT_PATH: &str = "fonts/Exo_2/static/Exo2-Regular.ttf";
 pub const ITALIC_GAME_FONT_PATH: &str = "fonts/Exo_2/static/Exo2-Italic.ttf";
 pub const TITLE_FONT_SIZE: f32 = 64.0;
 pub const DEFAULT_FONT_SIZE: f32 = 32.0;
+pub const SMALL_FONT_SIZE: f32 = 16.0;
 
 pub const ELEMENT_OUTLINE: Color = Color::srgb(0.45, 0.45, 0.45);
 pub const ELEMENT_FILL: Color = Color::srgb(0.35, 0.75, 0.35);
@@ -53,10 +54,11 @@ impl Plugin for CommonUiPlugin {
             Update,
             (
                 handle_common_ui_button_press,
-                handle_any_button_hover,
+                handle_button_hover_text_color,
                 update_slider_style,
                 update_checkbox_style,
                 update_checkbox_style2,
+                handle_escape_press_back.run_if(state_exists::<MainMenuState>),
             ),
         );
     }
@@ -115,7 +117,7 @@ fn handle_common_ui_button_press(
     }
 }
 
-type AnyButtonHoveredQuery<'w, 's> = Query<
+pub type AnyButtonInteractionQuery<'w, 's> = Query<
     'w,
     's,
     (&'static Interaction, &'static Children),
@@ -127,8 +129,8 @@ type AnyButtonHoveredQuery<'w, 's> = Query<
     ),
 >;
 
-fn handle_any_button_hover(
-    query: AnyButtonHoveredQuery,
+fn handle_button_hover_text_color(
+    query: AnyButtonInteractionQuery,
     mut text_color_query: Query<&mut TextColor>,
 ) {
     for (interaction, children) in query {
@@ -140,5 +142,23 @@ fn handle_any_button_hover(
             Interaction::None => **text_color = UI_TEXT,
             _ => {}
         }
+    }
+}
+
+fn handle_escape_press_back(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    main_menu_state: ResMut<State<MainMenuState>>,
+    mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        let new_state = match *main_menu_state.get() {
+            MainMenuState::Root => MainMenuState::Root,
+            MainMenuState::Settings => MainMenuState::Root,
+            MainMenuState::Credits => MainMenuState::Root,
+            MainMenuState::GameModeSelection => MainMenuState::MapSelection,
+            MainMenuState::MapSelection => MainMenuState::Root,
+        };
+
+        next_main_menu_state.set(new_state);
     }
 }

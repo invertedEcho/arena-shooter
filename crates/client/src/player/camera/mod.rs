@@ -4,9 +4,10 @@ use crate::{
     game_flow::states::InGameState,
     player::camera::systems::{
         do_weapon_kickback, free_cam_orbit, handle_free_cam_movement,
-        handle_player_scope_aim, interpolate_weapon_position,
-        make_player_weapon_hidden, make_player_weapon_visible,
-        setup_player_cameras, spawn_muzzle_flash, update_player_weapon_model,
+        handle_player_scope_aim, handle_spawn_player_camera_message,
+        interpolate_weapon_position, make_player_weapon_hidden,
+        make_player_weapon_visible, setup_player_cameras, spawn_muzzle_flash,
+        toggle_freecam, update_player_weapon_model,
         update_yaw_pitch_on_mouse_motion, weapon_sway,
     },
 };
@@ -17,10 +18,14 @@ pub mod weapon_positions;
 
 pub const PLAYER_CAMERA_Y_OFFSET: f32 = 0.4;
 
+#[derive(Message)]
+pub struct SpawnPlayerCamera(pub Entity);
+
 pub struct PlayerCameraPlugin;
 
 impl Plugin for PlayerCameraPlugin {
     fn build(&self, app: &mut App) {
+        app.add_message::<SpawnPlayerCamera>();
         app.add_systems(
             Update,
             (update_yaw_pitch_on_mouse_motion, free_cam_orbit)
@@ -30,6 +35,7 @@ impl Plugin for PlayerCameraPlugin {
             Update,
             (
                 setup_player_cameras,
+                handle_spawn_player_camera_message,
                 handle_free_cam_movement,
                 handle_player_scope_aim,
                 weapon_sway,
@@ -37,6 +43,7 @@ impl Plugin for PlayerCameraPlugin {
                 spawn_muzzle_flash,
                 interpolate_weapon_position,
                 do_weapon_kickback,
+                toggle_freecam,
             ),
         )
         .add_systems(OnEnter(InGameState::Playing), make_player_weapon_visible)

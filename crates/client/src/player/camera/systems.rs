@@ -1,4 +1,4 @@
-use avian3d::math::FRAC_PI_2;
+use avian3d::{math::FRAC_PI_2, prelude::LinearVelocity};
 use bevy::{
     camera::visibility::RenderLayers, core_pipeline::Skybox,
     input::mouse::AccumulatedMouseMotion, prelude::*,
@@ -13,7 +13,7 @@ use crate::{
     game_flow::states::AppState,
     player::{
         camera::{
-            PLAYER_CAMERA_Y_OFFSET,
+            PLAYER_CAMERA_Y_OFFSET, SpawnPlayerCamera,
             components::{
                 FreeCam, MuzzleFlash, PlayerCameraState, PlayerWeaponModel,
                 ViewModelCamera, WorldCamera,
@@ -36,23 +36,25 @@ use crate::{
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 
 pub fn setup_player_cameras(
-    asset_server: Res<AssetServer>,
-    mut commands: Commands,
     // using With<Controlled> ensures we only add cameras to our own player
     added_players: Query<Entity, (Added<Player>, With<Controlled>)>,
+    mut message_writer: MessageWriter<SpawnPlayerCamera>,
 ) {
     for added_player in added_players {
-        debug!(
-            "A new player was added and it has Controlled, e.g. its our \
-             player. Spawning cameras as children..."
-        );
+        message_writer.write(SpawnPlayerCamera(added_player));
+    }
+}
 
-        debug!("Inserting PlayerCameraState into player");
-        commands
-            .entity(added_player)
-            .insert(PlayerCameraState::Normal);
+pub fn handle_spawn_player_camera_message(
+    mut message_reader: MessageReader<SpawnPlayerCamera>,
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+) {
+    for message in message_reader.read() {
+        info!("Spawning new player camera, Player was added with Controlled");
+        commands.entity(message.0).insert(PlayerCameraState::Normal);
 
-        commands.entity(added_player).with_children(|parent| {
+        commands.entity(message.0).with_children(|parent| {
             parent.spawn((
                 Name::new("WorldCamera"),
                 WorldCamera,
@@ -168,77 +170,60 @@ pub fn update_yaw_pitch_on_mouse_motion(
     }
 }
 
-// TODO: is this even needed? cant we just query for With<Camera>?
-// 'w -> the world borrow lifetime, e.g. how long this query can read/write world data
-// 'a -> the system lifetime, e.g. how long this query is valid inside a system function
-// type AnyCamEntityQuery<'w, 's> = Query<
-//     'w,
-//     's,
-//     Entity,
-//     Or<(
-//         With<ViewModelCamera>,
-//         With<WorldCamera>,
-//         With<PlayerWeaponModel>,
-//     )>,
-// >;
+pub fn toggle_freecam(
+    player_query: Single<(
+        Entity,
+        &Transform,
+        &mut PlayerCameraState,
+        &mut LinearVelocity,
+    )>,
+    mut commands: Commands,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    camera_entities: Query<Entity, With<Camera>>,
+    mut message_writer: MessageWriter<SpawnPlayerCamera>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyC) {
+        let (
+            player_entity,
+            player_transform,
+            mut player_camera_state,
+            mut player_velocity,
+        ) = player_query.into_inner();
+        player_velocity.0 = Vec3::ZERO;
 
-// FIXME: Reintroduce
-//
-// pub fn toggle_freecam(
-//     client_local_player: Option<ResMut<ClientLocalPlayer>>,
-//     player_query: Single<(&Transform, &mut PlayerCameraState)>,
-//     mut commands: Commands,
-//     keyboard_input: Res<ButtonInput<KeyCode>>,
-//     camera_entities: AnyCamEntityQuery,
-//     free_cam_entity_query: Query<Entity, With<FreeCam>>,
-//     mut spawn_player_cameras_message_writer: MessageWriter<
-//         SpawnPlayerCamerasMessage,
-//     >,
-// ) {
-//     if keyboard_input.just_pressed(KeyCode::KeyC) {
-//         let Some(client_local_player) = client_local_player else {
-//             return;
-//         };
-//
-//         let (player_transform, mut player_camera_state) =
-//             player_query.into_inner();
-//         info!("okay freecam key pressed");
-//
-//         match *player_camera_state {
-//             PlayerCameraState::Normal => {
-//                 *player_camera_state = PlayerCameraState::FreeCam;
-//                 for player_camera_entity in camera_entities {
-//                     commands.entity(player_camera_entity).despawn();
-//                 }
-//                 commands.spawn((
-//                     Camera3d::default(),
-//                     Projection::from(PerspectiveProjection {
-//                         fov: 80.0_f32.to_radians(),
-//                         ..default()
-//                     }),
-//                     Transform::from_xyz(
-//                         player_transform.translation.x,
-//                         player_transform.translation.y + 2.0,
-//                         player_transform.translation.z,
-//                     ),
-//                     FreeCam,
-//                     DespawnOnExit(AppState::InGame),
-//                 ));
-//             }
-//             PlayerCameraState::FreeCam => {
-//                 info!("requested freecam -> normal");
-//                 *player_camera_state = PlayerCameraState::Normal;
-//                 info!("player camera state now set to normal");
-//                 for free_cam_entity in free_cam_entity_query {
-//                     debug!("despawning free cam entity {}", free_cam_entity);
-//                     commands.entity(free_cam_entity).despawn();
-//                 }
-//                 spawn_player_cameras_message_writer
-//                     .write(SpawnPlayerCamerasMessage(client_local_player.0));
-//             }
-//         }
-//     }
-// }
+        for camera_entity in camera_entities {
+            commands.entity(camera_entity).despawn();
+        }
+
+        match *player_camera_state {
+            PlayerCameraState::Normal => {
+                info!("PlayerCameraState updated to FreeCam");
+                *player_camera_state = PlayerCameraState::FreeCam;
+
+                commands.spawn((
+                    Camera3d::default(),
+                    Projection::from(PerspectiveProjection {
+                        fov: 80.0_f32.to_radians(),
+                        ..default()
+                    }),
+                    Transform::from_xyz(
+                        player_transform.translation.x,
+                        player_transform.translation.y + 2.0,
+                        player_transform.translation.z,
+                    ),
+                    FreeCam,
+                    DespawnOnExit(AppState::InGame),
+                ));
+            }
+            PlayerCameraState::FreeCam => {
+                info!("PlayerCameraState updated to Normal");
+                *player_camera_state = PlayerCameraState::Normal;
+
+                message_writer.write(SpawnPlayerCamera(player_entity));
+            }
+        }
+    }
+}
 
 pub fn handle_free_cam_movement(
     mut free_cam_transform: Single<&mut Transform, With<FreeCam>>,
@@ -246,9 +231,9 @@ pub fn handle_free_cam_movement(
 ) {
     let mut direction = Vec3::ZERO;
     let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
-        0.10
+        0.25
     } else {
-        0.02
+        0.10
     };
 
     if keyboard_input.pressed(KeyCode::KeyW) {
@@ -410,7 +395,9 @@ pub fn spawn_muzzle_flash(
                 normal: Dir3::Z,
             })),
             MeshMaterial3d(materials.add(StandardMaterial {
-                base_color_texture: Some(asset_server.load("muzzle_flash.png")),
+                base_color_texture: Some(
+                    asset_server.load("hud/muzzle_flash.png"),
+                ),
                 alpha_mode: AlphaMode::Blend,
                 unlit: true,
                 ..default()

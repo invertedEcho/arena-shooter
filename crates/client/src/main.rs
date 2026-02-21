@@ -49,9 +49,11 @@ mod world;
 fn main() {
     let mut app = App::new();
 
-    app.add_plugins(EmbeddedAssetPlugin {
-        mode: bevy_embedded_assets::PluginMode::ReplaceDefault,
-    });
+    if cfg!(not(debug_assertions)) {
+        app.add_plugins(EmbeddedAssetPlugin {
+            mode: bevy_embedded_assets::PluginMode::ReplaceDefault,
+        });
+    }
 
     let game_settings = get_or_create_game_settings();
 

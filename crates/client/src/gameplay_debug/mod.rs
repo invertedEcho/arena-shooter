@@ -8,6 +8,7 @@ use bevy_inspector_egui::{
     bevy_egui::{EguiContext, PrimaryEguiContext},
     egui,
 };
+use bevy_landmass::debug::{EnableLandmassDebug, Landmass3dDebugPlugin};
 use bevy_rich_text3d::{Text3d, Text3dPlugin, Text3dStyling, TextAtlas};
 use shared::{
     components::Health,
@@ -22,10 +23,23 @@ use crate::gameplay_debug::debug_overlay::DebugOverlayPlugin;
 
 mod debug_overlay;
 
+#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default, Copy)]
+pub enum AppDebugState {
+    #[default]
+    Disabled,
+    Enabled,
+}
+
 pub struct GameplayDebugPlugin;
 
 impl Plugin for GameplayDebugPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(Landmass3dDebugPlugin {
+            draw_on_start: false,
+            ..default()
+        });
+
+        app.init_state::<AppDebugState>();
         app.add_plugins(DebugOverlayPlugin);
         app.add_plugins(Text3dPlugin {
             load_system_fonts: true,
@@ -43,6 +57,8 @@ impl Plugin for GameplayDebugPlugin {
                 update_enemy_debug_text,
                 tick_despawn_timer_debug_gizmo_lines,
                 handle_spawn_debug_points_message,
+                update_app_debug_state,
+                update_landmass_debug_enabled,
             ),
         );
         // app.add_systems(EguiPrimaryContextPass, player_inspector);
@@ -78,7 +94,7 @@ pub struct DebugGizmoLine {
 #[derive(Resource)]
 pub struct DebugGizmos(pub Vec<DebugGizmoLine>);
 
-pub fn draw_gizmos(mut gizmos: Gizmos, debug_gizmos: Res<DebugGizmos>) {
+fn draw_gizmos(mut gizmos: Gizmos, debug_gizmos: Res<DebugGizmos>) {
     for gizmo in debug_gizmos.0.iter() {
         let start = gizmo.start;
         let end = gizmo.end;
@@ -212,7 +228,7 @@ fn _player_inspector(world: &mut World) {
     });
 }
 
-pub fn handle_spawn_debug_points_message(
+fn handle_spawn_debug_points_message(
     mut commands: Commands,
     mut message_reader: MessageReader<SpawnDebugPointMessage>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -229,4 +245,27 @@ pub fn handle_spawn_debug_points_message(
             DebugPoint,
         ));
     }
+}
+
+fn update_app_debug_state(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    current_app_debug_state: Res<State<AppDebugState>>,
+    mut next_app_debug_state: ResMut<NextState<AppDebugState>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyH) {
+        if *current_app_debug_state.get() == AppDebugState::Disabled {
+            next_app_debug_state.set(AppDebugState::Enabled);
+        } else if *current_app_debug_state.get() == AppDebugState::Enabled {
+            next_app_debug_state.set(AppDebugState::Disabled);
+        }
+    }
+}
+
+fn update_landmass_debug_enabled(
+    mut land_mass_debug: ResMut<EnableLandmassDebug>,
+    new_app_debug_state: Res<State<AppDebugState>>,
+) {
+    let app_debug_state_enabled =
+        *new_app_debug_state.get() == AppDebugState::Enabled;
+    land_mass_debug.0 = app_debug_state_enabled;
 }

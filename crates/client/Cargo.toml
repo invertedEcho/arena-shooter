@@ -16,6 +16,8 @@ bevy = { workspace = true, features = [
 bevy_embedded_assets = "0.15.0"
 bevy_hanabi = "0.18.0"
 bevy-inspector-egui = { workspace = true }
+# we need this so we can toggle nav mesh debug gizmo visibility on the client
+bevy_landmass = "0.11.0"
 bevy_rich_text3d = "0.6.0"
 bevy_skein = "0.5.0"
 dirs = "6.0.0"
