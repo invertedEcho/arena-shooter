@@ -11,7 +11,8 @@ use crate::{
             check_collider_constructor_hierarchy_ready,
             check_world_scene_loaded, free_mouse, grab_mouse,
             handle_escape_in_game, handle_player_death_event,
-            manual_free_mouse, pause_all_animations, resume_all_animations,
+            manual_mouse_grab_toggle, pause_all_animations,
+            resume_all_animations,
             send_update_game_server_state_request_on_in_game_state_change,
             spawn_main_menu_camera,
         },
@@ -50,7 +51,7 @@ impl Plugin for GameFlowPlugin {
                 (
                     check_world_scene_loaded,
                     handle_escape_in_game,
-                    manual_free_mouse,
+                    manual_mouse_grab_toggle,
                     handle_player_death_event,
                 ),
             )
