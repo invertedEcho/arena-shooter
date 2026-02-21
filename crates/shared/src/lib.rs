@@ -55,6 +55,32 @@ pub struct Medkit {
     pub respawn_timer: Timer,
 }
 
+pub enum MedkitFloatDirection {
+    Up,
+    Down,
+}
+
+#[derive(Message)]
+pub struct SpawnDebugSphereMessage {
+    pub location: Vec3,
+    pub color: Color,
+    pub radius: f32,
+}
+
+impl SpawnDebugSphereMessage {
+    pub fn _new<T: Into<Vec3>, U: Into<Color>>(
+        point: T,
+        color: U,
+        radius: f32,
+    ) -> Self {
+        Self {
+            location: point.into(),
+            color: color.into(),
+            radius,
+        }
+    }
+}
+
 // A client can send this message to the server indicating that the player requested a respawn.
 // The server will then update the players health and the players position.
 #[derive(Serialize, Deserialize)]
@@ -71,18 +97,11 @@ pub struct PlayerHitMessage {
 #[derive(Serialize, Deserialize)]
 pub struct ConfirmRespawn;
 
-pub enum MedkitFloatDirection {
-    Up,
-    Down,
-}
-
 pub const GRAVITY: f32 = 9.81;
 
 pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
 pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
 pub const SPAWN_POINT_MEDIUM_PLASTIC_MAP: Vec3 = vec3(0.0, 10.0, 0.0);
-
-pub const NAV_MESH_LAYER_MASK: LayerMask = LayerMask(0b0010);
 
 /// Logic for both client and server binary
 pub struct SharedPlugin;

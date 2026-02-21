@@ -1464,7 +1464,6 @@ dependencies = [
  "bevy_post_process",
  "bevy_ptr",
  "bevy_reflect",
- "bevy_remote",
  "bevy_render",
  "bevy_scene",
  "bevy_shader",

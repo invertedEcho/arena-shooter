@@ -33,13 +33,16 @@ pub fn free_mouse(
     primary_cursor_options.grab_mode = CursorGrabMode::None;
 }
 
-pub fn manual_free_mouse(
+pub fn manual_mouse_grab_toggle(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut primary_cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyU) {
-        primary_cursor_options.grab_mode = CursorGrabMode::None;
-        primary_cursor_options.visible = true;
+        if primary_cursor_options.grab_mode == CursorGrabMode::None {
+            primary_cursor_options.grab_mode = CursorGrabMode::Locked;
+        } else {
+            primary_cursor_options.grab_mode = CursorGrabMode::None;
+        }
     }
 }
 

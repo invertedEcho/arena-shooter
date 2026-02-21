@@ -2,13 +2,13 @@ use std::time::Instant;
 
 use crate::nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS};
 use avian3d::{math::Quaternion, prelude::*};
-use bevy::prelude::*;
+use bevy::{color::palettes::css::GREEN, prelude::*};
 use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
 };
 use rand::Rng;
 use shared::{
-    DEFAULT_HEALTH, NAV_MESH_LAYER_MASK,
+    DEFAULT_HEALTH, SpawnDebugSphereMessage,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, CHARACTER_FEET,
         MAX_DISTANCE_GROUNDED_SHAPE_CAST, RUN_VELOCITY, WALK_VELOCITY,
@@ -20,12 +20,19 @@ use shared::{
     protocol::EntityPositionServer,
 };
 
+/// A marker component inserted on entities with a mesh, indicating that an enemy may be spawned
+/// here.
+/// Right now we use this for enemy spawning, specifically getting a random enemy spawn location.
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct ValidEnemySpawnLocationArea;
+
 pub struct EnemySpawnPlugin;
 
 impl Plugin for EnemySpawnPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<SpawnEnemiesMessage>()
-            .add_systems(Update, (handle_spawn_enemies_message,));
+            .add_systems(Update, handle_spawn_enemies_message);
     }
 }
 
@@ -53,6 +60,7 @@ pub enum EnemySpawnStrategy {
 fn get_random_enemy_spawn_locations(
     enemy_spawn_count: usize,
     spatial_query: &mut SpatialQuery,
+    valid_enemy_spawn_areas: Vec<Entity>,
 ) -> Vec<Vec3> {
     const Y: f32 = 7.0;
     let mut rng = rand::rng();
@@ -63,25 +71,26 @@ fn get_random_enemy_spawn_locations(
         let random_x = rng.random_range(-10.0..10.0);
         let random_z = rng.random_range(-20.0..20.0);
         let hit = spatial_query.cast_shape(
-            &Collider::capsule(
-                CHARACTER_CAPSULE_RADIUS,
-                CHARACTER_CAPSULE_LENGTH,
-            ),
+            &Collider::capsule(0.5, CHARACTER_CAPSULE_LENGTH),
             vec3(random_x, Y, random_z),
             Quat::IDENTITY,
             Dir3::NEG_Y,
             // max distance is just something a bit higher than Y
             &ShapeCastConfig::default().with_max_distance(10.0),
-            // only include colliders that are on the given LayerMask, this specified LayerMask is
-            // the one where only the collider of the navmesh is in
-            &SpatialQueryFilter::default().with_mask(NAV_MESH_LAYER_MASK),
+            &SpatialQueryFilter::default(),
         );
-        if let Some(hit) = hit {
+        if let Some(hit) = hit
+            && valid_enemy_spawn_areas.contains(&hit.entity)
+        {
             let mut enemy_spawn_location = hit.point1;
             // elevate the y coordinate so they dont get spawned exactly at hit point, which would
             // be surface of the collider
             enemy_spawn_location.y += CHARACTER_FEET.abs() + 0.5;
-            info!("Found valid spawn point at {}", enemy_spawn_location);
+            info!(
+                "Found valid spawn point thats on a \
+                 ValidEnemySpawnLocationArea at {}",
+                enemy_spawn_location
+            );
             enemy_spawn_locations.push(enemy_spawn_location);
         }
     }
@@ -94,6 +103,13 @@ fn handle_spawn_enemies_message(
     archipelago_ref: Option<Res<ArchipelagoRef>>,
     mut game_score: Single<&mut GameScore>,
     mut spatial_query: SpatialQuery,
+    mut spawn_debug_sphere_message_writer: MessageWriter<
+        SpawnDebugSphereMessage,
+    >,
+    valid_spawn_location_areas: Query<
+        Entity,
+        With<ValidEnemySpawnLocationArea>,
+    >,
 ) {
     for event in message_reader.read() {
         let Some(ref archipelago_ref) = archipelago_ref else {
@@ -112,10 +128,18 @@ fn handle_spawn_enemies_message(
                 let enemy_spawn_locations = get_random_enemy_spawn_locations(
                     enemy_spawn_count,
                     &mut spatial_query,
+                    valid_spawn_location_areas.iter().collect(),
                 );
 
                 for enemy_spawn_location in enemy_spawn_locations {
                     info!("Spawning an enemy at {}", enemy_spawn_location);
+                    spawn_debug_sphere_message_writer.write(
+                        SpawnDebugSphereMessage::_new(
+                            enemy_spawn_location,
+                            GREEN,
+                            0.5,
+                        ),
+                    );
 
                     let enemy_entity = commands
                         .spawn((

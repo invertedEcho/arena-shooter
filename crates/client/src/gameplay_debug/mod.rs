@@ -12,7 +12,7 @@ use bevy_inspector_egui::{
 use bevy_landmass::debug::{EnableLandmassDebug, Landmass3dDebugPlugin};
 use bevy_rich_text3d::{Text3d, Text3dPlugin, Text3dStyling, TextAtlas};
 use shared::{
-    NAV_MESH_LAYER_MASK,
+    SpawnDebugSphereMessage,
     components::Health,
     enemy::{
         ENEMY_FOV, ENEMY_VISION_RANGE,
@@ -21,7 +21,10 @@ use shared::{
     player::Player,
 };
 
-use crate::gameplay_debug::debug_overlay::DebugOverlayPlugin;
+use crate::{
+    game_flow::states::AppState,
+    gameplay_debug::debug_overlay::DebugOverlayPlugin,
+};
 
 mod debug_overlay;
 
@@ -30,25 +33,6 @@ pub enum AppDebugState {
     #[default]
     Disabled,
     Enabled,
-}
-
-fn color_colliders_by_layer(
-    mut commands: Commands,
-    query: Query<
-        (Entity, &CollisionLayers),
-        (With<Collider>, Without<DebugRender>),
-    >,
-) {
-    for (entity, layers) in query {
-        let color = if layers.memberships == NAV_MESH_LAYER_MASK {
-            Color::srgb(1.0, 0.0, 0.0) // red for colliders of our layermask for navmesh
-        } else {
-            Color::srgb(1.0, 0.5, 0.0) // orange per default
-        };
-        commands
-            .entity(entity)
-            .insert(DebugRender::default().with_collider_color(color));
-    }
 }
 
 pub struct GameplayDebugPlugin;
@@ -68,9 +52,7 @@ impl Plugin for GameplayDebugPlugin {
             ..Default::default()
         });
 
-        app.add_systems(PreUpdate, color_colliders_by_layer);
-
-        app.add_message::<SpawnDebugPointMessage>();
+        app.add_message::<SpawnDebugSphereMessage>();
 
         app.add_systems(
             Update,
@@ -88,24 +70,6 @@ impl Plugin for GameplayDebugPlugin {
         // app.add_systems(EguiPrimaryContextPass, player_inspector);
 
         app.insert_resource(DebugGizmos(Vec::new()));
-    }
-}
-
-#[derive(Component)]
-pub struct DebugPoint;
-
-#[derive(Message)]
-pub struct SpawnDebugPointMessage {
-    pub point: Vec3,
-    pub color: Color,
-}
-
-impl SpawnDebugPointMessage {
-    pub fn _new<T: Into<Vec3>, U: Into<Color>>(point: T, color: U) -> Self {
-        Self {
-            point: point.into(),
-            color: color.into(),
-        }
     }
 }
 
@@ -252,21 +216,25 @@ fn _player_inspector(world: &mut World) {
     });
 }
 
+#[derive(Component)]
+pub struct DebugSphere;
+
 fn handle_spawn_debug_points_message(
     mut commands: Commands,
-    mut message_reader: MessageReader<SpawnDebugPointMessage>,
+    mut message_reader: MessageReader<SpawnDebugSphereMessage>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for message in message_reader.read() {
         commands.spawn((
-            Transform::from_translation(message.point),
-            Mesh3d(meshes.add(Sphere::new(0.1))),
+            Transform::from_translation(message.location),
+            Mesh3d(meshes.add(Sphere::new(message.radius))),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: message.color,
                 ..Default::default()
             })),
-            DebugPoint,
+            DebugSphere,
+            DespawnOnExit(AppState::InGame),
         ));
     }
 }
