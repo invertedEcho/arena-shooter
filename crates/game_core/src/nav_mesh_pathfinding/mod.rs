@@ -1,17 +1,16 @@
 use avian_rerecast::AvianBackendPlugin;
-use bevy::prelude::*;
-use bevy_landmass::{
-    FromAgentRadius, NavMeshHandle, nav_mesh::bevy_mesh_to_landmass_nav_mesh,
-    prelude::*,
+use bevy::{platform::collections::HashSet, prelude::*};
+use bevy_landmass::prelude::*;
+use bevy_rerecast::{Navmesh, prelude::*};
+use landmass_rerecast::{
+    Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
 };
-use bevy_rerecast::prelude::*;
-
-use crate::{
-    ServerLoadingState,
-    nav_mesh_pathfinding::utils::{ConvertMesh, convert_mesh},
+use shared::{
+    Medkit,
+    character_controller::{CHARACTER_HEIGHT, MAX_SLOPE_ANGLE},
 };
 
-mod utils;
+use crate::ServerLoadingState;
 
 pub const ENEMY_AGENT_RADIUS: f32 = 0.4;
 
@@ -23,101 +22,84 @@ pub struct NavMeshPathfindingPlugin;
 impl Plugin for NavMeshPathfindingPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(AvianBackendPlugin::default());
+        app.add_plugins(NavmeshPlugins::default());
         app.add_plugins(Landmass3dPlugin::default());
+        app.add_plugins(LandmassRerecastPlugin::default());
         app.add_systems(
             OnEnter(ServerLoadingState::CollidersSpawned),
-            create_island_from_nav_mesh,
+            generate_navmesh_on_map_colliders_ready,
         );
-        app.add_systems(Update, convert_mesh);
-        // app.add_observer(on_navmesh_ready);
+        app.add_observer(on_navmesh_ready);
         // app.add_systems(Update, log_agent_state);
     }
 }
 
-// We store the NavMesh handle in a resource so we can regenerate the navmesh when needed
-// #[derive(Resource)]
-// pub struct NavMeshHandle(pub Handle<Navmesh>);
+/// We store the NavMesh handle in a resource so we can regenerate the navmesh when needed
+#[derive(Resource)]
+pub struct NavMeshHandle(pub Handle<Navmesh>);
 
 #[derive(Resource)]
 pub struct ArchipelagoRef(pub Entity);
 
-fn create_island_from_nav_mesh(
+fn generate_navmesh_on_map_colliders_ready(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    nav_meshes: Res<Assets<NavMesh3d>>,
-    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
+    mut generator: NavmeshGenerator,
+    maybe_existing_nav_mesh: Option<Res<NavMeshHandle>>,
+    all_entities_except_medkits: Query<Entity, Without<Medkit>>,
 ) {
-    let archipelago_options: ArchipelagoOptions<ThreeD> =
-        ArchipelagoOptions::from_agent_radius(ENEMY_AGENT_RADIUS);
+    let nav_mesh_settings = NavmeshSettings {
+        // TODO: document why this radius is smaller than ENEMY_AGENT_RADIUS
+        agent_radius: 0.3,
+        // this is pretty important, so the agent doesnt try to climb some very high ledge
+        walkable_climb: 0.25,
+        walkable_slope_angle: MAX_SLOPE_ANGLE,
+        cell_size_fraction: 2.0,
+        cell_height_fraction: 4.0,
+        agent_height: CHARACTER_HEIGHT,
+        filter: Some(HashSet::from_iter(all_entities_except_medkits)),
+        ..default()
+    };
 
-    let archipelago_entity =
-        commands.spawn(Archipelago3d::new(archipelago_options)).id();
+    if let Some(existing_nav_mesh) = maybe_existing_nav_mesh {
+        info!("Nav mesh already exists, regenerating!");
+        generator.regenerate(&existing_nav_mesh.0, nav_mesh_settings);
+    } else {
+        let archipelago_options: ArchipelagoOptions<ThreeD> =
+            ArchipelagoOptions::from_agent_radius(ENEMY_AGENT_RADIUS);
 
-    commands.insert_resource(ArchipelagoRef(archipelago_entity));
+        let archipelago_id =
+            commands.spawn(Archipelago3d::new(archipelago_options)).id();
 
-    let mesh_1: Handle<Mesh> = asset_server
-        .load("nav_meshes/nav_mesh_medium_plastic.glb#Mesh0/Primitive0");
-    let nav_mesh_1 = nav_meshes.reserve_handle();
+        commands.insert_resource(ArchipelagoRef(archipelago_id));
 
-    commands.spawn((
-        Island3dBundle {
-            archipelago_ref: ArchipelagoRef3d::new(archipelago_entity),
+        let navmesh = generator.generate(nav_mesh_settings);
+
+        commands.spawn(Island3dBundle {
             island: Island,
-            nav_mesh: NavMeshHandle(nav_mesh_1.clone()),
-        },
-        ConvertMesh {
-            mesh: mesh_1,
-            nav_mesh: nav_mesh_1,
-        },
-    ));
-    next_server_loading_state.set(ServerLoadingState::NavMeshReady);
+            archipelago_ref: ArchipelagoRef3d::new(archipelago_id),
+            nav_mesh: NavMeshHandle3d(navmesh),
+        });
+    }
 }
 
-// fn generate_navmesh_on_map_colliders_ready(
-//     mut commands: Commands,
-//     mut generator: NavmeshGenerator,
-//     maybe_existing_nav_mesh: Option<Res<NavMeshHandle>>,
-//     all_entities_except_medkits: Query<Entity, Without<Medkit>>,
-// ) {
-//     let nav_mesh_settings = NavmeshSettings {
-//         // TODO: document why this radius is smaller than ENEMY_AGENT_RADIUS
-//         agent_radius: 0.3,
-//         // this is pretty important, so the agent doesnt try to climb some very high ledge
-//         walkable_climb: 0.25,
-//         walkable_slope_angle: MAX_SLOPE_ANGLE,
-//         cell_size_fraction: 2.0,
-//         cell_height_fraction: 4.0,
-//         agent_height: CHARACTER_HEIGHT,
-//         filter: Some(HashSet::from_iter(all_entities_except_medkits)),
-//         ..default()
-//     };
-//
-//     if let Some(existing_nav_mesh) = maybe_existing_nav_mesh {
-//         info!("Nav mesh already exists, regenerating!");
-//         generator.regenerate(&existing_nav_mesh.0, nav_mesh_settings);
-//     } else {
-//         let navmesh = generator.generate(nav_mesh_settings);
-//     }
-// }
+fn on_navmesh_ready(
+    trigger: On<NavmeshReady>,
+    mut commands: Commands,
+    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
+    mut nav_meshes: ResMut<Assets<Navmesh>>,
+) {
+    let Some(nav_mesh_handle) = nav_meshes.get_strong_handle(trigger.0) else {
+        panic!(
+            "Got navmeshready event but the Handle could not be found using \
+             the asset id from the trigger"
+        );
+    };
 
-// fn on_navmesh_ready(
-//     trigger: On<NavmeshReady>,
-//     mut commands: Commands,
-//     mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
-//     mut nav_meshes: ResMut<Assets<Navmesh>>,
-// ) {
-//     let Some(nav_mesh_handle) = nav_meshes.get_strong_handle(trigger.0) else {
-//         panic!(
-//             "Got navmeshready event but the Handle could not be found using \
-//              the asset id from the trigger"
-//         );
-//     };
-//
-//     info!("NavMesh is now ready, updating ServerLoadingState to Done");
-//     next_server_loading_state.set(ServerLoadingState::Done);
-//
-//     commands.insert_resource(NavMeshHandle(nav_mesh_handle));
-// }
+    info!("NavMesh is now ready, updating ServerLoadingState to Done");
+    next_server_loading_state.set(ServerLoadingState::Done);
+
+    commands.insert_resource(NavMeshHandle(nav_mesh_handle));
+}
 
 // fn log_agent_state(agent_state: Query<&AgentState>) {
 //     for agent_state in agent_state {

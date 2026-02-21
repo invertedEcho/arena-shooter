@@ -10,12 +10,10 @@ members = [
 # Shared dependencies, used in both client and server crate
 [workspace.dependencies]
 async-compat = "0.2.5"
-avian_rerecast = { version = "0.4.0" }
-avian3d = "0.5.0"
+avian3d = { version = "0.6.0-rc.1", features = ["f32"] }
 bevy = "0.18.0"
 bevy-inspector-egui = "0.36.0"
-lightyear = { version = "0.26.0", features = [
-  "avian3d",
+lightyear = { version = "0.26.0", default-features = false, features = [
   "client",
   "netcode",
   "replication",
