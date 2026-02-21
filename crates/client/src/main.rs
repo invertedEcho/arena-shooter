@@ -50,7 +50,6 @@ fn main() {
     let mut app = App::new();
 
     if cfg!(not(debug_assertions)) {
-        info!("Embedding assets into binary");
         app.add_plugins(EmbeddedAssetPlugin {
             mode: bevy_embedded_assets::PluginMode::ReplaceDefault,
         });
