@@ -8,7 +8,7 @@ use bevy_landmass::{
 };
 use rand::Rng;
 use shared::{
-    DEFAULT_HEALTH, SpawnDebugSphereMessage,
+    DEFAULT_HEALTH, SelectedMapState, SpawnDebugSphereMessage,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, CHARACTER_FEET,
         MAX_DISTANCE_GROUNDED_SHAPE_CAST, RUN_VELOCITY, WALK_VELOCITY,
@@ -52,24 +52,50 @@ pub enum EnemySpawnStrategy {
     RandomSelection,
 }
 
+struct EdgesOfMap {
+    min_x: f32,
+    max_x: f32,
+    min_z: f32,
+    max_z: f32,
+}
 // first corner is at: 10, 7, 20
 // second corner is at: -10, 7, 20
 // third corner is at -10, 7, -20
 // third corner is at 10, 7, -20
+fn get_edges_of_map(selected_map: &SelectedMapState) -> EdgesOfMap {
+    match selected_map {
+        SelectedMapState::MediumPlastic => EdgesOfMap {
+            min_x: -10.0,
+            max_x: 10.0,
+            min_z: -20.0,
+            max_z: 20.0,
+        },
+        SelectedMapState::TinyTown => EdgesOfMap {
+            min_x: -11.0,
+            max_x: 11.0,
+            min_z: -7.0,
+            max_z: 7.0,
+        },
+    }
+}
 
 fn get_random_enemy_spawn_locations(
     enemy_spawn_count: usize,
     spatial_query: &mut SpatialQuery,
     valid_enemy_spawn_areas: Vec<Entity>,
+    selected_map: &SelectedMapState,
 ) -> Vec<Vec3> {
     const Y: f32 = 7.0;
     let mut rng = rand::rng();
 
     let mut enemy_spawn_locations: Vec<Vec3> = vec![];
 
+    let edges_of_map = get_edges_of_map(selected_map);
+
     while enemy_spawn_locations.len() < enemy_spawn_count {
-        let random_x = rng.random_range(-10.0..10.0);
-        let random_z = rng.random_range(-20.0..20.0);
+        let random_x = rng.random_range(edges_of_map.min_x..edges_of_map.max_x);
+        let random_z = rng.random_range(edges_of_map.min_z..edges_of_map.max_z);
+
         let hit = spatial_query.cast_shape(
             &Collider::capsule(0.5, CHARACTER_CAPSULE_LENGTH),
             vec3(random_x, Y, random_z),
@@ -86,11 +112,6 @@ fn get_random_enemy_spawn_locations(
             // elevate the y coordinate so they dont get spawned exactly at hit point, which would
             // be surface of the collider
             enemy_spawn_location.y += CHARACTER_FEET.abs() + 0.5;
-            info!(
-                "Found valid spawn point thats on a \
-                 ValidEnemySpawnLocationArea at {}",
-                enemy_spawn_location
-            );
             enemy_spawn_locations.push(enemy_spawn_location);
         }
     }
@@ -103,13 +124,11 @@ fn handle_spawn_enemies_message(
     archipelago_ref: Option<Res<ArchipelagoRef>>,
     mut game_score: Single<&mut GameScore>,
     mut spatial_query: SpatialQuery,
-    mut spawn_debug_sphere_message_writer: MessageWriter<
-        SpawnDebugSphereMessage,
-    >,
     valid_spawn_location_areas: Query<
         Entity,
         With<ValidEnemySpawnLocationArea>,
     >,
+    selected_map: Res<State<SelectedMapState>>,
 ) {
     for event in message_reader.read() {
         let Some(ref archipelago_ref) = archipelago_ref else {
@@ -129,17 +148,11 @@ fn handle_spawn_enemies_message(
                     enemy_spawn_count,
                     &mut spatial_query,
                     valid_spawn_location_areas.iter().collect(),
+                    selected_map.get(),
                 );
 
                 for enemy_spawn_location in enemy_spawn_locations {
-                    info!("Spawning an enemy at {}", enemy_spawn_location);
-                    spawn_debug_sphere_message_writer.write(
-                        SpawnDebugSphereMessage::_new(
-                            enemy_spawn_location,
-                            GREEN,
-                            0.5,
-                        ),
-                    );
+                    debug!("Spawning an enemy at {}", enemy_spawn_location);
 
                     let enemy_entity = commands
                         .spawn((
