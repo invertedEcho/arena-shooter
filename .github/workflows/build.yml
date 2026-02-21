@@ -23,9 +23,13 @@ jobs:
         run: |
           rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
           cargo fmt --all -- --check
-      - name: Cargo check
+      - name: Install system dependencies
         run: |
-          sudo apt-get update; sudo apt-get install -y pkg-config libx11-dev libasound2-dev libudev-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libwayland-dev libxkbcommon-dev mold
+          sudo apt-get update; sudo apt-get install -y pkg-config libx11-dev libasound2-dev libudev-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libwayland-dev libxkbcommon-dev mold clang
+      - name: Cargo check
+        # we create empty assets directory so build of `bevy_embedded_assets` wont fail
+        run: |
+          mkdir assets
           cargo check
 
   # Build for Linux
