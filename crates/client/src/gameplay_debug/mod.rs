@@ -12,6 +12,7 @@ use bevy_inspector_egui::{
 use bevy_landmass::debug::{EnableLandmassDebug, Landmass3dDebugPlugin};
 use bevy_rich_text3d::{Text3d, Text3dPlugin, Text3dStyling, TextAtlas};
 use shared::{
+    NAV_MESH_LAYER_MASK,
     components::Health,
     enemy::{
         ENEMY_FOV, ENEMY_VISION_RANGE,
@@ -39,7 +40,7 @@ fn color_colliders_by_layer(
     >,
 ) {
     for (entity, layers) in query {
-        let color = if layers.memberships == LayerMask(0b0010) {
+        let color = if layers.memberships == NAV_MESH_LAYER_MASK {
             Color::srgb(1.0, 0.0, 0.0) // red for colliders of our layermask for navmesh
         } else {
             Color::srgb(1.0, 0.5, 0.0) // orange per default

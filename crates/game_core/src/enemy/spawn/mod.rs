@@ -8,7 +8,7 @@ use bevy_landmass::{
 };
 use rand::Rng;
 use shared::{
-    DEFAULT_HEALTH,
+    DEFAULT_HEALTH, NAV_MESH_LAYER_MASK,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, CHARACTER_FEET,
         MAX_DISTANCE_GROUNDED_SHAPE_CAST, RUN_VELOCITY, WALK_VELOCITY,
@@ -74,7 +74,7 @@ fn get_random_enemy_spawn_locations(
             &ShapeCastConfig::default().with_max_distance(10.0),
             // only include colliders that are on the given LayerMask, this specified LayerMask is
             // the one where only the collider of the navmesh is in
-            &SpatialQueryFilter::default().with_mask(LayerMask(0b0010)),
+            &SpatialQueryFilter::default().with_mask(NAV_MESH_LAYER_MASK),
         );
         if let Some(hit) = hit {
             let mut enemy_spawn_location = hit.point1;
