@@ -2,13 +2,13 @@ use std::time::Instant;
 
 use crate::nav_mesh_pathfinding::{ArchipelagoRef, ENEMY_AGENT_RADIUS};
 use avian3d::{math::Quaternion, prelude::*};
-use bevy::{color::palettes::css::GREEN, prelude::*};
+use bevy::prelude::*;
 use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
 };
 use rand::Rng;
 use shared::{
-    DEFAULT_HEALTH, SelectedMapState, SpawnDebugSphereMessage,
+    DEFAULT_HEALTH, SelectedMapState,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, CHARACTER_FEET,
         MAX_DISTANCE_GROUNDED_SHAPE_CAST, RUN_VELOCITY, WALK_VELOCITY,
@@ -72,7 +72,7 @@ fn get_edges_of_map(selected_map: &SelectedMapState) -> EdgesOfMap {
         },
         SelectedMapState::TinyTown => EdgesOfMap {
             min_x: -11.0,
-            max_x: 11.0,
+            max_x: 112.0,
             min_z: -7.0,
             max_z: 7.0,
         },
