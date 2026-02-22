@@ -1,12 +1,13 @@
 use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
-use lightyear::prelude::Controlled;
-use shared::{player::Player, utils::random::get_random_number_from_range};
+use shared::utils::random::get_random_number_from_range;
 
 use ::shared::components::DespawnTimer;
 
+use crate::player::camera::components::WorldCamera;
+
 const BULLET_IMPACT_PARTICLE_LIFETIME: f32 = 0.1;
-const BULLET_IMPACT_PARTICLE_VELOCITY: f32 = 3.0;
+const BULLET_IMPACT_PARTICLE_VELOCITY: f32 = 1.5;
 
 #[derive(Resource, Default)]
 pub struct BulletImpactEffectHandle(Option<Handle<EffectAsset>>);
@@ -51,7 +52,7 @@ fn setup_bullet_effect_handle(
 
     // gradient colors
     let mut gradient = bevy_hanabi::Gradient::new();
-    gradient.add_key(0.0, Vec4::new(0.69, 0.69, 0.69, 1.));
+    gradient.add_key(0.0, Vec4::new(0.69, 0.69, 0.69, 1.0));
     gradient.add_key(0.25, Vec4::new(1.0, 0.843, 0.0, 1.0));
     gradient.add_key(0.75, Vec4::new(0.678, 0.849, 0.902, 1.0));
     gradient.add_key(1.0, Vec4::new(1.0, 0.271, 0.0, 1.0));
@@ -88,7 +89,7 @@ fn setup_bullet_effect_handle(
 
     // face particles towards camera
     let orient_modifier_billboard = OrientModifier {
-        mode: OrientMode::FaceCameraPosition,
+        mode: OrientMode::ParallelCameraDepthPlane,
         rotation: None,
     };
 
@@ -117,7 +118,7 @@ fn handle_spawn_bullet_impact_effect(
     bullet_impact_body_effect_resource: Res<
         PlayerBulletHitEnemyImpactEffectHandle,
     >,
-    player_transform: Single<&Transform, (With<Player>, With<Controlled>)>,
+    player_camera_transform: Single<&Transform, With<WorldCamera>>,
 ) {
     for message in message_reader.read() {
         let Some(bullet_impact_effect_handle) = (match message.variant {
@@ -135,7 +136,7 @@ fn handle_spawn_bullet_impact_effect(
 
         let rotation_z = Quat::from_rotation_z(random_z_rotation);
         let rotation_towards_player_perpendicular =
-            player_transform.forward().cross(Vec3::Y).normalize();
+            player_camera_transform.forward().cross(Vec3::Y).normalize();
 
         let transform = Transform {
             translation: Vec3 {
@@ -179,7 +180,7 @@ fn setup_player_bullet_impact_enemy_handle(
     gradient.add_key(0.0, Vec4::new(0.8, 0.0, 0.0, 1.0));
     gradient.add_key(0.25, Vec4::new(0.6, 0.0, 0.0, 0.9));
     gradient.add_key(0.6, Vec4::new(0.3, 0.0, 0.0, 0.7));
-    gradient.add_key(1.0, Vec4::new(0.15, 0.05, 0.05, 0.0));
+    gradient.add_key(1.0, Vec4::new(0.15, 0.05, 0.05, 0.6));
 
     // where the origin of the particles is (randomly)
     let init_position_modifier = SetPositionCircleModifier {

@@ -16,6 +16,7 @@ use shared::{
 
 use crate::{
     enemy_visuals::animate::{AnimateEnemyPlugin, ENEMY_MODEL_PATH},
+    game_flow::states::AppState,
     user_interface::widgets::progressbar::build_progress_bar,
 };
 
@@ -90,6 +91,7 @@ fn spawn_health_bar_for_new_enemy(
                 },
                 RenderTarget::Image(image_handle.clone().into()),
                 HealthBarCamera,
+                DespawnOnExit(AppState::InGame),
             ))
             .id();
 
@@ -102,8 +104,8 @@ fn spawn_health_bar_for_new_enemy(
             cull_mode: None,
             alpha_mode: AlphaMode::Blend,
             base_color_texture: Some(image_handle),
-            reflectance: 0.0,
-            unlit: false,
+            reflectance: 1.0,
+            unlit: true,
             ..default()
         });
 
@@ -119,6 +121,7 @@ fn spawn_health_bar_for_new_enemy(
                 },
                 BackgroundColor(Color::NONE),
                 UiTargetCamera(texture_camera),
+                DespawnOnExit(AppState::InGame),
             ))
             .with_children(|parent| {
                 parent.spawn((build_progress_bar(
@@ -134,6 +137,7 @@ fn spawn_health_bar_for_new_enemy(
             Transform::default(),
             Name::new("Health Bar"),
             HealthBar(enemy_entity),
+            DespawnOnExit(AppState::InGame),
         ));
     }
 }
