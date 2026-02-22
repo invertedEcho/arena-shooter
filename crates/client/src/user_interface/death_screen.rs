@@ -1,6 +1,7 @@
+use avian3d::prelude::*;
 use bevy::prelude::*;
 use game_core::GameStateWave;
-use lightyear::prelude::{Controlled, MessageSender};
+use lightyear::prelude::*;
 use shared::{
     ClientRespawnRequest, DEFAULT_HEALTH, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
     ServerMode,
@@ -155,13 +156,14 @@ fn spawn_wave_game_mode_death_screen(
 }
 
 fn handle_button_press(
+    mut commands: Commands,
     query: Query<(&Interaction, &DeathScreenButton), Changed<Interaction>>,
     mut respawn_request_message_sender: Single<
         &mut MessageSender<ClientRespawnRequest>,
     >,
     server_mode: Res<State<ServerMode>>,
     mut player_query: Single<
-        (&mut Health, &mut EntityPositionServer),
+        (&mut Health, &mut EntityPositionServer, Entity),
         With<Controlled>,
     >,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
@@ -177,9 +179,15 @@ fn handle_button_press(
                 // receive the ConfirmRespawn message from server, so we just do the stuff that we
                 // would normally do manually
                 if *server_mode.get() == ServerMode::LocalServerSinglePlayer {
-                    player_query.0.0 = DEFAULT_HEALTH;
-                    player_query.1.translation = SPAWN_POINT_MEDIUM_PLASTIC_MAP;
+                    let (player_health, player_position_server, player_entity) =
+                        &mut *player_query;
+                    player_health.0 = DEFAULT_HEALTH;
+                    player_position_server.translation =
+                        SPAWN_POINT_MEDIUM_PLASTIC_MAP;
                     next_in_game_state.set(InGameState::Playing);
+                    commands
+                        .entity(*player_entity)
+                        .remove::<ColliderDisabled>();
                 } else {
                     respawn_request_message_sender
                         .send::<OrderedReliableChannel>(ClientRespawnRequest);
