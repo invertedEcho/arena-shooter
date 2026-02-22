@@ -35,6 +35,9 @@ pub enum AppDebugState {
     Enabled,
 }
 
+/// This plugin adds functionality related to debugging the game itself, like having debug gizmos
+/// for the navigation mesh visible, or having a debug text above enemies visible, to see their
+/// state. Note that this plugin only runs when running a debug build
 pub struct GameplayDebugPlugin;
 
 impl Plugin for GameplayDebugPlugin {
@@ -186,6 +189,7 @@ fn add_enemy_state_text(
                 scale: Vec3::ONE,
             },
             EnemyDebugText(entity),
+            Name::new("Enemy Debug Text"),
         ));
     }
 }

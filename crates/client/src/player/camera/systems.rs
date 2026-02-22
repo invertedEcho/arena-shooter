@@ -212,6 +212,7 @@ pub fn toggle_freecam(
                         player_transform.translation.z,
                     ),
                     FreeCam,
+                    Name::new("Free Cam"),
                     DespawnOnExit(AppState::InGame),
                 ));
             }
