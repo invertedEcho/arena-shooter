@@ -2,7 +2,7 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 use lightyear::prelude::*;
 use shared::{
-    PlayerHitMessage,
+    EnemyKilledMessage, PlayerHitMessage,
     components::{DespawnTimer, Health},
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
     game_score::GameScore,
@@ -11,9 +11,7 @@ use shared::{
     utils::random::get_random_number_from_range,
 };
 
-use crate::enemy::shooting::{
-    components::EnemyShootCooldownTimer, messages::EnemyKilledMessage,
-};
+use crate::enemy::shooting::components::EnemyShootCooldownTimer;
 
 pub fn enemy_shoot_player(
     mut commands: Commands,
