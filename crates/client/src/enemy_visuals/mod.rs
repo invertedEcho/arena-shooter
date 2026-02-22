@@ -8,7 +8,6 @@ use bevy::{
     render::render_resource::{Extent3d, TextureUsages},
 };
 use shared::{
-    GameStateServer,
     components::Health,
     enemy::components::{Enemy, EnemyState},
     player::Player,
