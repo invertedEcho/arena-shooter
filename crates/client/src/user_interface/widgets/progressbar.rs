@@ -15,8 +15,6 @@ pub fn build_progress_bar<T: Component>(
         Node {
             width,
             height,
-            border: UiRect::all(Val::Px(2.)),
-            border_radius: BorderRadius::all(Val::Px(10.)),
             ..default()
         },
         Name::new("Progress Bar Container"),

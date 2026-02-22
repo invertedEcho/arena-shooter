@@ -8,8 +8,10 @@ use bevy::{
     render::render_resource::{Extent3d, TextureUsages},
 };
 use shared::{
+    GameStateServer,
     components::Health,
     enemy::components::{Enemy, EnemyState},
+    player::Player,
 };
 
 use crate::{
@@ -31,10 +33,20 @@ impl Plugin for EnemyVisualsPlugin {
                 spawn_enemy_model_for_new_enemies,
                 update_health_bar_of_enemies,
                 rotate_enemy_toward_direction,
+                rotate_health_bar_to_player,
+                health_bar_follow_enemy,
             ),
         );
     }
 }
+
+/// 0: The enemy entity this health bar belongs to
+/// We need this to make the health bar follow the corresponding enemy
+#[derive(Component)]
+struct HealthBar(pub Entity);
+
+#[derive(Component)]
+pub struct HealthBarCamera;
 
 fn spawn_health_bar_for_new_enemy(
     mut commands: Commands,
@@ -76,8 +88,23 @@ fn spawn_health_bar_for_new_enemy(
                     ..default()
                 },
                 RenderTarget::Image(image_handle.clone().into()),
+                HealthBarCamera,
             ))
             .id();
+
+        let mesh_handle = meshes.add(Plane3d {
+            normal: Dir3::X,
+            half_size: vec2(0.5, 0.03),
+        });
+
+        let material_handle = materials.add(StandardMaterial {
+            cull_mode: None,
+            alpha_mode: AlphaMode::Blend,
+            base_color_texture: Some(image_handle),
+            reflectance: 0.0,
+            unlit: false,
+            ..default()
+        });
 
         commands
             .spawn((
@@ -87,8 +114,6 @@ fn spawn_health_bar_for_new_enemy(
                     flex_direction: FlexDirection::Column,
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
-                    border: UiRect::all(Val::Px(2.)),
-                    border_radius: BorderRadius::all(Val::Px(10.)),
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
@@ -96,54 +121,29 @@ fn spawn_health_bar_for_new_enemy(
             ))
             .with_children(|parent| {
                 parent.spawn((build_progress_bar(
-                    HealthBar(enemy_entity),
+                    HealthBarUINode(enemy_entity),
                     percent(100),
                     percent(100),
                 ),));
             });
 
-        let mesh_handle = meshes.add(Plane3d {
-            normal: Dir3::X,
-            half_size: vec2(0.5, 0.05),
-        });
-
-        let material_handle = materials.add(StandardMaterial {
-            cull_mode: None,
-            alpha_mode: AlphaMode::Blend,
-            base_color_texture: Some(image_handle),
-            reflectance: 0.02,
-            unlit: true,
-            ..default()
-        });
-
-        let health_bar = commands
-            .spawn((
-                Mesh3d(mesh_handle),
-                MeshMaterial3d(material_handle),
-                Transform {
-                    translation: vec3(0.0, 0.9, 0.0),
-                    rotation: Quat::from_euler(
-                        EulerRot::XYZ,
-                        FRAC_PI_2,
-                        0.0,
-                        -FRAC_PI_2,
-                    ),
-                    ..default()
-                },
-                Name::new("Health Bar"),
-            ))
-            .id();
-
-        commands.entity(enemy_entity).add_child(health_bar);
+        commands.spawn((
+            Mesh3d(mesh_handle),
+            MeshMaterial3d(material_handle),
+            Transform::default(),
+            Name::new("Health Bar"),
+            HealthBar(enemy_entity),
+        ));
     }
 }
 
 #[derive(Component)]
-struct HealthBar(Entity);
+struct HealthBarUINode(Entity);
 
+type EnemiesWithChangedHealth = (Changed<Health>, With<Enemy>);
 fn update_health_bar_of_enemies(
-    mut progress_bar_query: Query<(&mut Node, &HealthBar)>,
-    changed_health: Query<(Entity, &Health), (Changed<Health>, With<Enemy>)>,
+    mut progress_bar_query: Query<(&mut Node, &HealthBarUINode)>,
+    changed_health: Query<(Entity, &Health), EnemiesWithChangedHealth>,
 ) {
     for (entity, new_health) in changed_health {
         if let Some((mut progress_bar, _)) = progress_bar_query
@@ -190,6 +190,7 @@ fn spawn_enemy_model_for_new_enemies(
     }
 }
 
+/// Rotates all enemies toward the direction the velocity is going
 fn rotate_enemy_toward_direction(
     enemy_query: Query<
         (&mut Transform, &LinearVelocity, &EnemyState),
@@ -214,6 +215,36 @@ fn rotate_enemy_toward_direction(
             // enemy model, then this would match but all usages of transform.forward(), like in
             // RotateTowardsPlayer and draw_enemy_fov would be wrong way around.
             transform.rotation = Quat::from_rotation_y(yaw + PI);
+        }
+    }
+}
+
+fn rotate_health_bar_to_player(
+    health_bar_query: Query<&mut Transform, With<HealthBar>>,
+    player_transform: Single<&Transform, (With<Player>, Without<HealthBar>)>,
+) {
+    for mut transform in health_bar_query {
+        let offset = Quat::from_euler(EulerRot::XYZ, FRAC_PI_2, 0.0, FRAC_PI_2);
+        transform.look_at(player_transform.translation, Vec3::Y);
+        transform.rotation *= offset;
+    }
+}
+
+// TODO: we wouldnt need this if the health bar was a child of the enemy,
+// but right now i dont understand how we can take the parent rotation into account, so we get
+// global rotation of the health bar. we probably need to take the inverse of the enemy parent
+// rotation or something like this. this works so whatever
+fn health_bar_follow_enemy(
+    enemy_transform: Query<&Transform, With<Enemy>>,
+    health_bar_query: Query<(&mut Transform, &HealthBar), Without<Enemy>>,
+) {
+    for (mut health_bar_transform, health_bar) in health_bar_query {
+        if let Ok(enemy_transform) = enemy_transform.get(health_bar.0) {
+            health_bar_transform.translation = enemy_transform.translation;
+            // so its above the head
+            health_bar_transform.translation.y += 1.0;
+        } else {
+            warn!("Failed to update health bar position to enemy position");
         }
     }
 }

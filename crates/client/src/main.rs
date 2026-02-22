@@ -20,7 +20,7 @@ use bevy_skein::SkeinPlugin;
 use crate::{
     audio::AudioPlugin,
     character_controller::CharacterControllerPlugin,
-    enemy_visuals::EnemyVisualsPlugin,
+    enemy_visuals::{EnemyVisualsPlugin, HealthBarCamera},
     game_flow::{GameFlowPlugin, states::AppState},
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
@@ -145,7 +145,7 @@ fn main() {
 fn ensure_egui_context_exists(
     mut commands: Commands,
     existing_egui_contexts: Query<&PrimaryEguiContext>,
-    camera_query: Query<Entity, With<Camera>>,
+    camera_query: Query<Entity, (With<Camera>, Without<HealthBarCamera>)>,
 ) {
     if existing_egui_contexts.count() == 0 {
         let Some(first_camera) = camera_query.iter().next() else {
