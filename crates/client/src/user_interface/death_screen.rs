@@ -4,9 +4,7 @@ use game_core::GameStateWave;
 use lightyear::prelude::*;
 use shared::{
     ClientRespawnRequest, DEFAULT_HEALTH, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
-    ServerMode,
-    components::Health,
-    protocol::{EntityPositionServer, OrderedReliableChannel},
+    ServerMode, components::Health, protocol::OrderedReliableChannel,
 };
 
 use crate::{
@@ -163,7 +161,7 @@ fn handle_button_press(
     >,
     server_mode: Res<State<ServerMode>>,
     mut player_query: Single<
-        (&mut Health, &mut EntityPositionServer, Entity),
+        (&mut Health, &mut Transform, Entity, &mut LinearVelocity),
         With<Controlled>,
     >,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
@@ -179,15 +177,23 @@ fn handle_button_press(
                 // receive the ConfirmRespawn message from server, so we just do the stuff that we
                 // would normally do manually
                 if *server_mode.get() == ServerMode::LocalServerSinglePlayer {
-                    let (player_health, player_position_server, player_entity) =
-                        &mut *player_query;
+                    let (
+                        player_health,
+                        player_transform,
+                        player_entity,
+                        velocity,
+                    ) = &mut *player_query;
+
                     player_health.0 = DEFAULT_HEALTH;
-                    player_position_server.translation =
+                    player_transform.translation =
                         SPAWN_POINT_MEDIUM_PLASTIC_MAP;
                     next_in_game_state.set(InGameState::Playing);
                     commands
                         .entity(*player_entity)
                         .remove::<ColliderDisabled>();
+                    // velocity may be very high if we died because we fell off the map into the
+                    // deathzone
+                    velocity.0 = Vec3::ZERO;
                 } else {
                     respawn_request_message_sender
                         .send::<OrderedReliableChannel>(ClientRespawnRequest);

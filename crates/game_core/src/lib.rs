@@ -96,6 +96,7 @@ impl Plugin for GameCorePlugin {
                 receive_client_update_position,
                 handle_client_respawn_requests,
                 handle_game_server_state_update_request,
+                kill_players_below_death_zone,
             ),
         );
 
@@ -538,5 +539,17 @@ fn handle_game_server_state_update_request(
 
         info!("GameStateServer updated to {:?}", message.0);
         game_state_server.set(message.0);
+    }
+}
+
+fn kill_players_below_death_zone(
+    player_query: Query<(&mut Health, &Transform), With<Player>>,
+) {
+    const DEATH_ZONE: f32 = -30.0;
+    for (mut health, transform) in player_query {
+        if transform.translation.y < DEATH_ZONE && health.0 > 0.0 {
+            info!("A player is lower than y = -30, killing");
+            health.0 = 0.0;
+        }
     }
 }

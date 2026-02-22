@@ -224,9 +224,13 @@ pub fn apply_gravity_over_time(
     query: Query<(&Grounded, &mut LinearVelocity), EntitiesRelevantForGravity>,
     time: Res<Time>,
 ) {
+    const MAX_VERTICAL_VELOCITY: f32 = 15.0;
     for (grounded, mut velocity) in query {
         if !grounded.0 {
             velocity.y -= GRAVITY * time.delta_secs();
+            velocity.y = velocity
+                .y
+                .clamp(-MAX_VERTICAL_VELOCITY, MAX_VERTICAL_VELOCITY);
         }
     }
 }
