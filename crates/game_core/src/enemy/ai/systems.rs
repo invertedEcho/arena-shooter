@@ -68,9 +68,11 @@ pub fn enemy_state_decision_system(
         let player_in_range = distance_to_player < ENEMY_VISION_RANGE;
 
         if player_in_range {
+            debug!("Player is in range of enemy {}", enemy_entity);
             // we need to check if player is in radius of current enemy -> ENEMY_FOV
             let enemy_forward = enemy_transform.forward();
             let Some(direction_to_player) = to_player.try_normalize() else {
+                debug!("Failed to get direction to player");
                 continue;
             };
             let angle_between_enemy_and_player =
@@ -80,6 +82,7 @@ pub fn enemy_state_decision_system(
                 angle_between_enemy_and_player < ENEMY_FOV.to_radians();
 
             if player_in_enemy_fov {
+                debug!("Player is in enemy FOV. Enemy {}", enemy_entity);
                 let Ok(direction_to_player_as_dir) =
                     Dir3::new(direction_to_player)
                 else {
@@ -105,6 +108,7 @@ pub fn enemy_state_decision_system(
                     let enemy_can_see_player =
                         first_hit.entity == player_entity;
                     if enemy_can_see_player {
+                        debug!("Enemy {} can see the player", enemy_entity);
                         if is_facing_target_without_y(
                             enemy_transform,
                             player_transform,
@@ -119,7 +123,16 @@ pub fn enemy_state_decision_system(
                                 &mut enemy_last_state_update,
                             );
                         }
+                    } else if *enemy_state == EnemyState::GoToAgentTarget {
+                        debug!(
+                            "Enemy {} cant see the player but is still in \
+                             GoToAgentTarget state",
+                            enemy_entity
+                        );
                     } else if *enemy_state != EnemyState::GoToAgentTarget {
+                        debug!(
+                            "Enemy can't see the player, going to agent target"
+                        );
                         // the player is in range of the enemy, also in the fov cone of the enemy, but
                         // there is a obstacle in the way, so we need to give the enemy agent a new
                         // location to go to
@@ -138,6 +151,7 @@ pub fn enemy_state_decision_system(
                 );
             }
         } else if *enemy_state != EnemyState::GoToAgentTarget {
+            debug!("Player is not in range of enemy {}", enemy_entity);
             enemy_state.update_state(
                 EnemyState::GoToAgentTarget,
                 &mut enemy_last_state_update,
@@ -315,11 +329,6 @@ pub fn handle_chasing_enemies(
             velocity.z = 0.0;
             continue;
         }
-
-        debug!(
-            "Setting enemy velocity to agent_desired_velocity: {}, ignoring y",
-            agent_desired_velocity.velocity()
-        );
 
         // we dont apply y from agent velocity as otherwise it would fight our gravity system
         velocity.x = agent_desired_velocity.velocity().x;
