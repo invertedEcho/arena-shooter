@@ -10,3 +10,6 @@ hex = "0.4.3"
 lightyear = { workspace = true, features = ["client", "server", "trace"] }
 rand = { workspace = true }
 serde = "1.0.228"
+
+[lints]
+workspace = true

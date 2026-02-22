@@ -15,3 +15,6 @@ landmass_rerecast = "0.2.0"
 lightyear = { workspace = true }
 rand = { workspace = true }
 shared.workspace = true
+
+[lints]
+workspace = true

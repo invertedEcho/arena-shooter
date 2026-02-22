@@ -12,8 +12,29 @@ env:
   #itch_target: <itch.io-username>/<game-name>
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      # TODO: eventuall we should use this cache action in all jobs
+      - uses: Swatinem/rust-cache@v2
+      - name: Cargo format
+        run: |
+          rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
+          cargo fmt --all -- --check
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update; sudo apt-get install -y pkg-config libx11-dev libasound2-dev libudev-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libwayland-dev libxkbcommon-dev mold clang
+      - name: Cargo check
+        # we create empty assets directory so build of `bevy_embedded_assets` wont fail
+        run: |
+          mkdir assets
+          cargo check
+
   # Build for Linux
   build-linux:
+    needs: check
     runs-on: ubuntu-latest
 
     steps:
@@ -85,6 +106,7 @@ jobs:
 
   # Build for Windows
   build-windows:
+    needs: check
     runs-on: windows-latest
 
     steps:
@@ -145,6 +167,7 @@ jobs:
 
   # Build for MacOS x86_64
   build-macOS-intel:
+    needs: check
     runs-on: macOS-latest
 
     steps:
@@ -201,6 +224,7 @@ jobs:
 
   # Build for MacOS Apple Silicon
   build-macOS-apple-silicon:
+    needs: check
     runs-on: macOS-latest
 
     steps:
