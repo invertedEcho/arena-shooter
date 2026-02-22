@@ -97,6 +97,10 @@ pub struct PlayerHitMessage {
 #[derive(Serialize, Deserialize)]
 pub struct ConfirmRespawn;
 
+/// 0: The enemy entity that was killed
+#[derive(Message)]
+pub struct EnemyKilledMessage(pub Entity);
+
 pub const GRAVITY: f32 = 9.81;
 
 pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";

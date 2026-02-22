@@ -8,6 +8,7 @@ use bevy::{
     render::render_resource::{Extent3d, TextureUsages},
 };
 use shared::{
+    EnemyKilledMessage,
     components::Health,
     enemy::components::{Enemy, EnemyState},
     player::Player,
@@ -34,6 +35,7 @@ impl Plugin for EnemyVisualsPlugin {
                 rotate_enemy_toward_direction,
                 rotate_health_bar_to_player,
                 health_bar_follow_enemy,
+                despawn_health_bar_for_killed_enemies,
             ),
         );
     }
@@ -223,7 +225,8 @@ fn rotate_health_bar_to_player(
     player_transform: Single<&Transform, (With<Player>, Without<HealthBar>)>,
 ) {
     for mut transform in health_bar_query {
-        let offset = Quat::from_euler(EulerRot::XYZ, FRAC_PI_2, 0.0, FRAC_PI_2);
+        let offset =
+            Quat::from_euler(EulerRot::XYZ, FRAC_PI_2, 0.0, -FRAC_PI_2);
         transform.look_at(player_transform.translation, Vec3::Y);
         transform.rotation *= offset;
     }
@@ -244,6 +247,21 @@ fn health_bar_follow_enemy(
             health_bar_transform.translation.y += 1.0;
         } else {
             warn!("Failed to update health bar position to enemy position");
+        }
+    }
+}
+
+fn despawn_health_bar_for_killed_enemies(
+    mut commands: Commands,
+    mut message_reader: MessageReader<EnemyKilledMessage>,
+    health_bars: Query<(Entity, &HealthBar)>,
+) {
+    for message in message_reader.read() {
+        if let Some(health_bar_of_killed_enemy) = health_bars
+            .iter()
+            .find(|(_, health_bar)| message.0 == health_bar.0)
+        {
+            commands.entity(health_bar_of_killed_enemy.0).despawn();
         }
     }
 }

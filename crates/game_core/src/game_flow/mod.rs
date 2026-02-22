@@ -1,11 +1,9 @@
 use bevy::prelude::*;
+use shared::EnemyKilledMessage;
 
 use crate::{
     GameStateWave,
-    enemy::{
-        shooting::messages::EnemyKilledMessage,
-        spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
-    },
+    enemy::spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
 };
 
 pub struct GameFlowPlugin;

@@ -1,19 +1,14 @@
 use crate::{
     GameStateWave,
-    enemy::shooting::{
-        messages::EnemyKilledMessage,
-        systems::{
-            detect_killed_enemies, enemy_shoot_player,
-            handle_enemy_killed_message,
-            tick_enemy_shoot_player_cooldown_timer,
-        },
+    enemy::shooting::systems::{
+        detect_killed_enemies, enemy_shoot_player, handle_enemy_killed_message,
+        tick_enemy_shoot_player_cooldown_timer,
     },
 };
 use bevy::prelude::*;
-use shared::{GameStateServer, PlayerHitMessage};
+use shared::{EnemyKilledMessage, GameStateServer, PlayerHitMessage};
 
 pub mod components;
-pub mod messages;
 pub mod systems;
 
 pub struct EnemyShootingPlugin;
