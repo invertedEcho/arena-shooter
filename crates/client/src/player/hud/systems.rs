@@ -28,7 +28,10 @@ use crate::{
         },
     },
     shared::components::OnlyVisibleInGame,
-    user_interface::common::{ITALIC_GAME_FONT_PATH, UI_SELECTED, UI_TEXT},
+    user_interface::{
+        UiState,
+        common::{ITALIC_GAME_FONT_PATH, UI_SELECTED, UI_TEXT},
+    },
 };
 
 pub fn spawn_player_hud(
@@ -188,10 +191,30 @@ pub fn spawn_player_crosshair(
 pub fn update_player_crosshair_visibility(
     player_aim_type: Single<&AimType, Changed<AimType>>,
     mut player_cross_hair: Single<&mut Visibility, With<PlayerCrosshair>>,
+    ui_state: Res<UiState>,
 ) {
+    if ui_state.score_board_overlay_visible {
+        return;
+    }
+
     match *player_aim_type {
         AimType::Normal => **player_cross_hair = Visibility::Visible,
         AimType::Scoped => **player_cross_hair = Visibility::Hidden,
+    }
+}
+
+// this is a seperate system because update_player_crosshair_visibility only runs when AimType
+// changes, and this system should only run if UiState changed
+pub fn on_ui_state_change(
+    ui_state: Res<UiState>,
+    mut player_cross_hair: Single<&mut Visibility, With<PlayerCrosshair>>,
+    player_aim_type: Single<&AimType, With<AimType>>,
+) {
+    if ui_state.score_board_overlay_visible {
+        **player_cross_hair = Visibility::Hidden;
+    // only switch back to visible cross hair if player not currently scoping
+    } else if **player_aim_type != AimType::Scoped {
+        **player_cross_hair = Visibility::Visible;
     }
 }
 

@@ -1,6 +1,8 @@
 use bevy::{color::palettes::css::BLACK, prelude::*};
 use shared::game_score::GameScore;
 
+use crate::user_interface::UiState;
+
 #[derive(Component)]
 struct ScoreBoardOverlay;
 
@@ -60,11 +62,14 @@ fn change_score_board_overlay_visibility(
         &mut Visibility,
         With<ScoreBoardOverlay>,
     >,
+    mut ui_state: ResMut<UiState>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Tab) {
         **next_score_board_overlay_state = Visibility::Visible;
+        ui_state.score_board_overlay_visible = true;
     } else if keyboard_input.just_released(KeyCode::Tab) {
         **next_score_board_overlay_state = Visibility::Hidden;
+        ui_state.score_board_overlay_visible = false;
     }
 }
 

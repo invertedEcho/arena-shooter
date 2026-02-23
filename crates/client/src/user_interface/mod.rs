@@ -23,6 +23,14 @@ mod score_board_overlay;
 mod settings_menu;
 pub mod widgets;
 
+// idk i kinda dont like this but no idea how else i should do it so systems from different modules
+// can react to this resource change
+// in future more stuff will be added here
+#[derive(Resource, Default)]
+pub struct UiState {
+    pub score_board_overlay_visible: bool,
+}
+
 pub struct UserInterfacePlugin;
 
 impl Plugin for UserInterfacePlugin {
@@ -38,5 +46,6 @@ impl Plugin for UserInterfacePlugin {
             .add_plugins(LoadingScreenPlugin)
             .add_plugins(ScoreBoardOverlayPlugin)
             .add_plugins(CreditsScreenPlugin);
+        app.insert_resource(UiState::default());
     }
 }
