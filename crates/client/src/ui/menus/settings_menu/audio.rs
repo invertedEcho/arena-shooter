@@ -3,9 +3,7 @@ use bevy::{
     ui_widgets::{Slider, SliderValue, ValueChange, observe},
 };
 
-use crate::{
-    game_settings::GameSettings, user_interface::widgets::slider::build_slider,
-};
+use crate::{game_settings::GameSettings, ui::widgets::slider::build_slider};
 
 #[derive(Component)]
 pub struct VolumeSlider(VolumeSliderType);

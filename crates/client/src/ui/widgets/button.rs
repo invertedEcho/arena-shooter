@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::user_interface::common::{UI_BORDER, UI_PANEL, UI_TEXT};
+use crate::ui::common::{UI_BORDER, UI_PANEL, UI_TEXT};
 
 pub fn build_common_button<T: Component>(
     button_text: &str,

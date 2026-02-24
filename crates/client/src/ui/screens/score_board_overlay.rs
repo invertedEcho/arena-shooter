@@ -1,7 +1,7 @@
 use bevy::{color::palettes::css::BLACK, prelude::*};
 use shared::game_score::GameScore;
 
-use crate::user_interface::UiState;
+use crate::ui::UiState;
 
 #[derive(Component)]
 struct ScoreBoardOverlay;

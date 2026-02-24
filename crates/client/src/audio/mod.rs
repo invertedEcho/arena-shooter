@@ -18,7 +18,7 @@ use crate::{
         },
     },
     shared::WeaponType,
-    user_interface::common::AnyButtonInteractionQuery,
+    ui::common::AnyButtonInteractionQuery,
 };
 
 const BASE_PATH_TO_ASSAULT_RIFLE_SOUNDS: &str = "sfx/weapons/assault_rifle/";

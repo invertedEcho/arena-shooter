@@ -3,14 +3,14 @@ use game_core::GameStateWave;
 
 use crate::{
     game_flow::states::{GameModeClient, InGameState},
-    player::hud::systems::{
+    ui::UiState,
+    ui::hud::systems::{
         fade_out_damage_indicator, on_ui_state_change,
         spawn_bullet_hit_crosshair, spawn_damage_indicator,
         spawn_player_crosshair, spawn_player_hud, spawn_wave_hud,
         update_player_ammo_text, update_player_crosshair_visibility,
         update_player_health_text, update_selected_weapon, update_wave_hud,
     },
-    user_interface::UiState,
 };
 
 mod components;

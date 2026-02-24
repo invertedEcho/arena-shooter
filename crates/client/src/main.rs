@@ -28,7 +28,7 @@ use crate::{
     particles::ParticlesPlugin,
     player::PlayerPlugin,
     shared::{CommonPlugin, systems::apply_render_layers_to_children},
-    user_interface::UserInterfacePlugin,
+    ui::UserInterfacePlugin,
     world::WorldPlugin,
 };
 
@@ -43,7 +43,7 @@ mod network;
 mod particles;
 mod player;
 mod shared;
-mod user_interface;
+mod ui;
 mod utils;
 mod world;
 

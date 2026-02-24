@@ -1,12 +1,12 @@
 use crate::{
     game_flow::states::MainMenuState,
     game_settings::{GameSettings, update_game_settings_file},
-    user_interface::{
+    ui::{
         common::{
             DEFAULT_GAME_FONT_PATH, UI_BACKGROUND, UI_BORDER, UI_PANEL,
             UI_SELECTED, UI_TEXT,
         },
-        settings_menu::{
+        menus::settings_menu::{
             audio::{
                 build_audio_settings_tab_content, update_volume_slider_value,
             },
