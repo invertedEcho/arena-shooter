@@ -348,6 +348,7 @@ pub fn handle_chasing_enemies(
             spatial_query_filter,
             time.delta_secs(),
             0,
+            false,
         );
     }
 }

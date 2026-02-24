@@ -27,6 +27,7 @@ pub fn apply_collide_and_slide(
     spatial_query_filter: &SpatialQueryFilter,
     time_delta_secs: f32,
     current_hit_count: usize,
+    sprinting: bool,
 ) {
     const MAX_HITS: usize = 5;
     let Ok(direction_from_world_velocity) = Dir3::new(desired_velocity) else {
@@ -57,6 +58,15 @@ pub fn apply_collide_and_slide(
         },
         spatial_query_filter,
     ) else {
+        // no obstacle in the way, free movement
+        let max_delta = get_max_delta(desired_velocity, sprinting);
+        let new_velocity = move_towards_vec(
+            current_velocity,
+            desired_velocity,
+            max_delta * time_delta_secs,
+        );
+        current_velocity.x = new_velocity.x;
+        current_velocity.z = new_velocity.z;
         return;
     };
     // obstacle in the way, check if we can slimb it
@@ -117,6 +127,55 @@ pub fn apply_collide_and_slide(
             spatial_query_filter,
             time_delta_secs,
             current_hit_count + 1,
+            sprinting,
         );
+    }
+}
+
+fn get_max_delta(desired_velocity: Vec3, sprinting: bool) -> f32 {
+    const DECELERATION: f32 = 5.0;
+    const ACCELERATION: f32 = 11.0;
+
+    if sprinting {
+        if desired_velocity == Vec3::ZERO {
+            DECELERATION * 2.0
+        } else {
+            ACCELERATION * 2.0
+        }
+    } else {
+        if desired_velocity == Vec3::ZERO {
+            DECELERATION
+        } else {
+            ACCELERATION
+        }
+    }
+}
+
+/// currrent_velocity: Our current velocity
+/// target_velocity: Our target velocity, e.g. the max velocity
+/// max_delta: how fast are we allowed to change per frame. with this, we can control, how fast we
+///            accelerate or deccelerate
+fn move_towards_vec(
+    current_velocity: &Vec3,
+    target_velocity: Vec3,
+    max_delta: f32,
+) -> Vec3 {
+    // the difference between our current velocity and the target velocity
+    let delta = target_velocity - current_velocity;
+
+    // remember, the length of the vector is the distance between origin and destination
+    let distance = delta.length();
+
+    if distance <= max_delta || distance == 0.0 {
+        target_velocity
+    } else {
+        // to get normalized vector (which is only direction), we divide difference between our two
+        // vectors with the distance of that vector
+        let normalized_delta = delta / distance;
+
+        // as max_delta says how much we are allowed to change velocity per frame, by multiplying with max_delta,
+        // we get new vector, but only changing it as allowed by max_dellta
+        // normalized vektor = length 1, "stretching" that vector but only upon max_delta.
+        current_velocity + normalized_delta * max_delta
     }
 }
