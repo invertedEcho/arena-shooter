@@ -44,6 +44,7 @@ mod particles;
 mod player;
 mod shared;
 mod user_interface;
+mod utils;
 mod world;
 
 fn main() {

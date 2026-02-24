@@ -2,8 +2,9 @@ use bevy::{audio::Volume, prelude::*};
 use lightyear::prelude::Controlled;
 use rand::seq::IndexedRandom;
 use shared::{
-    character_controller::components::Grounded, components::DespawnTimer,
-    player::AimType,
+    character_controller::components::Grounded,
+    components::DespawnTimer,
+    player::{AimType, PlayerState},
 };
 
 use crate::{
@@ -113,11 +114,13 @@ fn spawn_audio_player_container(mut commands: Commands) {
 
 pub fn play_sound_on_player_weapon_fired(
     mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
-    player_weapon: Single<&PlayerWeapons>,
+    player_query: Single<(&PlayerWeapons, &PlayerState)>,
     mut play_sound_message_writer: MessageWriter<PlaySoundMessage>,
 ) {
+    let (player_weapons, player_state) = player_query.into_inner();
     for _ in message_reader.read() {
-        let current_weapon = &player_weapon.weapons[player_weapon.active_slot];
+        let current_weapon =
+            &player_weapons.weapons[player_state.active_weapon_slot];
 
         let shoot_sound = match current_weapon.stats.weapon_type {
             WeaponType::AssaultRifle => {
@@ -256,16 +259,17 @@ fn play_weapon_slot_change_audio(
 fn play_aim_sound_on_changed_aim_type(
     mut play_sound_message_writer: MessageWriter<PlaySoundMessage>,
     new_aim_type: Single<&AimType, Changed<AimType>>,
-    player_weapons: Single<&PlayerWeapons>,
+    player_query: Single<(&PlayerWeapons, &PlayerState)>,
 ) {
+    let (player_weapons, player_state) = player_query.into_inner();
+
     if **new_aim_type != AimType::Scoped {
         return;
     }
 
-    let current_weapon_stats = player_weapons.weapons
-        [player_weapons.active_slot]
-        .stats
-        .clone();
+    let current_weapon =
+        &player_weapons.weapons[player_state.active_weapon_slot];
+    let current_weapon_stats = &current_weapon.stats;
 
     if current_weapon_stats.weapon_type == WeaponType::Pistol {
         play_sound_message_writer.write(PlaySoundMessage {
@@ -277,14 +281,15 @@ fn play_aim_sound_on_changed_aim_type(
 fn play_reload_sound(
     mut play_sound_message_writer: MessageWriter<PlaySoundMessage>,
     mut message_reader: MessageReader<ReloadPlayerWeaponMessage>,
-    player_weapon: Single<&PlayerWeapons>,
+    player_query: Single<(&PlayerWeapons, &PlayerState)>,
 ) {
+    let (player_weapons, player_state) = player_query.into_inner();
     for _ in message_reader.read() {
-        let current_weapon_type = player_weapon.weapons
-            [player_weapon.active_slot]
+        let current_weapon_type = &player_weapons.weapons
+            [player_state.active_weapon_slot]
             .stats
-            .weapon_type
-            .clone();
+            .weapon_type;
+
         let path = match current_weapon_type {
             WeaponType::Pistol => {
                 BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "reload.ogg"

@@ -9,23 +9,21 @@ use shared::{
         components::{CharacterController, Grounded},
     },
     enemy::components::Enemy,
+    player::PlayerState,
 };
 
 use crate::{
     character_controller::messages::{MovementAction, MovementDirection},
-    player::{
-        camera::components::{PlayerCameraState, WorldCamera},
-        shooting::components::PlayerWeapons,
-    },
+    player::camera::components::{PlayerCameraState, WorldCamera},
 };
 
 pub fn handle_keyboard_input_for_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut movement_action_writer: MessageWriter<MovementAction>,
-    player_query: Single<(Entity, &PlayerWeapons, &PlayerCameraState)>,
+    player_query: Single<(Entity, &PlayerCameraState, &PlayerState)>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
 ) {
-    let (player_entity, player_weapons, player_camera_state) =
+    let (player_entity, player_camera_state, player_state) =
         player_query.into_inner();
 
     if *player_camera_state == PlayerCameraState::FreeCam {
@@ -33,7 +31,7 @@ pub fn handle_keyboard_input_for_player(
     }
 
     let sprint = keyboard_input.pressed(KeyCode::ShiftLeft);
-    let reloading = player_weapons.reloading;
+    let reloading = player_state.reloading;
 
     let speed = if sprint && !reloading {
         RUN_VELOCITY

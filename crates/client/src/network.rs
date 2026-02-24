@@ -31,6 +31,7 @@ use crate::character_controller::components::CharacterControllerBundle;
 use crate::game_flow::states::{
     AppState, ClientLoadingState, GameModeClient, InGameState,
 };
+use crate::utils::query_filters::OurPlayerFilter;
 
 const CLIENT_PORT: u16 = 0;
 
@@ -223,7 +224,7 @@ pub fn send_client_update_position(
         &mut MessageSender<ClientUpdatePositionMessage>,
         With<Client>,
     >,
-    player_transform: Single<&Transform, (With<Player>, With<Controlled>)>,
+    player_transform: Single<&Transform, OurPlayerFilter>,
 ) {
     message_sender.send::<OrderedReliableChannel>(
         ClientUpdatePositionMessage {

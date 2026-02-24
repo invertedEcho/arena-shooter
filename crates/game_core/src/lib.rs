@@ -14,7 +14,7 @@ use lightyear::{
 use shared::{
     ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH, GameModeServer,
     GameStateServer, PlayerHitMessage, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
-    ServerMode,
+    SelectedMapState, ServerMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -78,6 +78,7 @@ impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<ServerLoadingState>();
         app.init_state::<GameStateServer>();
+        app.init_state::<SelectedMapState>();
 
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 

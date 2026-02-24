@@ -4,11 +4,11 @@ use lightyear::prelude::{Controlled, MessageReceiver};
 use shared::{
     PlayerHitMessage,
     components::{DespawnTimer, Health},
-    player::AimType,
+    player::{AimType, PlayerState},
 };
 
 use crate::{
-    game_flow::states::AppState,
+    game_flow::states::{AppState, InGameState},
     player::{
         Player, PlayerReady,
         camera::components::WorldCamera,
@@ -32,17 +32,20 @@ use crate::{
         UiState,
         common::{ITALIC_GAME_FONT_PATH, UI_SELECTED, UI_TEXT},
     },
+    utils::query_filters::OurPlayerFilter,
 };
 
 pub fn spawn_player_hud(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     player_query: Query<
-        (&Health, &PlayerWeapons),
+        (&Health, &PlayerWeapons, &PlayerState),
         (Added<PlayerReady>, With<Controlled>),
     >,
 ) {
-    let Ok((player_health, player_weapons)) = player_query.single() else {
+    let Ok((player_health, player_weapons, player_state)) =
+        player_query.single()
+    else {
         return;
     };
 
@@ -52,7 +55,7 @@ pub fn spawn_player_hud(
     );
 
     let weapon_state =
-        &player_weapons.weapons[player_weapons.active_slot].state;
+        &player_weapons.weapons[player_state.active_weapon_slot].state;
 
     commands
         .spawn((
@@ -104,12 +107,12 @@ pub fn spawn_player_hud(
                     for (index, player_weapon) in
                         player_weapons.weapons.iter().enumerate()
                     {
-                        let text_color = if player_weapons.active_slot == index
-                        {
-                            UI_SELECTED
-                        } else {
-                            UI_TEXT
-                        };
+                        let text_color =
+                            if player_state.active_weapon_slot == index {
+                                UI_SELECTED
+                            } else {
+                                UI_TEXT
+                            };
 
                         parent.spawn((
                             Text::new(format!(
@@ -227,7 +230,10 @@ pub fn update_player_health_text(
 }
 
 pub fn update_player_ammo_text(
-    player_weapons: Single<&PlayerWeapons, Changed<PlayerWeapons>>,
+    player_query: Single<
+        (&PlayerWeapons, &PlayerState),
+        Changed<PlayerWeapons>,
+    >,
     mut player_loaded_ammo_text: Single<
         &mut Text,
         (With<PlayerLoadedAmmoText>, Without<PlayerCarriedAmmoText>),
@@ -237,7 +243,9 @@ pub fn update_player_ammo_text(
         (With<PlayerCarriedAmmoText>, Without<PlayerLoadedAmmoText>),
     >,
 ) {
-    let active_weapon = &player_weapons.weapons[player_weapons.active_slot];
+    let (player_weapons, player_state) = player_query.into_inner();
+    let active_weapon =
+        &player_weapons.weapons[player_state.active_weapon_slot];
 
     ***player_loaded_ammo_text = active_weapon.state.loaded_ammo.to_string();
     ***player_carried_ammo_text = active_weapon.state.carried_ammo.to_string();
@@ -326,7 +334,7 @@ pub fn spawn_damage_indicator(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut message_reader: MessageReader<PlayerHitMessage>,
-    player_transform: Single<&Transform, (With<Player>, With<Controlled>)>,
+    player_transform: Single<&Transform, OurPlayerFilter>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
     mut network_message_reader: Single<&mut MessageReceiver<PlayerHitMessage>>,
 ) {
@@ -375,6 +383,7 @@ pub fn spawn_damage_indicator(
                     0.05,
                     TimerMode::Repeating,
                 )),
+                DespawnOnExit(InGameState::Playing),
             ));
         }
     }
