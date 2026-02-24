@@ -16,6 +16,15 @@ pub struct PlayerBundle {
     player: Player,
     health: Health,
     aim_type: AimType,
+    state: PlayerState,
+}
+
+#[derive(Component, Serialize, Deserialize, Clone, Default, PartialEq)]
+pub struct PlayerState {
+    pub shooting: bool,
+    pub reloading: bool,
+    pub dead: bool,
+    pub active_weapon_slot: usize,
 }
 
 impl Default for PlayerBundle {
@@ -24,6 +33,7 @@ impl Default for PlayerBundle {
             player: Player,
             health: Health(DEFAULT_HEALTH),
             aim_type: AimType::Normal,
+            state: PlayerState::default(),
         }
     }
 }

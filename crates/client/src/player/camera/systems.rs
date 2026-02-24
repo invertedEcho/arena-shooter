@@ -6,7 +6,7 @@ use bevy::{
 use lightyear::prelude::Controlled;
 use shared::{
     components::DespawnTimer,
-    player::{AimType, Player},
+    player::{AimType, Player, PlayerState},
 };
 
 use crate::{
@@ -123,11 +123,11 @@ pub fn handle_spawn_player_camera_message(
 
 pub fn handle_player_scope_aim(
     mouse_input: Res<ButtonInput<MouseButton>>,
-    player_query: Single<(&mut PlayerWeapons, &mut AimType), With<Controlled>>,
+    player_query: Single<(&mut AimType, &PlayerState), With<Controlled>>,
 ) {
-    let (player_weapons, mut aim_type) = player_query.into_inner();
+    let (mut aim_type, player_state) = player_query.into_inner();
 
-    if player_weapons.reloading {
+    if player_state.reloading {
         return;
     }
 
@@ -373,12 +373,12 @@ pub fn spawn_muzzle_flash(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut player_shot_message_reader: MessageReader<PlayerWeaponFiredMessage>,
     player_weapon_model_entity: Single<Entity, With<PlayerWeaponModel>>,
-    player_query: Single<(&PlayerWeapons, &AimType)>,
+    player_query: Single<(&PlayerWeapons, &AimType, &PlayerState)>,
 ) {
-    let (player_weapons, aim_type) = player_query.into_inner();
+    let (player_weapons, aim_type, player_state) = player_query.into_inner();
 
     for _ in player_shot_message_reader.read() {
-        let active_weapon = player_weapons.active_slot;
+        let active_weapon = player_state.active_weapon_slot;
         let muzzle_flash_position = get_muzzle_flash_position_for_weapon(
             &player_weapons.weapons[active_weapon].stats.weapon_type,
             aim_type,
@@ -410,7 +410,7 @@ pub fn spawn_muzzle_flash(
 }
 
 pub fn interpolate_weapon_position(
-    player_query: Single<(&PlayerWeapons, &AimType)>,
+    player_query: Single<(&PlayerWeapons, &AimType, &PlayerState)>,
     mut player_weapon_model_transform: Single<
         &mut Transform,
         With<PlayerWeaponModel>,
@@ -419,18 +419,25 @@ pub fn interpolate_weapon_position(
 ) {
     const SPEED: f32 = 20.0;
 
-    let player_weapons = player_query.0;
-    let reloading = player_weapons.reloading;
+    let (player_weapons, aim_type, player_state) = player_query.into_inner();
 
-    let mut target_destination = get_position_for_weapon(
-        &player_weapons.weapons[player_weapons.active_slot]
-            .stats
-            .weapon_type,
-        player_query.1,
-    );
+    let reloading = player_state.reloading;
+
+    let weapon_type = &player_weapons.weapons[player_state.active_weapon_slot]
+        .stats
+        .weapon_type;
+
+    let mut target_destination = get_position_for_weapon(weapon_type, aim_type);
 
     if reloading {
-        target_destination = target_destination.with_y(-1.0);
+        match weapon_type {
+            WeaponType::Pistol => {
+                target_destination.y -= 0.25;
+            }
+            WeaponType::AssaultRifle => {
+                target_destination.y -= 0.3;
+            }
+        }
     }
 
     let speed = if reloading { 10.0 } else { SPEED };

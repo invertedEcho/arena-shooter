@@ -8,7 +8,7 @@ use crate::{
     components::Health,
     enemy::components::{Enemy, EnemyState},
     game_score::GameScore,
-    player::Player,
+    player::{Player, PlayerState},
 };
 
 pub struct OrderedReliableChannel;
@@ -70,6 +70,7 @@ impl Plugin for ProtocolPlugin {
             .add_direction(NetworkDirection::ServerToClient);
 
         app.register_component::<Player>();
+        app.register_component::<PlayerState>();
 
         app.register_component::<EntityPositionServer>();
 

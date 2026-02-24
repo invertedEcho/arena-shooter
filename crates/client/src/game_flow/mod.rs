@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use shared::SelectedMapState;
 
 use crate::{
     game_flow::{
@@ -29,7 +28,6 @@ pub struct GameFlowPlugin;
 impl Plugin for GameFlowPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<AppState>()
-            .init_state::<SelectedMapState>()
             .init_state::<GameModeClient>()
             .add_sub_state::<InGameState>()
             .add_sub_state::<MainMenuState>()
