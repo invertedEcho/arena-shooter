@@ -5,9 +5,9 @@ use crate::{
     ui::common::{CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH},
 };
 
-pub struct PauseMenuPlugin;
+pub struct PauseScreenPlugin;
 
-impl Plugin for PauseMenuPlugin {
+impl Plugin for PauseScreenPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(InGameState::Paused), spawn_pause_menu)
             .add_systems(

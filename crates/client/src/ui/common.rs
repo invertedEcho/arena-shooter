@@ -5,13 +5,9 @@ use shared::{ServerMode, game_score::GameScore};
 
 use crate::{
     game_flow::states::{AppState, MainMenuState},
-    ui::{
-        map_selection::MapSelectionButton,
-        settings_menu::TabButtonSettings,
-        widgets::{
-            checkbox::{update_checkbox_style, update_checkbox_style2},
-            slider::update_slider_style,
-        },
+    ui::widgets::{
+        checkbox::{update_checkbox_style, update_checkbox_style2},
+        slider::update_slider_style,
     },
 };
 
@@ -71,6 +67,9 @@ pub enum CommonUiButton {
     Quit,
 }
 
+#[derive(Component)]
+pub struct ExcludeFromHover;
+
 // TODO: This system does way too many things and especially things that aren't relevant for
 // `user_interface` module.
 fn handle_common_ui_button_press(
@@ -124,8 +123,7 @@ pub type AnyButtonInteractionQuery<'w, 's> = Query<
     (
         Changed<Interaction>,
         With<Button>,
-        Without<MapSelectionButton>,
-        Without<TabButtonSettings>,
+        Without<ExcludeFromHover>,
     ),
 >;
 

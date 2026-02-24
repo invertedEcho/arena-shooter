@@ -11,18 +11,15 @@ use crate::{
     },
 };
 
-pub struct CreditsScreenPlugin;
+pub struct CreditsPlugin;
 
-impl Plugin for CreditsScreenPlugin {
+impl Plugin for CreditsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(MainMenuState::Credits), spawn_credits_screen);
+        app.add_systems(OnEnter(MainMenuState::Credits), spawn_credits);
     }
 }
 
-fn spawn_credits_screen(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+fn spawn_credits(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font_handle = asset_server.load(DEFAULT_GAME_FONT_PATH);
 
     commands

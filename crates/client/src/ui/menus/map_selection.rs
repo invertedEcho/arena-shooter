@@ -6,7 +6,8 @@ use crate::{
     ui::{
         common::{
             CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
-            DEFAULT_ROW_GAP, UI_BACKGROUND, UI_SELECTED, UI_TEXT,
+            DEFAULT_ROW_GAP, ExcludeFromHover, UI_BACKGROUND, UI_SELECTED,
+            UI_TEXT,
         },
         widgets::button::build_common_button,
     },
@@ -105,6 +106,7 @@ fn spawn_map_selection(
                     Button,
                     MapSelectionButton(SelectedMapState::TinyTown),
                     TextColor::WHITE,
+                    ExcludeFromHover,
                 ))
                 .with_child((
                     Text::new("Tiny Town"),
@@ -124,6 +126,7 @@ fn spawn_map_selection(
                     Button,
                     MapSelectionButton(SelectedMapState::MediumPlastic),
                     TextColor::WHITE,
+                    ExcludeFromHover,
                 ))
                 .with_child((
                     Text::new("Medium Plastic"),

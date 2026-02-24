@@ -1,27 +1,14 @@
 use bevy::prelude::*;
 
 use crate::ui::{
-    common::CommonUiPlugin, credits_screen::CreditsScreenPlugin,
-    death_screen::DeathScreenPlugin, disconnect_screen::DisconnectScreenPlugin,
-    game_mode_selection::GameModeSelectionUIPlugin, hud::PlayerHudPlugin,
-    loading_screen::LoadingScreenPlugin, main_menu::MainMenuPlugin,
-    map_selection::MapSelectionPlugin, pause_menu::PauseMenuPlugin,
-    score_board_overlay::ScoreBoardOverlayPlugin,
-    settings_menu::SettingsMenuPlugin,
+    common::CommonUiPlugin, hud::PlayerHudPlugin, menus::UIMenusPlugin,
+    screens::UIScreensPlugin,
 };
 
 pub mod common;
-mod credits_screen;
-mod death_screen;
-mod disconnect_screen;
-mod game_mode_selection;
 mod hud;
-mod loading_screen;
-mod main_menu;
-mod map_selection;
-mod pause_menu;
-mod score_board_overlay;
-mod settings_menu;
+mod menus;
+mod screens;
 pub mod widgets;
 
 // idk i kinda dont like this but no idea how else i should do it so systems from different modules
@@ -36,19 +23,11 @@ pub struct UserInterfacePlugin;
 
 impl Plugin for UserInterfacePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(PlayerHudPlugin);
-
-        app.add_plugins(PauseMenuPlugin)
+        app.add_plugins(PlayerHudPlugin)
+            .add_plugins(UIMenusPlugin)
             .add_plugins(CommonUiPlugin)
-            .add_plugins(DeathScreenPlugin)
-            .add_plugins(SettingsMenuPlugin)
-            .add_plugins(MainMenuPlugin)
-            .add_plugins(GameModeSelectionUIPlugin)
-            .add_plugins(MapSelectionPlugin)
-            .add_plugins(DisconnectScreenPlugin)
-            .add_plugins(LoadingScreenPlugin)
-            .add_plugins(ScoreBoardOverlayPlugin)
-            .add_plugins(CreditsScreenPlugin);
+            .add_plugins(UIScreensPlugin);
+
         app.insert_resource(UiState::default());
     }
 }
