@@ -3,7 +3,6 @@ use bevy::{input::mouse::MouseWheel, prelude::*};
 use lightyear::prelude::*;
 use shared::{
     components::Health,
-    enemy::components::Enemy,
     player::{AimType, PlayerState},
     protocol::{OrderedReliableChannel, ShootRequest},
     shooting::MAX_SHOOTING_DISTANCE,
@@ -20,8 +19,8 @@ use crate::{
         shooting::{
             components::{PlayerShootCooldownTimer, PlayerWeapons, Weapon},
             messages::{
-                PlayerWeaponFiredMessage, PlayerWeaponSlotChangeMessage,
-                ReloadPlayerWeaponMessage,
+                PlayerBulletHit, PlayerWeaponFiredMessage,
+                PlayerWeaponSlotChangeMessage, ReloadPlayerWeaponMessage,
             },
             resources::{ChangeWeaponCooldown, WeaponReloadTimer},
         },
@@ -30,7 +29,7 @@ use crate::{
         WeaponSlotType, WeaponState, WeaponStats, WeaponType,
         get_fire_delay_by_weapon_type,
     },
-    utils::query_filters::OurPlayerFilter,
+    utils::query_filters::{OurPlayerFilter, PlayerOrEnemyFilter},
 };
 
 /// How long it takes to reload for a partial reload (and playing the corresponding animation), e.g. some bullets are left in
@@ -178,18 +177,13 @@ pub fn send_shoot_request_on_weapon_fired(
     }
 }
 
-type PlayerOrEnemy = Or<(With<Enemy>, With<Player>)>;
-pub fn spawn_bullet_impact_particle_on_weapon_fired(
+pub fn check_if_player_bullet_hit(
     mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
-    mut spawn_bullet_impact_effect_message_writer: MessageWriter<
-        SpawnBulletImpactEffectMessage,
-    >,
-    world_model_camera_query: WorldModelCameraQuery,
-    player_query: Single<Entity, OurPlayerFilter>,
+    mut message_writer: MessageWriter<PlayerBulletHit>,
     spatial_query: SpatialQuery,
-    player_and_enemies: Query<Entity, PlayerOrEnemy>,
+    player_entity: Single<Entity, OurPlayerFilter>,
+    world_model_camera_query: WorldModelCameraQuery,
 ) {
-    let player_entity = player_query.into_inner();
     for _ in message_reader.read() {
         let origin = world_model_camera_query.1.translation();
         let direction = world_model_camera_query.1.forward();
@@ -200,15 +194,29 @@ pub fn spawn_bullet_impact_particle_on_weapon_fired(
             MAX_SHOOTING_DISTANCE,
             false,
             &SpatialQueryFilter::default()
-                .with_excluded_entities([player_entity]),
+                .with_excluded_entities([*player_entity]),
         ) else {
             continue;
         };
 
-        let spawn_location = origin + direction * first_hit.distance;
+        let hit_point = origin + direction * first_hit.distance;
+        message_writer.write(PlayerBulletHit {
+            hit_point,
+            entity_hit: first_hit.entity,
+        });
+    }
+}
 
+pub fn spawn_bullet_impact_particle_on_player_bullet_hit(
+    mut message_reader: MessageReader<PlayerBulletHit>,
+    mut spawn_bullet_impact_effect_message_writer: MessageWriter<
+        SpawnBulletImpactEffectMessage,
+    >,
+    player_and_enemies: Query<Entity, PlayerOrEnemyFilter>,
+) {
+    for message in message_reader.read() {
         let player_or_enemy_hit =
-            player_and_enemies.get(first_hit.entity).is_ok();
+            player_and_enemies.get(message.entity_hit).is_ok();
 
         let bullet_impact_effect_variant = if player_or_enemy_hit {
             BulletImpactEffectVariant::Enemy
@@ -218,7 +226,7 @@ pub fn spawn_bullet_impact_particle_on_weapon_fired(
 
         spawn_bullet_impact_effect_message_writer.write(
             SpawnBulletImpactEffectMessage {
-                spawn_location,
+                spawn_location: message.hit_point,
                 variant: bullet_impact_effect_variant,
             },
         );
@@ -277,7 +285,6 @@ pub fn handle_reload_player_weapon_message(
         let weapon_position =
             get_position_for_weapon(weapon_type, &AimType::Normal);
 
-        info!("Starting reload, setting position to: {}", weapon_position);
         player_weapon_model_transform.translation = weapon_position;
     }
 }

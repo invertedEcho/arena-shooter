@@ -4,16 +4,16 @@ use crate::{
     game_flow::states::InGameState,
     player::shooting::{
         messages::{
-            PlayerBulletHitEnemyMessage, PlayerWeaponFiredMessage,
+            PlayerBulletHit, PlayerWeaponFiredMessage,
             PlayerWeaponSlotChangeMessage, ReloadPlayerWeaponMessage,
         },
         systems::{
-            add_player_weapons_to_new_players, check_if_player_dead,
-            handle_change_weapon_slot_cooldown, handle_input,
-            handle_player_weapon_reload_timer,
+            add_player_weapons_to_new_players, check_if_player_bullet_hit,
+            check_if_player_dead, handle_change_weapon_slot_cooldown,
+            handle_input, handle_player_weapon_reload_timer,
             handle_reload_player_weapon_message, handle_weapon_slot_change,
             reset_aim_type_on_pause, send_shoot_request_on_weapon_fired,
-            spawn_bullet_impact_particle_on_weapon_fired,
+            spawn_bullet_impact_particle_on_player_bullet_hit,
             tick_player_weapon_shoot_cooldown_timer,
         },
     },
@@ -30,7 +30,7 @@ pub struct PlayerShootingPlugin;
 impl Plugin for PlayerShootingPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<PlayerWeaponFiredMessage>()
-            .add_message::<PlayerBulletHitEnemyMessage>()
+            .add_message::<PlayerBulletHit>()
             .add_message::<ReloadPlayerWeaponMessage>()
             .add_message::<PlayerWeaponSlotChangeMessage>()
             .add_systems(
@@ -39,12 +39,13 @@ impl Plugin for PlayerShootingPlugin {
                     handle_input,
                     tick_player_weapon_shoot_cooldown_timer,
                     handle_reload_player_weapon_message,
-                    spawn_bullet_impact_particle_on_weapon_fired,
+                    spawn_bullet_impact_particle_on_player_bullet_hit,
                     add_player_weapons_to_new_players,
                     handle_player_weapon_reload_timer,
                     handle_weapon_slot_change,
                     handle_change_weapon_slot_cooldown,
                     send_shoot_request_on_weapon_fired,
+                    check_if_player_bullet_hit,
                 )
                     .run_if(in_state(InGameState::Playing)),
             )

@@ -22,9 +22,7 @@ use crate::{
         },
         shooting::{
             components::PlayerWeapons,
-            messages::{
-                PlayerBulletHitEnemyMessage, PlayerWeaponSlotChangeMessage,
-            },
+            messages::{PlayerBulletHit, PlayerWeaponSlotChangeMessage},
         },
     },
     shared::components::OnlyVisibleInGame,
@@ -32,7 +30,7 @@ use crate::{
         UiState,
         common::{ITALIC_GAME_FONT_PATH, UI_SELECTED, UI_TEXT},
     },
-    utils::query_filters::OurPlayerFilter,
+    utils::query_filters::{OurPlayerFilter, PlayerOrEnemyFilter},
 };
 
 pub fn spawn_player_hud(
@@ -254,11 +252,17 @@ pub fn update_player_ammo_text(
 pub fn spawn_bullet_hit_crosshair(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    mut player_bullet_hit_enemy_message_reader: MessageReader<
-        PlayerBulletHitEnemyMessage,
-    >,
+    mut player_bullet_hit_enemy_message_reader: MessageReader<PlayerBulletHit>,
+    player_and_enemies: Query<Entity, PlayerOrEnemyFilter>,
 ) {
-    for _ in player_bullet_hit_enemy_message_reader.read() {
+    for message in player_bullet_hit_enemy_message_reader.read() {
+        let player_or_enemy_hit =
+            player_and_enemies.get(message.entity_hit).is_ok();
+
+        if !player_or_enemy_hit {
+            return;
+        }
+
         commands
             .spawn(Node {
                 width: Val::Percent(100.0),
