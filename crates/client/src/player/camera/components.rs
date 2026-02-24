@@ -29,3 +29,6 @@ pub struct FreeCam;
 
 #[derive(Component)]
 pub struct MuzzleFlash;
+
+#[derive(Component)]
+pub struct MainMenuCamera;

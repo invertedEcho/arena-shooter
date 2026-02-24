@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::ui::{
     common::CommonUiPlugin, credits_screen::CreditsScreenPlugin,
     death_screen::DeathScreenPlugin, disconnect_screen::DisconnectScreenPlugin,
-    game_mode_selection::GameModeSelectionUIPlugin,
+    game_mode_selection::GameModeSelectionUIPlugin, hud::PlayerHudPlugin,
     loading_screen::LoadingScreenPlugin, main_menu::MainMenuPlugin,
     map_selection::MapSelectionPlugin, pause_menu::PauseMenuPlugin,
     score_board_overlay::ScoreBoardOverlayPlugin,
@@ -15,8 +15,9 @@ mod credits_screen;
 mod death_screen;
 mod disconnect_screen;
 mod game_mode_selection;
+mod hud;
 mod loading_screen;
-pub mod main_menu;
+mod main_menu;
 mod map_selection;
 mod pause_menu;
 mod score_board_overlay;
@@ -35,6 +36,8 @@ pub struct UserInterfacePlugin;
 
 impl Plugin for UserInterfacePlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(PlayerHudPlugin);
+
         app.add_plugins(PauseMenuPlugin)
             .add_plugins(CommonUiPlugin)
             .add_plugins(DeathScreenPlugin)

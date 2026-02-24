@@ -3,12 +3,14 @@ use bevy::{color::palettes::css::RED, prelude::*};
 use crate::{
     game_flow::states::AppState,
     network::GENERIC_NO_CONNECTION_ERROR_MESSAGE,
+    player::camera::{
+        components::MainMenuCamera, get_main_menu_camera_transform,
+    },
     ui::{
         common::{
             CommonUiButton, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
             UI_BACKGROUND,
         },
-        main_menu::{MainMenuCamera, get_main_menu_camera_transform},
         widgets::button::build_common_button,
     },
 };

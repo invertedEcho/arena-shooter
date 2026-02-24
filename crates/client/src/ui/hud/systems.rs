@@ -4,22 +4,13 @@ use lightyear::prelude::{Controlled, MessageReceiver};
 use shared::{
     PlayerHitMessage,
     components::{DespawnTimer, Health},
-    player::{AimType, PlayerState},
+    player::{AimType, Player, PlayerReady, PlayerState},
 };
 
 use crate::{
     game_flow::states::{AppState, InGameState},
     player::{
-        Player, PlayerReady,
         camera::components::WorldCamera,
-        hud::{
-            CROSSHAIR_BULLET_HIT_PATH, MAIN_CROSSHAIR_PATH,
-            components::{
-                CurrentWaveText, DamageIndicator, EnemiesLeftText,
-                PlayerCarriedAmmoText, PlayerCrosshair, PlayerHealthText,
-                PlayerHud, PlayerLoadedAmmoText, PlayerWeaponText,
-            },
-        },
         shooting::{
             components::PlayerWeapons,
             messages::{PlayerBulletHit, PlayerWeaponSlotChangeMessage},
@@ -29,6 +20,14 @@ use crate::{
     ui::{
         UiState,
         common::{ITALIC_GAME_FONT_PATH, UI_SELECTED, UI_TEXT},
+        hud::{
+            CROSSHAIR_BULLET_HIT_PATH, MAIN_CROSSHAIR_PATH,
+            components::{
+                CurrentWaveText, DamageIndicator, EnemiesLeftText,
+                PlayerCarriedAmmoText, PlayerCrosshair, PlayerHealthText,
+                PlayerHud, PlayerLoadedAmmoText, PlayerWeaponText,
+            },
+        },
     },
     utils::query_filters::{OurPlayerFilter, PlayerOrEnemyFilter},
 };

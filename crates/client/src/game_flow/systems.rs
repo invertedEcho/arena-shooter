@@ -12,8 +12,10 @@ use shared::{
 
 use crate::{
     game_flow::states::{AppState, ClientLoadingState, InGameState},
-    player::PlayerDeathMessage,
-    ui::main_menu::{MainMenuCamera, get_main_menu_camera_transform},
+    player::{
+        PlayerDeathMessage,
+        camera::{components::MainMenuCamera, get_main_menu_camera_transform},
+    },
     world::resources::WorldSceneHandle,
 };
 
