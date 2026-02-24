@@ -3,7 +3,7 @@ use bevy::{color::palettes::css::RED, prelude::*};
 use crate::{
     game_flow::states::AppState,
     network::GENERIC_NO_CONNECTION_ERROR_MESSAGE,
-    user_interface::{
+    ui::{
         common::{
             CommonUiButton, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
             UI_BACKGROUND,

@@ -2,9 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     game_flow::states::InGameState,
-    user_interface::common::{
-        CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
-    },
+    ui::common::{CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH},
 };
 
 pub struct PauseMenuPlugin;

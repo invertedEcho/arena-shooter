@@ -26,7 +26,7 @@ use crate::{
         },
     },
     shared::components::OnlyVisibleInGame,
-    user_interface::{
+    ui::{
         UiState,
         common::{ITALIC_GAME_FONT_PATH, UI_SELECTED, UI_TEXT},
     },

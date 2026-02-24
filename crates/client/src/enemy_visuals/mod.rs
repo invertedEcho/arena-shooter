@@ -17,7 +17,7 @@ use shared::{
 use crate::{
     enemy_visuals::animate::{AnimateEnemyPlugin, ENEMY_MODEL_PATH},
     game_flow::states::AppState,
-    user_interface::widgets::progressbar::build_progress_bar,
+    ui::widgets::progressbar::build_progress_bar,
 };
 
 mod animate;

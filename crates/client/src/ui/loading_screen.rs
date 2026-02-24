@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     game_flow::states::{AppState, ClientLoadingState},
-    user_interface::{
+    ui::{
         common::{DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP},
         widgets::button::build_common_button,
     },

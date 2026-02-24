@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::user_interface::{
+use crate::ui::{
     common::CommonUiPlugin, credits_screen::CreditsScreenPlugin,
     death_screen::DeathScreenPlugin, disconnect_screen::DisconnectScreenPlugin,
     game_mode_selection::GameModeSelectionUIPlugin,

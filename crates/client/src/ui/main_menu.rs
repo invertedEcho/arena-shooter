@@ -3,7 +3,7 @@ use shared::ServerMode;
 
 use crate::{
     game_flow::states::{AppState, GameModeClient, MainMenuState},
-    user_interface::{
+    ui::{
         common::{
             CommonUiButton, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
             TITLE_FONT_SIZE, UI_BACKGROUND,

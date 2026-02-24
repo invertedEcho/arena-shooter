@@ -5,7 +5,7 @@ use shared::{ServerMode, game_score::GameScore};
 
 use crate::{
     game_flow::states::{AppState, MainMenuState},
-    user_interface::{
+    ui::{
         map_selection::MapSelectionButton,
         settings_menu::TabButtonSettings,
         widgets::{

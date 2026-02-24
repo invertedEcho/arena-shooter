@@ -10,7 +10,7 @@ use crate::{
         update_player_ammo_text, update_player_crosshair_visibility,
         update_player_health_text, update_selected_weapon, update_wave_hud,
     },
-    user_interface::UiState,
+    ui::UiState,
 };
 
 mod components;

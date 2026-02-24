@@ -9,9 +9,7 @@ use shared::{
 
 use crate::{
     game_flow::{states::InGameState, systems::free_mouse},
-    user_interface::common::{
-        CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
-    },
+    ui::common::{CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH},
 };
 
 pub struct DeathScreenPlugin;

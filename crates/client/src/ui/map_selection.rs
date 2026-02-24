@@ -3,7 +3,7 @@ use shared::SelectedMapState;
 
 use crate::{
     game_flow::states::MainMenuState,
-    user_interface::{
+    ui::{
         common::{
             CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
             DEFAULT_ROW_GAP, UI_BACKGROUND, UI_SELECTED, UI_TEXT,

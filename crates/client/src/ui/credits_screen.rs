@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     game_flow::states::MainMenuState,
-    user_interface::{
+    ui::{
         common::{
             CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
             DEFAULT_ROW_GAP, SMALL_FONT_SIZE, TITLE_FONT_SIZE,
