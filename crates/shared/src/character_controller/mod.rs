@@ -155,6 +155,8 @@ fn get_max_delta(desired_velocity: Vec3, sprinting: bool) -> f32 {
 /// target_velocity: Our target velocity, e.g. the max velocity
 /// max_delta: how fast are we allowed to change per frame. with this, we can control, how fast we
 ///            accelerate or deccelerate
+///            note that deceleration is also handled by apply_movement_damping for players in
+///            client/character_controller/systems.rs
 fn move_towards_vec(
     current_velocity: &Vec3,
     target_velocity: Vec3,
@@ -178,4 +180,8 @@ fn move_towards_vec(
         // normalized vektor = length 1, "stretching" that vector but only upon max_delta.
         current_velocity + normalized_delta * max_delta
     }
+}
+
+pub fn get_character_collider() -> Collider {
+    Collider::capsule(CHARACTER_CAPSULE_RADIUS, CHARACTER_CAPSULE_LENGTH)
 }

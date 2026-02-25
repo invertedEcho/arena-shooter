@@ -84,15 +84,20 @@ pub fn handle_keyboard_input_for_player(
     }
 }
 
-// FIXME: ONLY APPLY IF NO INPUT!
 pub fn apply_movement_damping(
-    query: Single<(&mut LinearVelocity, &Grounded), OurPlayerFilter>,
+    player_query: Single<(&mut LinearVelocity, &Grounded), OurPlayerFilter>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
-    let (mut velocity, grounded) = query.into_inner();
+    let (mut player_velocity, grounded) = player_query.into_inner();
 
-    if grounded.0 {
-        velocity.x *= 0.7;
-        velocity.z *= 0.7;
+    let any_movement_input = keyboard_input.pressed(KeyCode::KeyW)
+        || keyboard_input.pressed(KeyCode::KeyA)
+        || keyboard_input.pressed(KeyCode::KeyS)
+        || keyboard_input.pressed(KeyCode::KeyD);
+
+    if !any_movement_input && grounded.0 {
+        player_velocity.x *= 0.8;
+        player_velocity.z *= 0.8;
     }
 }
 
@@ -123,6 +128,10 @@ pub fn handle_movement_actions_for_character_controllers(
 
         match *direction {
             MovementDirection::Jump => {
+                // This is pretty naive, but theoretically it works because we have the
+                // `check_above_head` system. In the future, we most likely just want a
+                // depenetration system which finds the shortest way out of the collider that we
+                // are stuck in.
                 if grounded.0 {
                     velocity.y = JUMP_VELOCITY;
                 }
@@ -154,27 +163,20 @@ pub fn handle_movement_actions_for_character_controllers(
 
 /// Updates the [`Grounded`] component
 pub fn update_grounded(
-    mut query: Query<
-        (&ShapeHits, &mut Grounded, &mut LinearVelocity),
-        EntitiesRelevantForGravity,
-    >,
+    mut query: Query<(&ShapeHits, &mut Grounded), EntitiesRelevantForGravity>,
 ) {
-    for (hits, mut grounded, mut velocity) in &mut query {
+    for (hits, mut grounded) in &mut query {
         let on_ground = !hits.0.is_empty();
 
         if grounded.0 != on_ground {
             grounded.0 = on_ground;
-        }
-
-        if on_ground && velocity.y < 0.0 {
-            velocity.y = 0.0
         }
     }
 }
 
 type EntitiesRelevantForGravity = Or<(With<Enemy>, With<CharacterController>)>;
 
-pub fn apply_gravity_over_time(
+pub fn apply_gravity(
     query: Query<(&Grounded, &mut LinearVelocity), EntitiesRelevantForGravity>,
     time: Res<Time>,
 ) {
@@ -185,6 +187,12 @@ pub fn apply_gravity_over_time(
             velocity.y = velocity
                 .y
                 .clamp(-MAX_VERTICAL_VELOCITY, MAX_VERTICAL_VELOCITY);
+        } else {
+            // if we are grounded and have negative y velocity, stop downwards vertical movement
+            // so we dont sink into the ground
+            if velocity.y < 0.0 {
+                velocity.y = 0.0
+            }
         }
     }
 }
@@ -225,6 +233,6 @@ pub fn check_above_head(
 
         // if there is something above the current shape, stop vertical movement, to prevent
         // clipping into ceilings
-        velocity.y -= 0.5;
+        velocity.y = -0.5;
     }
 }
