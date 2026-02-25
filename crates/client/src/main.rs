@@ -2,7 +2,7 @@ use ::shared::{
     ServerMode, ServerRunMode, SharedPlugin, enemy::components::Enemy,
 };
 use bevy::{
-    dev_tools::fps_overlay::FpsOverlayPlugin,
+    dev_tools::fps_overlay::{FpsOverlayPlugin, FrameTimeGraphConfig},
     diagnostic::FrameTimeDiagnosticsPlugin,
     input_focus::InputDispatchPlugin,
     prelude::*,
@@ -60,7 +60,7 @@ fn main() {
 
     app.insert_resource(game_settings.clone());
 
-    let window_mode = if game_settings.fullscreen {
+    let window_mode = if game_settings.graphics.borderless_fullscreen {
         WindowMode::BorderlessFullscreen(MonitorSelection::Current)
     } else {
         WindowMode::Windowed
@@ -98,6 +98,11 @@ fn main() {
         config: bevy::dev_tools::fps_overlay::FpsOverlayConfig {
             text_config: TextFont {
                 font_size: 14.,
+                ..default()
+            },
+            enabled: game_settings.graphics.fps_overlay_shown,
+            frame_time_graph_config: FrameTimeGraphConfig {
+                enabled: false,
                 ..default()
             },
             ..default()

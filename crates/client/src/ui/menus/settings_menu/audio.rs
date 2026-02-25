@@ -3,7 +3,14 @@ use bevy::{
     ui_widgets::{Slider, SliderValue, ValueChange, observe},
 };
 
-use crate::{game_settings::GameSettings, ui::widgets::slider::build_slider};
+use crate::{
+    game_settings::GameSettings,
+    ui::{
+        common::DEFAULT_GAME_FONT_PATH,
+        menus::settings_menu::SettingsRightSideContentRoot,
+        widgets::slider::build_slider,
+    },
+};
 
 #[derive(Component)]
 pub struct VolumeSlider(VolumeSliderType);
@@ -13,78 +20,69 @@ enum VolumeSliderType {
     Music,
 }
 
-pub fn build_audio_settings_tab_content(
-    game_font: Handle<Font>,
+pub fn spawn_audio_settings_tab_content(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    settings_right_side: Single<Entity, With<SettingsRightSideContentRoot>>,
     game_settings: Res<GameSettings>,
-) -> impl Bundle {
-    let game_settings = game_settings.into_inner();
-    (
-        Node {
-            width: percent(100.0),
-            height: percent(100.0),
-            flex_direction: FlexDirection::Column,
-            row_gap: px(8.0),
-            padding: UiRect::all(px(8.0)),
-            ..default()
-        },
-        children![
-            Node {
-                flex_direction: FlexDirection::Row,
-                justify_content: JustifyContent::SpaceBetween,
-                ..default()
-            },
-            (
-                Node {
+) {
+    info!("Entered CurrentTab::Audio, spawning AudioSettingsTabContent");
+    let font_handle = asset_server.load(DEFAULT_GAME_FONT_PATH);
+
+    commands.entity(*settings_right_side).despawn_children();
+
+    commands
+        .entity(*settings_right_side)
+        .with_children(|parent| {
+            parent
+                .spawn(Node {
                     flex_direction: FlexDirection::Row,
                     justify_content: JustifyContent::SpaceBetween,
                     ..default()
-                },
-                children![
-                    (
+                })
+                .with_children(|parent| {
+                    parent.spawn((
                         Text::new("Sound Volume"),
                         TextFont {
-                            font: game_font.clone(),
+                            font: font_handle.clone(),
                             ..default()
                         },
-                    ),
-                    (
+                    ));
+                    parent.spawn((
                         build_slider(
                             0.0,
                             100.0,
-                            game_settings.sounds_volume,
+                            game_settings.audio.sounds_volume,
                             VolumeSlider(VolumeSliderType::Sounds),
                         ),
                         observe(update_game_settings_on_volume_slider_change),
-                    )
-                ],
-            ),
-            (
-                Node {
+                    ));
+                });
+            parent
+                .spawn((Node {
                     flex_direction: FlexDirection::Row,
                     justify_content: JustifyContent::SpaceBetween,
                     ..default()
-                },
-                children![
-                    (
+                },))
+                .with_children(|parent| {
+                    parent.spawn((
                         Text::new("Music Volume"),
                         TextFont {
-                            font: game_font,
+                            font: font_handle,
                             ..default()
                         },
-                    ),
-                    (
+                    ));
+                    parent.spawn((
                         build_slider(
                             0.0,
                             100.0,
-                            game_settings.music_volume,
+                            game_settings.audio.music_volume,
                             VolumeSlider(VolumeSliderType::Music),
                         ),
                         observe(update_game_settings_on_volume_slider_change),
-                    )
-                ],
-            )
-        ],
-    )
+                    ));
+                });
+        });
 }
 
 fn update_game_settings_on_volume_slider_change(
@@ -98,10 +96,10 @@ fn update_game_settings_on_volume_slider_change(
     };
     match volume_slider.0 {
         VolumeSliderType::Sounds => {
-            game_settings.sounds_volume = value_change.value;
+            game_settings.audio.sounds_volume = value_change.value;
         }
         VolumeSliderType::Music => {
-            game_settings.music_volume = value_change.value;
+            game_settings.audio.music_volume = value_change.value;
         }
     }
 }
@@ -119,12 +117,12 @@ pub fn update_volume_slider_value(
                 VolumeSliderType::Sounds => {
                     commands
                         .entity(slider_entity)
-                        .insert(SliderValue(game_settings.sounds_volume));
+                        .insert(SliderValue(game_settings.audio.sounds_volume));
                 }
                 VolumeSliderType::Music => {
                     commands
                         .entity(slider_entity)
-                        .insert(SliderValue(game_settings.music_volume));
+                        .insert(SliderValue(game_settings.audio.music_volume));
                 }
             }
         }

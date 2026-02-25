@@ -74,7 +74,7 @@ fn start_main_menu_theme(
         PlaybackSettings {
             mode: bevy::audio::PlaybackMode::Loop,
             volume: game_settings_volume_to_bevy_volume(
-                game_settings.music_volume,
+                game_settings.audio.music_volume,
             ),
             ..default()
         },
@@ -86,7 +86,7 @@ fn update_audio_settings_on_game_settings_change(
     game_settings: Res<GameSettings>,
     music_audio_sinks: Query<&mut AudioSink, With<MusicAudio>>,
 ) {
-    let music_volume = game_settings.music_volume;
+    let music_volume = game_settings.audio.music_volume;
     let new_music_volume =
         Volume::Linear((music_volume / 100.0).clamp(0.0, 1.0));
 
@@ -225,7 +225,7 @@ fn handle_play_sound_message(
             PlaybackSettings {
                 mode: bevy::audio::PlaybackMode::Once,
                 volume: game_settings_volume_to_bevy_volume(
-                    game_settings.sounds_volume,
+                    game_settings.audio.sounds_volume,
                 ),
                 ..default()
             },
