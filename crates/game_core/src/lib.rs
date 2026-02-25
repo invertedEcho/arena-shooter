@@ -362,7 +362,7 @@ fn handle_shoot_requests(
 
                     match game_score.players.get_mut(&remote_id.to_bits()) {
                         Some(player) => {
-                            info!(
+                            debug!(
                                 "increased kill count of player with \
                                  remote_id: {}",
                                 remote_id.to_bits()

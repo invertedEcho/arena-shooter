@@ -6,13 +6,10 @@ use bevy::{
     ui_widgets::Checkbox,
 };
 
-use crate::ui::common::{
-    DEFAULT_GAME_FONT_PATH, ELEMENT_FILL, ELEMENT_OUTLINE,
-};
+use crate::ui::common::{ELEMENT_FILL, ELEMENT_OUTLINE};
 
-/// Create a demo checkbox
 pub fn build_checkbox<T: Component>(
-    asset_server: &AssetServer,
+    font_handle: Handle<Font>,
     caption: &str,
     marker_component: T,
 ) -> impl Bundle {
@@ -62,7 +59,7 @@ pub fn build_checkbox<T: Component>(
             Spawn((
                 Text::new(caption),
                 TextFont {
-                    font: asset_server.load(DEFAULT_GAME_FONT_PATH),
+                    font: font_handle,
                     ..default()
                 },
             )),

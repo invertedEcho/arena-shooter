@@ -84,6 +84,7 @@ pub fn handle_keyboard_input_for_player(
     }
 }
 
+// FIXME: ONLY APPLY IF NO INPUT!
 pub fn apply_movement_damping(
     query: Single<(&mut LinearVelocity, &Grounded), OurPlayerFilter>,
 ) {

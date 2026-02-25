@@ -12,19 +12,30 @@ use crate::game_settings::utils::{
 
 mod utils;
 
-#[derive(Serialize, Deserialize, Resource, Clone)]
+#[derive(Serialize, Deserialize, Resource, Clone, Default)]
+#[serde(default)]
 pub struct GameSettings {
-    pub sounds_volume: f32,
-    pub music_volume: f32,
-    pub fullscreen: bool,
+    pub audio: AudioSettings,
+    pub graphics: GraphicsSettings,
 }
 
-impl Default for GameSettings {
+#[derive(Serialize, Deserialize, Clone)]
+pub struct AudioSettings {
+    pub sounds_volume: f32,
+    pub music_volume: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Default)]
+pub struct GraphicsSettings {
+    pub borderless_fullscreen: bool,
+    pub fps_overlay_shown: bool,
+}
+
+impl Default for AudioSettings {
     fn default() -> Self {
         Self {
             sounds_volume: 50.0,
             music_volume: 50.0,
-            fullscreen: true,
         }
     }
 }
@@ -60,7 +71,7 @@ pub fn get_or_create_game_settings() -> GameSettings {
             serde_json::from_str(&file_buffer);
         match game_settings {
             Ok(game_settings) => {
-                info!(
+                println!(
                     "Sucessfully serialized existing game settings to \
                      GameSettings struct."
                 );
