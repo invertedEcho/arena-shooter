@@ -17,7 +17,9 @@ use crate::{
             weapon_positions::get_position_for_weapon,
         },
         shooting::{
-            components::{PlayerShootCooldownTimer, PlayerWeapons, Weapon},
+            components::{
+                PlayerShootCooldownTimer, PlayerWeapons, ShootRecoil, Weapon,
+            },
             messages::{
                 PlayerBulletHit, PlayerWeaponFiredMessage,
                 PlayerWeaponSlotChangeMessage, ReloadPlayerWeaponMessage,
@@ -78,10 +80,16 @@ pub fn add_player_weapons_to_new_players(
                     },
                 ],
             },
+            ShootRecoil::default(),
         ));
     }
 }
 
+// TODO: its pretty unclear what this function does, and the corresponding system does which handles the
+// PlayerWeaponFiredMessage. this is called handle_input, so it really should just handle input,
+// but we also check stuff like whether the player weapons is even ready to shoot, e.g. ammo full,
+// so we only send a message if we can actually shoot. we do this here because some systems rely on
+// the fact that PlayerWeaponFiredMessage only gets sent when the player can actually shoot.
 pub fn handle_input(
     mut commands: Commands,
     mouse_input: Res<ButtonInput<MouseButton>>,

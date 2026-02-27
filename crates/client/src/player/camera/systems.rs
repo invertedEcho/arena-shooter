@@ -24,7 +24,7 @@ use crate::{
         },
         shooting::{
             asset_paths::get_asset_path_for_weapon_type,
-            components::PlayerWeapons,
+            components::{PlayerWeapons, ShootRecoil},
             messages::{
                 PlayerWeaponFiredMessage, PlayerWeaponSlotChangeMessage,
             },
@@ -143,6 +143,7 @@ type AnyCamera = Or<(With<WorldCamera>, With<ViewModelCamera>)>;
 pub fn update_yaw_pitch_on_mouse_motion(
     mouse_motion: Res<AccumulatedMouseMotion>,
     camera_transforms: Query<&mut Transform, AnyCamera>,
+    mut shoot_recoil: Single<&mut ShootRecoil>,
 ) {
     let delta = mouse_motion.delta;
     if delta == Vec2::ZERO {
@@ -161,12 +162,14 @@ pub fn update_yaw_pitch_on_mouse_motion(
         let new_pitch_camera = (delta_pitch + current_pitch_camera)
             .clamp(-PITCH_LIMIT, PITCH_LIMIT);
 
-        transform.rotation = Quat::from_euler(
+        let new_rotation = Quat::from_euler(
             EulerRot::YXZ,
             new_yaw_camera,
             new_pitch_camera,
             current_roll_camera,
         );
+        transform.rotation = new_rotation;
+        shoot_recoil.original_rotation = new_rotation;
     }
 }
 
@@ -447,7 +450,7 @@ pub fn interpolate_weapon_position(
         .lerp(target_destination, time.delta_secs() * speed);
 }
 
-pub fn do_weapon_kickback(
+pub fn weapon_model_kickback(
     mut player_weapon_model_transform: Single<
         &mut Transform,
         With<PlayerWeaponModel>,
@@ -457,4 +460,23 @@ pub fn do_weapon_kickback(
     for _ in player_shot_message_reader.read() {
         player_weapon_model_transform.rotation *= Quat::from_rotation_z(0.15);
     }
+}
+
+pub fn recoil_camera_kickback(
+    mut world_camera: Single<&mut Transform, With<WorldCamera>>,
+    mut player_shot_message_reader: MessageReader<PlayerWeaponFiredMessage>,
+) {
+    for _ in player_shot_message_reader.read() {
+        world_camera.rotation *= Quat::from_rotation_x(0.025);
+    }
+}
+
+pub fn recoil_slerp_back(
+    shoot_recoil: Single<&mut ShootRecoil>,
+    mut world_camera: Single<&mut Transform, With<WorldCamera>>,
+    time: Res<Time>,
+) {
+    world_camera.rotation = world_camera
+        .rotation
+        .slerp(shoot_recoil.original_rotation, 3.5 * time.delta_secs());
 }
