@@ -2,7 +2,7 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 use lightyear::prelude::Controlled;
 use shared::{
-    GRAVITY, Medkit,
+    GRAVITY,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
         RUN_VELOCITY, WALK_VELOCITY, apply_collide_and_slide,
@@ -10,6 +10,7 @@ use shared::{
     },
     enemy::components::Enemy,
     player::PlayerState,
+    world_object::WorldObjectCollectibleServerSide,
 };
 
 use crate::{
@@ -109,7 +110,7 @@ pub fn handle_movement_actions_for_character_controllers(
     >,
     mut spatial_query: SpatialQuery,
     time: Res<Time>,
-    medkit_query: Query<Entity, With<Medkit>>,
+    world_objects_query: Query<Entity, With<WorldObjectCollectibleServerSide>>,
 ) {
     for movement_action in movement_action_reader.read() {
         let sprinting = movement_action.sprinting;
@@ -137,8 +138,8 @@ pub fn handle_movement_actions_for_character_controllers(
                 }
             }
             MovementDirection::Move(desired_velocity) => {
-                // exclude medkits because we want to be able to walk through medkits
-                let excluded_entities: Vec<Entity> = medkit_query
+                // exclude world objects because we want to be able to walk through them
+                let excluded_entities: Vec<Entity> = world_objects_query
                     .iter()
                     .chain(std::iter::once(character_controller_entity))
                     .collect();

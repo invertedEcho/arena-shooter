@@ -7,7 +7,8 @@ use game_core::ServerLoadingState;
 use lightyear::prelude::MessageSender;
 use shared::{
     GameStateServer, ServerMode,
-    protocol::{ChangeGameServerStateRequest, OrderedReliableChannel},
+    multiplayer_messages::ChangeGameServerStateRequest,
+    protocol::OrderedReliableChannel,
 };
 
 use crate::{

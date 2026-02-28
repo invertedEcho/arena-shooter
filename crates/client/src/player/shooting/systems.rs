@@ -3,8 +3,9 @@ use bevy::{input::mouse::MouseWheel, prelude::*};
 use lightyear::prelude::*;
 use shared::{
     components::Health,
+    multiplayer_messages::ShootRequest,
     player::{AimType, PlayerState},
-    protocol::{OrderedReliableChannel, ShootRequest},
+    protocol::OrderedReliableChannel,
     shooting::MAX_SHOOTING_DISTANCE,
 };
 

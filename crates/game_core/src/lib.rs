@@ -12,20 +12,21 @@ use lightyear::{
     },
 };
 use shared::{
-    ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH, GameModeServer,
-    GameStateServer, PlayerHitMessage, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
-    SelectedMapState, ServerMode,
+    DEFAULT_HEALTH, GameModeServer, GameStateServer,
+    SPAWN_POINT_MEDIUM_PLASTIC_MAP, SelectedMapState, ServerMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
-    components::Health,
+    components::{EntityPositionServer, Health},
     enemy::components::Enemy,
     game_score::{GameScore, LivingEntityStats},
-    player::{Player, PlayerBundle},
-    protocol::{
-        ChangeGameServerStateRequest, ClientUpdatePositionMessage,
-        EntityPositionServer, OrderedReliableChannel, ShootRequest,
+    multiplayer_messages::{
+        ChangeGameServerStateRequest, ClientRespawnRequest,
+        ClientUpdatePositionMessage, ConfirmRespawn, PlayerHitMessage,
+        ShootRequest,
     },
+    player::{Player, PlayerBundle},
+    protocol::OrderedReliableChannel,
     shooting::MAX_SHOOTING_DISTANCE,
     utils::{
         auth::get_private_key,
@@ -43,11 +44,13 @@ use crate::{
     },
     game_flow::GameFlowPlugin,
     nav_mesh_pathfinding::NavMeshPathfindingPlugin,
+    world_objects::WorldObjectsPlugin,
 };
 
 mod enemy;
 mod game_flow;
 mod nav_mesh_pathfinding;
+mod world_objects;
 
 // on client, the state gets reset to Initial when we exit to main menu, as everything gets
 // despawned.
@@ -83,10 +86,9 @@ impl Plugin for GameCorePlugin {
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
         app.add_plugins(EnemyPlugin);
-
         app.add_plugins(NavMeshPathfindingPlugin);
-
         app.add_plugins(GameFlowPlugin);
+        app.add_plugins(WorldObjectsPlugin);
 
         app.add_systems(Startup, start_server);
 

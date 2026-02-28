@@ -7,13 +7,16 @@ use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
+use shared::ServerMode;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
-use shared::player::Player;
-use shared::protocol::{
-    ClientUpdatePositionMessage, EntityPositionServer, OrderedReliableChannel,
+use shared::components::EntityPositionServer;
+use shared::multiplayer_messages::{
+    ClientUpdatePositionMessage, ConfirmRespawn, PlayerHitMessage,
 };
+use shared::player::Player;
+use shared::protocol::OrderedReliableChannel;
 use shared::utils::lightyear::{
     DisconnectReason, parse_lightyear_disconnect_reason,
 };
@@ -21,7 +24,6 @@ use shared::utils::network::{
     SERVER_PORT, get_auth_backend_socket_addr_client_side,
     get_server_socket_addr_client_side,
 };
-use shared::{ConfirmRespawn, PlayerHitMessage, ServerMode};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,

@@ -14,10 +14,9 @@ use shared::{
         MAX_DISTANCE_GROUNDED_SHAPE_CAST, RUN_VELOCITY, WALK_VELOCITY,
         components::Grounded,
     },
-    components::Health,
+    components::{EntityPositionServer, Health},
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
     game_score::{GameScore, LivingEntityStats},
-    protocol::EntityPositionServer,
 };
 
 /// A marker component inserted on entities with a mesh, indicating that an enemy may be spawned

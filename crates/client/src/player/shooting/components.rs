@@ -5,6 +5,7 @@ use crate::shared::{WeaponState, WeaponStats};
 #[derive(Component)]
 pub struct PlayerShootCooldownTimer(pub Timer);
 
+// TODO: this stuff should probably also only be spawned on server and synced to clients...
 #[derive(Component)]
 pub struct PlayerWeapons {
     pub weapons: [Weapon; 2],

@@ -9,6 +9,9 @@ pub struct Health(pub f32);
 #[derive(Component)]
 pub struct DespawnTimer(pub Timer);
 
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-pub struct MedkitSpawnLocation;
+/// This component indicates the current location of an entity on the server. It is replicated to
+/// all clients. All clients interpolate the local transform of this entity to this component
+#[derive(Component, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct EntityPositionServer {
+    pub translation: Vec3,
+}

@@ -3,8 +3,9 @@ use bevy::prelude::*;
 use game_core::GameStateWave;
 use lightyear::prelude::*;
 use shared::{
-    ClientRespawnRequest, DEFAULT_HEALTH, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
-    ServerMode, components::Health, protocol::OrderedReliableChannel,
+    DEFAULT_HEALTH, SPAWN_POINT_MEDIUM_PLASTIC_MAP, ServerMode,
+    components::Health, multiplayer_messages::ClientRespawnRequest,
+    protocol::OrderedReliableChannel,
 };
 
 use crate::{

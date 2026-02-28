@@ -2,8 +2,8 @@ use bevy::{color::palettes::css::WHITE, prelude::*};
 use game_core::GameStateWave;
 use lightyear::prelude::{Controlled, MessageReceiver};
 use shared::{
-    PlayerHitMessage,
     components::{DespawnTimer, Health},
+    multiplayer_messages::PlayerHitMessage,
     player::{AimType, Player, PlayerReady, PlayerState},
 };
 

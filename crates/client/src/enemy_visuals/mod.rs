@@ -245,13 +245,20 @@ fn health_bar_follow_enemy(
     health_bar_query: Query<(&mut Transform, &HealthBar), Without<Enemy>>,
 ) {
     for (mut health_bar_transform, health_bar) in health_bar_query {
-        if let Ok(enemy_transform) = enemy_transform.get(health_bar.0) {
-            health_bar_transform.translation = enemy_transform.translation;
-            // so its above the head
-            health_bar_transform.translation.y += 1.0;
-        } else {
-            warn!("Failed to update health bar position to enemy position");
-        }
+        match enemy_transform.get(health_bar.0) {
+            Ok(enemy_transform) => {
+                health_bar_transform.translation = enemy_transform.translation;
+                // so its above the head
+                health_bar_transform.translation.y += 1.0;
+            }
+            Err(error) => {
+                warn!(
+                    "Failed to update health bar position to enemy position: \
+                     {}",
+                    error
+                );
+            }
+        };
     }
 }
 

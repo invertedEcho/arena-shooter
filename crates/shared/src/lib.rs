@@ -8,10 +8,12 @@ pub mod character_controller;
 pub mod components;
 pub mod enemy;
 pub mod game_score;
+pub mod multiplayer_messages;
 pub mod player;
 pub mod protocol;
 pub mod shooting;
 pub mod utils;
+pub mod world_object;
 
 pub const DEFAULT_HEALTH: f32 = 100.0;
 
@@ -47,19 +49,6 @@ pub enum GameStateServer {
     Paused,
 }
 
-#[derive(Component)]
-pub struct Medkit {
-    pub active: bool,
-    pub health_to_give: f32,
-    pub float_direction: MedkitFloatDirection,
-    pub respawn_timer: Timer,
-}
-
-pub enum MedkitFloatDirection {
-    Up,
-    Down,
-}
-
 #[derive(Message)]
 pub struct SpawnDebugSphereMessage {
     pub location: Vec3,
@@ -80,22 +69,6 @@ impl SpawnDebugSphereMessage {
         }
     }
 }
-
-// A client can send this message to the server indicating that the player requested a respawn.
-// The server will then update the players health and the players position.
-#[derive(Serialize, Deserialize)]
-pub struct ClientRespawnRequest;
-
-/// This message is sent from server to client, so the client can spawn the damage indicator
-#[derive(Serialize, Deserialize, Message, Copy, Clone)]
-pub struct PlayerHitMessage {
-    pub origin: Vec3,
-}
-
-// The server will send this message to the client that the respawn was made and the client can now
-// update internal state, such as `InGameState`.
-#[derive(Serialize, Deserialize)]
-pub struct ConfirmRespawn;
 
 /// 0: The enemy entity that was killed
 #[derive(Message)]
