@@ -40,6 +40,7 @@ pub fn spawn_world_objects(
             Name::new("Medkit Collider"),
             CollidingEntities::default(),
             RespawnTimer(Timer::from_seconds(5.0, TimerMode::Repeating)),
+            Replicate::to_clients(NetworkTarget::All),
         ));
     }
 
@@ -54,6 +55,7 @@ pub fn spawn_world_objects(
             Name::new("Ammunition Pack"),
             RespawnTimer(Timer::from_seconds(5.0, TimerMode::Repeating)),
             CollidingEntities::default(),
+            Replicate::to_clients(NetworkTarget::All),
         ));
     }
 }
