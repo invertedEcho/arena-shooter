@@ -56,14 +56,14 @@ pub struct WeaponStats {
     /// The type of the weapon
     pub weapon_type: WeaponType,
     /// How much ammunition the weapon can hold at most (e.g. in the barrel)
-    pub max_loaded_ammo: u32,
+    pub max_loaded_ammo: u64,
     pub weapon_slot_type: WeaponSlotType,
 }
 
 #[derive(Component)]
 pub struct WeaponState {
-    pub loaded_ammo: u32,
-    pub carried_ammo: u32,
+    pub loaded_ammo: u64,
+    pub carried_ammo: u64,
 }
 
 #[derive(PartialEq, Clone)]

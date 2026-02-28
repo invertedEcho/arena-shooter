@@ -3,7 +3,7 @@ use bevy::{input::mouse::MouseWheel, prelude::*};
 use lightyear::prelude::*;
 use shared::{
     components::Health,
-    multiplayer_messages::ShootRequest,
+    multiplayer_messages::{AmmunitionBoxCollected, ShootRequest},
     player::{AimType, PlayerState},
     protocol::OrderedReliableChannel,
     shooting::MAX_SHOOTING_DISTANCE,
@@ -403,5 +403,18 @@ pub fn check_if_player_dead(
 ) {
     if player_health.0 <= 0.0 {
         player_death_message_writer.write(PlayerDeathMessage);
+    }
+}
+
+pub fn handle_ammunition_box_collected_message(
+    mut message_receiver: Single<&mut MessageReceiver<AmmunitionBoxCollected>>,
+    player_weapons: Single<(&mut PlayerWeapons, &PlayerState)>,
+) {
+    let (mut player_weapons, player_state) = player_weapons.into_inner();
+    for message in message_receiver.receive() {
+        info!("Received message!");
+        let current_weapon =
+            &mut player_weapons.weapons[player_state.active_weapon_slot];
+        current_weapon.state.carried_ammo += message.ammunition_to_give;
     }
 }

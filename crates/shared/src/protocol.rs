@@ -7,9 +7,9 @@ use crate::{
     enemy::components::{Enemy, EnemyState},
     game_score::GameScore,
     multiplayer_messages::{
-        ChangeGameServerStateRequest, ClientRespawnRequest,
-        ClientUpdatePositionMessage, ConfirmRespawn, PlayerHitMessage,
-        ShootRequest,
+        AmmunitionBoxCollected, ChangeGameServerStateRequest,
+        ClientRespawnRequest, ClientUpdatePositionMessage, ConfirmRespawn,
+        PlayerHitMessage, ShootRequest,
     },
     player::{Player, PlayerState},
     world_object::WorldObjectCollectibleServerSide,
@@ -49,6 +49,9 @@ impl Plugin for ProtocolPlugin {
             .add_direction(NetworkDirection::ClientToServer);
 
         app.register_message::<PlayerHitMessage>()
+            .add_direction(NetworkDirection::ServerToClient);
+
+        app.register_message::<AmmunitionBoxCollected>()
             .add_direction(NetworkDirection::ServerToClient);
 
         app.register_component::<Player>();
