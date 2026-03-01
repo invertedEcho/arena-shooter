@@ -17,7 +17,7 @@ pub mod world_object;
 
 pub const DEFAULT_HEALTH: f32 = 100.0;
 
-#[derive(Resource, PartialEq)]
+#[derive(Resource, PartialEq, Debug)]
 pub enum ServerRunMode {
     Headless,
     Headful,

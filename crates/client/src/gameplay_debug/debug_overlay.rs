@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::GameModeServer;
+use shared::{GameModeServer, ServerMode, ServerRunMode};
 
 use crate::{
     game_flow::states::{
@@ -24,6 +24,9 @@ impl Plugin for DebugOverlayPlugin {
                 update_current_main_menu_state,
                 update_loading_game_state_text,
                 update_current_server_game_mode_text,
+                update_server_run_mode_text
+                    .run_if(resource_changed::<ServerRunMode>),
+                update_server_mode_text.run_if(state_changed::<ServerMode>),
             ),
         );
     }
@@ -49,6 +52,12 @@ struct CurrentConnectionStateText;
 
 #[derive(Component)]
 struct DebugOverlayRoot;
+
+#[derive(Component)]
+struct CurrentServerModeText;
+
+#[derive(Component)]
+struct CurrentServerRunModeText;
 
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
@@ -95,6 +104,16 @@ fn spawn_debug_overlay(mut commands: Commands) {
             parent.spawn(build_debug_overlay_state_item_text(
                 "ConnectionState",
                 CurrentConnectionStateText,
+            ));
+
+            parent.spawn(build_debug_overlay_state_item_text(
+                "ServerMode",
+                CurrentServerModeText,
+            ));
+
+            parent.spawn(build_debug_overlay_state_item_text(
+                "ServerMode",
+                CurrentServerRunModeText,
             ));
         });
 }
@@ -213,4 +232,18 @@ fn update_debug_overlay_visibility(
     } else if *app_debug_state.get() == AppDebugState::Disabled {
         **debug_overlay_visibility = Visibility::Hidden;
     }
+}
+
+fn update_server_run_mode_text(
+    mut server_run_mode_text: Single<&mut Text, With<CurrentServerRunModeText>>,
+    server_run_mode: Res<ServerRunMode>,
+) {
+    **server_run_mode_text = Text::new(format!("{:?}", server_run_mode));
+}
+
+fn update_server_mode_text(
+    mut server_mode_text: Single<&mut Text, With<CurrentServerModeText>>,
+    server_mode: Res<State<ServerMode>>,
+) {
+    **server_mode_text = Text::new(format!("{:?}", server_mode));
 }

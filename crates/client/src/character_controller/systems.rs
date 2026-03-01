@@ -165,9 +165,18 @@ pub fn handle_movement_actions_for_character_controllers(
 /// Updates the [`Grounded`] component
 pub fn update_grounded(
     mut query: Query<(&ShapeHits, &mut Grounded), EntitiesRelevantForGravity>,
+    world_objects_query: Query<Entity, With<WorldObjectCollectibleServerSide>>,
 ) {
     for (hits, mut grounded) in &mut query {
-        let on_ground = !hits.0.is_empty();
+        let hits_without_world_objects: Vec<&ShapeHitData> = hits
+            .0
+            .iter()
+            .filter(|shape_hit_data| {
+                !world_objects_query.contains(shape_hit_data.entity)
+            })
+            .collect();
+
+        let on_ground = !hits_without_world_objects.is_empty();
 
         if grounded.0 != on_ground {
             grounded.0 = on_ground;
@@ -206,17 +215,22 @@ pub fn zero_player_velocity(
 }
 
 pub fn check_above_head(
+    mut commands: Commands,
     query: Query<
         (Entity, &mut LinearVelocity, &Transform, &Grounded),
         With<CharacterController>,
     >,
     spatial_query: SpatialQuery,
+    world_objects_query: Query<Entity, With<WorldObjectCollectibleServerSide>>,
 ) {
     for (entity_itself, mut velocity, transform, grounded) in query {
         if grounded.0 {
             continue;
         };
-        let Some(_) = spatial_query.cast_shape(
+        let excluded_entities =
+            world_objects_query.iter().chain([entity_itself]);
+
+        let Some(hit) = spatial_query.cast_shape(
             &Collider::capsule(
                 CHARACTER_CAPSULE_RADIUS,
                 CHARACTER_CAPSULE_LENGTH,
@@ -227,10 +241,12 @@ pub fn check_above_head(
             // TODO: investigate whether we can further decrease this value
             &ShapeCastConfig::default().with_max_distance(0.1),
             &SpatialQueryFilter::default()
-                .with_excluded_entities([entity_itself]),
+                .with_excluded_entities(excluded_entities),
         ) else {
             continue;
         };
+        info!("CHECK ABOVE HEAD HIT: {}", hit.entity);
+        commands.entity(hit.entity).log_components();
 
         // if there is something above the current shape, stop vertical movement, to prevent
         // clipping into ceilings
