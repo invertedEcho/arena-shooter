@@ -1,5 +1,5 @@
 ﻿use bevy::prelude::*;
-use shared::ServerMode;
+use shared::{AppRole, ServerMode};
 
 use crate::{
     game_flow::states::{AppState, GameModeClient, MainMenuState},
@@ -102,6 +102,7 @@ fn handle_main_menu_button_pressed(
     mut next_game_mode_state: ResMut<NextState<GameModeClient>>,
     mut server_run_mode: ResMut<NextState<ServerMode>>,
     mut next_app_state: ResMut<NextState<AppState>>,
+    mut next_app_role: ResMut<NextState<AppRole>>,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
         let Interaction::Pressed = interaction else {
@@ -111,11 +112,13 @@ fn handle_main_menu_button_pressed(
             MainMenuButton::Singleplayer => {
                 server_run_mode.set(ServerMode::LocalServerSinglePlayer);
                 next_main_menu_state.set(MainMenuState::MapSelection);
+                next_app_role.set(AppRole::ClientAndServer);
             }
             MainMenuButton::Multiplayer => {
                 server_run_mode.set(ServerMode::RemoteServer);
                 next_game_mode_state.set(GameModeClient::Multiplayer);
                 next_app_state.set(AppState::LoadingGame);
+                next_app_role.set(AppRole::ClientOnly);
             }
             MainMenuButton::SettingsMainMenu => {
                 next_main_menu_state.set(MainMenuState::Settings);

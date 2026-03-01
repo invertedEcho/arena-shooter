@@ -120,6 +120,7 @@ pub fn check_world_scene_loaded(
 // events with expected
 pub fn check_collider_constructor_hierarchy_ready(
     _trigger: On<ColliderConstructorHierarchyReady>,
+    current_loading_state: Res<State<ServerLoadingState>>,
     mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
     server_mode: Res<State<ServerMode>>,
     mut next_app_state: ResMut<NextState<AppState>>,
@@ -127,10 +128,12 @@ pub fn check_collider_constructor_hierarchy_ready(
     info!("ColliderConstructorHierarchyReady! setting AppState to InGame");
     next_app_state.set(AppState::InGame);
 
-    if *server_mode == ServerMode::LocalServerSinglePlayer {
+    if *server_mode == ServerMode::LocalServerSinglePlayer
+        && *current_loading_state.get() != ServerLoadingState::CollidersSpawned
+    {
         info!(
-            "We have LocalServerSinglePlayer, so we set serverloadingstate to \
-             CollidersSpawned"
+            "ColliderConstructorHierarchyReady!, setting \
+             ServerLoadingState::CollidersSpawned"
         );
         next_server_loading_state.set(ServerLoadingState::CollidersSpawned);
     }

@@ -1,5 +1,6 @@
 use ::shared::{
-    ServerMode, ServerRunMode, SharedPlugin, enemy::components::Enemy,
+    AppRole, ServerMode, ServerRunMode, SharedPlugin, enemy::components::Enemy,
+    player::Player,
 };
 use bevy::{
     dev_tools::fps_overlay::{FpsOverlayPlugin, FrameTimeGraphConfig},
@@ -29,7 +30,7 @@ use crate::{
     player::PlayerPlugin,
     shared::{CommonPlugin, systems::apply_render_layers_to_children},
     ui::UserInterfacePlugin,
-    world::WorldPlugin,
+    world::{WorldPlugin, components::MapModel},
 };
 
 mod audio;
@@ -84,6 +85,8 @@ fn main() {
                 ..default()
             }),
     );
+
+    app.insert_state(AppRole::ClientOnly);
 
     app.add_plugins(game_core::GameCorePlugin);
 
@@ -145,6 +148,15 @@ fn main() {
     app.add_systems(Update, ensure_egui_context_exists);
     app.add_systems(OnExit(AppState::InGame), despawn_enemys_on_exit);
 
+    app.add_systems(
+        Update,
+        (
+            log_current_player_count,
+            log_camera_count,
+            log_map_model_count,
+        ),
+    );
+
     app.run();
 }
 
@@ -170,4 +182,25 @@ pub fn despawn_enemys_on_exit(
     for enemy in enemy_query {
         commands.entity(enemy).despawn();
     }
+}
+
+fn log_current_player_count(query: Query<Entity, With<Player>>) {
+    info!(
+        "Currently, {} players exist in the client world",
+        query.iter().count()
+    );
+}
+
+fn log_camera_count(query: Query<Entity, With<Camera>>) {
+    info!(
+        "Currently, {} cameras exist in the client world",
+        query.iter().count()
+    );
+}
+
+fn log_map_model_count(query: Query<Entity, With<MapModel>>) {
+    info!(
+        "Currently, {} map models exist in the client world",
+        query.iter().count()
+    );
 }

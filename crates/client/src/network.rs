@@ -5,6 +5,7 @@ use avian3d::prelude::*;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
+use game_core::start_server;
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
 use shared::character_controller::{
@@ -21,7 +22,7 @@ use shared::utils::network::{
     SERVER_PORT, get_auth_backend_socket_addr_client_side,
     get_server_socket_addr_client_side,
 };
-use shared::{ConfirmRespawn, PlayerHitMessage, ServerMode};
+use shared::{AppRole, ConfirmRespawn, PlayerHitMessage, ServerMode};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,
@@ -44,6 +45,10 @@ pub struct NetworkPlugin;
 impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
+            OnEnter(ClientLoadingState::StartingServer),
+            start_server,
+        );
+        app.add_systems(
             OnEnter(ClientLoadingState::ConnectingToServer),
             on_enter_connecting_to_server,
         );
@@ -57,20 +62,33 @@ impl Plugin for NetworkPlugin {
             (
                 send_client_update_position,
                 apply_server_position_other_clients,
-            )
-                .run_if(in_state(ServerMode::RemoteServer)),
+                handle_confirm_respawn_message,
+                handle_hit_message,
+            ),
         );
-        app.add_systems(
-            Update,
-            (handle_confirm_respawn_message, handle_hit_message),
-        );
+        app.add_observer(handle_added_server);
         app.add_observer(handle_new_player);
         app.add_observer(handle_connected);
         app.add_observer(handle_disconnect);
     }
 }
 
-pub fn on_enter_connecting_to_server(
+fn handle_added_server(
+    trigger: On<Add, Server>,
+    app_role: Res<State<AppRole>>,
+    mut next_client_loading_state: ResMut<NextState<ClientLoadingState>>,
+) {
+    info!("Server {} now added!", trigger.entity);
+    if *app_role.get() == AppRole::ClientAndServer {
+        info!(
+            "Server was added and AppRole::ClientAndServer, setting \
+             LoadingState to ConnectingToServer"
+        );
+        next_client_loading_state.set(ClientLoadingState::ConnectingToServer);
+    }
+}
+
+fn on_enter_connecting_to_server(
     mut commands: Commands,
     connected_query: Query<Has<Connected>>,
     game_mode: Res<State<GameModeClient>>,
@@ -217,7 +235,7 @@ fn handle_new_player(
     }
 }
 
-pub fn send_client_update_position(
+fn send_client_update_position(
     // With<Client> also ensures its the messagesender from our local client, as client component
     // only gets inserted into our own client
     mut message_sender: Single<
@@ -233,7 +251,7 @@ pub fn send_client_update_position(
     );
 }
 
-pub fn apply_server_position_other_clients(
+fn apply_server_position_other_clients(
     time: Res<Time>,
     mut query: Query<(
         &mut Transform,
@@ -255,7 +273,7 @@ pub fn apply_server_position_other_clients(
     }
 }
 
-pub fn handle_disconnect(
+fn handle_disconnect(
     trigger: On<Add, Disconnected>,
     disconnected: Query<&Disconnected>,
     mut next_app_state: ResMut<NextState<AppState>>,
@@ -295,7 +313,7 @@ pub fn handle_disconnect(
     }
 }
 
-pub fn handle_confirm_respawn_message(
+fn handle_confirm_respawn_message(
     mut message_receiver: Single<&mut MessageReceiver<ConfirmRespawn>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
@@ -305,7 +323,7 @@ pub fn handle_confirm_respawn_message(
     }
 }
 
-pub fn handle_hit_message(
+fn handle_hit_message(
     mut message_receiver: Single<&mut MessageReceiver<PlayerHitMessage>>,
     mut message_sender: MessageWriter<PlayerHitMessage>,
 ) {

@@ -12,9 +12,9 @@ use lightyear::{
     },
 };
 use shared::{
-    ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH, GameModeServer,
-    GameStateServer, PlayerHitMessage, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
-    SelectedMapState, ServerMode,
+    AppRole, ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH,
+    GameModeServer, GameStateServer, PlayerHitMessage,
+    SPAWN_POINT_MEDIUM_PLASTIC_MAP, SelectedMapState, ServerMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -88,8 +88,6 @@ impl Plugin for GameCorePlugin {
 
         app.add_plugins(GameFlowPlugin);
 
-        app.add_systems(Startup, start_server);
-
         app.add_systems(
             Update,
             (
@@ -116,7 +114,12 @@ impl Plugin for GameCorePlugin {
 pub fn start_server(
     mut commands: Commands,
     server_mode: Res<State<ServerMode>>,
+    app_role: Res<State<AppRole>>,
 ) {
+    if *app_role.get() == AppRole::ClientOnly {
+        info!("Skipping starting of server, AppRole is ClientOnly");
+        return;
+    }
     let entity_name = match server_mode.get() {
         ServerMode::LocalServerSinglePlayer => "Local Server for singleplayer",
         ServerMode::RemoteServer => "Server from server Binary",
@@ -129,7 +132,11 @@ pub fn start_server(
             SERVER_SOCKET_ADDR_REMOTE_SERVER
         };
 
-    info!("Starting server on {}", local_addr);
+    info!(
+        "Starting server on {}, current AppRole: {:?}",
+        local_addr,
+        app_role.get()
+    );
 
     let server = commands
         .spawn((

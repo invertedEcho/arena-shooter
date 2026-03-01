@@ -6,12 +6,13 @@ use bevy::prelude::*;
 use bevy::state::app::StatesPlugin;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use game_core::start_server;
 use lightyear::utils::collections::HashSet;
-use shared::SharedPlugin;
 use shared::utils::auth::get_private_key;
 use shared::utils::network::{
     AUTH_BACKEND_ADDRESS_SERVER_SIDE, get_server_socket_addr_client_side,
 };
+use shared::{AppRole, SharedPlugin};
 use shared::{ServerMode, ServerRunMode};
 
 use crate::auth::start_netcode_authentication_task;
@@ -23,7 +24,7 @@ mod systems;
 mod utils;
 
 /// This plugin adds all plugins from bevy necessary to start a headless server
-pub struct HeadlessServerPlugin;
+struct HeadlessServerPlugin;
 
 impl Plugin for HeadlessServerPlugin {
     fn build(&self, app: &mut App) {
@@ -40,7 +41,7 @@ impl Plugin for HeadlessServerPlugin {
 }
 
 /// This plugin adds all plugins from bevy necessary to start a headful server
-pub struct HeadfulServerPlugin;
+struct HeadfulServerPlugin;
 
 impl Plugin for HeadfulServerPlugin {
     fn build(&self, app: &mut App) {
@@ -55,17 +56,6 @@ impl Plugin for HeadfulServerPlugin {
     }
 }
 
-/// This plugin adds plugins & systems thats only relevant if the server is the server binary
-/// itself.
-pub struct MultiPlayerServerOnlyPlugin;
-
-impl Plugin for MultiPlayerServerOnlyPlugin {
-    fn build(&self, app: &mut App) {
-        // if we would add SharedPlugin in GameCorePlugin, it would already be added by client
-        app.add_plugins(SharedPlugin);
-    }
-}
-
 fn main() {
     dotenvy::dotenv().ok();
     let mut app = App::new();
@@ -75,7 +65,7 @@ fn main() {
 
     app.add_plugins(StatesPlugin);
 
-    app.insert_state(ServerMode::RemoteServer);
+    app.insert_state(AppRole::DedicatedServer);
 
     match run_mode {
         ServerRunMode::Headless => {
@@ -89,7 +79,9 @@ fn main() {
     }
 
     app.add_plugins(game_core::GameCorePlugin);
-    app.add_plugins(MultiPlayerServerOnlyPlugin);
+    app.add_plugins(SharedPlugin);
+
+    app.add_systems(Startup, start_server);
 
     app.add_systems(Startup, spawn_map_colliders);
 

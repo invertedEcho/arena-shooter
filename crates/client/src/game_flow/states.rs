@@ -18,6 +18,9 @@ pub enum AppState {
 #[source(AppState = AppState::LoadingGame)]
 pub enum ClientLoadingState {
     #[default]
+    /// Note that this state will be skipped if AppRole::ClientOnly. This is only relevant for
+    /// AppRole::ClientAndServer
+    StartingServer,
     ConnectingToServer,
     SpawningMap,
     SpawningColliders,
@@ -26,11 +29,10 @@ pub enum ClientLoadingState {
 impl Display for ClientLoadingState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::StartingServer => f.write_str("Starting local server"),
             Self::SpawningMap => f.write_str("Spawning the map"),
             Self::SpawningColliders => f.write_str("Setting up collisions"),
-            Self::ConnectingToServer => {
-                f.write_str("Connecting to the game server")
-            }
+            Self::ConnectingToServer => f.write_str("Connecting to the server"),
         }
     }
 }

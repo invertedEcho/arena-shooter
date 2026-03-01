@@ -21,6 +21,21 @@ pub enum ServerRunMode {
     Headful,
 }
 
+/// This state exists both in server binary and client binary. As game_core runs on both server
+/// binary and client binary, it helps game_core to understand in which context it is currently
+/// running. So for example if the game_core checks this state and sees ClientOnly, then it knows
+/// not to run simulation logic, as the multiplayer server already runs that
+#[derive(States, PartialEq, Debug, Hash, Clone, Eq)]
+pub enum AppRole {
+    /// This app is a client that is connecting to multiplayer server
+    ClientOnly,
+    /// This app is a client that is also hosting a local server, e.g. Singleplayer
+    ClientAndServer,
+    /// This app is the server binary
+    DedicatedServer,
+}
+
+// FIXME: this is kinda duplicate from above AppRole
 /// A state indicating whether we are using a remote server to connect to,
 /// or a local server is started, e.g. for singleplayer
 #[derive(States, PartialEq, Debug, Hash, Clone, Eq)]
