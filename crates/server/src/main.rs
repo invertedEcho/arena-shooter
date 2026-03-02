@@ -8,12 +8,12 @@ use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use game_core::start_server;
 use lightyear::utils::collections::HashSet;
-use shared::ServerRunMode;
 use shared::utils::auth::load_private_key_from_env;
 use shared::utils::network::{
     AUTH_BACKEND_ADDRESS_SERVER_SIDE, get_server_socket_addr_client_side,
 };
 use shared::{AppRole, SharedPlugin};
+use shared::{ServerRunMode, StartGame};
 
 use crate::auth::start_netcode_authentication_task;
 use crate::utils::get_run_mode;
@@ -79,7 +79,7 @@ fn main() {
     app.add_plugins(game_core::GameCorePlugin);
     app.add_plugins(SharedPlugin);
 
-    app.add_systems(Startup, start_server);
+    app.add_systems(Startup, (start_server, write_start_game_message));
 
     if run_mode == ServerRunMode::Headful {
         app.add_systems(Startup, spawn_camera_if_headful);
@@ -103,6 +103,10 @@ fn main() {
     );
 
     app.run();
+}
+
+fn write_start_game_message(mut message_writer: MessageWriter<StartGame>) {
+    message_writer.write(StartGame);
 }
 
 fn spawn_camera_if_headful(

@@ -124,7 +124,7 @@ impl Plugin for SharedPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(ProtocolPlugin);
 
-        app.add_message::<StartSinglePlayerGame>();
+        app.add_message::<StartGame>();
         app.add_message::<StopSinglePlayerGame>();
 
         app.add_plugins(PhysicsPlugins::default().build())
@@ -154,11 +154,10 @@ pub fn handle_despawn_timer(
     }
 }
 
-/// A client can send this message to game_core, and game_core will start the server, spawn map,
-/// etc...
-///  NOTE: This message gets ignored if game_core has AppRole::DedicatedServer (atm)
+/// game_core listens for this message. Upon receiving, game_core will spawn the map, spawn colliders,
+/// spawn enemies, etc...
 #[derive(Message)]
-pub struct StartSinglePlayerGame;
+pub struct StartGame;
 
 /// A client can send this message to game_core, and game_core will stop the server, despawn map,
 /// despawn enemies, etc

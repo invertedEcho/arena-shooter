@@ -15,7 +15,7 @@ use shared::{
     AppRole, ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH,
     GameCoreReady, GameModeServer, GameStateServer, MEDIUM_PLASTIC_MAP_PATH,
     PlayerHitMessage, SPAWN_POINT_MEDIUM_PLASTIC_MAP, SelectedMapState,
-    StartSinglePlayerGame, StopSinglePlayerGame,
+    StartGame, StopSinglePlayerGame,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -108,7 +108,7 @@ impl Plugin for GameCorePlugin {
 
         // now we dont start loading at startup but only when we receive the StartGameRequest from
         // the client
-        app.add_systems(Update, handle_start_single_player_game);
+        app.add_systems(Update, handle_start_game_message);
 
         app.add_systems(
             OnEnter(GameCoreLoadingState::GameScoreFinishedSetup),
@@ -177,13 +177,11 @@ pub fn start_server(mut commands: Commands, app_role: Res<State<AppRole>>) {
     commands.trigger(Start { entity: server });
 }
 
-// FIXME: this function needs to also run / StartSinglePlayerGame message also needs to be written
-// in server binary at startup
-fn handle_start_single_player_game(
+fn handle_start_game_message(
     mut commands: Commands,
     mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     app_role: Res<State<AppRole>>,
-    mut message_receiver: MessageReader<StartSinglePlayerGame>,
+    mut message_receiver: MessageReader<StartGame>,
 ) {
     for _ in message_receiver.read() {
         info!("RECEIVED StartSinglePlayerGame!!!!");
@@ -598,11 +596,6 @@ fn kill_players_below_death_zone(
     }
 }
 
-// FIXME: hmm i mean this is weird?
-// 1. AppRole::ClientOnly: yes, we want this to run, to know whether colliders have spawned locally
-//    of local map. but there we dont want to change ServerLoadingState?
-// 2. AppRole::ClientAndServer: here, it makes sense. we change the ServerLoadingState
-// 3. AppRole::DedicatedServer: here, it also makes sense. we can change the ServerLoadingState
 // TODO: we now have multiple colliderconstructor hierarchies. we need to compare count of ready
 // events with expected
 fn check_collider_constructor_hierarchy_ready(
@@ -702,12 +695,12 @@ fn log_updates_to_game_core_loading_state(
     game_core_loading_state: Res<State<GameCoreLoadingState>>,
     server: Single<Entity, With<Server>>,
 ) {
-    info!("\n");
+    println!();
     info!(
         "GameCoreLoadingState UPDATED! Now: {:?}",
         *game_core_loading_state.get()
     );
-    info!("\n");
+    println!();
     if *game_core_loading_state.get() == GameCoreLoadingState::Done {
         commands.entity(*server).insert(GameCoreReady);
     }

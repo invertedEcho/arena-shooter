@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::StartSinglePlayerGame;
+use shared::StartGame;
 
 use crate::{
     game_flow::states::{AppState, GameModeClient, MainMenuState},
@@ -107,7 +107,7 @@ fn handle_game_mode_selection_button_press(
     mut next_app_state: ResMut<NextState<AppState>>,
     // mut game_mode_server: Query<&mut GameModeServer>,
     // app_role: Res<State<AppRole>>,
-    mut message_writer: MessageWriter<StartSinglePlayerGame>,
+    mut message_writer: MessageWriter<StartGame>,
 ) {
     for (interaction, game_mode_selection_button) in query {
         if let Interaction::Pressed = interaction {
@@ -115,7 +115,7 @@ fn handle_game_mode_selection_button_press(
             next_game_mode_state.set(pressed_game_mode);
             next_app_state.set(AppState::LoadingGame);
 
-            message_writer.write(StartSinglePlayerGame);
+            message_writer.write(StartGame);
 
             // FIXME: the below comment can be implemented by adding fields to the above StartGameRequest!
             // FIXME: maybe this should just never happen on the client. the client can only send
