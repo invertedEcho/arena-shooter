@@ -652,9 +652,15 @@ struct GameMap;
 #[derive(Component)]
 struct GameMapLight;
 
-/// Spawns the corresponding map (determined by looking at SelectedMapState) on the client, when
-/// we enter LoadingGameState::SpawningMap
-fn on_enter_spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
+fn on_enter_spawn_map(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    app_role: Res<State<AppRole>>,
+) {
+    if *app_role.get() == AppRole::DedicatedServer {
+        info!("Skipping spawning map, AppRole is DedicatedServer");
+        return;
+    }
     // FIXME: reintroduce choosing different map on client.
     // i think im gonna do that with a request message that can be sent from client to server.
     // thats probably also very future proof in case we want to allow changing map while server is
