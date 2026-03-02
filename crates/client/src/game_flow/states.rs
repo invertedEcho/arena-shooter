@@ -17,21 +17,21 @@ pub enum AppState {
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[source(AppState = AppState::LoadingGame)]
 pub enum ClientLoadingState {
-    #[default]
+    // TODO: can we then just get rid of this state alltogether?
+    // i mean StartingServer, thats just done via game_core, not client
+    // and then we are only left with ConnectingToServer, and one state means we can just have
+    // AppState::Loading / ConnectingToGameServer
     /// Note that this state will be skipped if AppRole::ClientOnly. This is only relevant for
     /// AppRole::ClientAndServer
+    #[default]
     StartingServer,
     ConnectingToServer,
-    SpawningMap,
-    SpawningColliders,
 }
 
 impl Display for ClientLoadingState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::StartingServer => f.write_str("Starting local server"),
-            Self::SpawningMap => f.write_str("Spawning the map"),
-            Self::SpawningColliders => f.write_str("Setting up collisions"),
             Self::ConnectingToServer => f.write_str("Connecting to the server"),
         }
     }

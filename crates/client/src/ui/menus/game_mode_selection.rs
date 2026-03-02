@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::{GameModeServer, ServerMode};
+use shared::{AppRole, GameModeServer};
 
 use crate::{
     game_flow::states::{AppState, GameModeClient, MainMenuState},
@@ -106,7 +106,7 @@ fn handle_game_mode_selection_button_press(
     mut next_game_mode_state: ResMut<NextState<GameModeClient>>,
     mut next_app_state: ResMut<NextState<AppState>>,
     mut game_mode_server: Query<&mut GameModeServer>,
-    server_mode: Res<State<ServerMode>>,
+    app_role: Res<State<AppRole>>,
 ) {
     for (interaction, game_mode_selection_button) in query {
         if let Interaction::Pressed = interaction {
@@ -114,7 +114,10 @@ fn handle_game_mode_selection_button_press(
             next_game_mode_state.set(pressed_game_mode);
             next_app_state.set(AppState::LoadingGame);
 
-            if *server_mode.get() == ServerMode::LocalServerSinglePlayer
+            // FIXME: maybe this should just never happen on the client. the client can only send
+            // requests to game_core that the game mode should be changed. and these requests are
+            // just ignored if AppRole::DedicatedServer, similar to pausing game stat
+            if *app_role.get() == AppRole::ClientAndServer
                 && let Ok(mut game_mode_server) = game_mode_server.single_mut()
             {
                 match pressed_game_mode {

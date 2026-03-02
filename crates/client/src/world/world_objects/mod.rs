@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use game_core::ServerLoadingState;
+use game_core::GameCoreLoadingState;
 
 use crate::{
     game_flow::states::InGameState,
@@ -15,16 +15,19 @@ pub struct WorldObjectsPlugin;
 
 impl Plugin for WorldObjectsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(ServerLoadingState::MapSpawned), spawn_medkits)
-            .add_systems(
-                Update,
-                (
-                    rotate_and_float_medkits,
-                    detect_collision_medkit_with_player,
-                    activate_medkits_over_time,
-                    tick_respawn_timer_medkits,
-                )
-                    .run_if(in_state(InGameState::Playing)),
-            );
+        app.add_systems(
+            OnEnter(GameCoreLoadingState::MapSpawned),
+            spawn_medkits,
+        )
+        .add_systems(
+            Update,
+            (
+                rotate_and_float_medkits,
+                detect_collision_medkit_with_player,
+                activate_medkits_over_time,
+                tick_respawn_timer_medkits,
+            )
+                .run_if(in_state(InGameState::Playing)),
+        );
     }
 }

@@ -35,15 +35,6 @@ pub enum AppRole {
     DedicatedServer,
 }
 
-// FIXME: this is kinda duplicate from above AppRole
-/// A state indicating whether we are using a remote server to connect to,
-/// or a local server is started, e.g. for singleplayer
-#[derive(States, PartialEq, Debug, Hash, Clone, Eq)]
-pub enum ServerMode {
-    RemoteServer,
-    LocalServerSinglePlayer,
-}
-
 /// The game mode that is running on the server. Must be a component as we can only replicate
 /// components with lightyear.
 #[derive(Component, Serialize, Deserialize, PartialEq, Debug)]

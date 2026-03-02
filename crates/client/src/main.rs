@@ -1,5 +1,5 @@
 use ::shared::{
-    AppRole, ServerMode, ServerRunMode, SharedPlugin, enemy::components::Enemy,
+    AppRole, ServerRunMode, SharedPlugin, enemy::components::Enemy,
     player::Player,
 };
 use bevy::{
@@ -86,6 +86,9 @@ fn main() {
             }),
     );
 
+    // per default, a client is AppRole::ClientOnly. only when player clicks on Singleplayer,
+    // AppRole gets set to AppRole::ClientAndServer. once we enter main menu root again, we set it
+    // back to ClientOnly
     app.insert_state(AppRole::ClientOnly);
 
     app.add_plugins(game_core::GameCorePlugin);
@@ -126,7 +129,6 @@ fn main() {
     }
 
     app.insert_resource(ServerRunMode::Headless);
-    app.insert_state(ServerMode::LocalServerSinglePlayer);
 
     app.add_plugins(NetworkPlugin)
         .add_plugins(PlayerPlugin)
@@ -148,14 +150,14 @@ fn main() {
     app.add_systems(Update, ensure_egui_context_exists);
     app.add_systems(OnExit(AppState::InGame), despawn_enemys_on_exit);
 
-    app.add_systems(
-        Update,
-        (
-            log_current_player_count,
-            log_camera_count,
-            log_map_model_count,
-        ),
-    );
+    // app.add_systems(
+    //     Update,
+    //     (
+    //         log_current_player_count,
+    //         log_camera_count,
+    //         log_map_model_count,
+    //     ),
+    // );
 
     app.run();
 }

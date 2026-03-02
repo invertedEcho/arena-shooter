@@ -8,19 +8,17 @@ use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use game_core::start_server;
 use lightyear::utils::collections::HashSet;
-use shared::utils::auth::get_private_key;
+use shared::ServerRunMode;
+use shared::utils::auth::load_private_key_from_env;
 use shared::utils::network::{
     AUTH_BACKEND_ADDRESS_SERVER_SIDE, get_server_socket_addr_client_side,
 };
 use shared::{AppRole, SharedPlugin};
-use shared::{ServerMode, ServerRunMode};
 
 use crate::auth::start_netcode_authentication_task;
-use crate::systems::{spawn_map, spawn_map_colliders};
 use crate::utils::get_run_mode;
 
 mod auth;
-mod systems;
 mod utils;
 
 /// This plugin adds all plugins from bevy necessary to start a headless server
@@ -83,10 +81,8 @@ fn main() {
 
     app.add_systems(Startup, start_server);
 
-    app.add_systems(Startup, spawn_map_colliders);
-
     if run_mode == ServerRunMode::Headful {
-        app.add_systems(Startup, (spawn_map, spawn_camera_if_headful));
+        app.add_systems(Startup, spawn_camera_if_headful);
     }
 
     app.insert_resource(run_mode);
@@ -103,7 +99,7 @@ fn main() {
         ),
         AUTH_BACKEND_ADDRESS_SERVER_SIDE,
         client_ids.clone(),
-        get_private_key(&ServerMode::RemoteServer),
+        load_private_key_from_env().unwrap(),
     );
 
     app.run();

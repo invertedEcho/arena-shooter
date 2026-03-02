@@ -22,7 +22,7 @@ use shared::utils::network::{
     SERVER_PORT, get_auth_backend_socket_addr_client_side,
     get_server_socket_addr_client_side,
 };
-use shared::{AppRole, ConfirmRespawn, PlayerHitMessage, ServerMode};
+use shared::{AppRole, ConfirmRespawn, PlayerHitMessage};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,
@@ -68,7 +68,6 @@ impl Plugin for NetworkPlugin {
         );
         app.add_observer(handle_added_server);
         app.add_observer(handle_new_player);
-        app.add_observer(handle_connected);
         app.add_observer(handle_disconnect);
     }
 }
@@ -105,9 +104,11 @@ fn on_enter_connecting_to_server(
 
     let is_singleplayer = *game_mode.get() != GameModeClient::Multiplayer;
 
+    info!("SERVER COUNT: {}", server_entity.iter().count());
     if let Ok(server_entity) = server_entity.single()
         && is_singleplayer
     {
+        info!("SPAWNING A HOST CLIENT",);
         let client = commands
             .spawn((
                 Name::new("Host Client"),
@@ -171,21 +172,13 @@ fn on_enter_connecting_to_server(
     }
 }
 
-fn handle_connected(
-    _trigger: On<Add, Connected>,
-    mut next_loading_game_state: ResMut<NextState<ClientLoadingState>>,
-) {
-    debug!("Connected to server, setting LoadingGameState to SpawningMap");
-    next_loading_game_state.set(ClientLoadingState::SpawningMap);
-}
-
 fn handle_new_player(
     trigger: On<Add, Player>,
     mut commands: Commands,
     player_query: Query<(Entity, Has<Controlled>), With<Player>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    server_mode: Res<State<ServerMode>>,
+    // app_role: Res<State<AppRole>>,
 ) {
     let Ok((our_player_entity, has_controlled)) =
         player_query.get(trigger.entity)
@@ -193,13 +186,9 @@ fn handle_new_player(
         return;
     };
 
-    let is_remote_server = *server_mode == ServerMode::RemoteServer;
-    let is_local_server_single_player =
-        *server_mode == ServerMode::LocalServerSinglePlayer;
-
-    if (is_remote_server && has_controlled) || is_local_server_single_player {
+    if has_controlled {
         // we insert the character controller locally on our client, as it should only run on the
-        // client. as it is not registered in our protocol, it wont be replicated.
+        // client.
         commands.entity(our_player_entity).insert((
             CharacterControllerBundle::default(),
             DespawnOnExit(AppState::InGame),
@@ -215,7 +204,7 @@ fn handle_new_player(
                 ..Default::default()
             })),
         ));
-    } else if is_remote_server && !has_controlled {
+    } else {
         commands.entity(trigger.entity).insert((
             Mesh3d(meshes.add(Capsule3d::new(
                 CHARACTER_CAPSULE_RADIUS,
@@ -233,6 +222,49 @@ fn handle_new_player(
             ),
         ));
     }
+
+    // let app_role = app_role.get();
+
+    // FIXME: but this makes no sense too. the approle can never be dedicated server on the
+    // client?
+    // let is_dedicated_server = *app_role == AppRole::DedicatedServer;
+    // let is_client_and_server = *app_role == AppRole::ClientAndServer;
+    // if (is_dedicated_server && has_controlled) || is_client_and_server {
+    //     // we insert the character controller locally on our client, as it should only run on the
+    //     // client. as it is not registered in our protocol, it wont be replicated.
+    //     commands.entity(our_player_entity).insert((
+    //         CharacterControllerBundle::default(),
+    //         DespawnOnExit(AppState::InGame),
+    //         Visibility::Visible,
+    //         Transform::from_translation(vec3(0.0, 20.0, 0.0)),
+    //         Name::new("Our Player"),
+    //         Mesh3d(meshes.add(Capsule3d::new(
+    //             CHARACTER_CAPSULE_RADIUS,
+    //             CHARACTER_CAPSULE_LENGTH,
+    //         ))),
+    //         MeshMaterial3d(materials.add(StandardMaterial {
+    //             base_color: WHITE.into(),
+    //             ..Default::default()
+    //         })),
+    //     ));
+    // } else if is_dedicated_server && !has_controlled {
+    //     commands.entity(trigger.entity).insert((
+    //         Mesh3d(meshes.add(Capsule3d::new(
+    //             CHARACTER_CAPSULE_RADIUS,
+    //             CHARACTER_CAPSULE_LENGTH,
+    //         ))),
+    //         MeshMaterial3d(materials.add(StandardMaterial {
+    //             base_color: WHITE.into(),
+    //             ..Default::default()
+    //         })),
+    //         Name::new("Remote Player"),
+    //         RigidBody::Kinematic,
+    //         Collider::capsule(
+    //             CHARACTER_CAPSULE_RADIUS,
+    //             CHARACTER_CAPSULE_LENGTH,
+    //         ),
+    //     ));
+    // }
 }
 
 fn send_client_update_position(

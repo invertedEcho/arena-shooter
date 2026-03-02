@@ -150,8 +150,7 @@ fn update_current_main_menu_state(
                 Text::new(format!("{:?}", *main_menu_state.get()));
         }
     } else {
-        **current_main_menu_state_text =
-            Text::new("MainMenuState doesn't exist");
+        **current_main_menu_state_text = Text::new("None");
     }
 }
 
@@ -168,7 +167,7 @@ fn update_current_in_game_state_text(
                 Text::new(format!("{:?}", *in_game_state.get()));
         }
     } else {
-        **current_in_game_state_text = Text::new("InGameState doesn't exist");
+        **current_in_game_state_text = Text::new("None");
     }
 }
 
@@ -191,8 +190,7 @@ fn update_loading_game_state_text(
     loading_game_state: Option<Res<State<ClientLoadingState>>>,
 ) {
     let Some(loading_game_state) = loading_game_state else {
-        **current_loading_game_state_text =
-            Text::new("LoadingGameState doesn't exist");
+        **current_loading_game_state_text = Text::new("None");
         return;
     };
     if loading_game_state.is_changed() {

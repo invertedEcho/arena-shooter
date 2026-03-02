@@ -13,8 +13,8 @@ use lightyear::{
 };
 use shared::{
     AppRole, ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH,
-    GameModeServer, GameStateServer, PlayerHitMessage,
-    SPAWN_POINT_MEDIUM_PLASTIC_MAP, SelectedMapState, ServerMode,
+    GameModeServer, GameStateServer, MEDIUM_PLASTIC_MAP_PATH, PlayerHitMessage,
+    SPAWN_POINT_MEDIUM_PLASTIC_MAP, SelectedMapState,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -28,9 +28,9 @@ use shared::{
     },
     shooting::MAX_SHOOTING_DISTANCE,
     utils::{
-        auth::get_private_key,
+        auth::{LOCAL_SERVER_PRIVATE_KEY, load_private_key_from_env},
         network::{
-            NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_REMOTE_SERVER,
+            NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_DEDICATED_SERVER,
             SERVER_SOCKET_ADDR_SINGLEPLAYER,
         },
     },
@@ -53,7 +53,7 @@ mod nav_mesh_pathfinding;
 // despawned.
 // for server binary, this will just be used once, at startup
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
-pub enum ServerLoadingState {
+pub enum GameCoreLoadingState {
     #[default]
     Initial,
     GameScoreFinishedSetup,
@@ -76,7 +76,7 @@ pub struct GameCorePlugin;
 
 impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<ServerLoadingState>();
+        app.init_state::<GameCoreLoadingState>();
         app.init_state::<GameStateServer>();
         app.init_state::<SelectedMapState>();
 
@@ -100,37 +100,38 @@ impl Plugin for GameCorePlugin {
         );
 
         app.add_systems(
-            OnEnter(ServerLoadingState::Done),
+            OnEnter(GameCoreLoadingState::Done),
             handle_server_loading_state_done,
         );
 
-        app.add_systems(OnEnter(ServerLoadingState::Initial), setup_game_score);
+        app.add_systems(
+            OnEnter(GameCoreLoadingState::Initial),
+            setup_game_score,
+        );
 
         app.add_observer(handle_new_connection);
         app.add_observer(spawn_player_on_new_client);
+        app.add_observer(check_collider_constructor_hierarchy_ready);
     }
 }
 
-pub fn start_server(
-    mut commands: Commands,
-    server_mode: Res<State<ServerMode>>,
-    app_role: Res<State<AppRole>>,
-) {
-    if *app_role.get() == AppRole::ClientOnly {
-        info!("Skipping starting of server, AppRole is ClientOnly");
-        return;
-    }
-    let entity_name = match server_mode.get() {
-        ServerMode::LocalServerSinglePlayer => "Local Server for singleplayer",
-        ServerMode::RemoteServer => "Server from server Binary",
+pub fn start_server(mut commands: Commands, app_role: Res<State<AppRole>>) {
+    let entity_name = match app_role.get() {
+        AppRole::ClientOnly => {
+            info!("Skipping starting of server, AppRole is ClientOnly");
+            return;
+        }
+        AppRole::ClientAndServer => "Local Server for singleplayer",
+        AppRole::DedicatedServer => "Server from server Binary",
     };
 
-    let local_addr =
-        if *server_mode.get() == ServerMode::LocalServerSinglePlayer {
-            SERVER_SOCKET_ADDR_SINGLEPLAYER
-        } else {
-            SERVER_SOCKET_ADDR_REMOTE_SERVER
-        };
+    let local_addr = match app_role.get() {
+        AppRole::ClientOnly => {
+            return;
+        }
+        AppRole::ClientAndServer => SERVER_SOCKET_ADDR_SINGLEPLAYER,
+        AppRole::DedicatedServer => SERVER_SOCKET_ADDR_DEDICATED_SERVER,
+    };
 
     info!(
         "Starting server on {}, current AppRole: {:?}",
@@ -138,17 +139,26 @@ pub fn start_server(
         app_role.get()
     );
 
+    let private_key = match app_role.get() {
+        AppRole::ClientOnly => {
+            return;
+        }
+        AppRole::ClientAndServer => LOCAL_SERVER_PRIVATE_KEY,
+        AppRole::DedicatedServer => load_private_key_from_env().unwrap(),
+    };
+
     let server = commands
         .spawn((
             NetcodeServer::new(NetcodeConfig {
                 protocol_id: NETCODE_PROTOCOL_VERSION,
-                private_key: get_private_key(&server_mode),
+                private_key,
                 ..default()
             }),
             LocalAddr(local_addr),
             ServerUdpIo::default(),
             Name::new(entity_name),
             GameModeServer::FreeForAll,
+            DespawnOnExit(AppRole::ClientAndServer),
         ))
         .id();
 
@@ -157,8 +167,8 @@ pub fn start_server(
 
 fn setup_game_score(
     mut commands: Commands,
-    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
-    server_mode: Res<State<ServerMode>>,
+    mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
+    app_role: Res<State<AppRole>>,
 ) {
     commands
         .spawn((
@@ -169,12 +179,12 @@ fn setup_game_score(
             Name::new("Game Score"),
         ))
         .insert_if(Replicate::to_clients(NetworkTarget::All), || {
-            *server_mode.get() == ServerMode::RemoteServer
+            *app_role.get() == AppRole::DedicatedServer
         });
 
     // NOTE: theoretically the game score entity is not necessarily already spawned here, but we
     // just do it here as spawning such a simple entity is trivial.
-    next_server_loading_state.set(ServerLoadingState::GameScoreFinishedSetup);
+    next_server_loading_state.set(GameCoreLoadingState::GameScoreFinishedSetup);
 }
 
 fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
@@ -193,8 +203,8 @@ fn spawn_player_on_new_client(
     mut commands: Commands,
     materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    server_mode: Res<State<ServerMode>>,
     mut game_score: Query<&mut GameScore>,
+    app_role: Res<State<AppRole>>,
 ) {
     if let Ok(remote_id) = clients_query.get(trigger.entity) {
         let peer_id = remote_id.0;
@@ -243,7 +253,7 @@ fn spawn_player_on_new_client(
             ))
             .id();
 
-        if *server_mode == ServerMode::RemoteServer {
+        if *app_role.get() == AppRole::DedicatedServer {
             // on headless setup, materials doesnt exist
             if let Some(mut materials) = materials {
                 commands.entity(player_entity).insert((
@@ -258,7 +268,7 @@ fn spawn_player_on_new_client(
                 ));
             }
         }
-        if *server_mode == ServerMode::LocalServerSinglePlayer {
+        if *app_role.get() == AppRole::ClientAndServer {
             commands.entity(player_entity).insert(Controlled);
         }
     }
@@ -536,11 +546,11 @@ fn handle_game_server_state_update_request(
     mut message_receiver: Single<
         &mut MessageReceiver<ChangeGameServerStateRequest>,
     >,
-    server_mode: Res<State<ServerMode>>,
+    app_role: Res<State<AppRole>>,
     mut game_state_server: ResMut<NextState<GameStateServer>>,
 ) {
     for message in message_receiver.receive() {
-        if *server_mode.get() != ServerMode::LocalServerSinglePlayer {
+        if *app_role.get() != AppRole::ClientAndServer {
             info!("Ignored ChangeGameServerStateRequest");
             return;
         }
@@ -560,4 +570,104 @@ fn kill_players_below_death_zone(
             health.0 = 0.0;
         }
     }
+}
+
+// FIXME: hmm i mean this is weird?
+// 1. AppRole::ClientOnly: yes, we want this to run, to know whether colliders have spawned locally
+//    of local map. but there we dont want to change ServerLoadingState?
+// 2. AppRole::ClientAndServer: here, it makes sense. we change the ServerLoadingState
+// 3. AppRole::DedicatedServer: here, it also makes sense. we can change the ServerLoadingState
+// TODO: we now have multiple colliderconstructor hierarchies. we need to compare count of ready
+// events with expected
+fn check_collider_constructor_hierarchy_ready(
+    _trigger: On<ColliderConstructorHierarchyReady>,
+    current_loading_state: Res<State<GameCoreLoadingState>>,
+    mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
+    mut already_done: Local<bool>,
+) {
+    if *already_done {
+        info!("ALREADY DONE, SKIPPING!");
+        return;
+    }
+
+    if *current_loading_state.get() != GameCoreLoadingState::CollidersSpawned {
+        info!(
+            "FIRST ColliderConstructorHierarchyReady! setting AppState to \
+             InGame"
+        );
+        info!(
+            "ColliderConstructorHierarchyReady!, setting \
+             ServerLoadingState::CollidersSpawned"
+        );
+
+        next_server_loading_state.set(GameCoreLoadingState::CollidersSpawned);
+        *already_done = true;
+    }
+}
+
+/// We store the world scene handle as we listen for any AssetEvents::Scene to be
+/// `LoadedWithDependencies`. but this of course gets triggered for any scenes that get spawned,
+/// like enemy models, so we need to compare our WorldSceneHandle that we insert when we spawn the
+/// map with the one that we get from the LoadedWithDependencies message/event.
+#[derive(Resource)]
+pub struct WorldSceneHandle(pub Handle<Scene>);
+
+pub fn check_world_scene_loaded(
+    mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
+    mut next_game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
+    maybe_world_scene_handle: Option<Res<WorldSceneHandle>>,
+) {
+    for asset_event in asset_event_message_reader.read() {
+        if let AssetEvent::LoadedWithDependencies { id } = asset_event
+            && let Some(ref world_scene_handle) = maybe_world_scene_handle
+            && *id == world_scene_handle.0.id()
+        {
+            info!(
+                "Map fully spawned, setting LoadingGameSubState to \
+                 SpawningColliders"
+            );
+            next_game_core_loading_state.set(GameCoreLoadingState::MapSpawned);
+        }
+    }
+}
+
+/// Spawns the corresponding map (determined by looking at SelectedMapState) on the client, when
+/// we enter LoadingGameState::SpawningMap
+pub fn on_enter_spawn_map(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+) {
+    // FIXME: reintroduce choosing different map on client.
+    // i think im gonna do that with a request message that can be sent from client to server.
+    // thats probably also very future proof in case we want to allow changing map while server is
+    // running etc
+    let map_path = MEDIUM_PLASTIC_MAP_PATH;
+
+    info!("Spawning the game map");
+    commands.spawn((
+        DirectionalLight {
+            illuminance: 6000.,
+            shadows_enabled: true,
+            ..default()
+        },
+        // MapDirectionalLight,
+        Transform::default().looking_at(Vec3::new(-1.0, -3.0, -2.0), Vec3::Y),
+        // FIXME: reintroduce. this should be inserted on client
+        // or can we just insert this always?
+        // TODO: should be constants
+        // RenderLayers::from_layers(&[0, 1]),
+    ));
+
+    let world_scene_handle =
+        asset_server.load(GltfAssetLabel::Scene(0).from_asset(map_path));
+
+    commands.insert_resource(WorldSceneHandle(world_scene_handle.clone()));
+
+    commands.spawn((
+        SceneRoot(world_scene_handle),
+        Name::new("Scene Root (Map)"),
+        Visibility::Visible,
+        RigidBody::Static,
+        // MapModel,
+    ));
 }
