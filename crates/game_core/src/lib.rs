@@ -15,7 +15,7 @@ use shared::{
     AppRole, ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH,
     GameCoreReady, GameModeServer, GameStateServer, MEDIUM_PLASTIC_MAP_PATH,
     PlayerHitMessage, SPAWN_POINT_MEDIUM_PLASTIC_MAP, SelectedMapState,
-    StartSinglePlayerGame,
+    StartSinglePlayerGame, StopSinglePlayerGame,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -97,6 +97,7 @@ impl Plugin for GameCorePlugin {
                 handle_client_respawn_requests,
                 handle_game_server_state_update_request,
                 kill_players_below_death_zone,
+                read_stop_single_player_game,
             ),
         );
 
@@ -652,6 +653,12 @@ pub fn check_world_scene_loaded(
     }
 }
 
+#[derive(Component)]
+struct GameMap;
+
+#[derive(Component)]
+struct GameMapLight;
+
 /// Spawns the corresponding map (determined by looking at SelectedMapState) on the client, when
 /// we enter LoadingGameState::SpawningMap
 fn on_enter_spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
@@ -668,7 +675,7 @@ fn on_enter_spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
             shadows_enabled: true,
             ..default()
         },
-        // MapDirectionalLight,
+        GameMapLight,
         Transform::default().looking_at(Vec3::new(-1.0, -3.0, -2.0), Vec3::Y),
         // FIXME: reintroduce. this should be inserted on client
         // or can we just insert this always?
@@ -682,11 +689,11 @@ fn on_enter_spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.insert_resource(WorldSceneHandle(world_scene_handle.clone()));
 
     commands.spawn((
+        GameMap,
         SceneRoot(world_scene_handle),
         Name::new("Scene Root (Map)"),
         Visibility::Visible,
         RigidBody::Static,
-        // MapModel,
     ));
 }
 
@@ -703,5 +710,33 @@ fn log_updates_to_game_core_loading_state(
     info!("\n");
     if *game_core_loading_state.get() == GameCoreLoadingState::Done {
         commands.entity(*server).insert(GameCoreReady);
+    }
+}
+
+type EntitiesToDespawnQueryFilter = Or<(
+    With<GameMap>,
+    With<GameMapLight>,
+    With<Enemy>,
+    With<Server>,
+    With<Client>,
+    With<Player>,
+)>;
+
+fn read_stop_single_player_game(
+    mut commands: Commands,
+    mut message_reader: MessageReader<StopSinglePlayerGame>,
+    app_role: Res<State<AppRole>>,
+    entities_to_despawn: Query<Entity, EntitiesToDespawnQueryFilter>,
+) {
+    for _ in message_reader.read() {
+        if *app_role.get() == AppRole::DedicatedServer {
+            info!("Ignoring StopSinglePlayerGame message");
+            continue;
+        }
+        info!("Received StopSinglePlayerGame message!");
+        for entity in entities_to_despawn {
+            info!("Despawning entity {}", entity);
+            commands.entity(entity).despawn();
+        }
     }
 }

@@ -148,14 +148,7 @@ fn main() {
     app.add_systems(OnExit(AppState::InGame), despawn_enemys_on_exit);
 
     app.add_observer(on_server_ready);
-    // app.add_systems(
-    //     Update,
-    //     (
-    //         log_current_player_count,
-    //         log_camera_count,
-    //         log_map_model_count,
-    //     ),
-    // );
+    // app.add_systems(Update, (log_current_player_count, log_camera_count));
 
     app.run();
 }
