@@ -42,6 +42,8 @@ pub const GENERIC_NO_CONNECTION_ERROR_MESSAGE: &str =
 
 pub struct NetworkPlugin;
 
+// TODO: This plugin; its not really clear what purpose it has. It does too many different things. I
+// dont like this.
 impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
@@ -64,10 +66,11 @@ impl Plugin for NetworkPlugin {
                 apply_server_position_other_clients,
                 handle_confirm_respawn_message,
                 handle_hit_message,
+                handle_new_player,
             ),
         );
+
         app.add_observer(handle_added_server);
-        app.add_observer(handle_new_player);
         app.add_observer(handle_disconnect);
     }
 }
@@ -173,98 +176,96 @@ fn on_enter_connecting_to_server(
 }
 
 fn handle_new_player(
-    trigger: On<Add, Player>,
     mut commands: Commands,
-    player_query: Query<(Entity, Has<Controlled>), With<Player>>,
+    player_query: Query<(Entity, Has<Controlled>), Added<Player>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    // app_role: Res<State<AppRole>>,
+    app_role: Res<State<AppRole>>,
 ) {
-    let Ok((our_player_entity, has_controlled)) =
-        player_query.get(trigger.entity)
-    else {
-        return;
-    };
+    for (player_entity, has_controlled) in player_query {
+        info!("A player was added! {}", player_entity);
+        // NOTE: in case of AppRole::ClientAndServer, controlled component is inserted too late.
+        // Hence, we add this additional check
+        if has_controlled || *app_role.get() == AppRole::ClientAndServer {
+            // we insert the character controller locally on our client, as it should only run on the
+            // client.
+            commands.entity(player_entity).insert((
+                CharacterControllerBundle::default(),
+                DespawnOnExit(AppState::InGame),
+                Visibility::Visible,
+                Transform::from_translation(vec3(0.0, 20.0, 0.0)),
+                Name::new("Our Player"),
+                Mesh3d(meshes.add(Capsule3d::new(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: WHITE.into(),
+                    ..Default::default()
+                })),
+            ));
+        } else {
+            commands.entity(player_entity).insert((
+                Mesh3d(meshes.add(Capsule3d::new(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: WHITE.into(),
+                    ..Default::default()
+                })),
+                Name::new("Remote Player"),
+                RigidBody::Kinematic,
+                Collider::capsule(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ),
+            ));
+        }
 
-    if has_controlled {
-        // we insert the character controller locally on our client, as it should only run on the
-        // client.
-        commands.entity(our_player_entity).insert((
-            CharacterControllerBundle::default(),
-            DespawnOnExit(AppState::InGame),
-            Visibility::Visible,
-            Transform::from_translation(vec3(0.0, 20.0, 0.0)),
-            Name::new("Our Player"),
-            Mesh3d(meshes.add(Capsule3d::new(
-                CHARACTER_CAPSULE_RADIUS,
-                CHARACTER_CAPSULE_LENGTH,
-            ))),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: WHITE.into(),
-                ..Default::default()
-            })),
-        ));
-    } else {
-        commands.entity(trigger.entity).insert((
-            Mesh3d(meshes.add(Capsule3d::new(
-                CHARACTER_CAPSULE_RADIUS,
-                CHARACTER_CAPSULE_LENGTH,
-            ))),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: WHITE.into(),
-                ..Default::default()
-            })),
-            Name::new("Remote Player"),
-            RigidBody::Kinematic,
-            Collider::capsule(
-                CHARACTER_CAPSULE_RADIUS,
-                CHARACTER_CAPSULE_LENGTH,
-            ),
-        ));
+        // let app_role = app_role.get();
+
+        // FIXME: but this makes no sense too. the approle can never be dedicated server on the
+        // client?
+        // let is_dedicated_server = *app_role == AppRole::DedicatedServer;
+        // let is_client_and_server = *app_role == AppRole::ClientAndServer;
+        // if (is_dedicated_server && has_controlled) || is_client_and_server {
+        //     // we insert the character controller locally on our client, as it should only run on the
+        //     // client. as it is not registered in our protocol, it wont be replicated.
+        //     commands.entity(our_player_entity).insert((
+        //         CharacterControllerBundle::default(),
+        //         DespawnOnExit(AppState::InGame),
+        //         Visibility::Visible,
+        //         Transform::from_translation(vec3(0.0, 20.0, 0.0)),
+        //         Name::new("Our Player"),
+        //         Mesh3d(meshes.add(Capsule3d::new(
+        //             CHARACTER_CAPSULE_RADIUS,
+        //             CHARACTER_CAPSULE_LENGTH,
+        //         ))),
+        //         MeshMaterial3d(materials.add(StandardMaterial {
+        //             base_color: WHITE.into(),
+        //             ..Default::default()
+        //         })),
+        //     ));
+        // } else if is_dedicated_server && !has_controlled {
+        //     commands.entity(trigger.entity).insert((
+        //         Mesh3d(meshes.add(Capsule3d::new(
+        //             CHARACTER_CAPSULE_RADIUS,
+        //             CHARACTER_CAPSULE_LENGTH,
+        //         ))),
+        //         MeshMaterial3d(materials.add(StandardMaterial {
+        //             base_color: WHITE.into(),
+        //             ..Default::default()
+        //         })),
+        //         Name::new("Remote Player"),
+        //         RigidBody::Kinematic,
+        //         Collider::capsule(
+        //             CHARACTER_CAPSULE_RADIUS,
+        //             CHARACTER_CAPSULE_LENGTH,
+        //         ),
+        //     ));
+        // }
     }
-
-    // let app_role = app_role.get();
-
-    // FIXME: but this makes no sense too. the approle can never be dedicated server on the
-    // client?
-    // let is_dedicated_server = *app_role == AppRole::DedicatedServer;
-    // let is_client_and_server = *app_role == AppRole::ClientAndServer;
-    // if (is_dedicated_server && has_controlled) || is_client_and_server {
-    //     // we insert the character controller locally on our client, as it should only run on the
-    //     // client. as it is not registered in our protocol, it wont be replicated.
-    //     commands.entity(our_player_entity).insert((
-    //         CharacterControllerBundle::default(),
-    //         DespawnOnExit(AppState::InGame),
-    //         Visibility::Visible,
-    //         Transform::from_translation(vec3(0.0, 20.0, 0.0)),
-    //         Name::new("Our Player"),
-    //         Mesh3d(meshes.add(Capsule3d::new(
-    //             CHARACTER_CAPSULE_RADIUS,
-    //             CHARACTER_CAPSULE_LENGTH,
-    //         ))),
-    //         MeshMaterial3d(materials.add(StandardMaterial {
-    //             base_color: WHITE.into(),
-    //             ..Default::default()
-    //         })),
-    //     ));
-    // } else if is_dedicated_server && !has_controlled {
-    //     commands.entity(trigger.entity).insert((
-    //         Mesh3d(meshes.add(Capsule3d::new(
-    //             CHARACTER_CAPSULE_RADIUS,
-    //             CHARACTER_CAPSULE_LENGTH,
-    //         ))),
-    //         MeshMaterial3d(materials.add(StandardMaterial {
-    //             base_color: WHITE.into(),
-    //             ..Default::default()
-    //         })),
-    //         Name::new("Remote Player"),
-    //         RigidBody::Kinematic,
-    //         Collider::capsule(
-    //             CHARACTER_CAPSULE_RADIUS,
-    //             CHARACTER_CAPSULE_LENGTH,
-    //         ),
-    //     ));
-    // }
 }
 
 fn send_client_update_position(

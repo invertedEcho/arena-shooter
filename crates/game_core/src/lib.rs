@@ -617,10 +617,6 @@ fn check_collider_constructor_hierarchy_ready(
 
     if *current_loading_state.get() != GameCoreLoadingState::CollidersSpawned {
         info!(
-            "FIRST ColliderConstructorHierarchyReady! setting AppState to \
-             InGame"
-        );
-        info!(
             "ColliderConstructorHierarchyReady!, setting \
              ServerLoadingState::CollidersSpawned"
         );
