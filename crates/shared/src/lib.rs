@@ -113,12 +113,18 @@ pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
 pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
 pub const SPAWN_POINT_MEDIUM_PLASTIC_MAP: Vec3 = vec3(0.0, 10.0, 0.0);
 
+// FIXME: hmm thats weird. the below description is the same as GameCore? i think we should rather
+// not have a SharedPlugin, and just do this stuff in game_core. hmm but actually adding a
+// ProtocolPlugin in game_core doesnt feel right.
+
 /// Logic for both client and server binary
 pub struct SharedPlugin;
 
 impl Plugin for SharedPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(ProtocolPlugin);
+
+        app.add_message::<StartSinglePlayerGame>();
 
         app.add_plugins(PhysicsPlugins::default().build())
             .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
@@ -146,3 +152,16 @@ pub fn handle_despawn_timer(
         }
     }
 }
+
+///  A client can send this message to game_core, and game_core will start the server, spawn map,
+///  etc...
+///  NOTE: This message gets ignored if game_core has AppRole::DedicatedServer (atm)
+#[derive(Message)]
+pub struct StartSinglePlayerGame;
+
+/// This component can be inserted into server entities which have the game core logic fully
+/// initialized, e.g. the map is spawned, colliders are spawned, nav mesh is generated, enemies are
+/// spawned, etc... This component can then be queried on the client, to know whether the server
+/// the client is connecting to has finished loading.
+#[derive(Component)]
+pub struct GameCoreReady;

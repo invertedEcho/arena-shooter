@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::{AppRole, GameModeServer};
+use shared::StartSinglePlayerGame;
 
 use crate::{
     game_flow::states::{AppState, GameModeClient, MainMenuState},
@@ -105,8 +105,9 @@ fn handle_game_mode_selection_button_press(
     >,
     mut next_game_mode_state: ResMut<NextState<GameModeClient>>,
     mut next_app_state: ResMut<NextState<AppState>>,
-    mut game_mode_server: Query<&mut GameModeServer>,
-    app_role: Res<State<AppRole>>,
+    // mut game_mode_server: Query<&mut GameModeServer>,
+    // app_role: Res<State<AppRole>>,
+    mut message_writer: MessageWriter<StartSinglePlayerGame>,
 ) {
     for (interaction, game_mode_selection_button) in query {
         if let Interaction::Pressed = interaction {
@@ -114,22 +115,25 @@ fn handle_game_mode_selection_button_press(
             next_game_mode_state.set(pressed_game_mode);
             next_app_state.set(AppState::LoadingGame);
 
+            message_writer.write(StartSinglePlayerGame);
+
+            // FIXME: the below comment can be implemented by adding fields to the above StartGameRequest!
             // FIXME: maybe this should just never happen on the client. the client can only send
             // requests to game_core that the game mode should be changed. and these requests are
             // just ignored if AppRole::DedicatedServer, similar to pausing game stat
-            if *app_role.get() == AppRole::ClientAndServer
-                && let Ok(mut game_mode_server) = game_mode_server.single_mut()
-            {
-                match pressed_game_mode {
-                    GameModeClient::FreeRoam => {
-                        *game_mode_server = GameModeServer::FreeForAll;
-                    }
-                    GameModeClient::Waves => {
-                        *game_mode_server = GameModeServer::Waves;
-                    }
-                    _ => {}
-                }
-            }
+            // if *app_role.get() == AppRole::ClientAndServer
+            //     && let Ok(mut game_mode_server) = game_mode_server.single_mut()
+            // {
+            //     match pressed_game_mode {
+            //         GameModeClient::FreeRoam => {
+            //             *game_mode_server = GameModeServer::FreeForAll;
+            //         }
+            //         GameModeClient::Waves => {
+            //             *game_mode_server = GameModeServer::Waves;
+            //         }
+            //         _ => {}
+            //     }
+            // }
         }
     }
 }

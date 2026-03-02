@@ -13,8 +13,9 @@ use lightyear::{
 };
 use shared::{
     AppRole, ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH,
-    GameModeServer, GameStateServer, MEDIUM_PLASTIC_MAP_PATH, PlayerHitMessage,
-    SPAWN_POINT_MEDIUM_PLASTIC_MAP, SelectedMapState,
+    GameCoreReady, GameModeServer, GameStateServer, MEDIUM_PLASTIC_MAP_PATH,
+    PlayerHitMessage, SPAWN_POINT_MEDIUM_PLASTIC_MAP, SelectedMapState,
+    StartSinglePlayerGame,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -25,7 +26,6 @@ use shared::{
     protocol::{
         ChangeGameServerStateRequest, ClientUpdatePositionMessage,
         EntityPositionServer, OrderedReliableChannel, ShootRequest,
-        StartGameRequest,
     },
     shooting::MAX_SHOOTING_DISTANCE,
     utils::{
@@ -107,7 +107,7 @@ impl Plugin for GameCorePlugin {
 
         // now we dont start loading at startup but only when we receive the StartGameRequest from
         // the client
-        app.add_systems(Update, setup_game_score);
+        app.add_systems(Update, handle_start_single_player_game);
 
         app.add_systems(
             OnEnter(GameCoreLoadingState::GameScoreFinishedSetup),
@@ -117,6 +117,12 @@ impl Plugin for GameCorePlugin {
         app.add_observer(handle_new_connection);
         app.add_observer(spawn_player_on_new_client);
         app.add_observer(check_collider_constructor_hierarchy_ready);
+
+        app.add_systems(
+            Update,
+            log_updates_to_game_core_loading_state
+                .run_if(state_changed::<GameCoreLoadingState>),
+        );
     }
 }
 
@@ -170,14 +176,16 @@ pub fn start_server(mut commands: Commands, app_role: Res<State<AppRole>>) {
     commands.trigger(Start { entity: server });
 }
 
-fn setup_game_score(
+// FIXME: this function needs to also run / StartSinglePlayerGame message also needs to be written
+// in server binary at startup
+fn handle_start_single_player_game(
     mut commands: Commands,
     mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     app_role: Res<State<AppRole>>,
-    mut message_receiver: Single<&mut MessageReceiver<StartGameRequest>>,
+    mut message_receiver: MessageReader<StartSinglePlayerGame>,
 ) {
-    for _ in message_receiver.receive() {
-        info!("RECEIVED StartGameRequest, starting loading game now!");
+    for _ in message_receiver.read() {
+        info!("RECEIVED StartSinglePlayerGame!!!!");
         commands
             .spawn((
                 GameScore {
@@ -221,15 +229,20 @@ fn spawn_player_on_new_client(
         let peer_id = remote_id.0;
 
         // why does game score not exist here yet?
-        let mut game_score = game_score.single_mut().unwrap();
-
-        game_score.players.insert(
-            peer_id.to_bits(),
-            LivingEntityStats {
-                username: format!("Player {}", peer_id.to_bits()),
-                ..default()
-            },
-        );
+        if let Ok(mut game_score) = game_score.single_mut() {
+            game_score.players.insert(
+                peer_id.to_bits(),
+                LivingEntityStats {
+                    username: format!("Player {}", peer_id.to_bits()),
+                    ..default()
+                },
+            );
+        } else {
+            error!(
+                "No game score currently exists, player will be missing in \
+                 game score!"
+            );
+        }
 
         info!(
             "Spawning a player for fully connected Client entity: {} | \
@@ -679,4 +692,20 @@ fn on_enter_spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
         RigidBody::Static,
         // MapModel,
     ));
+}
+
+fn log_updates_to_game_core_loading_state(
+    mut commands: Commands,
+    game_core_loading_state: Res<State<GameCoreLoadingState>>,
+    server: Single<Entity, With<Server>>,
+) {
+    info!("\n");
+    info!(
+        "GameCoreLoadingState UPDATED! Now: {:?}",
+        *game_core_loading_state.get()
+    );
+    info!("\n");
+    if *game_core_loading_state.get() == GameCoreLoadingState::Done {
+        commands.entity(*server).insert(GameCoreReady);
+    }
 }
