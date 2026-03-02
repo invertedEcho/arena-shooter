@@ -1,8 +1,10 @@
 ﻿use bevy::prelude::*;
-use shared::AppRole;
+use shared::{AppRole, StartGame};
 
 use crate::{
-    game_flow::states::{AppState, GameModeClient, MainMenuState},
+    game_flow::states::{
+        AppState, ClientLoadingState, GameModeClient, MainMenuState,
+    },
     ui::{
         common::{
             CommonUiButton, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
@@ -102,6 +104,8 @@ fn handle_main_menu_button_pressed(
     mut next_game_mode_state: ResMut<NextState<GameModeClient>>,
     mut next_app_state: ResMut<NextState<AppState>>,
     mut next_app_role: ResMut<NextState<AppRole>>,
+    mut next_client_loading_state: ResMut<NextState<ClientLoadingState>>,
+    mut message_writer: MessageWriter<StartGame>,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
         let Interaction::Pressed = interaction else {
@@ -116,6 +120,14 @@ fn handle_main_menu_button_pressed(
                 next_game_mode_state.set(GameModeClient::Multiplayer);
                 next_app_state.set(AppState::LoadingGame);
                 next_app_role.set(AppRole::ClientOnly);
+                // NOTE: we skip state StartingServer, because in multiplayer we dont start a
+                // server ourself but connect to the dedicated server
+                next_client_loading_state
+                    .set(ClientLoadingState::ConnectingToServer);
+
+                // TODO: i think better would be to write StartGame when we enter
+                // AppState::LoadingGame
+                message_writer.write(StartGame);
             }
             MainMenuButton::SettingsMainMenu => {
                 next_main_menu_state.set(MainMenuState::Settings);

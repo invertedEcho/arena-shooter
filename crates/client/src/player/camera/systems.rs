@@ -1,7 +1,7 @@
 use avian3d::{math::FRAC_PI_2, prelude::LinearVelocity};
 use bevy::{
-    camera::visibility::RenderLayers, input::mouse::AccumulatedMouseMotion,
-    prelude::*,
+    camera::visibility::RenderLayers, core_pipeline::Skybox,
+    input::mouse::AccumulatedMouseMotion, prelude::*,
 };
 use lightyear::prelude::Controlled;
 use shared::{
@@ -77,20 +77,20 @@ pub fn handle_spawn_player_camera_message(
                     ..default()
                 }),
                 DespawnOnExit(AppState::InGame),
-                // EnvironmentMapLight {
-                //     diffuse_map: asset_server
-                //         .load("lightmaps/voortrekker_interior_1k_diffuse.ktx2"),
-                //     specular_map: asset_server.load(
-                //         "lightmaps/voortrekker_interior_1k_specular.ktx2",
-                //     ),
-                //     intensity: 1500.0,
-                //     ..default()
-                // },
-                // Skybox {
-                //     image: asset_server.load("skyboxes/skybox_main.ktx2"),
-                //     brightness: 1000.0,
-                //     ..default()
-                // },
+                EnvironmentMapLight {
+                    diffuse_map: asset_server
+                        .load("lightmaps/voortrekker_interior_1k_diffuse.ktx2"),
+                    specular_map: asset_server.load(
+                        "lightmaps/voortrekker_interior_1k_specular.ktx2",
+                    ),
+                    intensity: 1500.0,
+                    ..default()
+                },
+                Skybox {
+                    image: asset_server.load("skyboxes/skybox_main.ktx2"),
+                    brightness: 1000.0,
+                    ..default()
+                },
             ));
 
             let weapon_model_path =

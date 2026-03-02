@@ -13,9 +13,9 @@ use lightyear::{
 };
 use shared::{
     AppRole, ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH,
-    GameCoreReady, GameModeServer, GameStateServer, MEDIUM_PLASTIC_MAP_PATH,
-    PlayerHitMessage, SPAWN_POINT_MEDIUM_PLASTIC_MAP, SelectedMapState,
-    StartGame, StopSinglePlayerGame,
+    GameModeServer, GameStateServer, MEDIUM_PLASTIC_MAP_PATH, PlayerHitMessage,
+    SPAWN_POINT_MEDIUM_PLASTIC_MAP, SelectedMapState, StartGame,
+    StopSinglePlayerGame,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -106,8 +106,6 @@ impl Plugin for GameCorePlugin {
             on_game_core_loading_state_done,
         );
 
-        // now we dont start loading at startup but only when we receive the StartGameRequest from
-        // the client
         app.add_systems(Update, handle_start_game_message);
 
         app.add_systems(
@@ -697,9 +695,7 @@ fn on_enter_spawn_map(
 }
 
 fn log_updates_to_game_core_loading_state(
-    mut commands: Commands,
     game_core_loading_state: Res<State<GameCoreLoadingState>>,
-    server: Single<Entity, With<Server>>,
 ) {
     println!();
     info!(
@@ -707,9 +703,6 @@ fn log_updates_to_game_core_loading_state(
         *game_core_loading_state.get()
     );
     println!();
-    if *game_core_loading_state.get() == GameCoreLoadingState::Done {
-        commands.entity(*server).insert(GameCoreReady);
-    }
 }
 
 type EntitiesToDespawnQueryFilter = Or<(

@@ -164,10 +164,3 @@ pub struct StartGame;
 ///  NOTE: This message gets ignored if game_core has AppRole::DedicatedServer (atm)
 #[derive(Message)]
 pub struct StopSinglePlayerGame;
-
-/// This component can be inserted into server entities which have the game core logic fully
-/// initialized, e.g. the map is spawned, colliders are spawned, nav mesh is generated, enemies are
-/// spawned, etc... This component can then be queried on the client, to know whether the server
-/// the client is connecting to has finished loading.
-#[derive(Component)]
-pub struct GameCoreReady;

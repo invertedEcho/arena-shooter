@@ -1,6 +1,6 @@
 use ::shared::{
-    AppRole, GameCoreReady, ServerRunMode, SharedPlugin,
-    enemy::components::Enemy, player::Player,
+    AppRole, ServerRunMode, SharedPlugin, enemy::components::Enemy,
+    player::Player,
 };
 use bevy::{
     dev_tools::fps_overlay::{FpsOverlayPlugin, FrameTimeGraphConfig},
@@ -147,7 +147,6 @@ fn main() {
     app.add_systems(Update, ensure_egui_context_exists);
     app.add_systems(OnExit(AppState::InGame), despawn_enemys_on_exit);
 
-    app.add_observer(on_server_ready);
     // app.add_systems(Update, (log_current_player_count, log_camera_count));
 
     app.run();
@@ -189,12 +188,4 @@ fn log_camera_count(query: Query<Entity, With<Camera>>) {
         "Currently, {} cameras exist in the client world",
         query.iter().count()
     );
-}
-
-fn on_server_ready(
-    trigger: On<Add, GameCoreReady>,
-    mut next_app_state: ResMut<NextState<AppState>>,
-) {
-    info!("GAME CORE IS READY! Server: {}", trigger.entity);
-    next_app_state.set(AppState::InGame);
 }
