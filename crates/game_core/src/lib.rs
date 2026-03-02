@@ -25,6 +25,7 @@ use shared::{
     protocol::{
         ChangeGameServerStateRequest, ClientUpdatePositionMessage,
         EntityPositionServer, OrderedReliableChannel, ShootRequest,
+        StartGameRequest,
     },
     shooting::MAX_SHOOTING_DISTANCE,
     utils::{
@@ -101,12 +102,16 @@ impl Plugin for GameCorePlugin {
 
         app.add_systems(
             OnEnter(GameCoreLoadingState::Done),
-            handle_server_loading_state_done,
+            on_game_core_loading_state_done,
         );
 
+        // now we dont start loading at startup but only when we receive the StartGameRequest from
+        // the client
+        app.add_systems(Update, setup_game_score);
+
         app.add_systems(
-            OnEnter(GameCoreLoadingState::Initial),
-            setup_game_score,
+            OnEnter(GameCoreLoadingState::GameScoreFinishedSetup),
+            on_enter_spawn_map,
         );
 
         app.add_observer(handle_new_connection);
@@ -169,22 +174,28 @@ fn setup_game_score(
     mut commands: Commands,
     mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     app_role: Res<State<AppRole>>,
+    mut message_receiver: Single<&mut MessageReceiver<StartGameRequest>>,
 ) {
-    commands
-        .spawn((
-            GameScore {
-                players: HashMap::new(),
-                enemies: HashMap::new(),
-            },
-            Name::new("Game Score"),
-        ))
-        .insert_if(Replicate::to_clients(NetworkTarget::All), || {
-            *app_role.get() == AppRole::DedicatedServer
-        });
+    for _ in message_receiver.receive() {
+        info!("RECEIVED StartGameRequest, starting loading game now!");
+        commands
+            .spawn((
+                GameScore {
+                    players: HashMap::new(),
+                    enemies: HashMap::new(),
+                },
+                Name::new("Game Score"),
+            ))
+            .insert_if(Replicate::to_clients(NetworkTarget::All), || {
+                *app_role.get() == AppRole::DedicatedServer
+            });
 
-    // NOTE: theoretically the game score entity is not necessarily already spawned here, but we
-    // just do it here as spawning such a simple entity is trivial.
-    next_server_loading_state.set(GameCoreLoadingState::GameScoreFinishedSetup);
+        // NOTE: theoretically the game score entity is not necessarily already spawned here, but we
+        // just do it here as spawning such a simple entity is trivial.
+        info!("SPAWNED GAME SCORE, SETTING GameScoreFinishedSetup!");
+        next_server_loading_state
+            .set(GameCoreLoadingState::GameScoreFinishedSetup);
+    }
 }
 
 fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
@@ -209,6 +220,7 @@ fn spawn_player_on_new_client(
     if let Ok(remote_id) = clients_query.get(trigger.entity) {
         let peer_id = remote_id.0;
 
+        // why does game score not exist here yet?
         let mut game_score = game_score.single_mut().unwrap();
 
         game_score.players.insert(
@@ -430,15 +442,15 @@ fn handle_shoot_requests(
     }
 }
 
-fn handle_server_loading_state_done(
+fn on_game_core_loading_state_done(
     mut commands: Commands,
     game_mode_server: Single<&GameModeServer>,
     mut spawn_enemies: MessageWriter<SpawnEnemiesMessage>,
     enemy_query: Query<Entity, With<Enemy>>,
 ) {
     info!(
-        "ServerLoadingState is done, now doing actions corresponding to game \
-         mode. Game mode is: {:?}",
+        "GameCoreLoadingState is done, now doing actions corresponding to \
+         game mode. Game mode is: {:?}",
         *game_mode_server
     );
 
@@ -633,10 +645,7 @@ pub fn check_world_scene_loaded(
 
 /// Spawns the corresponding map (determined by looking at SelectedMapState) on the client, when
 /// we enter LoadingGameState::SpawningMap
-pub fn on_enter_spawn_map(
-    asset_server: Res<AssetServer>,
-    mut commands: Commands,
-) {
+fn on_enter_spawn_map(asset_server: Res<AssetServer>, mut commands: Commands) {
     // FIXME: reintroduce choosing different map on client.
     // i think im gonna do that with a request message that can be sent from client to server.
     // thats probably also very future proof in case we want to allow changing map while server is

@@ -36,6 +36,13 @@ pub struct ShootRequest {
 #[derive(Serialize, Deserialize)]
 pub struct ChangeGameServerStateRequest(pub GameStateServer);
 
+/// A client can send this message to game_core to start the game. Note that this message is
+/// ignored in case of AppRole::DedicatedServer, because dedicatedserver will start the game always
+/// at startup
+// FIXME: that actually needs to be implemneted (starting the game / writing this message on server)!
+#[derive(Serialize, Deserialize)]
+pub struct StartGameRequest;
+
 pub struct ProtocolPlugin;
 
 impl Plugin for ProtocolPlugin {
@@ -68,6 +75,9 @@ impl Plugin for ProtocolPlugin {
 
         app.register_message::<PlayerHitMessage>()
             .add_direction(NetworkDirection::ServerToClient);
+
+        app.register_message::<StartGameRequest>()
+            .add_direction(NetworkDirection::ClientToServer);
 
         app.register_component::<Player>();
         app.register_component::<PlayerState>();

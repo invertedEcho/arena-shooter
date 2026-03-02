@@ -6,6 +6,7 @@ use bevy::{
     dev_tools::fps_overlay::{FpsOverlayPlugin, FrameTimeGraphConfig},
     diagnostic::FrameTimeDiagnosticsPlugin,
     input_focus::InputDispatchPlugin,
+    log::LogPlugin,
     prelude::*,
     ui_widgets::UiWidgetsPlugins,
     window::{PresentMode, WindowMode},
@@ -30,7 +31,6 @@ use crate::{
     player::PlayerPlugin,
     shared::{CommonPlugin, systems::apply_render_layers_to_children},
     ui::UserInterfacePlugin,
-    world::{WorldPlugin, components::MapModel},
 };
 
 mod audio;
@@ -46,7 +46,6 @@ mod player;
 mod shared;
 mod ui;
 mod utils;
-mod world;
 
 fn main() {
     let mut app = App::new();
@@ -82,6 +81,11 @@ fn main() {
             })
             .set(AssetPlugin {
                 file_path: "../../assets".to_string(),
+                ..default()
+            })
+            .set(LogPlugin {
+                // FIXME: REMOVE ME!!!
+                filter: "bevy_render=error,info".to_string(),
                 ..default()
             }),
     );
@@ -132,7 +136,6 @@ fn main() {
 
     app.add_plugins(NetworkPlugin)
         .add_plugins(PlayerPlugin)
-        .add_plugins(WorldPlugin)
         .add_plugins(GameFlowPlugin)
         .add_plugins(CommonPlugin)
         .add_plugins(UserInterfacePlugin)
@@ -196,13 +199,6 @@ fn log_current_player_count(query: Query<Entity, With<Player>>) {
 fn log_camera_count(query: Query<Entity, With<Camera>>) {
     info!(
         "Currently, {} cameras exist in the client world",
-        query.iter().count()
-    );
-}
-
-fn log_map_model_count(query: Query<Entity, With<MapModel>>) {
-    info!(
-        "Currently, {} map models exist in the client world",
         query.iter().count()
     );
 }

@@ -1,7 +1,5 @@
 use bevy::prelude::*;
-use game_core::GameCoreLoadingState;
 use lightyear::prelude::*;
-use shared::{AppRole, game_score::GameScore};
 
 use crate::{
     game_flow::states::{AppState, MainMenuState},
@@ -80,9 +78,6 @@ fn handle_common_ui_button_press(
     mut next_app_state: ResMut<NextState<AppState>>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     own_client: Query<Entity, With<Client>>,
-    game_score: Query<Entity, With<GameScore>>,
-    mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
-    app_role: Res<State<AppRole>>,
 ) {
     for (interaction, common_ui_button) in query {
         let Interaction::Pressed = interaction else {
@@ -102,14 +97,17 @@ fn handle_common_ui_button_press(
 
                 debug!("Triggering disconnect and despawning our client");
                 commands.trigger(Disconnect { entity: own_client });
+                // FIXME: despawning client should probably also only happen in game_core
                 commands.entity(own_client).despawn();
-                if *app_role.get() == AppRole::ClientAndServer
-                    && let Ok(game_score) = game_score.single()
-                {
-                    commands.entity(game_score).despawn();
-                    next_server_loading_state
-                        .set(GameCoreLoadingState::Initial);
-                };
+                // FIXME: this is also wrong, why change GameCoreLoadingState on the client?
+                // and also despawning game score. that should happen in game_core!
+                // if *app_role.get() == AppRole::ClientAndServer
+                //     && let Ok(game_score) = game_score.single()
+                // {
+                //     commands.entity(game_score).despawn();
+                //     next_server_loading_state
+                //         .set(GameCoreLoadingState::Initial);
+                // };
             }
             CommonUiButton::ToGameModeSelection => {
                 next_main_menu_state.set(MainMenuState::GameModeSelection);

@@ -21,6 +21,9 @@ pub enum ClientLoadingState {
     // i mean StartingServer, thats just done via game_core, not client
     // and then we are only left with ConnectingToServer, and one state means we can just have
     // AppState::Loading / ConnectingToGameServer
+    // okay but how can we know on the client that the server finished loading?
+    // especially in the case of multiplayer, where the server will be started initially, and
+    // future connecting clients will never receive a message that server finished loading
     /// Note that this state will be skipped if AppRole::ClientOnly. This is only relevant for
     /// AppRole::ClientAndServer
     #[default]
