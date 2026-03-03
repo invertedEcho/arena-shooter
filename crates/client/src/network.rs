@@ -62,12 +62,18 @@ impl Plugin for NetworkPlugin {
         app.add_systems(
             Update,
             (
-                send_client_update_position,
-                apply_server_position_other_clients,
                 handle_confirm_respawn_message,
                 handle_hit_message,
                 handle_new_player,
             ),
+        );
+        app.add_systems(
+            Update,
+            (
+                send_client_update_position,
+                apply_server_position_other_clients,
+            )
+                .run_if(in_state(GameModeClient::Multiplayer)),
         );
 
         app.add_observer(handle_added_server);

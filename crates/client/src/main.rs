@@ -1,7 +1,4 @@
-use ::shared::{
-    AppRole, ServerRunMode, SharedPlugin, enemy::components::Enemy,
-    player::Player,
-};
+use ::shared::{AppRole, ServerRunMode, SharedPlugin};
 use bevy::{
     dev_tools::fps_overlay::{FpsOverlayPlugin, FrameTimeGraphConfig},
     diagnostic::FrameTimeDiagnosticsPlugin,
@@ -22,7 +19,7 @@ use crate::{
     audio::AudioPlugin,
     character_controller::CharacterControllerPlugin,
     enemy_visuals::{EnemyVisualsPlugin, HealthBarCamera},
-    game_flow::{GameFlowPlugin, states::AppState},
+    game_flow::GameFlowPlugin,
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
     network::NetworkPlugin,
@@ -145,9 +142,6 @@ fn main() {
     // TODO: move elsewhere
     app.add_observer(apply_render_layers_to_children);
     app.add_systems(Update, ensure_egui_context_exists);
-    app.add_systems(OnExit(AppState::InGame), despawn_enemys_on_exit);
-
-    app.add_systems(Update, (log_current_player_count, log_camera_count));
 
     app.run();
 }
@@ -165,27 +159,4 @@ fn ensure_egui_context_exists(
         info!("Inserting PrimaryEguiContext into first camera found");
         commands.entity(first_camera).insert(PrimaryEguiContext);
     }
-}
-
-pub fn despawn_enemys_on_exit(
-    mut commands: Commands,
-    enemy_query: Query<Entity, With<Enemy>>,
-) {
-    for enemy in enemy_query {
-        commands.entity(enemy).despawn();
-    }
-}
-
-fn log_current_player_count(query: Query<Entity, With<Player>>) {
-    info!(
-        "Currently, {} players exist in the client world",
-        query.iter().count()
-    );
-}
-
-fn log_camera_count(query: Query<Entity, With<Camera>>) {
-    info!(
-        "Currently, {} cameras exist in the client world",
-        query.iter().count()
-    );
 }

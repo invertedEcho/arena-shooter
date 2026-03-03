@@ -93,12 +93,12 @@ impl Plugin for GameCorePlugin {
             Update,
             (
                 handle_shoot_requests,
-                receive_client_update_position,
+                receive_and_apply_client_update_position
+                    .run_if(in_state(AppRole::DedicatedServer)),
                 handle_client_respawn_requests,
                 handle_game_server_state_update_request,
                 kill_players_below_death_zone,
                 read_stop_single_player_game,
-                log_game_map_count,
             ),
         );
 
@@ -301,7 +301,7 @@ fn spawn_player_on_new_client(
 /// The server will then apply it to the `PlayerPositionServer` component, which then gets
 /// replicated to all clients. All clients receive the updates from `PlayerPositionServer`, and
 /// update the Transform locally.
-fn receive_client_update_position(
+fn receive_and_apply_client_update_position(
     mut receivers: Query<(
         &mut MessageReceiver<ClientUpdatePositionMessage>,
         Entity,
@@ -729,11 +729,4 @@ fn read_stop_single_player_game(
             commands.entity(entity).despawn();
         }
     }
-}
-
-fn log_game_map_count(query: Query<Entity, With<GameMap>>) {
-    info!(
-        "Currently, there exists {} game maps.",
-        query.iter().count()
-    );
 }
