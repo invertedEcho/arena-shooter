@@ -135,7 +135,9 @@ fn on_enter_connecting_to_server(
             ))
             .id();
 
-        // FIXME: why do we only trigger Connect for HostClient???
+        // NOTE: We only trigger the Connect in this system for host client, as the connect for a
+        // client connecting to the official dedicated server triggers only when we received a
+        // ConnectToken. this happens in auth.rs
         commands.trigger(Connect { entity: client });
     } else {
         info!("Connecting to official dedicated server");

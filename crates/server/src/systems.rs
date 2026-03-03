@@ -3,7 +3,7 @@ use std::{fs::File, io::Read};
 use avian3d::prelude::Collider;
 use bevy::prelude::*;
 use game_core::GameCoreLoadingState;
-use shared::{CurrentMap, GameMode, ServerRunMode, StartGame};
+use shared::{CurrentMap, GameModeServer, ServerRunMode, StartGame};
 
 use crate::utils::get_path_to_collider_json;
 
@@ -45,7 +45,7 @@ pub fn spawn_map_colliders(
 pub fn write_start_game_message(mut message_writer: MessageWriter<StartGame>) {
     message_writer.write(StartGame {
         map: CurrentMap::MediumPlastic,
-        game_mode: GameMode::FreeForAll,
+        game_mode: GameModeServer::FreeForAll,
     });
 }
 

@@ -35,11 +35,11 @@ pub enum AppRole {
     DedicatedServer,
 }
 
-/// The game mode that is running on the game_core.
+/// The game mode that is running on the server.
 /// In case of AppRole::DedicatedServer, this gets replicated to all connected clients.
 /// Must be a component as we can only replicate components with lightyear.
 #[derive(Component, Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub enum GameMode {
+pub enum GameModeServer {
     Waves,
     FreeForAll,
     FreeRoam,
@@ -134,7 +134,6 @@ impl Plugin for SharedPlugin {
     }
 }
 
-// This is not a substate, as it needs to exist globally
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
 pub enum CurrentMap {
     #[default]
@@ -160,7 +159,7 @@ pub fn handle_despawn_timer(
 #[derive(Message)]
 pub struct StartGame {
     pub map: CurrentMap,
-    pub game_mode: GameMode,
+    pub game_mode: GameModeServer,
 }
 
 /// A client can send this message to game_core, and game_core will despawn the map,

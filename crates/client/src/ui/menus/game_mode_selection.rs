@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::{CurrentMap, GameMode, StartGame};
+use shared::{CurrentMap, GameModeServer, StartGame};
 
 use crate::{
     game_flow::states::{AppState, GameModeClient, MainMenuState},
@@ -117,9 +117,9 @@ fn handle_game_mode_selection_button_press(
             next_app_state.set(AppState::LoadingGame);
 
             let game_mode = match pressed_game_mode {
-                GameModeClient::FreeRoam => GameMode::FreeRoam,
-                GameModeClient::Waves => GameMode::Waves,
-                GameModeClient::Multiplayer => GameMode::FreeRoam,
+                GameModeClient::FreeRoam => GameModeServer::FreeRoam,
+                GameModeClient::Waves => GameModeServer::Waves,
+                GameModeClient::Multiplayer => GameModeServer::FreeRoam,
             };
 
             message_writer.write(StartGame {

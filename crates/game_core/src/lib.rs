@@ -14,7 +14,7 @@ use lightyear::{
 };
 use shared::{
     AppRole, ClientRespawnRequest, ConfirmRespawn, CurrentMap, DEFAULT_HEALTH,
-    GameMode, GameStateServer, MEDIUM_PLASTIC_MAP_PATH, PlayerHitMessage,
+    GameModeServer, GameStateServer, MEDIUM_PLASTIC_MAP_PATH, PlayerHitMessage,
     SPAWN_POINT_MEDIUM_PLASTIC_MAP, StartGame, StopGame, TINY_TOWN_MAP_PATH,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
@@ -168,7 +168,7 @@ pub fn start_server(mut commands: Commands, app_role: Res<State<AppRole>>) {
             LocalAddr(local_addr),
             ServerUdpIo::default(),
             Name::new(entity_name),
-            GameMode::FreeForAll,
+            GameModeServer::FreeForAll,
             DespawnOnExit(AppRole::ClientAndServer),
         ))
         .id();
@@ -182,7 +182,7 @@ fn handle_start_game_message(
     app_role: Res<State<AppRole>>,
     mut message_receiver: MessageReader<StartGame>,
     mut next_current_map: ResMut<NextState<CurrentMap>>,
-    mut game_mode_server: Single<&mut GameMode>,
+    mut game_mode_server: Single<&mut GameModeServer>,
 ) {
     for message in message_receiver.read() {
         next_current_map.set(message.map.clone());
@@ -338,7 +338,7 @@ fn handle_shoot_requests(
     spatial_query: SpatialQuery,
     player_query: Query<(Entity, &ControlledBy), With<Player>>,
     mut game_score: Single<&mut GameScore>,
-    game_mode_server: Single<&GameMode>,
+    game_mode_server: Single<&GameModeServer>,
     client_query: Query<&RemoteId, With<ClientOf>>,
     mut server_multi_message_sender: ServerMultiMessageSender,
     server: Single<&Server>,
@@ -423,7 +423,7 @@ fn handle_shoot_requests(
 
                     // if we have game mode wave, the entity killed will always be an enemy. so we
                     // skip this case
-                    if **game_mode_server == GameMode::Waves {
+                    if **game_mode_server == GameModeServer::Waves {
                         return;
                     };
                     match player_query.get(entity_killed) {
@@ -457,7 +457,7 @@ fn handle_shoot_requests(
 
 fn on_game_core_loading_state_done(
     mut commands: Commands,
-    game_mode_server: Single<&GameMode>,
+    game_mode_server: Single<&GameModeServer>,
     mut spawn_enemies: MessageWriter<SpawnEnemiesMessage>,
     enemy_query: Query<Entity, With<Enemy>>,
 ) {
@@ -468,7 +468,7 @@ fn on_game_core_loading_state_done(
     );
 
     match *game_mode_server {
-        GameMode::Waves => {
+        GameModeServer::Waves => {
             commands.insert_resource(GameStateWave {
                 current_wave: 1,
                 enemies_killed: 0,
@@ -479,7 +479,7 @@ fn on_game_core_loading_state_done(
                 spawn_strategy: EnemySpawnStrategy::RandomSelection,
             });
         }
-        GameMode::FreeForAll | GameMode::FreeRoam => {
+        GameModeServer::FreeForAll | GameModeServer::FreeRoam => {
             commands.remove_resource::<GameStateWave>();
             for enemy in enemy_query {
                 commands.entity(enemy).despawn();
