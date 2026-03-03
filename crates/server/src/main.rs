@@ -11,7 +11,8 @@ use lightyear::utils::collections::HashSet;
 use shared::ServerRunMode;
 use shared::utils::auth::load_private_key_from_env;
 use shared::utils::network::{
-    AUTH_BACKEND_ADDRESS_SERVER_SIDE, get_server_socket_addr_client_side,
+    AUTH_BACKEND_ADDRESS_SERVER_SIDE,
+    get_dedicated_server_socket_addr_client_side,
 };
 use shared::{AppRole, SharedPlugin};
 
@@ -100,7 +101,7 @@ fn main() {
     start_netcode_authentication_task(
         // this must be client side because it will be contained in the token that the client
         // receives and uses to connect
-        get_server_socket_addr_client_side().expect(
+        get_dedicated_server_socket_addr_client_side().expect(
             "Could not resolve game server address. Please make sure you have \
              a working internet connection. Game server may be currently down",
         ),

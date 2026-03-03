@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use shared::StopGame;
 
 use crate::{
     game_flow::states::{AppState, ClientLoadingState},
@@ -80,6 +81,7 @@ fn handle_loading_screen_button_pressed(
         Changed<Interaction>,
     >,
     mut next_app_state: ResMut<NextState<AppState>>,
+    mut stop_game_message_writer: MessageWriter<StopGame>,
 ) {
     for (interaction, loading_screen_button) in interaction_query {
         let Interaction::Pressed = interaction else {
@@ -88,6 +90,7 @@ fn handle_loading_screen_button_pressed(
         match loading_screen_button {
             LoadingScreenButton::Cancel => {
                 next_app_state.set(AppState::MainMenu);
+                stop_game_message_writer.write(StopGame);
             }
         }
     }

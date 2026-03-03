@@ -147,7 +147,7 @@ fn main() {
     app.add_systems(Update, ensure_egui_context_exists);
     app.add_systems(OnExit(AppState::InGame), despawn_enemys_on_exit);
 
-    // app.add_systems(Update, (log_current_player_count, log_camera_count));
+    app.add_systems(Update, (log_current_player_count, log_camera_count));
 
     app.run();
 }

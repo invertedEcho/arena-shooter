@@ -19,8 +19,8 @@ use shared::utils::lightyear::{
     DisconnectReason, parse_lightyear_disconnect_reason,
 };
 use shared::utils::network::{
-    SERVER_PORT, get_auth_backend_socket_addr_client_side,
-    get_server_socket_addr_client_side,
+    get_auth_backend_socket_addr_client_side,
+    get_dedicated_server_socket_addr_client_side,
 };
 use shared::{AppRole, ConfirmRespawn, PlayerHitMessage};
 
@@ -77,10 +77,12 @@ impl Plugin for NetworkPlugin {
 
 fn handle_added_server(
     trigger: On<Add, Server>,
+    mut commands: Commands,
     app_role: Res<State<AppRole>>,
     mut next_client_loading_state: ResMut<NextState<ClientLoadingState>>,
 ) {
     info!("Server {} now added!", trigger.entity);
+    commands.entity(trigger.entity).log_components();
     if *app_role.get() == AppRole::ClientAndServer {
         info!(
             "Server was added and AppRole::ClientAndServer, setting \
@@ -97,6 +99,10 @@ fn on_enter_connecting_to_server(
     server_entity: Query<Entity, With<Server>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
+    info!(
+        "Entered ClientLoadingState::ConnectingToServer! Spawning a client \
+         and triggering Connect to server"
+    );
     // Connected component only present on our own client
     for connected in connected_query {
         if connected {
@@ -107,11 +113,12 @@ fn on_enter_connecting_to_server(
 
     let is_singleplayer = *game_mode.get() != GameModeClient::Multiplayer;
 
-    info!("SERVER COUNT: {}", server_entity.iter().count());
+    // FIXME: following code is so insanely unreadable
     if let Ok(server_entity) = server_entity.single()
         && is_singleplayer
     {
-        info!("SPAWNING A HOST CLIENT",);
+        info!("Spawning a host client, we have single player mode");
+
         let client = commands
             .spawn((
                 Name::new("Host Client"),
@@ -122,37 +129,29 @@ fn on_enter_connecting_to_server(
             ))
             .id();
 
+        // FIXME: why do we only trigger Connect for HostClient???
         commands.trigger(Connect { entity: client });
     } else {
-        if !is_singleplayer {
-            let auth_backend_addr = get_auth_backend_socket_addr_client_side();
-            if let Some(auth_backend_addr) = auth_backend_addr {
-                debug!(
-                    "Starting task to get auth ConnectToken via AuthBackend \
-                     at {}",
-                    auth_backend_addr
-                );
-                let task =
-                    IoTaskPool::get().spawn_local(Compat::new(async move {
-                        get_connect_token_from_auth_backend(auth_backend_addr)
-                            .await
-                    }));
-                commands.insert_resource(ConnectTokenRequestTask {
-                    task: Some(task),
-                });
-            } else {
-                next_app_state.set(AppState::Disconnected);
-            }
+        info!("Connecting to official dedicated server");
+        info!("Spawning a 'normal' client");
+        let auth_backend_addr = get_auth_backend_socket_addr_client_side();
+        if let Some(auth_backend_addr) = auth_backend_addr {
+            debug!(
+                "Starting task to get auth ConnectToken via AuthBackend at {}",
+                auth_backend_addr
+            );
+            let task = IoTaskPool::get().spawn_local(Compat::new(async move {
+                get_connect_token_from_auth_backend(auth_backend_addr).await
+            }));
+            commands
+                .insert_resource(ConnectTokenRequestTask { task: Some(task) });
+        } else {
+            next_app_state.set(AppState::Disconnected);
         }
-        let server_address = match *game_mode.get() {
-            GameModeClient::Multiplayer => get_server_socket_addr_client_side(),
-            _ => Some(SocketAddr::new(
-                std::net::IpAddr::V6(Ipv6Addr::LOCALHOST),
-                SERVER_PORT,
-            )),
-        };
 
-        if let Some(server_address) = server_address {
+        if let Some(server_address) =
+            get_dedicated_server_socket_addr_client_side()
+        {
             commands.spawn((
                 Name::new("Client"),
                 Client::default(),
@@ -180,7 +179,7 @@ fn handle_new_player(
     player_query: Query<(Entity, Has<Controlled>), Added<Player>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    app_role: Res<State<AppRole>>,
+    // app_role: Res<State<AppRole>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     for (player_entity, has_controlled) in player_query {
@@ -188,7 +187,7 @@ fn handle_new_player(
 
         // NOTE: in case of AppRole::ClientAndServer, controlled component is inserted too late.
         // Hence, we add this additional check
-        if has_controlled || *app_role.get() == AppRole::ClientAndServer {
+        if has_controlled {
             // we insert the character controller locally on our client, as it should only run on the
             // client.
             commands.entity(player_entity).insert((
@@ -210,6 +209,7 @@ fn handle_new_player(
             // FIXME: is this a good idea? issue is if dedicated server, the GameCoreReady component
             // will never be available to the client, so here we assume that if our player is
             // present, it means GameCore is ready.
+            info!("Our player was added, setting AppState to InGame");
             next_app_state.set(AppState::InGame);
         } else {
             commands.entity(player_entity).insert((

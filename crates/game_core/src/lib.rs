@@ -2,7 +2,8 @@ use std::time::Duration;
 
 use avian3d::prelude::*;
 use bevy::{
-    color::palettes::css::WHITE, platform::collections::HashMap, prelude::*,
+    camera::visibility::RenderLayers, color::palettes::css::WHITE,
+    platform::collections::HashMap, prelude::*,
 };
 use lightyear::{
     netcode::NetcodeServer,
@@ -14,8 +15,7 @@ use lightyear::{
 use shared::{
     AppRole, ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH,
     GameModeServer, GameStateServer, MEDIUM_PLASTIC_MAP_PATH, PlayerHitMessage,
-    SPAWN_POINT_MEDIUM_PLASTIC_MAP, SelectedMapState, StartGame,
-    StopSinglePlayerGame,
+    SPAWN_POINT_MEDIUM_PLASTIC_MAP, SelectedMapState, StartGame, StopGame,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -98,6 +98,7 @@ impl Plugin for GameCorePlugin {
                 handle_game_server_state_update_request,
                 kill_players_below_death_zone,
                 read_stop_single_player_game,
+                log_game_map_count,
             ),
         );
 
@@ -110,7 +111,7 @@ impl Plugin for GameCorePlugin {
 
         app.add_systems(
             OnEnter(GameCoreLoadingState::GameScoreFinishedSetup),
-            on_enter_spawn_map,
+            spawn_map,
         );
 
         app.add_observer(handle_new_connection);
@@ -182,7 +183,7 @@ fn handle_start_game_message(
     mut message_receiver: MessageReader<StartGame>,
 ) {
     for _ in message_receiver.read() {
-        info!("RECEIVED StartSinglePlayerGame!!!!");
+        info!("RECEIVED StartGame message!!!!");
         commands
             .spawn((
                 GameScore {
@@ -273,6 +274,9 @@ fn spawn_player_on_new_client(
                 ),
                 RigidBody::Kinematic,
             ))
+            .insert_if(Controlled, || {
+                *app_role.get() == AppRole::ClientAndServer
+            })
             .id();
 
         if *app_role.get() == AppRole::DedicatedServer {
@@ -289,9 +293,6 @@ fn spawn_player_on_new_client(
                     })),
                 ));
             }
-        }
-        if *app_role.get() == AppRole::ClientAndServer {
-            commands.entity(player_entity).insert(Controlled);
         }
     }
 }
@@ -650,7 +651,7 @@ struct GameMap;
 #[derive(Component)]
 struct GameMapLight;
 
-fn on_enter_spawn_map(
+fn spawn_map(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     app_role: Res<State<AppRole>>,
@@ -665,7 +666,10 @@ fn on_enter_spawn_map(
     // running etc
     let map_path = MEDIUM_PLASTIC_MAP_PATH;
 
-    info!("Spawning the game map");
+    info!(
+        "Entered GameCoreLoadingState::GameScoreFinishedSetup! Spawning the \
+         game map"
+    );
     commands.spawn((
         DirectionalLight {
             illuminance: 6000.,
@@ -677,7 +681,7 @@ fn on_enter_spawn_map(
         // FIXME: reintroduce. this should be inserted on client
         // or can we just insert this always?
         // TODO: should be constants
-        // RenderLayers::from_layers(&[0, 1]),
+        RenderLayers::from_layers(&[0, 1]),
     ));
 
     let world_scene_handle =
@@ -705,18 +709,12 @@ fn log_updates_to_game_core_loading_state(
     println!();
 }
 
-type EntitiesToDespawnQueryFilter = Or<(
-    With<GameMap>,
-    With<GameMapLight>,
-    With<Enemy>,
-    With<Server>,
-    With<Client>,
-    With<Player>,
-)>;
+type EntitiesToDespawnQueryFilter =
+    Or<(With<GameMap>, With<GameMapLight>, With<Enemy>, With<Server>)>;
 
 fn read_stop_single_player_game(
     mut commands: Commands,
-    mut message_reader: MessageReader<StopSinglePlayerGame>,
+    mut message_reader: MessageReader<StopGame>,
     app_role: Res<State<AppRole>>,
     entities_to_despawn: Query<Entity, EntitiesToDespawnQueryFilter>,
 ) {
@@ -731,4 +729,11 @@ fn read_stop_single_player_game(
             commands.entity(entity).despawn();
         }
     }
+}
+
+fn log_game_map_count(query: Query<Entity, With<GameMap>>) {
+    info!(
+        "Currently, there exists {} game maps.",
+        query.iter().count()
+    );
 }

@@ -125,7 +125,7 @@ impl Plugin for SharedPlugin {
         app.add_plugins(ProtocolPlugin);
 
         app.add_message::<StartGame>();
-        app.add_message::<StopSinglePlayerGame>();
+        app.add_message::<StopGame>();
 
         app.add_plugins(PhysicsPlugins::default().build())
             .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
@@ -159,8 +159,8 @@ pub fn handle_despawn_timer(
 #[derive(Message)]
 pub struct StartGame;
 
-/// A client can send this message to game_core, and game_core will stop the server, despawn map,
+/// A client can send this message to game_core, and game_core will despawn the map,
 /// despawn enemies, etc
 ///  NOTE: This message gets ignored if game_core has AppRole::DedicatedServer (atm)
 #[derive(Message)]
-pub struct StopSinglePlayerGame;
+pub struct StopGame;

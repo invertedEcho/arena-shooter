@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use lightyear::prelude::*;
-use shared::StopSinglePlayerGame;
+use shared::StopGame;
 
 use crate::{
     game_flow::states::{AppState, MainMenuState},
@@ -69,7 +69,6 @@ pub enum CommonUiButton {
 #[derive(Component)]
 pub struct ExcludeFromHover;
 
-// TODO: create a exit game message that does all of the things in BackToMainMenu
 // TODO: This system does way too many things and especially things that aren't relevant for
 // `user_interface` module.
 fn handle_common_ui_button_press(
@@ -79,7 +78,7 @@ fn handle_common_ui_button_press(
     mut next_app_state: ResMut<NextState<AppState>>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     own_client: Query<Entity, With<Client>>,
-    mut message_writer: MessageWriter<StopSinglePlayerGame>,
+    mut message_writer: MessageWriter<StopGame>,
 ) {
     for (interaction, common_ui_button) in query {
         let Interaction::Pressed = interaction else {
@@ -98,7 +97,7 @@ fn handle_common_ui_button_press(
                 };
 
                 debug!("Triggering disconnect and despawning our client");
-                message_writer.write(StopSinglePlayerGame);
+                message_writer.write(StopGame);
                 commands.trigger(Disconnect { entity: own_client });
                 // FIXME: despawning client should probably also only happen in game_core
                 commands.entity(own_client).despawn();

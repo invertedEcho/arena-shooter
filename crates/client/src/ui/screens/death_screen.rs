@@ -27,7 +27,7 @@ impl Plugin for DeathScreenPlugin {
 
 #[derive(Component, PartialEq)]
 enum DeathScreenButton {
-    Restart,
+    Respawn,
 }
 
 fn spawn_wave_game_mode_death_screen(
@@ -129,7 +129,7 @@ fn spawn_wave_game_mode_death_screen(
                     };
 
                     parent
-                        .spawn((Button, DeathScreenButton::Restart))
+                        .spawn((Button, DeathScreenButton::Respawn))
                         .with_child((
                             Text::new(restart_button_text),
                             TextFont {
@@ -170,7 +170,7 @@ fn handle_button_press(
             continue;
         }
         match button {
-            DeathScreenButton::Restart => {
+            DeathScreenButton::Respawn => {
                 // TODO: i really hate this
                 // unfortunately in HostClient setup (e.g. AppRole::ClientAndServer) we never
                 // receive the ConfirmRespawn message from server, so we just do the stuff that we

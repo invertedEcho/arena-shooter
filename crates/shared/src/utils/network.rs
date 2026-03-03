@@ -46,7 +46,7 @@ fn resolve_with_retry(
     Err(last_err.unwrap())
 }
 
-pub fn get_server_socket_addr_client_side() -> Option<SocketAddr> {
+pub fn get_dedicated_server_socket_addr_client_side() -> Option<SocketAddr> {
     match resolve_with_retry("game.invertedecho.com:5888") {
         Ok(success) => success.first().copied(),
         Err(error) => {

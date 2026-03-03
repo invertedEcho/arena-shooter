@@ -13,7 +13,7 @@ pub enum AppState {
 
 /// The current loading state of the client.
 /// Note that upon entering each of these states, the corresponding
-/// systems will be run, e.g. SpawningMap state will spawn the map
+/// systems will be run
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[source(AppState = AppState::LoadingGame)]
 pub enum ClientLoadingState {
