@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::StartGame;
+use shared::{CurrentMap, GameMode, StartGame};
 
 use crate::{
     game_flow::states::{AppState, GameModeClient, MainMenuState},
@@ -108,6 +108,7 @@ fn handle_game_mode_selection_button_press(
     // mut game_mode_server: Query<&mut GameModeServer>,
     // app_role: Res<State<AppRole>>,
     mut message_writer: MessageWriter<StartGame>,
+    current_map: Res<State<CurrentMap>>,
 ) {
     for (interaction, game_mode_selection_button) in query {
         if let Interaction::Pressed = interaction {
@@ -115,25 +116,16 @@ fn handle_game_mode_selection_button_press(
             next_game_mode_state.set(pressed_game_mode);
             next_app_state.set(AppState::LoadingGame);
 
-            message_writer.write(StartGame);
+            let game_mode = match pressed_game_mode {
+                GameModeClient::FreeRoam => GameMode::FreeRoam,
+                GameModeClient::Waves => GameMode::Waves,
+                GameModeClient::Multiplayer => GameMode::FreeRoam,
+            };
 
-            // FIXME: the below comment can be implemented by adding fields to the above StartGameRequest!
-            // FIXME: maybe this should just never happen on the client. the client can only send
-            // requests to game_core that the game mode should be changed. and these requests are
-            // just ignored if AppRole::DedicatedServer, similar to pausing game stat
-            // if *app_role.get() == AppRole::ClientAndServer
-            //     && let Ok(mut game_mode_server) = game_mode_server.single_mut()
-            // {
-            //     match pressed_game_mode {
-            //         GameModeClient::FreeRoam => {
-            //             *game_mode_server = GameModeServer::FreeForAll;
-            //         }
-            //         GameModeClient::Waves => {
-            //             *game_mode_server = GameModeServer::Waves;
-            //         }
-            //         _ => {}
-            //     }
-            // }
+            message_writer.write(StartGame {
+                map: current_map.get().clone(),
+                game_mode,
+            });
         }
     }
 }

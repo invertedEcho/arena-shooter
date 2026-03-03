@@ -96,11 +96,9 @@ fn handle_common_ui_button_press(
                     continue;
                 };
 
-                debug!("Triggering disconnect and despawning our client");
+                debug!("Sending StopGame message and triggering disconnect");
                 message_writer.write(StopGame);
                 commands.trigger(Disconnect { entity: own_client });
-                // FIXME: despawning client should probably also only happen in game_core
-                commands.entity(own_client).despawn();
             }
             CommonUiButton::ToGameModeSelection => {
                 next_main_menu_state.set(MainMenuState::GameModeSelection);

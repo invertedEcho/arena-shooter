@@ -35,10 +35,11 @@ pub enum AppRole {
     DedicatedServer,
 }
 
-/// The game mode that is running on the server. Must be a component as we can only replicate
-/// components with lightyear.
-#[derive(Component, Serialize, Deserialize, PartialEq, Debug)]
-pub enum GameModeServer {
+/// The game mode that is running on the game_core.
+/// In case of AppRole::DedicatedServer, this gets replicated to all connected clients.
+/// Must be a component as we can only replicate components with lightyear.
+#[derive(Component, Serialize, Deserialize, PartialEq, Debug, Clone)]
+pub enum GameMode {
     Waves,
     FreeForAll,
     FreeRoam,
@@ -114,7 +115,7 @@ pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
 pub const SPAWN_POINT_MEDIUM_PLASTIC_MAP: Vec3 = vec3(0.0, 10.0, 0.0);
 
 // FIXME: hmm thats weird. the below description is the same as GameCore? i think we should rather
-// not have a SharedPlugin, and just do this stuff in game_core. hmm but actually adding
+// not have a SharedPlugin, and just do this stuff in game_core. hmm but adding
 // ProtocolPlugin in game_core doesnt feel right.
 
 /// Logic for both client and server binary
@@ -135,7 +136,7 @@ impl Plugin for SharedPlugin {
 
 // This is not a substate, as it needs to exist globally
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
-pub enum SelectedMapState {
+pub enum CurrentMap {
     #[default]
     MediumPlastic,
     TinyTown,
@@ -157,7 +158,10 @@ pub fn handle_despawn_timer(
 /// game_core listens for this message. Upon receiving, game_core will spawn the map, spawn colliders,
 /// spawn enemies, etc...
 #[derive(Message)]
-pub struct StartGame;
+pub struct StartGame {
+    pub map: CurrentMap,
+    pub game_mode: GameMode,
+}
 
 /// A client can send this message to game_core, and game_core will despawn the map,
 /// despawn enemies, etc

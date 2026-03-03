@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::GameModeServer;
+use shared::GameMode;
 
 use crate::{
     game_flow::states::{
@@ -176,7 +176,7 @@ fn update_current_server_game_mode_text(
         &mut Text,
         With<CurrentServerGameModeText>,
     >,
-    server_game_mode: Single<&GameModeServer, Changed<GameModeServer>>,
+    server_game_mode: Single<&GameMode, Changed<GameMode>>,
 ) {
     **current_server_game_mode_text =
         Text::new(format!("{:?}", *server_game_mode));

@@ -13,9 +13,9 @@ use lightyear::{
     },
 };
 use shared::{
-    AppRole, ClientRespawnRequest, ConfirmRespawn, DEFAULT_HEALTH,
-    GameModeServer, GameStateServer, MEDIUM_PLASTIC_MAP_PATH, PlayerHitMessage,
-    SPAWN_POINT_MEDIUM_PLASTIC_MAP, SelectedMapState, StartGame, StopGame,
+    AppRole, ClientRespawnRequest, ConfirmRespawn, CurrentMap, DEFAULT_HEALTH,
+    GameMode, GameStateServer, MEDIUM_PLASTIC_MAP_PATH, PlayerHitMessage,
+    SPAWN_POINT_MEDIUM_PLASTIC_MAP, StartGame, StopGame, TINY_TOWN_MAP_PATH,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -79,7 +79,7 @@ impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<GameCoreLoadingState>();
         app.init_state::<GameStateServer>();
-        app.init_state::<SelectedMapState>();
+        app.init_state::<CurrentMap>();
 
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
@@ -98,7 +98,7 @@ impl Plugin for GameCorePlugin {
                 handle_client_respawn_requests,
                 handle_game_server_state_update_request,
                 kill_players_below_death_zone,
-                read_stop_single_player_game,
+                read_stop_game_message,
             ),
         );
 
@@ -168,7 +168,7 @@ pub fn start_server(mut commands: Commands, app_role: Res<State<AppRole>>) {
             LocalAddr(local_addr),
             ServerUdpIo::default(),
             Name::new(entity_name),
-            GameModeServer::FreeForAll,
+            GameMode::FreeForAll,
             DespawnOnExit(AppRole::ClientAndServer),
         ))
         .id();
@@ -181,9 +181,12 @@ fn handle_start_game_message(
     mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     app_role: Res<State<AppRole>>,
     mut message_receiver: MessageReader<StartGame>,
+    mut next_current_map: ResMut<NextState<CurrentMap>>,
+    mut game_mode_server: Single<&mut GameMode>,
 ) {
-    for _ in message_receiver.read() {
-        info!("RECEIVED StartGame message!!!!");
+    for message in message_receiver.read() {
+        next_current_map.set(message.map.clone());
+        **game_mode_server = message.game_mode.clone();
         commands
             .spawn((
                 GameScore {
@@ -198,7 +201,6 @@ fn handle_start_game_message(
 
         // NOTE: theoretically the game score entity is not necessarily already spawned here, but we
         // just do it here as spawning such a simple entity is trivial.
-        info!("SPAWNED GAME SCORE, SETTING GameScoreFinishedSetup!");
         next_server_loading_state
             .set(GameCoreLoadingState::GameScoreFinishedSetup);
     }
@@ -336,7 +338,7 @@ fn handle_shoot_requests(
     spatial_query: SpatialQuery,
     player_query: Query<(Entity, &ControlledBy), With<Player>>,
     mut game_score: Single<&mut GameScore>,
-    game_mode_server: Single<&GameModeServer>,
+    game_mode_server: Single<&GameMode>,
     client_query: Query<&RemoteId, With<ClientOf>>,
     mut server_multi_message_sender: ServerMultiMessageSender,
     server: Single<&Server>,
@@ -421,7 +423,7 @@ fn handle_shoot_requests(
 
                     // if we have game mode wave, the entity killed will always be an enemy. so we
                     // skip this case
-                    if **game_mode_server == GameModeServer::Waves {
+                    if **game_mode_server == GameMode::Waves {
                         return;
                     };
                     match player_query.get(entity_killed) {
@@ -455,7 +457,7 @@ fn handle_shoot_requests(
 
 fn on_game_core_loading_state_done(
     mut commands: Commands,
-    game_mode_server: Single<&GameModeServer>,
+    game_mode_server: Single<&GameMode>,
     mut spawn_enemies: MessageWriter<SpawnEnemiesMessage>,
     enemy_query: Query<Entity, With<Enemy>>,
 ) {
@@ -466,7 +468,7 @@ fn on_game_core_loading_state_done(
     );
 
     match *game_mode_server {
-        GameModeServer::Waves => {
+        GameMode::Waves => {
             commands.insert_resource(GameStateWave {
                 current_wave: 1,
                 enemies_killed: 0,
@@ -477,7 +479,7 @@ fn on_game_core_loading_state_done(
                 spawn_strategy: EnemySpawnStrategy::RandomSelection,
             });
         }
-        GameModeServer::FreeForAll | GameModeServer::FreeRoam => {
+        GameMode::FreeForAll | GameMode::FreeRoam => {
             commands.remove_resource::<GameStateWave>();
             for enemy in enemy_query {
                 commands.entity(enemy).despawn();
@@ -655,16 +657,17 @@ fn spawn_map(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     app_role: Res<State<AppRole>>,
+    current_map: Res<State<CurrentMap>>,
 ) {
     if *app_role.get() == AppRole::DedicatedServer {
         info!("Skipping spawning map, AppRole is DedicatedServer");
         return;
     }
-    // FIXME: reintroduce choosing different map on client.
-    // i think im gonna do that with a request message that can be sent from client to server.
-    // thats probably also very future proof in case we want to allow changing map while server is
-    // running etc
-    let map_path = MEDIUM_PLASTIC_MAP_PATH;
+
+    let map_path = match current_map.get() {
+        CurrentMap::MediumPlastic => MEDIUM_PLASTIC_MAP_PATH,
+        CurrentMap::TinyTown => TINY_TOWN_MAP_PATH,
+    };
 
     info!(
         "Entered GameCoreLoadingState::GameScoreFinishedSetup! Spawning the \
@@ -678,8 +681,6 @@ fn spawn_map(
         },
         GameMapLight,
         Transform::default().looking_at(Vec3::new(-1.0, -3.0, -2.0), Vec3::Y),
-        // FIXME: reintroduce. this should be inserted on client
-        // or can we just insert this always?
         // TODO: should be constants
         RenderLayers::from_layers(&[0, 1]),
     ));
@@ -709,10 +710,15 @@ fn log_updates_to_game_core_loading_state(
     println!();
 }
 
-type EntitiesToDespawnQueryFilter =
-    Or<(With<GameMap>, With<GameMapLight>, With<Enemy>, With<Server>)>;
+type EntitiesToDespawnQueryFilter = Or<(
+    With<GameMap>,
+    With<GameMapLight>,
+    With<Enemy>,
+    With<Server>,
+    With<Client>,
+)>;
 
-fn read_stop_single_player_game(
+fn read_stop_game_message(
     mut commands: Commands,
     mut message_reader: MessageReader<StopGame>,
     app_role: Res<State<AppRole>>,

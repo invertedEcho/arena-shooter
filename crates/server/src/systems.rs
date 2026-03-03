@@ -3,7 +3,7 @@ use std::{fs::File, io::Read};
 use avian3d::prelude::Collider;
 use bevy::prelude::*;
 use game_core::GameCoreLoadingState;
-use shared::{ServerRunMode, StartGame};
+use shared::{CurrentMap, GameMode, ServerRunMode, StartGame};
 
 use crate::utils::get_path_to_collider_json;
 
@@ -43,7 +43,10 @@ pub fn spawn_map_colliders(
 }
 
 pub fn write_start_game_message(mut message_writer: MessageWriter<StartGame>) {
-    message_writer.write(StartGame);
+    message_writer.write(StartGame {
+        map: CurrentMap::MediumPlastic,
+        game_mode: GameMode::FreeForAll,
+    });
 }
 
 pub fn spawn_camera_if_headful(

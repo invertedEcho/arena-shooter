@@ -3,7 +3,7 @@ use lightyear::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ClientRespawnRequest, ConfirmRespawn, GameModeServer, GameStateServer,
+    ClientRespawnRequest, ConfirmRespawn, GameMode, GameStateServer,
     PlayerHitMessage,
     components::Health,
     enemy::components::{Enemy, EnemyState},
@@ -79,7 +79,7 @@ impl Plugin for ProtocolPlugin {
         app.register_component::<Enemy>();
         app.register_component::<EnemyState>();
 
-        app.register_component::<GameModeServer>();
+        app.register_component::<GameMode>();
 
         app.register_component::<GameScore>();
 

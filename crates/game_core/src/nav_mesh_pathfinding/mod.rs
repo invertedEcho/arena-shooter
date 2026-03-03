@@ -47,7 +47,7 @@ fn generate_navmesh_on_map_colliders_ready(
     maybe_existing_nav_mesh: Option<Res<NavMeshHandle>>,
     all_entities_except_medkits: Query<Entity, Without<Medkit>>,
 ) {
-    info!("Colliders are spawned, now generating NavMesh!");
+    info!("Colliders spawned, generating NavMesh");
     let nav_mesh_settings = NavmeshSettings {
         // TODO: document why this radius is smaller than ENEMY_AGENT_RADIUS
         agent_radius: 0.3,

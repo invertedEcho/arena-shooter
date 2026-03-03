@@ -1,5 +1,5 @@
 ﻿use bevy::prelude::*;
-use shared::{AppRole, StartGame};
+use shared::{AppRole, CurrentMap, GameMode, StartGame};
 
 use crate::{
     game_flow::states::{
@@ -127,7 +127,10 @@ fn handle_main_menu_button_pressed(
 
                 // TODO: i think better would be to write StartGame when we enter
                 // AppState::LoadingGame
-                message_writer.write(StartGame);
+                message_writer.write(StartGame {
+                    game_mode: GameMode::FreeForAll,
+                    map: CurrentMap::MediumPlastic,
+                });
             }
             MainMenuButton::SettingsMainMenu => {
                 next_main_menu_state.set(MainMenuState::Settings);
