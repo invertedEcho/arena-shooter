@@ -6,7 +6,7 @@ use landmass_rerecast::{
     Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
 };
 use shared::{
-    Medkit,
+    AppRole, Medkit,
     character_controller::{CHARACTER_HEIGHT, MAX_SLOPE_ANGLE},
 };
 
@@ -46,7 +46,15 @@ fn generate_navmesh_on_map_colliders_ready(
     mut generator: NavmeshGenerator,
     maybe_existing_nav_mesh: Option<Res<NavMeshHandle>>,
     all_entities_except_medkits: Query<Entity, Without<Medkit>>,
+    app_role: Res<State<AppRole>>,
+    mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
 ) {
+    // NOTE: We skip navmesh generation on dedicated server as we dont need it there currently
+    if *app_role.get() == AppRole::DedicatedServer {
+        next_server_loading_state.set(GameCoreLoadingState::Done);
+        return;
+    }
+
     info!("Colliders spawned, generating NavMesh");
     let nav_mesh_settings = NavmeshSettings {
         // TODO: document why this radius is smaller than ENEMY_AGENT_RADIUS
