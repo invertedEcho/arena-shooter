@@ -54,11 +54,14 @@ pub fn fetch_connect_token(
 pub async fn get_connect_token_from_auth_backend(
     auth_backend_address: SocketAddr,
 ) -> Option<ConnectToken> {
-    let Ok(stream) = tokio::net::TcpStream::connect(auth_backend_address).await
-    else {
-        error!("Failed to open tcp stream to auth backend");
-        return None;
-    };
+    let stream =
+        match tokio::net::TcpStream::connect(auth_backend_address).await {
+            Ok(stream) => stream,
+            Err(error) => {
+                error!("Failed to open tcp stream to auth backend: {}", error);
+                return None;
+            }
+        };
 
     debug!("Sucesfully opened tcp stream to auth backend!");
 

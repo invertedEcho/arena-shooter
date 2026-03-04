@@ -1,6 +1,9 @@
 use std::env;
 
-use crate::ServerMode;
+pub const LOCAL_SERVER_PRIVATE_KEY: [u8; 32] = [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0,
+];
 
 pub fn load_private_key_from_env() -> Result<[u8; 32], String> {
     let Ok(value) = env::var("SERVER_PRIVATE_KEY") else {
@@ -20,18 +23,4 @@ pub fn load_private_key_from_env() -> Result<[u8; 32], String> {
     let mut key = [0u8; 32];
     key.copy_from_slice(&bytes);
     Ok(key)
-}
-
-// Dependin whether this is for server binary or server locally for single player, it will either:
-// - return private key from .env file (server binary)
-// - return static private key, just zeroes (local server for singleplayer on the client)
-pub fn get_private_key(server_mode: &ServerMode) -> [u8; 32] {
-    const LOCAL_SERVER_PRIVATE_KEY: [u8; 32] = [
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-    ];
-    match server_mode {
-        ServerMode::RemoteServer => load_private_key_from_env().unwrap(),
-        ServerMode::LocalServerSinglePlayer => LOCAL_SERVER_PRIVATE_KEY,
-    }
 }

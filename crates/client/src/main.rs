@@ -1,6 +1,4 @@
-use ::shared::{
-    ServerMode, ServerRunMode, SharedPlugin, enemy::components::Enemy,
-};
+use ::shared::{AppRole, ServerRunMode, SharedPlugin};
 use bevy::{
     dev_tools::fps_overlay::{FpsOverlayPlugin, FrameTimeGraphConfig},
     diagnostic::FrameTimeDiagnosticsPlugin,
@@ -21,7 +19,7 @@ use crate::{
     audio::AudioPlugin,
     character_controller::CharacterControllerPlugin,
     enemy_visuals::{EnemyVisualsPlugin, HealthBarCamera},
-    game_flow::{GameFlowPlugin, states::AppState},
+    game_flow::GameFlowPlugin,
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
     network::NetworkPlugin,
@@ -29,7 +27,6 @@ use crate::{
     player::PlayerPlugin,
     shared::{CommonPlugin, systems::apply_render_layers_to_children},
     ui::UserInterfacePlugin,
-    world::WorldPlugin,
 };
 
 mod audio;
@@ -45,7 +42,6 @@ mod player;
 mod shared;
 mod ui;
 mod utils;
-mod world;
 
 fn main() {
     let mut app = App::new();
@@ -85,6 +81,11 @@ fn main() {
             }),
     );
 
+    // per default, a client is AppRole::ClientOnly. only when player clicks on Singleplayer,
+    // AppRole gets set to AppRole::ClientAndServer. once we enter main menu root again, we set it
+    // back to ClientOnly
+    app.insert_state(AppRole::ClientOnly);
+
     app.add_plugins(game_core::GameCorePlugin);
 
     // lightyear plugins
@@ -123,11 +124,9 @@ fn main() {
     }
 
     app.insert_resource(ServerRunMode::Headless);
-    app.insert_state(ServerMode::LocalServerSinglePlayer);
 
     app.add_plugins(NetworkPlugin)
         .add_plugins(PlayerPlugin)
-        .add_plugins(WorldPlugin)
         .add_plugins(GameFlowPlugin)
         .add_plugins(CommonPlugin)
         .add_plugins(UserInterfacePlugin)
@@ -143,7 +142,6 @@ fn main() {
     // TODO: move elsewhere
     app.add_observer(apply_render_layers_to_children);
     app.add_systems(Update, ensure_egui_context_exists);
-    app.add_systems(OnExit(AppState::InGame), despawn_enemys_on_exit);
 
     app.run();
 }
@@ -160,14 +158,5 @@ fn ensure_egui_context_exists(
 
         info!("Inserting PrimaryEguiContext into first camera found");
         commands.entity(first_camera).insert(PrimaryEguiContext);
-    }
-}
-
-pub fn despawn_enemys_on_exit(
-    mut commands: Commands,
-    enemy_query: Query<Entity, With<Enemy>>,
-) {
-    for enemy in enemy_query {
-        commands.entity(enemy).despawn();
     }
 }

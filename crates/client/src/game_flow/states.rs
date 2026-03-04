@@ -12,25 +12,22 @@ pub enum AppState {
 }
 
 /// The current loading state of the client.
-/// Note that upon entering each of these states, the corresponding
-/// systems will be run, e.g. SpawningMap state will spawn the map
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[source(AppState = AppState::LoadingGame)]
 pub enum ClientLoadingState {
+    /// This state is set when the client is starting local server to play Singleplayer on
+    /// It is skipped in case of connecting to the official dedicated server, e.g. multiplayer
     #[default]
+    StartingServer,
+    /// This state is set when the client connects to the game server
     ConnectingToServer,
-    SpawningMap,
-    SpawningColliders,
 }
 
 impl Display for ClientLoadingState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::SpawningMap => f.write_str("Spawning the map"),
-            Self::SpawningColliders => f.write_str("Setting up collisions"),
-            Self::ConnectingToServer => {
-                f.write_str("Connecting to the game server")
-            }
+            Self::StartingServer => f.write_str("Starting local server"),
+            Self::ConnectingToServer => f.write_str("Connecting to the server"),
         }
     }
 }

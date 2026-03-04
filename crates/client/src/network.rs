@@ -5,6 +5,7 @@ use avian3d::prelude::*;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
+use game_core::start_server;
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
 use shared::character_controller::{
@@ -18,10 +19,10 @@ use shared::utils::lightyear::{
     DisconnectReason, parse_lightyear_disconnect_reason,
 };
 use shared::utils::network::{
-    SERVER_PORT, get_auth_backend_socket_addr_client_side,
-    get_server_socket_addr_client_side,
+    get_auth_backend_socket_addr_client_side,
+    get_dedicated_server_socket_addr_client_side,
 };
-use shared::{ConfirmRespawn, PlayerHitMessage, ServerMode};
+use shared::{AppRole, ConfirmRespawn, PlayerHitMessage};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,
@@ -41,8 +42,14 @@ pub const GENERIC_NO_CONNECTION_ERROR_MESSAGE: &str =
 
 pub struct NetworkPlugin;
 
+// TODO: This plugin; its not really clear what purpose it has. It does too many different things. I
+// dont like this.
 impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
+        app.add_systems(
+            OnEnter(ClientLoadingState::StartingServer),
+            start_server,
+        );
         app.add_systems(
             OnEnter(ClientLoadingState::ConnectingToServer),
             on_enter_connecting_to_server,
@@ -55,28 +62,51 @@ impl Plugin for NetworkPlugin {
         app.add_systems(
             Update,
             (
-                send_client_update_position,
-                apply_server_position_other_clients,
-            )
-                .run_if(in_state(ServerMode::RemoteServer)),
+                handle_confirm_respawn_message,
+                handle_hit_message,
+                handle_new_player,
+            ),
         );
         app.add_systems(
             Update,
-            (handle_confirm_respawn_message, handle_hit_message),
+            (
+                send_client_update_position,
+                apply_server_position_other_clients,
+            )
+                .run_if(in_state(GameModeClient::Multiplayer)),
         );
-        app.add_observer(handle_new_player);
-        app.add_observer(handle_connected);
+
+        app.add_observer(handle_added_server);
         app.add_observer(handle_disconnect);
     }
 }
 
-pub fn on_enter_connecting_to_server(
+fn handle_added_server(
+    trigger: On<Add, Server>,
+    app_role: Res<State<AppRole>>,
+    mut next_client_loading_state: ResMut<NextState<ClientLoadingState>>,
+) {
+    info!("Server {} now added!", trigger.entity);
+    if *app_role.get() == AppRole::ClientAndServer {
+        info!(
+            "Server was added and AppRole::ClientAndServer, setting \
+             LoadingState to ConnectingToServer"
+        );
+        next_client_loading_state.set(ClientLoadingState::ConnectingToServer);
+    }
+}
+
+fn on_enter_connecting_to_server(
     mut commands: Commands,
     connected_query: Query<Has<Connected>>,
     game_mode: Res<State<GameModeClient>>,
     server_entity: Query<Entity, With<Server>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
+    info!(
+        "Entered ClientLoadingState::ConnectingToServer! Spawning a client \
+         and triggering Connect to server"
+    );
     // Connected component only present on our own client
     for connected in connected_query {
         if connected {
@@ -87,9 +117,12 @@ pub fn on_enter_connecting_to_server(
 
     let is_singleplayer = *game_mode.get() != GameModeClient::Multiplayer;
 
+    // FIXME: following code is so insanely unreadable
     if let Ok(server_entity) = server_entity.single()
         && is_singleplayer
     {
+        info!("Spawning a host client, we have single player mode");
+
         let client = commands
             .spawn((
                 Name::new("Host Client"),
@@ -100,37 +133,32 @@ pub fn on_enter_connecting_to_server(
             ))
             .id();
 
+        // NOTE: We only trigger the Connect in this system for host client, as the connect for a
+        // client connecting to the official dedicated server triggers only when we received a
+        // ConnectToken. this happens in auth.rs
         commands.trigger(Connect { entity: client });
     } else {
-        if !is_singleplayer {
-            let auth_backend_addr = get_auth_backend_socket_addr_client_side();
-            if let Some(auth_backend_addr) = auth_backend_addr {
-                debug!(
-                    "Starting task to get auth ConnectToken via AuthBackend \
-                     at {}",
-                    auth_backend_addr
-                );
-                let task =
-                    IoTaskPool::get().spawn_local(Compat::new(async move {
-                        get_connect_token_from_auth_backend(auth_backend_addr)
-                            .await
-                    }));
-                commands.insert_resource(ConnectTokenRequestTask {
-                    task: Some(task),
-                });
-            } else {
-                next_app_state.set(AppState::Disconnected);
-            }
+        info!("Connecting to official dedicated server");
+        info!("Spawning a 'normal' client");
+        let auth_backend_addr = get_auth_backend_socket_addr_client_side();
+        if let Some(auth_backend_addr) = auth_backend_addr {
+            debug!(
+                "Starting task to get auth ConnectToken via AuthBackend at {}",
+                auth_backend_addr
+            );
+            let task = IoTaskPool::get().spawn_local(Compat::new(async move {
+                get_connect_token_from_auth_backend(auth_backend_addr).await
+            }));
+            commands
+                .insert_resource(ConnectTokenRequestTask { task: Some(task) });
+            debug!("Inserted ConnectTokenRequestTask!");
+        } else {
+            next_app_state.set(AppState::Disconnected);
         }
-        let server_address = match *game_mode.get() {
-            GameModeClient::Multiplayer => get_server_socket_addr_client_side(),
-            _ => Some(SocketAddr::new(
-                std::net::IpAddr::V6(Ipv6Addr::LOCALHOST),
-                SERVER_PORT,
-            )),
-        };
 
-        if let Some(server_address) = server_address {
+        if let Some(server_address) =
+            get_dedicated_server_socket_addr_client_side()
+        {
             commands.spawn((
                 Name::new("Client"),
                 Client::default(),
@@ -153,71 +181,61 @@ pub fn on_enter_connecting_to_server(
     }
 }
 
-fn handle_connected(
-    _trigger: On<Add, Connected>,
-    mut next_loading_game_state: ResMut<NextState<ClientLoadingState>>,
-) {
-    debug!("Connected to server, setting LoadingGameState to SpawningMap");
-    next_loading_game_state.set(ClientLoadingState::SpawningMap);
-}
-
 fn handle_new_player(
-    trigger: On<Add, Player>,
     mut commands: Commands,
-    player_query: Query<(Entity, Has<Controlled>), With<Player>>,
+    player_query: Query<(Entity, Has<Controlled>), Added<Player>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    server_mode: Res<State<ServerMode>>,
+    mut next_app_state: ResMut<NextState<AppState>>,
 ) {
-    let Ok((our_player_entity, has_controlled)) =
-        player_query.get(trigger.entity)
-    else {
-        return;
-    };
+    for (player_entity, has_controlled) in player_query {
+        info!("A player was added! {}", player_entity);
 
-    let is_remote_server = *server_mode == ServerMode::RemoteServer;
-    let is_local_server_single_player =
-        *server_mode == ServerMode::LocalServerSinglePlayer;
+        if has_controlled {
+            // we insert the character controller locally on our client, as it should only run on the
+            // client.
+            commands.entity(player_entity).insert((
+                CharacterControllerBundle::default(),
+                DespawnOnExit(AppState::InGame),
+                Visibility::Visible,
+                Transform::from_translation(vec3(0.0, 20.0, 0.0)),
+                Name::new("Our Player"),
+                Mesh3d(meshes.add(Capsule3d::new(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: WHITE.into(),
+                    ..Default::default()
+                })),
+            ));
 
-    if (is_remote_server && has_controlled) || is_local_server_single_player {
-        // we insert the character controller locally on our client, as it should only run on the
-        // client. as it is not registered in our protocol, it wont be replicated.
-        commands.entity(our_player_entity).insert((
-            CharacterControllerBundle::default(),
-            DespawnOnExit(AppState::InGame),
-            Visibility::Visible,
-            Transform::from_translation(vec3(0.0, 20.0, 0.0)),
-            Name::new("Our Player"),
-            Mesh3d(meshes.add(Capsule3d::new(
-                CHARACTER_CAPSULE_RADIUS,
-                CHARACTER_CAPSULE_LENGTH,
-            ))),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: WHITE.into(),
-                ..Default::default()
-            })),
-        ));
-    } else if is_remote_server && !has_controlled {
-        commands.entity(trigger.entity).insert((
-            Mesh3d(meshes.add(Capsule3d::new(
-                CHARACTER_CAPSULE_RADIUS,
-                CHARACTER_CAPSULE_LENGTH,
-            ))),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: WHITE.into(),
-                ..Default::default()
-            })),
-            Name::new("Remote Player"),
-            RigidBody::Kinematic,
-            Collider::capsule(
-                CHARACTER_CAPSULE_RADIUS,
-                CHARACTER_CAPSULE_LENGTH,
-            ),
-        ));
+            // TODO: is this a good idea? we assume that if our player is
+            // present, it means GameCore is ready.
+            info!("Our player was added, setting AppState to InGame");
+            next_app_state.set(AppState::InGame);
+        } else {
+            commands.entity(player_entity).insert((
+                Mesh3d(meshes.add(Capsule3d::new(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: WHITE.into(),
+                    ..Default::default()
+                })),
+                Name::new("Remote Player"),
+                RigidBody::Kinematic,
+                Collider::capsule(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ),
+            ));
+        }
     }
 }
 
-pub fn send_client_update_position(
+fn send_client_update_position(
     // With<Client> also ensures its the messagesender from our local client, as client component
     // only gets inserted into our own client
     mut message_sender: Single<
@@ -233,7 +251,7 @@ pub fn send_client_update_position(
     );
 }
 
-pub fn apply_server_position_other_clients(
+fn apply_server_position_other_clients(
     time: Res<Time>,
     mut query: Query<(
         &mut Transform,
@@ -255,7 +273,7 @@ pub fn apply_server_position_other_clients(
     }
 }
 
-pub fn handle_disconnect(
+fn handle_disconnect(
     trigger: On<Add, Disconnected>,
     disconnected: Query<&Disconnected>,
     mut next_app_state: ResMut<NextState<AppState>>,
@@ -295,7 +313,7 @@ pub fn handle_disconnect(
     }
 }
 
-pub fn handle_confirm_respawn_message(
+fn handle_confirm_respawn_message(
     mut message_receiver: Single<&mut MessageReceiver<ConfirmRespawn>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
@@ -305,7 +323,7 @@ pub fn handle_confirm_respawn_message(
     }
 }
 
-pub fn handle_hit_message(
+fn handle_hit_message(
     mut message_receiver: Single<&mut MessageReceiver<PlayerHitMessage>>,
     mut message_sender: MessageWriter<PlayerHitMessage>,
 ) {

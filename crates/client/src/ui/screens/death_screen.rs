@@ -3,8 +3,9 @@ use bevy::prelude::*;
 use game_core::GameStateWave;
 use lightyear::prelude::*;
 use shared::{
-    ClientRespawnRequest, DEFAULT_HEALTH, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
-    ServerMode, components::Health, protocol::OrderedReliableChannel,
+    AppRole, ClientRespawnRequest, DEFAULT_HEALTH,
+    SPAWN_POINT_MEDIUM_PLASTIC_MAP, components::Health,
+    protocol::OrderedReliableChannel,
 };
 
 use crate::{
@@ -26,7 +27,7 @@ impl Plugin for DeathScreenPlugin {
 
 #[derive(Component, PartialEq)]
 enum DeathScreenButton {
-    Restart,
+    Respawn,
 }
 
 fn spawn_wave_game_mode_death_screen(
@@ -128,7 +129,7 @@ fn spawn_wave_game_mode_death_screen(
                     };
 
                     parent
-                        .spawn((Button, DeathScreenButton::Restart))
+                        .spawn((Button, DeathScreenButton::Respawn))
                         .with_child((
                             Text::new(restart_button_text),
                             TextFont {
@@ -157,24 +158,25 @@ fn handle_button_press(
     mut respawn_request_message_sender: Single<
         &mut MessageSender<ClientRespawnRequest>,
     >,
-    server_mode: Res<State<ServerMode>>,
     mut player_query: Single<
         (&mut Health, &mut Transform, Entity, &mut LinearVelocity),
         With<Controlled>,
     >,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
+    app_role: Res<State<AppRole>>,
 ) {
     for (interaction, button) in query {
         if interaction != &Interaction::Pressed {
             continue;
         }
         match button {
-            DeathScreenButton::Restart => {
+            DeathScreenButton::Respawn => {
+                // https://github.com/cBournhonesque/lightyear/issues/1417
                 // TODO: i really hate this
-                // unfortunately in HostClient setup (e.g. LocalServerSinglePlayer) we never
+                // unfortunately in HostClient setup (e.g. AppRole::ClientAndServer) we never
                 // receive the ConfirmRespawn message from server, so we just do the stuff that we
                 // would normally do manually
-                if *server_mode.get() == ServerMode::LocalServerSinglePlayer {
+                if *app_role.get() == AppRole::ClientAndServer {
                     let (
                         player_health,
                         player_transform,

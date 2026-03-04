@@ -1,22 +1,19 @@
-use avian3d::prelude::*;
 use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
-use game_core::ServerLoadingState;
 use lightyear::prelude::MessageSender;
 use shared::{
-    GameStateServer, ServerMode,
+    GameStateServer,
     protocol::{ChangeGameServerStateRequest, OrderedReliableChannel},
 };
 
 use crate::{
-    game_flow::states::{AppState, ClientLoadingState, InGameState},
+    game_flow::states::{AppState, InGameState},
     player::{
         PlayerDeathMessage,
         camera::{components::MainMenuCamera, get_main_menu_camera_transform},
     },
-    world::resources::WorldSceneHandle,
 };
 
 pub fn grab_mouse(
@@ -92,47 +89,6 @@ pub fn spawn_main_menu_camera(
         commands
             .entity(main_menu_camera)
             .insert(bevy_inspector_egui::bevy_egui::PrimaryEguiContext);
-    }
-}
-
-pub fn check_world_scene_loaded(
-    mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
-    maybe_world_scene_handle: Option<Res<WorldSceneHandle>>,
-    mut next_game_loading_state: ResMut<NextState<ClientLoadingState>>,
-    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
-) {
-    for asset_event in asset_event_message_reader.read() {
-        if let AssetEvent::LoadedWithDependencies { id } = asset_event
-            && let Some(ref world_scene_handle) = maybe_world_scene_handle
-            && *id == world_scene_handle.0.id()
-        {
-            info!(
-                "Map fully spawned, setting LoadingGameSubState to \
-                 SpawningColliders"
-            );
-            next_game_loading_state.set(ClientLoadingState::SpawningColliders);
-            next_server_loading_state.set(ServerLoadingState::MapSpawned);
-        }
-    }
-}
-
-// TODO: we now have multiple colliderconstructor hierarchies. we need to compare count of ready
-// events with expected
-pub fn check_collider_constructor_hierarchy_ready(
-    _trigger: On<ColliderConstructorHierarchyReady>,
-    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
-    server_mode: Res<State<ServerMode>>,
-    mut next_app_state: ResMut<NextState<AppState>>,
-) {
-    info!("ColliderConstructorHierarchyReady! setting AppState to InGame");
-    next_app_state.set(AppState::InGame);
-
-    if *server_mode == ServerMode::LocalServerSinglePlayer {
-        info!(
-            "We have LocalServerSinglePlayer, so we set serverloadingstate to \
-             CollidersSpawned"
-        );
-        next_server_loading_state.set(ServerLoadingState::CollidersSpawned);
     }
 }
 

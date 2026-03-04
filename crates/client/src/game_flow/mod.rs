@@ -7,17 +7,14 @@ use crate::{
             MainMenuState,
         },
         systems::{
-            check_collider_constructor_hierarchy_ready,
-            check_world_scene_loaded, free_mouse, grab_mouse,
-            handle_escape_in_game, handle_player_death_event,
-            manual_mouse_grab_toggle, pause_all_animations,
-            resume_all_animations,
+            free_mouse, grab_mouse, handle_escape_in_game,
+            handle_player_death_event, manual_mouse_grab_toggle,
+            pause_all_animations, resume_all_animations,
             send_update_game_server_state_request_on_in_game_state_change,
             spawn_main_menu_camera,
         },
     },
     player::PlayerDeathMessage,
-    world::resources::WorldSceneHandle,
 };
 
 pub mod states;
@@ -33,7 +30,6 @@ impl Plugin for GameFlowPlugin {
             .add_sub_state::<MainMenuState>()
             .add_sub_state::<ClientLoadingState>()
             .add_message::<PlayerDeathMessage>()
-            .add_observer(check_collider_constructor_hierarchy_ready)
             .add_systems(
                 OnEnter(InGameState::Playing),
                 (grab_mouse, resume_all_animations),
@@ -47,16 +43,10 @@ impl Plugin for GameFlowPlugin {
             .add_systems(
                 Update,
                 (
-                    check_world_scene_loaded,
                     handle_escape_in_game,
                     manual_mouse_grab_toggle,
                     handle_player_death_event,
                 ),
-            )
-            .add_systems(
-                Update,
-                check_world_scene_loaded
-                    .run_if(resource_added::<WorldSceneHandle>),
             )
             .add_systems(
                 Update,
