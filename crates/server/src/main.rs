@@ -6,7 +6,7 @@ use bevy::prelude::*;
 use bevy::state::app::StatesPlugin;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use game_core::start_server;
+use game_core::{GameCoreLoadingState, start_server};
 use lightyear::utils::collections::HashSet;
 use shared::ServerRunMode;
 use shared::utils::auth::load_private_key_from_env;
@@ -84,9 +84,14 @@ fn main() {
     app.add_plugins(game_core::GameCorePlugin);
     app.add_plugins(SharedPlugin);
 
+    app.add_systems(Startup, (start_server, write_start_game_message));
+
+    // mimic the normal flow, because on the dedicated server we do things a bit differently, e.g.
+    // we dont spawn the entire map with the collider constructors, but we only spawn the map
+    // colliders
     app.add_systems(
-        Startup,
-        (start_server, write_start_game_message, spawn_map_colliders),
+        OnEnter(GameCoreLoadingState::GameScoreFinishedSetup),
+        spawn_map_colliders,
     );
 
     if run_mode == ServerRunMode::Headful {
