@@ -12,7 +12,6 @@ bevy = { workspace = true, features = [
   "file_watcher",
   "mp3",
   "wayland",
-  "debug"
 ] }
 bevy_embedded_assets = "0.15.0"
 bevy_hanabi = "0.18.0"

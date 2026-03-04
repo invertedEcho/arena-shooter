@@ -186,14 +186,11 @@ fn handle_new_player(
     player_query: Query<(Entity, Has<Controlled>), Added<Player>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    // app_role: Res<State<AppRole>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     for (player_entity, has_controlled) in player_query {
         info!("A player was added! {}", player_entity);
 
-        // NOTE: in case of AppRole::ClientAndServer, controlled component is inserted too late.
-        // Hence, we add this additional check
         if has_controlled {
             // we insert the character controller locally on our client, as it should only run on the
             // client.
@@ -213,8 +210,7 @@ fn handle_new_player(
                 })),
             ));
 
-            // FIXME: is this a good idea? issue is if dedicated server, the GameCoreReady component
-            // will never be available to the client, so here we assume that if our player is
+            // TODO: is this a good idea? we assume that if our player is
             // present, it means GameCore is ready.
             info!("Our player was added, setting AppState to InGame");
             next_app_state.set(AppState::InGame);

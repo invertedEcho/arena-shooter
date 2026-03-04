@@ -171,6 +171,7 @@ fn handle_button_press(
         }
         match button {
             DeathScreenButton::Respawn => {
+                // https://github.com/cBournhonesque/lightyear/issues/1417
                 // TODO: i really hate this
                 // unfortunately in HostClient setup (e.g. AppRole::ClientAndServer) we never
                 // receive the ConfirmRespawn message from server, so we just do the stuff that we

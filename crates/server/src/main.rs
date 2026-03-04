@@ -18,7 +18,7 @@ use shared::{AppRole, SharedPlugin};
 
 use crate::auth::start_netcode_authentication_task;
 use crate::systems::{
-    spawn_camera_if_headful, spawn_map_colliders, write_start_game_message,
+    spawn_map_colliders, spawn_server_camera, write_start_game_message,
 };
 use crate::utils::get_run_mode;
 
@@ -90,7 +90,7 @@ fn main() {
     );
 
     if run_mode == ServerRunMode::Headful {
-        app.add_systems(Startup, spawn_camera_if_headful);
+        app.add_systems(Startup, spawn_server_camera);
     }
 
     app.insert_resource(run_mode);
