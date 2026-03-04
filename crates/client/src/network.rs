@@ -83,12 +83,10 @@ impl Plugin for NetworkPlugin {
 
 fn handle_added_server(
     trigger: On<Add, Server>,
-    mut commands: Commands,
     app_role: Res<State<AppRole>>,
     mut next_client_loading_state: ResMut<NextState<ClientLoadingState>>,
 ) {
     info!("Server {} now added!", trigger.entity);
-    commands.entity(trigger.entity).log_components();
     if *app_role.get() == AppRole::ClientAndServer {
         info!(
             "Server was added and AppRole::ClientAndServer, setting \
@@ -153,6 +151,7 @@ fn on_enter_connecting_to_server(
             }));
             commands
                 .insert_resource(ConnectTokenRequestTask { task: Some(task) });
+            debug!("Inserted ConnectTokenRequestTask!");
         } else {
             next_app_state.set(AppState::Disconnected);
         }

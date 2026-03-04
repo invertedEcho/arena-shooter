@@ -125,8 +125,7 @@ fn handle_main_menu_button_pressed(
                 next_client_loading_state
                     .set(ClientLoadingState::ConnectingToServer);
 
-                // TODO: i think better would be to write StartGame when we enter
-                // AppState::LoadingGame
+                info!("Writing StartGame message!");
                 message_writer.write(StartGame {
                     game_mode: GameModeServer::FreeForAll,
                     map: CurrentMap::MediumPlastic,

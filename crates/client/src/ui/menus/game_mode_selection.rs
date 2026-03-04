@@ -105,8 +105,6 @@ fn handle_game_mode_selection_button_press(
     >,
     mut next_game_mode_state: ResMut<NextState<GameModeClient>>,
     mut next_app_state: ResMut<NextState<AppState>>,
-    // mut game_mode_server: Query<&mut GameModeServer>,
-    // app_role: Res<State<AppRole>>,
     mut message_writer: MessageWriter<StartGame>,
     current_map: Res<State<CurrentMap>>,
 ) {

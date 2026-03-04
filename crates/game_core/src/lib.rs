@@ -97,9 +97,13 @@ impl Plugin for GameCorePlugin {
                     .run_if(in_state(AppRole::DedicatedServer)),
                 handle_client_respawn_requests,
                 handle_game_server_state_update_request,
-                kill_players_below_death_zone,
                 read_stop_game_message,
             ),
+        );
+        app.add_systems(
+            Update,
+            (kill_players_below_death_zone)
+                .run_if(not(in_state(AppRole::ClientOnly))),
         );
 
         app.add_systems(
@@ -182,11 +186,28 @@ fn handle_start_game_message(
     app_role: Res<State<AppRole>>,
     mut message_receiver: MessageReader<StartGame>,
     mut next_current_map: ResMut<NextState<CurrentMap>>,
-    mut game_mode_server: Single<&mut GameModeServer>,
+    mut game_mode_server: Query<&mut GameModeServer>,
 ) {
     for message in message_receiver.read() {
+        info!("Received StartGame message");
         next_current_map.set(message.map.clone());
-        **game_mode_server = message.game_mode.clone();
+
+        if *app_role.get() != AppRole::ClientOnly {
+            match game_mode_server.single_mut() {
+                Ok(mut game_mode_server) => {
+                    *game_mode_server = message.game_mode.clone();
+                    info!(
+                        "Updated GameModeServer to {:?}, read from StartGame \
+                         message.",
+                        message.game_mode
+                    );
+                }
+                Err(error) => {
+                    error!("Failed to update GameModeServer {}", error)
+                }
+            }
+        }
+
         commands
             .spawn((
                 GameScore {
@@ -229,19 +250,19 @@ fn spawn_player_on_new_client(
         let peer_id = remote_id.0;
 
         // why does game score not exist here yet?
-        if let Ok(mut game_score) = game_score.single_mut() {
-            game_score.players.insert(
-                peer_id.to_bits(),
-                LivingEntityStats {
-                    username: format!("Player {}", peer_id.to_bits()),
-                    ..default()
-                },
-            );
-        } else {
-            error!(
-                "No game score currently exists, player will be missing in \
-                 game score!"
-            );
+        match game_score.single_mut() {
+            Ok(mut game_score) => {
+                game_score.players.insert(
+                    peer_id.to_bits(),
+                    LivingEntityStats {
+                        username: format!("Player {}", peer_id.to_bits()),
+                        ..default()
+                    },
+                );
+            }
+            Err(error) => {
+                error!("Failed to add player to game score: {}", error);
+            }
         }
 
         info!(
@@ -549,7 +570,7 @@ fn handle_client_respawn_requests(
                             }
                         }
                         Err(error) => {
-                            warn!(
+                            error!(
                                 "Failed to find controlling player: {}",
                                 error
                             );
@@ -557,7 +578,7 @@ fn handle_client_respawn_requests(
                     }
                 }
                 None => {
-                    warn!(
+                    error!(
                         "Received a ClientRespawnRequest but no \
                          'ControlledByRemote' exists"
                     );
@@ -597,28 +618,40 @@ fn kill_players_below_death_zone(
     }
 }
 
-// TODO: we now have multiple colliderconstructor hierarchies. we need to compare count of ready
-// events with expected
+const COLLIDER_CONSTRUCTOR_COUNT_MEDIUM_PLASTIC: usize = 2;
+
+// On tiny town we also have bunch of CollderConstructor, but they are all of type Cuboid, so very
+// easy to spawn
+const COLLIDER_CONSTRUCTOR_COUNT_TINY_TOWN: usize = 2;
+
 fn check_collider_constructor_hierarchy_ready(
     _trigger: On<ColliderConstructorHierarchyReady>,
-    current_loading_state: Res<State<GameCoreLoadingState>>,
     mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
-    mut already_done: Local<bool>,
+    mut local_count: Local<usize>,
+    current_map: Res<State<CurrentMap>>,
 ) {
-    if *already_done {
-        info!("ALREADY DONE, SKIPPING!");
+    *local_count += 1;
+
+    let required_count = match current_map.get() {
+        CurrentMap::MediumPlastic => COLLIDER_CONSTRUCTOR_COUNT_MEDIUM_PLASTIC,
+        CurrentMap::TinyTown => COLLIDER_CONSTRUCTOR_COUNT_TINY_TOWN,
+    };
+
+    // Only after all ColliderConstructorHierarchy are ready, we update
+    // the GameCoreLoadingState to CollidersSpawned
+    if *local_count != required_count {
         return;
     }
 
-    if *current_loading_state.get() != GameCoreLoadingState::CollidersSpawned {
-        info!(
-            "ColliderConstructorHierarchyReady!, setting \
-             ServerLoadingState::CollidersSpawned"
-        );
+    info!(
+        "ColliderConstructorHierarchyReady!, setting \
+         ServerLoadingState::CollidersSpawned"
+    );
 
-        next_server_loading_state.set(GameCoreLoadingState::CollidersSpawned);
-        *already_done = true;
-    }
+    next_server_loading_state.set(GameCoreLoadingState::CollidersSpawned);
+
+    // Reset back to zero to prepare for next GameStart
+    *local_count = 0;
 }
 
 /// We store the world scene handle as we listen for any AssetEvents::Scene to be
@@ -716,6 +749,7 @@ type EntitiesToDespawnQueryFilter = Or<(
     With<Enemy>,
     With<Server>,
     With<Client>,
+    With<GameScore>,
 )>;
 
 fn read_stop_game_message(
@@ -726,12 +760,11 @@ fn read_stop_game_message(
 ) {
     for _ in message_reader.read() {
         if *app_role.get() == AppRole::DedicatedServer {
-            info!("Ignoring StopSinglePlayerGame message");
+            info!("Ignoring StopGame message");
             continue;
         }
-        info!("Received StopSinglePlayerGame message!");
+        info!("Received StopGame message!");
         for entity in entities_to_despawn {
-            info!("Despawning entity {}", entity);
             commands.entity(entity).despawn();
         }
     }
