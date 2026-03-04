@@ -9,7 +9,7 @@ use bevy::prelude::*;
 pub const SERVER_SOCKET_ADDR_SINGLEPLAYER: SocketAddr =
     SocketAddr::new(SERVER_ADDRESS_SERVER_SIDE, 0);
 
-pub const SERVER_SOCKET_ADDR_REMOTE_SERVER: SocketAddr =
+pub const SERVER_SOCKET_ADDR_DEDICATED_SERVER: SocketAddr =
     SocketAddr::new(SERVER_ADDRESS_SERVER_SIDE, SERVER_PORT);
 
 pub const AUTH_BACKEND_ADDRESS_SERVER_SIDE: SocketAddr =
@@ -46,7 +46,7 @@ fn resolve_with_retry(
     Err(last_err.unwrap())
 }
 
-pub fn get_server_socket_addr_client_side() -> Option<SocketAddr> {
+pub fn get_dedicated_server_socket_addr_client_side() -> Option<SocketAddr> {
     match resolve_with_retry("game.invertedecho.com:5888") {
         Ok(success) => success.first().copied(),
         Err(error) => {

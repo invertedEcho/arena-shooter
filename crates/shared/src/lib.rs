@@ -23,17 +23,24 @@ pub enum ServerRunMode {
     Headful,
 }
 
-/// A state indicating whether we are using a remote server to connect to,
-/// or a local server is started, e.g. for singleplayer
+/// This state exists both in server binary and client binary. As game_core runs on both server
+/// binary and client binary, it helps game_core to understand in which context it is currently
+/// running. So for example if the game_core checks this state and sees ClientOnly, then it knows
+/// not to run simulation logic, as the multiplayer server already runs that
 #[derive(States, PartialEq, Debug, Hash, Clone, Eq)]
-pub enum ServerMode {
-    RemoteServer,
-    LocalServerSinglePlayer,
+pub enum AppRole {
+    /// This app is a client that is connecting to multiplayer server
+    ClientOnly,
+    /// This app is a client that is also hosting a local server, e.g. Singleplayer
+    ClientAndServer,
+    /// This app is the server binary
+    DedicatedServer,
 }
 
-/// The game mode that is running on the server. Must be a component as we can only replicate
-/// components with lightyear.
-#[derive(Component, Serialize, Deserialize, PartialEq, Debug)]
+/// The game mode that is running on the server.
+/// In case of AppRole::DedicatedServer, this gets replicated to all connected clients.
+/// Must be a component as we can only replicate components with lightyear.
+#[derive(Component, Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub enum GameModeServer {
     Waves,
     FreeForAll,
@@ -80,6 +87,10 @@ pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
 pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
 pub const SPAWN_POINT_MEDIUM_PLASTIC_MAP: Vec3 = vec3(0.0, 10.0, 0.0);
 
+// FIXME: hmm thats weird. the below description is the same as GameCore? i think we should rather
+// not have a SharedPlugin, and just do this stuff in game_core. hmm but adding
+// ProtocolPlugin in game_core doesnt feel right.
+
 /// Logic for both client and server binary
 pub struct SharedPlugin;
 
@@ -87,15 +98,17 @@ impl Plugin for SharedPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(ProtocolPlugin);
 
+        app.add_message::<StartGame>();
+        app.add_message::<StopGame>();
+
         app.add_plugins(PhysicsPlugins::default().build())
             .insert_resource(Gravity(Vec3::NEG_Y * GRAVITY));
         app.add_systems(Update, handle_despawn_timer);
     }
 }
 
-// This is not a substate, as it needs to exist globally
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
-pub enum SelectedMapState {
+pub enum CurrentMap {
     #[default]
     MediumPlastic,
     TinyTown,
@@ -113,3 +126,17 @@ pub fn handle_despawn_timer(
         }
     }
 }
+
+/// game_core listens for this message. Upon receiving, game_core will spawn the map, spawn colliders,
+/// spawn enemies, etc...
+#[derive(Message)]
+pub struct StartGame {
+    pub map: CurrentMap,
+    pub game_mode: GameModeServer,
+}
+
+/// A client can send this message to game_core, and game_core will despawn the map,
+/// despawn enemies, etc
+///  NOTE: This message gets ignored if game_core has AppRole::DedicatedServer (atm)
+#[derive(Message)]
+pub struct StopGame;

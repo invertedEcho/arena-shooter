@@ -15,8 +15,8 @@ use crate::{
         camera::{
             PLAYER_CAMERA_Y_OFFSET, SpawnPlayerCamera,
             components::{
-                FreeCam, MuzzleFlash, PlayerCameraState, PlayerWeaponModel,
-                ViewModelCamera, WorldCamera,
+                FreeCam, MainMenuCamera, MuzzleFlash, PlayerCameraState,
+                PlayerWeaponModel, ViewModelCamera, WorldCamera,
             },
             weapon_positions::{
                 get_muzzle_flash_position_for_weapon, get_position_for_weapon,
@@ -49,9 +49,17 @@ pub fn handle_spawn_player_camera_message(
     mut message_reader: MessageReader<SpawnPlayerCamera>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
+    main_menu_camera: Query<Entity, With<MainMenuCamera>>,
 ) {
     for message in message_reader.read() {
-        info!("Spawning new player camera, Player was added with Controlled");
+        info!(
+            "Spawning new player camera, received SpawnPlayerCamera message!"
+        );
+
+        for main_menu_camera in main_menu_camera {
+            info!("Despawning main menu camera before spawning player camera");
+            commands.entity(main_menu_camera).despawn();
+        }
         commands.entity(message.0).insert(PlayerCameraState::Normal);
 
         commands.entity(message.0).with_children(|parent| {

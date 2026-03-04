@@ -6,11 +6,12 @@ use landmass_rerecast::{
     Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
 };
 use shared::{
+    AppRole,
     character_controller::{CHARACTER_HEIGHT, MAX_SLOPE_ANGLE},
     world_object::WorldObjectCollectibleServerSide,
 };
 
-use crate::ServerLoadingState;
+use crate::GameCoreLoadingState;
 
 pub const ENEMY_AGENT_RADIUS: f32 = 0.4;
 
@@ -26,7 +27,7 @@ impl Plugin for NavMeshPathfindingPlugin {
         app.add_plugins(Landmass3dPlugin::default());
         app.add_plugins(LandmassRerecastPlugin::default());
         app.add_systems(
-            OnEnter(ServerLoadingState::CollidersSpawned),
+            OnEnter(GameCoreLoadingState::CollidersSpawned),
             generate_navmesh_on_map_colliders_ready,
         );
         app.add_observer(on_navmesh_ready);
@@ -49,7 +50,16 @@ fn generate_navmesh_on_map_colliders_ready(
         Entity,
         Without<WorldObjectCollectibleServerSide>,
     >,
+    app_role: Res<State<AppRole>>,
+    mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
 ) {
+    // NOTE: We skip navmesh generation on dedicated server as we dont need it there currently
+    if *app_role.get() == AppRole::DedicatedServer {
+        next_server_loading_state.set(GameCoreLoadingState::Done);
+        return;
+    }
+
+    info!("Colliders spawned, generating NavMesh");
     let nav_mesh_settings = NavmeshSettings {
         // TODO: document why this radius is smaller than ENEMY_AGENT_RADIUS
         agent_radius: 0.3,
@@ -89,7 +99,7 @@ fn generate_navmesh_on_map_colliders_ready(
 fn on_navmesh_ready(
     trigger: On<NavmeshReady>,
     mut commands: Commands,
-    mut next_server_loading_state: ResMut<NextState<ServerLoadingState>>,
+    mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     mut nav_meshes: ResMut<Assets<Navmesh>>,
 ) {
     let Some(nav_mesh_handle) = nav_meshes.get_strong_handle(trigger.0) else {
@@ -102,7 +112,7 @@ fn on_navmesh_ready(
     commands.insert_resource(NavMeshHandle(nav_mesh_handle));
 
     info!("NavMesh is now ready, updating ServerLoadingState to Done");
-    next_server_loading_state.set(ServerLoadingState::Done);
+    next_server_loading_state.set(GameCoreLoadingState::Done);
 }
 
 // fn log_agent_state(agent_state: Query<&AgentState>) {

@@ -1,8 +1,10 @@
 ﻿use bevy::prelude::*;
-use shared::ServerMode;
+use shared::{AppRole, CurrentMap, GameModeServer, StartGame};
 
 use crate::{
-    game_flow::states::{AppState, GameModeClient, MainMenuState},
+    game_flow::states::{
+        AppState, ClientLoadingState, GameModeClient, MainMenuState,
+    },
     ui::{
         common::{
             CommonUiButton, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
@@ -100,8 +102,10 @@ fn handle_main_menu_button_pressed(
     >,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
     mut next_game_mode_state: ResMut<NextState<GameModeClient>>,
-    mut server_run_mode: ResMut<NextState<ServerMode>>,
     mut next_app_state: ResMut<NextState<AppState>>,
+    mut next_app_role: ResMut<NextState<AppRole>>,
+    mut next_client_loading_state: ResMut<NextState<ClientLoadingState>>,
+    mut message_writer: MessageWriter<StartGame>,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
         let Interaction::Pressed = interaction else {
@@ -109,13 +113,23 @@ fn handle_main_menu_button_pressed(
         };
         match main_menu_button {
             MainMenuButton::Singleplayer => {
-                server_run_mode.set(ServerMode::LocalServerSinglePlayer);
                 next_main_menu_state.set(MainMenuState::MapSelection);
+                next_app_role.set(AppRole::ClientAndServer);
             }
             MainMenuButton::Multiplayer => {
-                server_run_mode.set(ServerMode::RemoteServer);
                 next_game_mode_state.set(GameModeClient::Multiplayer);
                 next_app_state.set(AppState::LoadingGame);
+                next_app_role.set(AppRole::ClientOnly);
+                // NOTE: we skip state StartingServer, because in multiplayer we dont start a
+                // server ourself but connect to the dedicated server
+                next_client_loading_state
+                    .set(ClientLoadingState::ConnectingToServer);
+
+                info!("Writing StartGame message!");
+                message_writer.write(StartGame {
+                    game_mode: GameModeServer::FreeForAll,
+                    map: CurrentMap::MediumPlastic,
+                });
             }
             MainMenuButton::SettingsMainMenu => {
                 next_main_menu_state.set(MainMenuState::Settings);

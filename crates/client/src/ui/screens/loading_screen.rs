@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use shared::StopGame;
 
 use crate::{
     game_flow::states::{AppState, ClientLoadingState},
@@ -6,7 +7,6 @@ use crate::{
         common::{DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP},
         widgets::button::build_common_button,
     },
-    world::components::{MapDirectionalLight, MapModel},
 };
 
 pub struct LoadingScreenPlugin;
@@ -76,16 +76,12 @@ fn update_loading_state_text(
 }
 
 fn handle_loading_screen_button_pressed(
-    mut commands: Commands,
     interaction_query: Query<
         (&Interaction, &LoadingScreenButton),
         Changed<Interaction>,
     >,
     mut next_app_state: ResMut<NextState<AppState>>,
-    entities_to_despawn: Query<
-        Entity,
-        Or<(With<MapDirectionalLight>, With<MapModel>)>,
-    >,
+    mut stop_game_message_writer: MessageWriter<StopGame>,
 ) {
     for (interaction, loading_screen_button) in interaction_query {
         let Interaction::Pressed = interaction else {
@@ -94,10 +90,7 @@ fn handle_loading_screen_button_pressed(
         match loading_screen_button {
             LoadingScreenButton::Cancel => {
                 next_app_state.set(AppState::MainMenu);
-
-                for entity_to_despawn in entities_to_despawn {
-                    commands.entity(entity_to_despawn).despawn();
-                }
+                stop_game_message_writer.write(StopGame);
             }
         }
     }

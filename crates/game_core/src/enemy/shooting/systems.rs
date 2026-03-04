@@ -53,7 +53,6 @@ pub fn enemy_shoot_player(
                 TimerMode::Repeating,
             )));
 
-        // do raycast from enemy to player direction
         let origin = enemy_transform.translation;
 
         let random_x_offset = get_random_number_from_range(-0.5..0.5);
