@@ -215,7 +215,6 @@ pub fn zero_player_velocity(
 }
 
 pub fn check_above_head(
-    mut commands: Commands,
     query: Query<
         (Entity, &mut LinearVelocity, &Transform, &Grounded),
         With<CharacterController>,
@@ -230,7 +229,7 @@ pub fn check_above_head(
         let excluded_entities =
             world_objects_query.iter().chain([entity_itself]);
 
-        let Some(hit) = spatial_query.cast_shape(
+        let Some(_) = spatial_query.cast_shape(
             &Collider::capsule(
                 CHARACTER_CAPSULE_RADIUS,
                 CHARACTER_CAPSULE_LENGTH,
@@ -245,11 +244,27 @@ pub fn check_above_head(
         ) else {
             continue;
         };
-        info!("CHECK ABOVE HEAD HIT: {}", hit.entity);
-        commands.entity(hit.entity).log_components();
 
         // if there is something above the current shape, stop vertical movement, to prevent
         // clipping into ceilings
         velocity.y = -0.5;
+    }
+}
+
+pub fn exclude_added_world_object_from_ground_caster(
+    query: Query<Entity, Added<WorldObjectCollectibleServerSide>>,
+    mut ground_caster: Single<&mut ShapeCaster, With<CharacterController>>,
+) {
+    for added_world_object in query {
+        info!("Adding new world object to ground caster");
+        let existing_excluded_entities =
+            &ground_caster.query_filter.excluded_entities;
+        ground_caster.query_filter = SpatialQueryFilter::default()
+            .with_excluded_entities(
+                existing_excluded_entities
+                    .into_iter()
+                    .copied()
+                    .chain([added_world_object]),
+            );
     }
 }

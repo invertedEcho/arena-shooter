@@ -98,6 +98,7 @@ impl Plugin for GameCorePlugin {
                 handle_client_respawn_requests,
                 handle_game_server_state_update_request,
                 read_stop_game_message,
+                check_world_scene_loaded,
             ),
         );
         app.add_systems(
@@ -453,7 +454,7 @@ fn check_collider_constructor_hierarchy_ready(
 #[derive(Resource, Debug)]
 pub struct WorldSceneHandle(pub Handle<Scene>);
 
-pub fn check_world_scene_loaded(
+fn check_world_scene_loaded(
     mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
     mut next_game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     maybe_world_scene_handle: Option<Res<WorldSceneHandle>>,
@@ -463,16 +464,8 @@ pub fn check_world_scene_loaded(
             && let Some(ref world_scene_handle) = maybe_world_scene_handle
             && *id == world_scene_handle.0.id()
         {
-            info!(
-                "Map fully spawned, setting LoadingGameSubState to \
-                 SpawningColliders"
-            );
+            info!("Map fully spawned");
             next_game_core_loading_state.set(GameCoreLoadingState::MapSpawned);
-        } else {
-            info!(
-                "This asset event doesnt match our world scene handle: {:?}",
-                maybe_world_scene_handle
-            );
         }
     }
 }

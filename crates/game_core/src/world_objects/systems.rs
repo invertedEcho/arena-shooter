@@ -82,11 +82,6 @@ pub fn detect_collision_world_object_with_player(
                     else {
                         continue;
                     };
-                    info!(
-                        "Detected a collision with a player {} with medkit \
-                         {:?}",
-                        player_entity, world_object
-                    );
                     let player_full_hp = player_health.0 == DEFAULT_HEALTH;
                     let player_collied_with_medkit =
                         colliding_entities.contains(&player_entity);
@@ -101,24 +96,11 @@ pub fn detect_collision_world_object_with_player(
             }
             WorldObjectCollectibleType::Ammunition => {
                 for collided_entity in colliding_entities.iter() {
-                    info!(
-                        "Entity {} collided with an ammunition box",
-                        collided_entity
-                    );
-                    let Ok((
-                        player_entity,
-                        _,
-                        mut player_weapons,
-                        player_state,
-                    )) = player_query.get_mut(*collided_entity)
+                    let Ok((_, _, mut player_weapons, player_state)) =
+                        player_query.get_mut(*collided_entity)
                     else {
                         continue;
                     };
-                    info!(
-                        "Detected a collision with a player {} with \
-                         ammunition box {:?}",
-                        player_entity, world_object
-                    );
                     player_weapons.weapons[player_state.active_weapon_slot]
                         .state
                         .carried_ammo += 60;

@@ -5,6 +5,7 @@ use crate::{
         messages::MovementAction,
         systems::{
             apply_gravity, apply_movement_damping, check_above_head,
+            exclude_added_world_object_from_ground_caster,
             handle_keyboard_input_for_player,
             handle_movement_actions_for_character_controllers, update_grounded,
             zero_player_velocity,
@@ -30,6 +31,7 @@ impl Plugin for CharacterControllerPlugin {
                     check_above_head.after(update_grounded),
                     handle_movement_actions_for_character_controllers,
                     apply_movement_damping,
+                    exclude_added_world_object_from_ground_caster,
                 )
                     .run_if(in_state(AppState::InGame)),
             )
