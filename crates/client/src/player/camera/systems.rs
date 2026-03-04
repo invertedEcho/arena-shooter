@@ -7,6 +7,7 @@ use lightyear::prelude::Controlled;
 use shared::{
     components::DespawnTimer,
     player::{AimType, Player, PlayerState},
+    shooting::{PlayerWeapons, WeaponType},
 };
 
 use crate::{
@@ -24,13 +25,12 @@ use crate::{
         },
         shooting::{
             asset_paths::get_asset_path_for_weapon_type,
-            components::{PlayerWeapons, ShootRecoil},
+            components::ShootRecoil,
             messages::{
                 PlayerWeaponFiredMessage, PlayerWeaponSlotChangeMessage,
             },
         },
     },
-    shared::WeaponType,
 };
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;

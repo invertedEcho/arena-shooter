@@ -15,6 +15,11 @@ pub fn spawn_visuals_for_world_objects(
     >,
 ) {
     for (entity, world_object_collectible) in added_world_objects {
+        debug!(
+            "Spawning world_object_collectible for added \
+             WorldObjectCollectibleServerSide {}",
+            entity
+        );
         let model = match world_object_collectible.object_type {
             shared::world_object::WorldObjectCollectibleType::Medkit => {
                 asset_server.load(

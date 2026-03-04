@@ -9,9 +9,8 @@ use crate::{
         },
         systems::{
             add_player_weapons_to_new_players, check_if_player_bullet_hit,
-            check_if_player_dead, handle_ammunition_box_collected_message,
-            handle_change_weapon_slot_cooldown, handle_input,
-            handle_player_weapon_reload_timer,
+            check_if_player_dead, handle_change_weapon_slot_cooldown,
+            handle_input, handle_player_weapon_reload_timer,
             handle_reload_player_weapon_message, handle_weapon_slot_change,
             reset_aim_type_on_pause, send_shoot_request_on_weapon_fired,
             spawn_bullet_impact_particle_on_player_bullet_hit,
@@ -46,7 +45,6 @@ impl Plugin for PlayerShootingPlugin {
                     handle_weapon_slot_change,
                     handle_change_weapon_slot_cooldown,
                     send_shoot_request_on_weapon_fired,
-                    handle_ammunition_box_collected_message,
                     check_if_player_bullet_hit,
                 )
                     .run_if(in_state(InGameState::Playing)),

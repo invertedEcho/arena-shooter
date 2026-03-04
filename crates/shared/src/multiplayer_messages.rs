@@ -24,6 +24,7 @@ pub struct ChangeGameServerStateRequest(pub GameStateServer);
 pub struct ClientRespawnRequest;
 
 /// This message is sent from server to client, so the client can spawn the damage indicator
+/// TODO: Explain when this message gets sent
 #[derive(Serialize, Deserialize, Message, Copy, Clone)]
 pub struct PlayerHitMessage {
     pub origin: Vec3,
@@ -33,12 +34,3 @@ pub struct PlayerHitMessage {
 /// update internal state, such as `InGameState`.
 #[derive(Serialize, Deserialize)]
 pub struct ConfirmRespawn;
-
-/// This message gets sent to the client that the server detected is colliding with an ammunition
-/// box. `PlayerWeapons` component currenctly lives on the client, so we can't directly increase
-/// ammunition count. I like this approach (message) more, but maybe in the future we will have to
-/// keep the `PlayerWeapons` component on the server anyways.
-#[derive(Serialize, Deserialize)]
-pub struct AmmunitionBoxCollected {
-    pub ammunition_to_give: u64,
-}

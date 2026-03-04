@@ -1,9 +1,11 @@
 use bevy::prelude::*;
-use shared::player::{Player, PlayerReady};
+use shared::{
+    player::{Player, PlayerReady},
+    shooting::PlayerWeapons,
+};
 
 use crate::player::{
-    camera::PlayerCameraPlugin,
-    shooting::{PlayerShootingPlugin, components::PlayerWeapons},
+    camera::PlayerCameraPlugin, shooting::PlayerShootingPlugin,
 };
 
 pub mod camera;
