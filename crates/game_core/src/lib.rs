@@ -55,6 +55,8 @@ mod world_objects;
 // on client, the state gets reset to Initial when we exit to main menu, as everything gets
 // despawned.
 // for server binary, this will just be used once, at startup
+// a few steps are skipped in case of AppRole::ClientOnly, such as generating the nav mesh or
+// spawning the GameScore. maybe i can come up with a better situation
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
 pub enum GameCoreLoadingState {
     #[default]
@@ -185,11 +187,11 @@ fn handle_start_game_message(
     mut commands: Commands,
     mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     app_role: Res<State<AppRole>>,
-    mut message_receiver: MessageReader<StartGame>,
+    mut start_game_message_reader: MessageReader<StartGame>,
     mut next_current_map: ResMut<NextState<GameMap>>,
     mut game_mode_server: ResMut<NextState<GameModeServer>>,
 ) {
-    for message in message_receiver.read() {
+    for message in start_game_message_reader.read() {
         info!("Received StartGame message");
         next_current_map.set(message.map.clone());
 
@@ -199,19 +201,18 @@ fn handle_start_game_message(
                 "Updated GameModeServer to {:?}, read from StartGame message.",
                 message.game_mode
             );
+            commands
+                .spawn((
+                    GameScore {
+                        players: HashMap::new(),
+                        enemies: HashMap::new(),
+                    },
+                    Name::new("Game Score"),
+                ))
+                .insert_if(Replicate::to_clients(NetworkTarget::All), || {
+                    *app_role.get() == AppRole::DedicatedServer
+                });
         }
-
-        commands
-            .spawn((
-                GameScore {
-                    players: HashMap::new(),
-                    enemies: HashMap::new(),
-                },
-                Name::new("Game Score"),
-            ))
-            .insert_if(Replicate::to_clients(NetworkTarget::All), || {
-                *app_role.get() == AppRole::DedicatedServer
-            });
 
         // NOTE: theoretically the game score entity is not necessarily already spawned here, but we
         // just do it here as spawning such a simple entity is trivial.
@@ -267,7 +268,14 @@ fn on_game_core_loading_state_done(
     game_mode_server: Res<State<GameModeServer>>,
     mut spawn_enemies: MessageWriter<SpawnEnemiesMessage>,
     enemy_query: Query<Entity, With<Enemy>>,
+    app_role: Res<State<AppRole>>,
 ) {
+    if *app_role.get() == AppRole::ClientOnly {
+        info!(
+            "Not doing actions depending on GameModeServer, this is ClientOnly"
+        );
+        return;
+    }
     // TODO: This would mean GameCore is not fully done? We still spawn enemies, so theoretically
     // GameCoreLoadingState should not be done, e.g. we should add another state
     info!(

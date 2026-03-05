@@ -14,8 +14,8 @@ pub fn spawn_map_colliders(
     let file_path = get_path_to_collider_json();
 
     let mut file_buffer = String::from("");
-    let mut collider_file =
-        File::open(file_path).expect("Can open medium_plastic_colliders.json");
+    let mut collider_file = File::open(file_path)
+        .expect("Can open collider file for medium plastic map");
 
     collider_file.read_to_string(&mut file_buffer).unwrap();
 

@@ -20,7 +20,7 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(spawn_player_on_new_client);
-        app.add_systems(Update, (handle_shoot_requests));
+        app.add_systems(Update, handle_shoot_requests);
     }
 }
 

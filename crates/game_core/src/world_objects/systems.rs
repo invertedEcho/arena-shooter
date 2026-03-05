@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use lightyear::prelude::*;
 use serde::{Deserialize, Serialize};
 use shared::{
-    DEFAULT_HEALTH, GameMap,
+    AppRole, DEFAULT_HEALTH, GameMap,
     components::Health,
     player::{Player, PlayerState},
     shooting::PlayerWeapons,
@@ -49,7 +49,14 @@ fn load_spawn_locations(
 pub fn spawn_world_objects(
     mut commands: Commands,
     game_map: Res<State<GameMap>>,
+    app_role: Res<State<AppRole>>,
 ) {
+    if *app_role.get() == AppRole::ClientOnly {
+        info!(
+            "Not spawning WorldObjectCollectibleServerSide, this is ClientOnly"
+        );
+        return;
+    }
     let spawn_locations = load_spawn_locations(game_map.get())
         .expect("Couldn't load and parse spawn locations from json file");
     info!("Loaded spawn locations for world objects, spawning...");
