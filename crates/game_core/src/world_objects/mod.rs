@@ -9,17 +9,19 @@ use crate::{
     },
 };
 
-mod components;
+pub mod components;
 mod systems;
 
 const DEFAULT_HEALTH_TO_GIVE_MEDKIT: f32 = 25.0;
 
-pub struct WorldObjectsPlugin;
+pub struct MapPlugin;
 
-impl Plugin for WorldObjectsPlugin {
+impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
+        // NOTE: spawn_world_objects doesnt really depend on anything, so we can run it even before
+        // the map is spawned
         app.add_systems(
-            OnEnter(GameCoreLoadingState::MapSpawned),
+            OnEnter(GameCoreLoadingState::GameScoreFinishedSetup),
             spawn_world_objects,
         );
         app.add_systems(

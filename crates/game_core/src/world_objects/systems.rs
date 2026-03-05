@@ -52,9 +52,9 @@ pub fn spawn_world_objects(
 ) {
     let spawn_locations = load_spawn_locations(game_map.get())
         .expect("Couldn't load and parse spawn locations from json file");
+    info!("Loaded spawn locations for world objects, spawning...");
 
     for spawn_location in spawn_locations {
-        info!("Spawning a world object: {:?}", spawn_location);
         commands
             .spawn(Transform::from_xyz(
                 spawn_location.position[0],

@@ -32,6 +32,7 @@ use shared::{
             SERVER_SOCKET_ADDR_SINGLEPLAYER,
         },
     },
+    world_object::WorldObjectCollectibleServerSide,
 };
 
 use crate::{
@@ -42,7 +43,7 @@ use crate::{
     game_flow::GameFlowPlugin,
     nav_mesh_pathfinding::NavMeshPathfindingPlugin,
     player::PlayerPlugin,
-    world_objects::WorldObjectsPlugin,
+    world_objects::{MapPlugin, components::MapModel},
 };
 
 mod enemy;
@@ -87,7 +88,7 @@ impl Plugin for GameCorePlugin {
         app.add_plugins(EnemyPlugin);
         app.add_plugins(NavMeshPathfindingPlugin);
         app.add_plugins(GameFlowPlugin);
-        app.add_plugins(WorldObjectsPlugin);
+        app.add_plugins(MapPlugin);
         app.add_plugins(PlayerPlugin);
 
         app.add_systems(
@@ -518,6 +519,7 @@ fn spawn_map(
         Name::new("Scene Root (Map)"),
         Visibility::Visible,
         RigidBody::Static,
+        MapModel,
     ));
 }
 
@@ -538,6 +540,8 @@ type EntitiesToDespawnQueryFilter = Or<(
     With<Server>,
     With<Client>,
     With<GameScore>,
+    With<MapModel>,
+    With<WorldObjectCollectibleServerSide>,
 )>;
 
 fn read_stop_game_message(
