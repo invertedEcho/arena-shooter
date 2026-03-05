@@ -20,13 +20,13 @@ pub fn spawn_visuals_for_world_objects(
              WorldObjectCollectibleServerSide {}",
             entity
         );
-        let model = match world_object_collectible.object_type {
-            shared::world_object::WorldObjectCollectibleType::Medkit => {
+        let model = match world_object_collectible.kind {
+            shared::world_object::WorldObjectCollectibleKind::Medkit => {
                 asset_server.load(
                     GltfAssetLabel::Scene(0).from_asset(MEDKIT_MODEL_PATH),
                 )
             }
-            shared::world_object::WorldObjectCollectibleType::Ammunition => {
+            shared::world_object::WorldObjectCollectibleKind::Ammunition => {
                 asset_server.load(
                     GltfAssetLabel::Scene(0).from_asset(AMMUNITION_MODEL_PATH),
                 )

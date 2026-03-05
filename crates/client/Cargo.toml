@@ -24,7 +24,7 @@ dirs = "6.0.0"
 game_core = { path = "../game_core", version = "0.1.0" }
 lightyear = { workspace = true }
 rand = { workspace = true }
-serde = "1.0.228"
+serde = { workspace = true }
 serde_json = { workspace = true }
 shared = { workspace = true }
 tokio = { workspace = true }

@@ -8,7 +8,7 @@ use bevy_landmass::{
 };
 use rand::Rng;
 use shared::{
-    CurrentMap, DEFAULT_HEALTH,
+    DEFAULT_HEALTH, GameMap,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, CHARACTER_FEET,
         MAX_DISTANCE_GROUNDED_SHAPE_CAST, RUN_VELOCITY, WALK_VELOCITY,
@@ -61,15 +61,15 @@ struct EdgesOfMap {
 // second corner is at: -10, 7, 20
 // third corner is at -10, 7, -20
 // third corner is at 10, 7, -20
-fn get_edges_of_map(selected_map: &CurrentMap) -> EdgesOfMap {
+fn get_edges_of_map(selected_map: &GameMap) -> EdgesOfMap {
     match selected_map {
-        CurrentMap::MediumPlastic => EdgesOfMap {
+        GameMap::MediumPlastic => EdgesOfMap {
             min_x: -10.0,
             max_x: 10.0,
             min_z: -20.0,
             max_z: 20.0,
         },
-        CurrentMap::TinyTown => EdgesOfMap {
+        GameMap::TinyTown => EdgesOfMap {
             min_x: -11.0,
             max_x: 112.0,
             min_z: -7.0,
@@ -82,7 +82,7 @@ fn get_random_enemy_spawn_locations(
     enemy_spawn_count: usize,
     spatial_query: &mut SpatialQuery,
     valid_enemy_spawn_areas: Vec<Entity>,
-    selected_map: &CurrentMap,
+    selected_map: &GameMap,
 ) -> Vec<Vec3> {
     const Y: f32 = 7.0;
     let mut rng = rand::rng();
@@ -127,7 +127,7 @@ fn handle_spawn_enemies_message(
         Entity,
         With<ValidEnemySpawnLocationArea>,
     >,
-    selected_map: Res<State<CurrentMap>>,
+    selected_map: Res<State<GameMap>>,
 ) {
     for event in message_reader.read() {
         let Some(ref archipelago_ref) = archipelago_ref else {

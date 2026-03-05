@@ -3781,6 +3781,8 @@ dependencies = [
  "landmass_rerecast",
  "lightyear",
  "rand",
+ "serde",
+ "serde_json",
  "shared",
 ]
 

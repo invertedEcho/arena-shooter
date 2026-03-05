@@ -107,8 +107,9 @@ impl Plugin for SharedPlugin {
     }
 }
 
+// The current game map
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
-pub enum CurrentMap {
+pub enum GameMap {
     #[default]
     MediumPlastic,
     TinyTown,
@@ -131,7 +132,7 @@ pub fn handle_despawn_timer(
 /// spawn enemies, etc...
 #[derive(Message)]
 pub struct StartGame {
-    pub map: CurrentMap,
+    pub map: GameMap,
     pub game_mode: GameModeServer,
 }
 

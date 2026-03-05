@@ -14,6 +14,8 @@ bevy_rerecast = { version = "0.4.0", default-features = false, features = [
 landmass_rerecast = "0.2.0"
 lightyear = { workspace = true }
 rand = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 shared.workspace = true
 
 [lints]

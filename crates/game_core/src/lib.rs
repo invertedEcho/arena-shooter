@@ -13,7 +13,7 @@ use lightyear::{
     },
 };
 use shared::{
-    AppRole, CurrentMap, DEFAULT_HEALTH, GameModeServer, GameStateServer,
+    AppRole, DEFAULT_HEALTH, GameMap, GameModeServer, GameStateServer,
     MEDIUM_PLASTIC_MAP_PATH, SPAWN_POINT_MEDIUM_PLASTIC_MAP, StartGame,
     StopGame, TINY_TOWN_MAP_PATH,
     components::{EntityPositionServer, Health},
@@ -80,7 +80,7 @@ impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<GameCoreLoadingState>();
         app.init_state::<GameStateServer>();
-        app.init_state::<CurrentMap>();
+        app.init_state::<GameMap>();
 
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
@@ -185,7 +185,7 @@ fn handle_start_game_message(
     mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     app_role: Res<State<AppRole>>,
     mut message_receiver: MessageReader<StartGame>,
-    mut next_current_map: ResMut<NextState<CurrentMap>>,
+    mut next_current_map: ResMut<NextState<GameMap>>,
     mut game_mode_server: Query<&mut GameModeServer>,
 ) {
     for message in message_receiver.read() {
@@ -421,13 +421,13 @@ fn check_collider_constructor_hierarchy_ready(
     _trigger: On<ColliderConstructorHierarchyReady>,
     mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     mut local_count: Local<usize>,
-    current_map: Res<State<CurrentMap>>,
+    current_map: Res<State<GameMap>>,
 ) {
     *local_count += 1;
 
     let required_count = match current_map.get() {
-        CurrentMap::MediumPlastic => COLLIDER_CONSTRUCTOR_COUNT_MEDIUM_PLASTIC,
-        CurrentMap::TinyTown => COLLIDER_CONSTRUCTOR_COUNT_TINY_TOWN,
+        GameMap::MediumPlastic => COLLIDER_CONSTRUCTOR_COUNT_MEDIUM_PLASTIC,
+        GameMap::TinyTown => COLLIDER_CONSTRUCTOR_COUNT_TINY_TOWN,
     };
 
     // Only after all ColliderConstructorHierarchy are ready, we update
@@ -471,25 +471,25 @@ fn check_world_scene_loaded(
 }
 
 #[derive(Component)]
-struct GameMap;
-
-#[derive(Component)]
 struct GameMapLight;
 
 fn spawn_map(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     app_role: Res<State<AppRole>>,
-    current_map: Res<State<CurrentMap>>,
+    current_map: Res<State<GameMap>>,
 ) {
+    // FIXME: not spawning the map actually has the problem that the MedkitSpawnLocations and
+    // AmmunitionPackSpawnLocations are never spawned. so dedicated server will never have those
+    // we need another way of storing information on where to spawn medkits, etc
     if *app_role.get() == AppRole::DedicatedServer {
         info!("Skipping spawning map, AppRole is DedicatedServer");
         return;
     }
 
     let map_path = match current_map.get() {
-        CurrentMap::MediumPlastic => MEDIUM_PLASTIC_MAP_PATH,
-        CurrentMap::TinyTown => TINY_TOWN_MAP_PATH,
+        GameMap::MediumPlastic => MEDIUM_PLASTIC_MAP_PATH,
+        GameMap::TinyTown => TINY_TOWN_MAP_PATH,
     };
 
     info!(
@@ -514,7 +514,6 @@ fn spawn_map(
     commands.insert_resource(WorldSceneHandle(world_scene_handle.clone()));
 
     commands.spawn((
-        GameMap,
         SceneRoot(world_scene_handle),
         Name::new("Scene Root (Map)"),
         Visibility::Visible,
@@ -534,7 +533,6 @@ fn log_updates_to_game_core_loading_state(
 }
 
 type EntitiesToDespawnQueryFilter = Or<(
-    With<GameMap>,
     With<GameMapLight>,
     With<Enemy>,
     With<Server>,

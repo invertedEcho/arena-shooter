@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::{CurrentMap, GameModeServer, StartGame};
+use shared::{GameMap, GameModeServer, StartGame};
 
 use crate::{
     game_flow::states::{AppState, GameModeClient, MainMenuState},
@@ -106,7 +106,7 @@ fn handle_game_mode_selection_button_press(
     mut next_game_mode_state: ResMut<NextState<GameModeClient>>,
     mut next_app_state: ResMut<NextState<AppState>>,
     mut message_writer: MessageWriter<StartGame>,
-    current_map: Res<State<CurrentMap>>,
+    current_map: Res<State<GameMap>>,
 ) {
     for (interaction, game_mode_selection_button) in query {
         if let Interaction::Pressed = interaction {

@@ -7,11 +7,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Component, Debug, Serialize, Deserialize, PartialEq)]
 pub struct WorldObjectCollectibleServerSide {
     pub active: bool,
-    pub object_type: WorldObjectCollectibleType,
+    pub kind: WorldObjectCollectibleKind,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub enum WorldObjectCollectibleType {
+pub enum WorldObjectCollectibleKind {
     Medkit,
     Ammunition,
 }

@@ -1,5 +1,5 @@
 ﻿use bevy::prelude::*;
-use shared::{AppRole, CurrentMap, GameModeServer, StartGame};
+use shared::{AppRole, GameMap, GameModeServer, StartGame};
 
 use crate::{
     game_flow::states::{
@@ -128,7 +128,7 @@ fn handle_main_menu_button_pressed(
                 info!("Writing StartGame message!");
                 message_writer.write(StartGame {
                     game_mode: GameModeServer::FreeForAll,
-                    map: CurrentMap::MediumPlastic,
+                    map: GameMap::MediumPlastic,
                 });
             }
             MainMenuButton::SettingsMainMenu => {

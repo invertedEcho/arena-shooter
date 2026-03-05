@@ -1,61 +1,76 @@
+use std::{fs::File, io::Read};
+
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use lightyear::prelude::*;
+use serde::{Deserialize, Serialize};
 use shared::{
-    DEFAULT_HEALTH,
+    DEFAULT_HEALTH, GameMap,
     components::Health,
     player::{Player, PlayerState},
     shooting::PlayerWeapons,
     world_object::{
-        WorldObjectCollectibleServerSide, WorldObjectCollectibleType,
+        WorldObjectCollectibleKind, WorldObjectCollectibleServerSide,
     },
 };
 
 use crate::world_objects::{
-    DEFAULT_HEALTH_TO_GIVE_MEDKIT,
-    components::{AmmunitionSpawnLocation, MedkitSpawnLocation, RespawnTimer},
+    DEFAULT_HEALTH_TO_GIVE_MEDKIT, components::RespawnTimer,
 };
+
+#[derive(Debug, Serialize, Deserialize)]
+struct SpawnLocation {
+    kind: WorldObjectCollectibleKind,
+    position: [f32; 3],
+}
+
+fn load_spawn_locations(
+    game_map: &GameMap,
+) -> Result<std::vec::Vec<SpawnLocation>, serde_json::Error> {
+    let file_path = match game_map {
+        GameMap::MediumPlastic => {
+            "assets/maps/medium_plastic/spawn_locations.json"
+        }
+        GameMap::TinyTown => "assets/maps/tiny_town/spawn_locations.json",
+    };
+
+    let mut file_buffer = String::from("");
+    let mut collider_file = File::open(file_path)
+        .expect("Can open spawn_locations.json for corresponding game map");
+
+    collider_file.read_to_string(&mut file_buffer).unwrap();
+
+    let spawn_locations: Result<Vec<SpawnLocation>, serde_json::error::Error> =
+        serde_json::from_str(&file_buffer);
+
+    spawn_locations
+}
 
 pub fn spawn_world_objects(
     mut commands: Commands,
-    medkit_spawn_locations: Query<Entity, With<MedkitSpawnLocation>>,
-    ammunition_spawn_locations: Query<Entity, With<AmmunitionSpawnLocation>>,
+    game_map: Res<State<GameMap>>,
 ) {
-    if medkit_spawn_locations.is_empty() {
-        warn!("No MedkitSpawnLocations, no medkits will be spawned");
-    }
-    if ammunition_spawn_locations.is_empty() {
-        warn!("No AmmunitionSpawnLocation, no ammunition will be spawned");
-    }
+    let spawn_locations = load_spawn_locations(game_map.get())
+        .expect("Couldn't load and parse spawn locations from json file");
 
-    for entity in medkit_spawn_locations {
-        debug!("Spawning a medkit for spawn location: {}", entity);
-        commands.entity(entity).with_child((
-            Collider::cuboid(0.2, 0.2, 0.2),
-            WorldObjectCollectibleServerSide {
-                object_type: WorldObjectCollectibleType::Medkit,
-                active: true,
-            },
-            Name::new("Medkit Collider"),
-            CollidingEntities::default(),
-            RespawnTimer(Timer::from_seconds(5.0, TimerMode::Repeating)),
-            Replicate::to_clients(NetworkTarget::All),
-        ));
-    }
-
-    for entity in ammunition_spawn_locations {
-        debug!("Spawning a medkit for spawn location: {}", entity);
-        commands.entity(entity).with_child((
-            Collider::cuboid(0.2, 0.2, 0.2),
-            WorldObjectCollectibleServerSide {
-                active: true,
-                object_type: WorldObjectCollectibleType::Ammunition,
-            },
-            Name::new("Ammunition Pack"),
-            RespawnTimer(Timer::from_seconds(5.0, TimerMode::Repeating)),
-            CollidingEntities::default(),
-            Replicate::to_clients(NetworkTarget::All),
-        ));
+    for spawn_location in spawn_locations {
+        info!("Spawning a world object: {:?}", spawn_location);
+        commands
+            .spawn(Transform::from_xyz(
+                spawn_location.position[0],
+                spawn_location.position[1],
+                spawn_location.position[2],
+            ))
+            .with_child((
+                Collider::cuboid(0.2, 0.2, 0.2),
+                WorldObjectCollectibleServerSide {
+                    kind: spawn_location.kind,
+                    active: true,
+                },
+                CollidingEntities::default(),
+                RespawnTimer(Timer::from_seconds(5.0, TimerMode::Repeating)),
+                Replicate::to_clients(NetworkTarget::All),
+            ));
     }
 }
 
@@ -74,8 +89,8 @@ pub fn detect_collision_world_object_with_player(
             continue;
         }
 
-        match world_object.object_type {
-            WorldObjectCollectibleType::Medkit => {
+        match world_object.kind {
+            WorldObjectCollectibleKind::Medkit => {
                 for collided_entity in colliding_entities.iter() {
                     let Ok((player_entity, mut player_health, _, _)) =
                         player_query.get_mut(*collided_entity)
@@ -94,7 +109,7 @@ pub fn detect_collision_world_object_with_player(
                     }
                 }
             }
-            WorldObjectCollectibleType::Ammunition => {
+            WorldObjectCollectibleKind::Ammunition => {
                 for collided_entity in colliding_entities.iter() {
                     let Ok((_, _, mut player_weapons, player_state)) =
                         player_query.get_mut(*collided_entity)
