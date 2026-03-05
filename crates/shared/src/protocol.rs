@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use lightyear::prelude::*;
 
 use crate::{
-    GameModeServer,
     components::{EntityPositionServer, Health},
     enemy::components::{Enemy, EnemyState},
     game_score::GameScore,
@@ -62,8 +61,6 @@ impl Plugin for ProtocolPlugin {
 
         app.register_component::<Enemy>();
         app.register_component::<EnemyState>();
-
-        app.register_component::<GameModeServer>();
 
         app.register_component::<GameScore>();
 

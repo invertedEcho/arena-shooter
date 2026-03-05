@@ -256,7 +256,6 @@ pub fn exclude_added_world_object_from_ground_caster(
     mut ground_caster: Single<&mut ShapeCaster, With<CharacterController>>,
 ) {
     for added_world_object in query {
-        info!("Adding new world object to ground caster");
         let existing_excluded_entities =
             &ground_caster.query_filter.excluded_entities;
         ground_caster.query_filter = SpatialQueryFilter::default()

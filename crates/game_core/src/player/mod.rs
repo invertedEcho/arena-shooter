@@ -31,7 +31,7 @@ fn handle_shoot_requests(
     spatial_query: SpatialQuery,
     player_query: Query<(Entity, &ControlledBy), With<Player>>,
     mut game_score: Single<&mut GameScore>,
-    game_mode_server: Single<&GameModeServer>,
+    game_mode_server: Res<State<GameModeServer>>,
     client_query: Query<&RemoteId, With<ClientOf>>,
     mut server_multi_message_sender: ServerMultiMessageSender,
     server: Single<&Server>,

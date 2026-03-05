@@ -82,6 +82,7 @@ impl Plugin for GameCorePlugin {
         app.init_state::<GameCoreLoadingState>();
         app.init_state::<GameStateServer>();
         app.init_state::<GameMap>();
+        app.init_state::<GameModeServer>();
 
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
@@ -173,7 +174,6 @@ pub fn start_server(mut commands: Commands, app_role: Res<State<AppRole>>) {
             LocalAddr(local_addr),
             ServerUdpIo::default(),
             Name::new(entity_name),
-            GameModeServer::FreeForAll,
             DespawnOnExit(AppRole::ClientAndServer),
         ))
         .id();
@@ -187,26 +187,18 @@ fn handle_start_game_message(
     app_role: Res<State<AppRole>>,
     mut message_receiver: MessageReader<StartGame>,
     mut next_current_map: ResMut<NextState<GameMap>>,
-    mut game_mode_server: Query<&mut GameModeServer>,
+    mut game_mode_server: ResMut<NextState<GameModeServer>>,
 ) {
     for message in message_receiver.read() {
         info!("Received StartGame message");
         next_current_map.set(message.map.clone());
 
         if *app_role.get() != AppRole::ClientOnly {
-            match game_mode_server.single_mut() {
-                Ok(mut game_mode_server) => {
-                    *game_mode_server = message.game_mode.clone();
-                    info!(
-                        "Updated GameModeServer to {:?}, read from StartGame \
-                         message.",
-                        message.game_mode
-                    );
-                }
-                Err(error) => {
-                    error!("Failed to update GameModeServer {}", error)
-                }
-            }
+            game_mode_server.set(message.game_mode.clone());
+            info!(
+                "Updated GameModeServer to {:?}, read from StartGame message.",
+                message.game_mode
+            );
         }
 
         commands
@@ -272,17 +264,19 @@ fn receive_and_apply_client_update_position(
 
 fn on_game_core_loading_state_done(
     mut commands: Commands,
-    game_mode_server: Single<&GameModeServer>,
+    game_mode_server: Res<State<GameModeServer>>,
     mut spawn_enemies: MessageWriter<SpawnEnemiesMessage>,
     enemy_query: Query<Entity, With<Enemy>>,
 ) {
+    // TODO: This would mean GameCore is not fully done? We still spawn enemies, so theoretically
+    // GameCoreLoadingState should not be done, e.g. we should add another state
     info!(
         "GameCoreLoadingState is done, now doing actions corresponding to \
          game mode. Game mode is: {:?}",
         *game_mode_server
     );
 
-    match *game_mode_server {
+    match *game_mode_server.get() {
         GameModeServer::Waves => {
             commands.insert_resource(GameStateWave {
                 current_wave: 1,

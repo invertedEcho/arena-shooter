@@ -37,13 +37,14 @@ pub enum AppRole {
     DedicatedServer,
 }
 
-/// The game mode that is running on the server.
-/// In case of AppRole::DedicatedServer, this gets replicated to all connected clients.
-/// Must be a component as we can only replicate components with lightyear.
-#[derive(Component, Serialize, Deserialize, PartialEq, Debug, Clone)]
+/// The game mode that is running on the server
+#[derive(
+    States, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize, Default,
+)]
 pub enum GameModeServer {
-    Waves,
+    #[default]
     FreeForAll,
+    Waves,
     FreeRoam,
 }
 

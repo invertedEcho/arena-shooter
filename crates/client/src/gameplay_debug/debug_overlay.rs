@@ -23,7 +23,8 @@ impl Plugin for DebugOverlayPlugin {
                 update_current_in_game_state_text,
                 update_current_main_menu_state,
                 update_loading_game_state_text,
-                update_current_server_game_mode_text,
+                update_current_server_game_mode_text
+                    .run_if(state_changed::<GameModeServer>),
             ),
         );
     }
@@ -176,7 +177,7 @@ fn update_current_server_game_mode_text(
         &mut Text,
         With<CurrentServerGameModeText>,
     >,
-    server_game_mode: Single<&GameModeServer, Changed<GameModeServer>>,
+    server_game_mode: Res<State<GameModeServer>>,
 ) {
     **current_server_game_mode_text =
         Text::new(format!("{:?}", *server_game_mode));
