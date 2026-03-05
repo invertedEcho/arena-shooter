@@ -18,10 +18,10 @@ pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        // NOTE: spawn_world_objects doesnt really depend on anything, so we can run it even before
-        // the map is spawned
+        // for some reason, spawn_world_objects makes client crash when this is set to
+        // OnEnter(GameCoreLoadingState::GameScoreFinishedSetup)
         app.add_systems(
-            OnEnter(GameCoreLoadingState::GameScoreFinishedSetup),
+            OnEnter(GameCoreLoadingState::MapSpawned),
             spawn_world_objects,
         );
         app.add_systems(
