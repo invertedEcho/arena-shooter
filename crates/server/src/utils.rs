@@ -24,8 +24,7 @@ pub fn get_run_mode(run_mode_str: Option<&String>) -> ServerRunMode {
 // The server can be started from workspace root via `cargo run -p server` or from server workspace,
 // so we need to ensure we use the correct path
 pub fn get_path_to_collider_json() -> String {
-    const BASE_PATH: &str =
-        "assets/maps/medium_plastic/medium_plastic_colliders.json";
+    const BASE_PATH: &str = "assets/maps/medium_plastic/colliders.json";
     let path = Path::new(BASE_PATH);
     if path.exists() {
         BASE_PATH.to_string()

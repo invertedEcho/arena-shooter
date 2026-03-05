@@ -83,7 +83,7 @@ pub struct EnemyKilledMessage(pub Entity);
 
 pub const GRAVITY: f32 = 9.81;
 
-pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
+pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/scene.gltf";
 pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
 pub const SPAWN_POINT_MEDIUM_PLASTIC_MAP: Vec3 = vec3(0.0, 10.0, 0.0);
 
