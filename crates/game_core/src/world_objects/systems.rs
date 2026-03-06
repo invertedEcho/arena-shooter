@@ -51,6 +51,7 @@ pub fn spawn_world_objects(
     game_map: Res<State<GameMap>>,
     app_role: Res<State<AppRole>>,
 ) {
+    info!("MAYBE WE SEE THIS?");
     if *app_role.get() == AppRole::ClientOnly {
         info!(
             "Not spawning WorldObjectCollectibleServerSide, this is ClientOnly"
