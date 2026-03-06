@@ -7,7 +7,7 @@ use bevy::{
 };
 use bevy_inspector_egui::{
     bevy_egui::{EguiContext, PrimaryEguiContext},
-    egui,
+    egui::{self, util::id_type_map::TypeId},
 };
 use bevy_landmass::debug::{EnableLandmassDebug, Landmass3dDebugPlugin};
 use bevy_rich_text3d::{Text3d, Text3dPlugin, Text3dStyling, TextAtlas};
@@ -60,19 +60,38 @@ impl Plugin for GameplayDebugPlugin {
         app.add_systems(
             Update,
             (
-                draw_gizmos,
-                draw_enemy_fov,
+                draw_gizmos.run_if(in_state(AppDebugState::Enabled)),
+                draw_enemy_fov.run_if(in_state(AppDebugState::Enabled)),
                 add_enemy_state_text,
                 update_enemy_debug_text,
                 tick_despawn_timer_debug_gizmo_lines,
                 handle_spawn_debug_points_message,
                 update_app_debug_state,
-                update_landmass_debug_enabled,
             ),
+        );
+        app.add_systems(
+            Update,
+            (
+                update_physics_debug_enabled,
+                update_landmass_debug_enabled,
+                update_enemy_debug_text_visible,
+            )
+                .run_if(state_changed::<AppDebugState>),
         );
         // app.add_systems(EguiPrimaryContextPass, player_inspector);
 
         app.insert_resource(DebugGizmos(Vec::new()));
+    }
+}
+
+fn update_physics_debug_enabled(
+    mut store: ResMut<GizmoConfigStore>,
+    current_app_debug_state: Res<State<AppDebugState>>,
+) {
+    let (config, _) = store.config_mut::<PhysicsGizmos>();
+    match current_app_debug_state.get() {
+        AppDebugState::Disabled => config.enabled = false,
+        AppDebugState::Enabled => config.enabled = true,
     }
 }
 
@@ -218,6 +237,19 @@ fn _player_inspector(world: &mut World) {
             }
         })
     });
+}
+
+fn update_enemy_debug_text_visible(
+    query: Query<&mut Visibility, With<EnemyDebugText>>,
+    current_app_debug_state: Res<State<AppDebugState>>,
+) {
+    let new_visibility = match current_app_debug_state.get() {
+        AppDebugState::Disabled => Visibility::Hidden,
+        AppDebugState::Enabled => Visibility::Visible,
+    };
+    for mut visibility in query {
+        *visibility = new_visibility;
+    }
 }
 
 #[derive(Component)]
