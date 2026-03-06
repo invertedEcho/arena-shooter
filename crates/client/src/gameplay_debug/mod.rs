@@ -7,7 +7,7 @@ use bevy::{
 };
 use bevy_inspector_egui::{
     bevy_egui::{EguiContext, PrimaryEguiContext},
-    egui::{self, util::id_type_map::TypeId},
+    egui,
 };
 use bevy_landmass::debug::{EnableLandmassDebug, Landmass3dDebugPlugin};
 use bevy_rich_text3d::{Text3d, Text3dPlugin, Text3dStyling, TextAtlas};

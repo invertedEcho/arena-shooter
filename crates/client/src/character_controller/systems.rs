@@ -9,7 +9,6 @@ use shared::{
         components::{CharacterController, Grounded},
     },
     enemy::components::Enemy,
-    player::PlayerState,
     world_object::WorldObjectCollectibleServerSide,
 };
 
@@ -22,24 +21,18 @@ use crate::{
 pub fn handle_keyboard_input_for_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut movement_action_writer: MessageWriter<MovementAction>,
-    player_query: Single<(Entity, &PlayerCameraState, &PlayerState)>,
+    player_query: Single<(Entity, &PlayerCameraState)>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
 ) {
-    let (player_entity, player_camera_state, player_state) =
-        player_query.into_inner();
+    let (player_entity, player_camera_state) = player_query.into_inner();
 
     if *player_camera_state == PlayerCameraState::FreeCam {
         return;
     }
 
     let sprint = keyboard_input.pressed(KeyCode::ShiftLeft);
-    let reloading = player_state.reloading;
 
-    let speed = if sprint && !reloading {
-        RUN_VELOCITY
-    } else {
-        WALK_VELOCITY
-    };
+    let speed = if sprint { RUN_VELOCITY } else { WALK_VELOCITY };
 
     let forward_camera = camera_transform.forward();
     let right = camera_transform.right();
