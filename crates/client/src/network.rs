@@ -8,13 +8,16 @@ use bevy::tasks::IoTaskPool;
 use game_core::start_server;
 use lightyear::prelude::client::*;
 use lightyear::prelude::*;
+use shared::AppRole;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
-use shared::player::Player;
-use shared::protocol::{
-    ClientUpdatePositionMessage, EntityPositionServer, OrderedReliableChannel,
+use shared::components::EntityPositionServer;
+use shared::multiplayer_messages::{
+    ClientUpdatePositionMessage, ConfirmRespawn, PlayerHitMessage,
 };
+use shared::player::Player;
+use shared::protocol::OrderedReliableChannel;
 use shared::utils::lightyear::{
     DisconnectReason, parse_lightyear_disconnect_reason,
 };
@@ -22,7 +25,6 @@ use shared::utils::network::{
     get_auth_backend_socket_addr_client_side,
     get_dedicated_server_socket_addr_client_side,
 };
-use shared::{AppRole, ConfirmRespawn, PlayerHitMessage};
 
 use crate::auth::{
     ConnectTokenRequestTask, fetch_connect_token,
@@ -103,10 +105,6 @@ fn on_enter_connecting_to_server(
     server_entity: Query<Entity, With<Server>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
-    info!(
-        "Entered ClientLoadingState::ConnectingToServer! Spawning a client \
-         and triggering Connect to server"
-    );
     // Connected component only present on our own client
     for connected in connected_query {
         if connected {
@@ -138,8 +136,10 @@ fn on_enter_connecting_to_server(
         // ConnectToken. this happens in auth.rs
         commands.trigger(Connect { entity: client });
     } else {
-        info!("Connecting to official dedicated server");
-        info!("Spawning a 'normal' client");
+        info!(
+            "Connecting to official dedicated server, Spawning a 'normal' \
+             client"
+        );
         let auth_backend_addr = get_auth_backend_socket_addr_client_side();
         if let Some(auth_backend_addr) = auth_backend_addr {
             debug!(
@@ -151,7 +151,7 @@ fn on_enter_connecting_to_server(
             }));
             commands
                 .insert_resource(ConnectTokenRequestTask { task: Some(task) });
-            debug!("Inserted ConnectTokenRequestTask!");
+            debug!("Inserted ConnectTokenRequestTask");
         } else {
             next_app_state.set(AppState::Disconnected);
         }

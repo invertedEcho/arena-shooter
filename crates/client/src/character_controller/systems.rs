@@ -2,7 +2,7 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 use lightyear::prelude::Controlled;
 use shared::{
-    GRAVITY, Medkit,
+    GRAVITY,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
         RUN_VELOCITY, WALK_VELOCITY, apply_collide_and_slide,
@@ -10,6 +10,7 @@ use shared::{
     },
     enemy::components::Enemy,
     player::PlayerState,
+    world_object::WorldObjectCollectibleServerSide,
 };
 
 use crate::{
@@ -109,7 +110,7 @@ pub fn handle_movement_actions_for_character_controllers(
     >,
     mut spatial_query: SpatialQuery,
     time: Res<Time>,
-    medkit_query: Query<Entity, With<Medkit>>,
+    world_objects_query: Query<Entity, With<WorldObjectCollectibleServerSide>>,
 ) {
     for movement_action in movement_action_reader.read() {
         let sprinting = movement_action.sprinting;
@@ -137,8 +138,8 @@ pub fn handle_movement_actions_for_character_controllers(
                 }
             }
             MovementDirection::Move(desired_velocity) => {
-                // exclude medkits because we want to be able to walk through medkits
-                let excluded_entities: Vec<Entity> = medkit_query
+                // exclude world objects because we want to be able to walk through them
+                let excluded_entities: Vec<Entity> = world_objects_query
                     .iter()
                     .chain(std::iter::once(character_controller_entity))
                     .collect();
@@ -166,6 +167,8 @@ pub fn update_grounded(
     mut query: Query<(&ShapeHits, &mut Grounded), EntitiesRelevantForGravity>,
 ) {
     for (hits, mut grounded) in &mut query {
+        // we dont have to filter out world object collectibles, because we add them to excluded
+        // entities of the shapecaster for grounded detection
         let on_ground = !hits.0.is_empty();
 
         if grounded.0 != on_ground {
@@ -210,11 +213,15 @@ pub fn check_above_head(
         With<CharacterController>,
     >,
     spatial_query: SpatialQuery,
+    world_objects_query: Query<Entity, With<WorldObjectCollectibleServerSide>>,
 ) {
     for (entity_itself, mut velocity, transform, grounded) in query {
         if grounded.0 {
             continue;
         };
+        let excluded_entities =
+            world_objects_query.iter().chain([entity_itself]);
+
         let Some(_) = spatial_query.cast_shape(
             &Collider::capsule(
                 CHARACTER_CAPSULE_RADIUS,
@@ -226,7 +233,7 @@ pub fn check_above_head(
             // TODO: investigate whether we can further decrease this value
             &ShapeCastConfig::default().with_max_distance(0.1),
             &SpatialQueryFilter::default()
-                .with_excluded_entities([entity_itself]),
+                .with_excluded_entities(excluded_entities),
         ) else {
             continue;
         };
@@ -234,5 +241,22 @@ pub fn check_above_head(
         // if there is something above the current shape, stop vertical movement, to prevent
         // clipping into ceilings
         velocity.y = -0.5;
+    }
+}
+
+pub fn exclude_added_world_object_from_ground_caster(
+    query: Query<Entity, Added<WorldObjectCollectibleServerSide>>,
+    mut ground_caster: Single<&mut ShapeCaster, With<CharacterController>>,
+) {
+    for added_world_object in query {
+        let existing_excluded_entities =
+            &ground_caster.query_filter.excluded_entities;
+        ground_caster.query_filter = SpatialQueryFilter::default()
+            .with_excluded_entities(
+                existing_excluded_entities
+                    .into_iter()
+                    .copied()
+                    .chain([added_world_object]),
+            );
     }
 }

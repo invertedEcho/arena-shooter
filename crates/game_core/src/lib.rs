@@ -2,32 +2,29 @@ use std::time::Duration;
 
 use avian3d::prelude::*;
 use bevy::{
-    camera::visibility::RenderLayers, color::palettes::css::WHITE,
-    platform::collections::HashMap, prelude::*,
+    camera::visibility::RenderLayers, platform::collections::HashMap,
+    prelude::*,
 };
 use lightyear::{
     netcode::NetcodeServer,
     prelude::{
-        server::{ClientOf, NetcodeConfig, ServerUdpIo, Start},
+        server::{NetcodeConfig, ServerUdpIo, Start},
         *,
     },
 };
 use shared::{
-    AppRole, ClientRespawnRequest, ConfirmRespawn, CurrentMap, DEFAULT_HEALTH,
-    GameModeServer, GameStateServer, MEDIUM_PLASTIC_MAP_PATH, PlayerHitMessage,
-    SPAWN_POINT_MEDIUM_PLASTIC_MAP, StartGame, StopGame, TINY_TOWN_MAP_PATH,
-    character_controller::{
-        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
-    },
-    components::Health,
+    AppRole, DEFAULT_HEALTH, GameMap, GameModeServer, GameStateServer,
+    MEDIUM_PLASTIC_MAP_PATH, SPAWN_POINT_MEDIUM_PLASTIC_MAP, StartGame,
+    StopGame, TINY_TOWN_MAP_PATH,
+    components::{EntityPositionServer, Health},
     enemy::components::Enemy,
-    game_score::{GameScore, LivingEntityStats},
-    player::{Player, PlayerBundle},
-    protocol::{
-        ChangeGameServerStateRequest, ClientUpdatePositionMessage,
-        EntityPositionServer, OrderedReliableChannel, ShootRequest,
+    game_score::GameScore,
+    multiplayer_messages::{
+        ChangeGameServerStateRequest, ClientRespawnRequest,
+        ClientUpdatePositionMessage, ConfirmRespawn,
     },
-    shooting::MAX_SHOOTING_DISTANCE,
+    player::Player,
+    protocol::OrderedReliableChannel,
     utils::{
         auth::{LOCAL_SERVER_PRIVATE_KEY, load_private_key_from_env},
         network::{
@@ -35,6 +32,7 @@ use shared::{
             SERVER_SOCKET_ADDR_SINGLEPLAYER,
         },
     },
+    world_object::WorldObjectCollectibleServerSide,
 };
 
 use crate::{
@@ -44,20 +42,27 @@ use crate::{
     },
     game_flow::GameFlowPlugin,
     nav_mesh_pathfinding::NavMeshPathfindingPlugin,
+    player::PlayerPlugin,
+    world_objects::{MapPlugin, components::MapModel},
 };
 
 mod enemy;
 mod game_flow;
 mod nav_mesh_pathfinding;
+mod player;
+mod world_objects;
 
 // on client, the state gets reset to Initial when we exit to main menu, as everything gets
 // despawned.
 // for server binary, this will just be used once, at startup
+// a few steps are skipped in case of AppRole::ClientOnly, such as generating the nav mesh or
+// spawning the GameScore. maybe i can come up with a better situation
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
 pub enum GameCoreLoadingState {
     #[default]
     Initial,
     GameScoreFinishedSetup,
+    // FIXME: MapSpawned is currently never entered again after the first game
     MapSpawned,
     CollidersSpawned,
     NavMeshReady,
@@ -79,25 +84,26 @@ impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<GameCoreLoadingState>();
         app.init_state::<GameStateServer>();
-        app.init_state::<CurrentMap>();
+        app.init_state::<GameMap>();
+        app.init_state::<GameModeServer>();
 
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
         app.add_plugins(EnemyPlugin);
-
         app.add_plugins(NavMeshPathfindingPlugin);
-
         app.add_plugins(GameFlowPlugin);
+        app.add_plugins(MapPlugin);
+        app.add_plugins(PlayerPlugin);
 
         app.add_systems(
             Update,
             (
-                handle_shoot_requests,
                 receive_and_apply_client_update_position
                     .run_if(in_state(AppRole::DedicatedServer)),
                 handle_client_respawn_requests,
                 handle_game_server_state_update_request,
                 read_stop_game_message,
+                check_world_scene_loaded,
             ),
         );
         app.add_systems(
@@ -119,7 +125,6 @@ impl Plugin for GameCorePlugin {
         );
 
         app.add_observer(handle_new_connection);
-        app.add_observer(spawn_player_on_new_client);
         app.add_observer(check_collider_constructor_hierarchy_ready);
 
         app.add_systems(
@@ -172,7 +177,6 @@ pub fn start_server(mut commands: Commands, app_role: Res<State<AppRole>>) {
             LocalAddr(local_addr),
             ServerUdpIo::default(),
             Name::new(entity_name),
-            GameModeServer::FreeForAll,
             DespawnOnExit(AppRole::ClientAndServer),
         ))
         .id();
@@ -184,41 +188,32 @@ fn handle_start_game_message(
     mut commands: Commands,
     mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     app_role: Res<State<AppRole>>,
-    mut message_receiver: MessageReader<StartGame>,
-    mut next_current_map: ResMut<NextState<CurrentMap>>,
-    mut game_mode_server: Query<&mut GameModeServer>,
+    mut start_game_message_reader: MessageReader<StartGame>,
+    mut next_current_map: ResMut<NextState<GameMap>>,
+    mut game_mode_server: ResMut<NextState<GameModeServer>>,
 ) {
-    for message in message_receiver.read() {
+    for message in start_game_message_reader.read() {
         info!("Received StartGame message");
         next_current_map.set(message.map.clone());
 
         if *app_role.get() != AppRole::ClientOnly {
-            match game_mode_server.single_mut() {
-                Ok(mut game_mode_server) => {
-                    *game_mode_server = message.game_mode.clone();
-                    info!(
-                        "Updated GameModeServer to {:?}, read from StartGame \
-                         message.",
-                        message.game_mode
-                    );
-                }
-                Err(error) => {
-                    error!("Failed to update GameModeServer {}", error)
-                }
-            }
+            game_mode_server.set(message.game_mode.clone());
+            info!(
+                "Updated GameModeServer to {:?}, read from StartGame message.",
+                message.game_mode
+            );
+            commands
+                .spawn((
+                    GameScore {
+                        players: HashMap::new(),
+                        enemies: HashMap::new(),
+                    },
+                    Name::new("Game Score"),
+                ))
+                .insert_if(Replicate::to_clients(NetworkTarget::All), || {
+                    *app_role.get() == AppRole::DedicatedServer
+                });
         }
-
-        commands
-            .spawn((
-                GameScore {
-                    players: HashMap::new(),
-                    enemies: HashMap::new(),
-                },
-                Name::new("Game Score"),
-            ))
-            .insert_if(Replicate::to_clients(NetworkTarget::All), || {
-                *app_role.get() == AppRole::DedicatedServer
-            });
 
         // NOTE: theoretically the game score entity is not necessarily already spawned here, but we
         // just do it here as spawning such a simple entity is trivial.
@@ -235,89 +230,6 @@ fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
             SendUpdatesMode::SinceLastAck,
             false,
         ),));
-}
-
-fn spawn_player_on_new_client(
-    trigger: On<Add, Connected>,
-    clients_query: Query<&RemoteId, With<ClientOf>>,
-    mut commands: Commands,
-    materials: Option<ResMut<Assets<StandardMaterial>>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut game_score: Query<&mut GameScore>,
-    app_role: Res<State<AppRole>>,
-) {
-    if let Ok(remote_id) = clients_query.get(trigger.entity) {
-        let peer_id = remote_id.0;
-
-        // why does game score not exist here yet?
-        match game_score.single_mut() {
-            Ok(mut game_score) => {
-                game_score.players.insert(
-                    peer_id.to_bits(),
-                    LivingEntityStats {
-                        username: format!("Player {}", peer_id.to_bits()),
-                        ..default()
-                    },
-                );
-            }
-            Err(error) => {
-                error!("Failed to add player to game score: {}", error);
-            }
-        }
-
-        info!(
-            "Spawning a player for fully connected Client entity: {} | \
-             peer_id: {}",
-            trigger.entity, peer_id
-        );
-
-        // NOTE: The replicate component gets inserted into the player entity, but only registered
-        // components will be replicated to all other clients
-        let player_entity = commands
-            .spawn((
-                PlayerBundle::default(),
-                Name::new("Player"),
-                Replicate::to_clients(NetworkTarget::All),
-                // TODO: think we could override replication behaviour for this component and only
-                // replicate to all other clients than the current client
-                EntityPositionServer {
-                    translation: vec3(0.0, 20.0, 0.0),
-                },
-                Visibility::Visible,
-                // we add the ControlledBy on the server, with the client entity as the owner of this
-                // player, so on the client we can then filter by players that have the `Controlled`
-                // component and those are the players that are actually owned by that client
-                ControlledBy {
-                    owner: trigger.entity,
-                    lifetime: Lifetime::SessionBased,
-                },
-                Collider::capsule(
-                    CHARACTER_CAPSULE_RADIUS,
-                    CHARACTER_CAPSULE_LENGTH,
-                ),
-                RigidBody::Kinematic,
-            ))
-            .insert_if(Controlled, || {
-                *app_role.get() == AppRole::ClientAndServer
-            })
-            .id();
-
-        if *app_role.get() == AppRole::DedicatedServer {
-            // on headless setup, materials doesnt exist
-            if let Some(mut materials) = materials {
-                commands.entity(player_entity).insert((
-                    Mesh3d(meshes.add(Capsule3d::new(
-                        CHARACTER_CAPSULE_RADIUS,
-                        CHARACTER_CAPSULE_LENGTH,
-                    ))),
-                    MeshMaterial3d(materials.add(StandardMaterial {
-                        base_color: WHITE.into(),
-                        ..Default::default()
-                    })),
-                ));
-            }
-        }
-    }
 }
 
 /// This systems receives a message from clients, that their position has changed.
@@ -352,143 +264,28 @@ fn receive_and_apply_client_update_position(
     }
 }
 
-fn handle_shoot_requests(
-    mut commands: Commands,
-    receivers: Query<(&mut MessageReceiver<ShootRequest>, Entity, &RemoteId)>,
-    mut health_query: Query<&mut Health>,
-    spatial_query: SpatialQuery,
-    player_query: Query<(Entity, &ControlledBy), With<Player>>,
-    mut game_score: Single<&mut GameScore>,
-    game_mode_server: Single<&GameModeServer>,
-    client_query: Query<&RemoteId, With<ClientOf>>,
-    mut server_multi_message_sender: ServerMultiMessageSender,
-    server: Single<&Server>,
-    enemy_query: Query<Entity, With<Enemy>>,
-) {
-    for (mut message_receiver, client_entity_server_side, remote_id) in
-        receivers
-    {
-        for message in message_receiver.receive() {
-            let Some(shooter_entity) = player_query
-                .iter()
-                .find(|(_, controlled_by)| {
-                    controlled_by.owner == client_entity_server_side
-                })
-                .map(|i| i.0)
-            else {
-                warn!(
-                    "Received a ShootRequest but couldn't determine from \
-                     which player this came from"
-                );
-                continue;
-            };
-
-            let Some(first_hit) = spatial_query.cast_ray(
-                message.origin,
-                message.direction,
-                MAX_SHOOTING_DISTANCE,
-                false,
-                &SpatialQueryFilter::default()
-                    .with_excluded_entities([shooter_entity]),
-            ) else {
-                continue;
-            };
-
-            if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
-                health.0 -= 8.0;
-                let is_enemy = enemy_query.get(first_hit.entity).is_ok();
-                if !is_enemy {
-                    if let Ok(client_entity_that_was_hit) =
-                        player_query.get(first_hit.entity).map(|i| i.1)
-                        && let Ok(client) =
-                            client_query.get(client_entity_that_was_hit.owner)
-                    {
-                        server_multi_message_sender
-                            .send::<PlayerHitMessage, OrderedReliableChannel>(
-                                &PlayerHitMessage {
-                                    origin: message.origin,
-                                },
-                                &server,
-                                &NetworkTarget::Single(client.0),
-                            )
-                            .ok();
-                    } else {
-                        error!(
-                            "Could not find client that was hit by the bullet"
-                        );
-                    }
-                }
-
-                if health.0 <= 0.0 {
-                    let entity_killed = first_hit.entity;
-                    commands.entity(entity_killed).insert(ColliderDisabled);
-
-                    match game_score.players.get_mut(&remote_id.to_bits()) {
-                        Some(player) => {
-                            debug!(
-                                "increased kill count of player with \
-                                 remote_id: {}",
-                                remote_id.to_bits()
-                            );
-                            player.kills += 1;
-                        }
-                        None => {
-                            warn!(
-                                "Failed to find player in game score by \
-                                 remote_id {}\nGame score: {:?}",
-                                remote_id.to_bits(),
-                                *game_score
-                            )
-                        }
-                    }
-
-                    // if we have game mode wave, the entity killed will always be an enemy. so we
-                    // skip this case
-                    if **game_mode_server == GameModeServer::Waves {
-                        return;
-                    };
-                    match player_query.get(entity_killed) {
-                        Ok((_, controlled_by)) => {
-                            if let Ok(remote_id) =
-                                client_query.get(controlled_by.owner)
-                                && let Some(player_score) = game_score
-                                    .players
-                                    .get_mut(&remote_id.to_bits())
-                            {
-                                player_score.deaths += 1;
-                            } else {
-                                warn!(
-                                    "Failed to find client of player that was \
-                                     killed"
-                                );
-                            };
-                        }
-                        Err(error) => {
-                            warn!(
-                                "Failed to find player that was killed: {}",
-                                error
-                            );
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 fn on_game_core_loading_state_done(
     mut commands: Commands,
-    game_mode_server: Single<&GameModeServer>,
+    game_mode_server: Res<State<GameModeServer>>,
     mut spawn_enemies: MessageWriter<SpawnEnemiesMessage>,
     enemy_query: Query<Entity, With<Enemy>>,
+    app_role: Res<State<AppRole>>,
 ) {
+    if *app_role.get() == AppRole::ClientOnly {
+        info!(
+            "Not doing actions depending on GameModeServer, this is ClientOnly"
+        );
+        return;
+    }
+    // TODO: This would mean GameCore is not fully done? We still spawn enemies, so theoretically
+    // GameCoreLoadingState should not be done, e.g. we should add another state
     info!(
         "GameCoreLoadingState is done, now doing actions corresponding to \
          game mode. Game mode is: {:?}",
         *game_mode_server
     );
 
-    match *game_mode_server {
+    match *game_mode_server.get() {
         GameModeServer::Waves => {
             commands.insert_resource(GameStateWave {
                 current_wave: 1,
@@ -628,13 +425,13 @@ fn check_collider_constructor_hierarchy_ready(
     _trigger: On<ColliderConstructorHierarchyReady>,
     mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     mut local_count: Local<usize>,
-    current_map: Res<State<CurrentMap>>,
+    current_map: Res<State<GameMap>>,
 ) {
     *local_count += 1;
 
     let required_count = match current_map.get() {
-        CurrentMap::MediumPlastic => COLLIDER_CONSTRUCTOR_COUNT_MEDIUM_PLASTIC,
-        CurrentMap::TinyTown => COLLIDER_CONSTRUCTOR_COUNT_TINY_TOWN,
+        GameMap::MediumPlastic => COLLIDER_CONSTRUCTOR_COUNT_MEDIUM_PLASTIC,
+        GameMap::TinyTown => COLLIDER_CONSTRUCTOR_COUNT_TINY_TOWN,
     };
 
     // Only after all ColliderConstructorHierarchy are ready, we update
@@ -644,7 +441,7 @@ fn check_collider_constructor_hierarchy_ready(
     }
 
     info!(
-        "ColliderConstructorHierarchyReady!, setting \
+        "All ColliderConstructorHierarchies are ready, setting \
          ServerLoadingState::CollidersSpawned"
     );
 
@@ -658,10 +455,11 @@ fn check_collider_constructor_hierarchy_ready(
 /// `LoadedWithDependencies`. but this of course gets triggered for any scenes that get spawned,
 /// like enemy models, so we need to compare our WorldSceneHandle that we insert when we spawn the
 /// map with the one that we get from the LoadedWithDependencies message/event.
-#[derive(Resource)]
+#[derive(Resource, Debug)]
 pub struct WorldSceneHandle(pub Handle<Scene>);
 
-pub fn check_world_scene_loaded(
+// FIXME: this detection logic doesnt work on second time
+fn check_world_scene_loaded(
     mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
     mut next_game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     maybe_world_scene_handle: Option<Res<WorldSceneHandle>>,
@@ -671,17 +469,11 @@ pub fn check_world_scene_loaded(
             && let Some(ref world_scene_handle) = maybe_world_scene_handle
             && *id == world_scene_handle.0.id()
         {
-            info!(
-                "Map fully spawned, setting LoadingGameSubState to \
-                 SpawningColliders"
-            );
+            info!("Map fully spawned");
             next_game_core_loading_state.set(GameCoreLoadingState::MapSpawned);
         }
     }
 }
-
-#[derive(Component)]
-struct GameMap;
 
 #[derive(Component)]
 struct GameMapLight;
@@ -690,16 +482,19 @@ fn spawn_map(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     app_role: Res<State<AppRole>>,
-    current_map: Res<State<CurrentMap>>,
+    current_map: Res<State<GameMap>>,
 ) {
+    // FIXME: not spawning the map actually has the problem that the MedkitSpawnLocations and
+    // AmmunitionPackSpawnLocations are never spawned. so dedicated server will never have those
+    // we need another way of storing information on where to spawn medkits, etc
     if *app_role.get() == AppRole::DedicatedServer {
         info!("Skipping spawning map, AppRole is DedicatedServer");
         return;
     }
 
     let map_path = match current_map.get() {
-        CurrentMap::MediumPlastic => MEDIUM_PLASTIC_MAP_PATH,
-        CurrentMap::TinyTown => TINY_TOWN_MAP_PATH,
+        GameMap::MediumPlastic => MEDIUM_PLASTIC_MAP_PATH,
+        GameMap::TinyTown => TINY_TOWN_MAP_PATH,
     };
 
     info!(
@@ -724,11 +519,11 @@ fn spawn_map(
     commands.insert_resource(WorldSceneHandle(world_scene_handle.clone()));
 
     commands.spawn((
-        GameMap,
         SceneRoot(world_scene_handle),
         Name::new("Scene Root (Map)"),
         Visibility::Visible,
         RigidBody::Static,
+        MapModel,
     ));
 }
 
@@ -744,12 +539,13 @@ fn log_updates_to_game_core_loading_state(
 }
 
 type EntitiesToDespawnQueryFilter = Or<(
-    With<GameMap>,
     With<GameMapLight>,
     With<Enemy>,
     With<Server>,
     With<Client>,
     With<GameScore>,
+    With<MapModel>,
+    With<WorldObjectCollectibleServerSide>,
 )>;
 
 fn read_stop_game_message(

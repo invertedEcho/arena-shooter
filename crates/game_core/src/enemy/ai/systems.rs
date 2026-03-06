@@ -4,7 +4,6 @@ use bevy_landmass::{
     AgentDesiredVelocity3d, AgentState, AgentTarget3d, Velocity3d,
 };
 use shared::{
-    Medkit,
     character_controller::apply_collide_and_slide,
     enemy::{
         ENEMY_FOV, ENEMY_VISION_RANGE,
@@ -12,6 +11,7 @@ use shared::{
     },
     player::Player,
     utils::transform::is_facing_target_without_y,
+    world_object::WorldObjectCollectibleServerSide,
 };
 
 use crate::enemy::{
@@ -307,7 +307,10 @@ pub fn handle_chasing_enemies(
         &EnemyAgentEntityPointer,
     )>,
     mut spatial_query: SpatialQuery,
-    medkit_query: Query<Entity, With<Medkit>>,
+    world_object_collectible: Query<
+        Entity,
+        With<WorldObjectCollectibleServerSide>,
+    >,
     time: Res<Time>,
 ) {
     for (agent_desired_velocity, agent_enemy_entity_pointer) in
@@ -334,8 +337,10 @@ pub fn handle_chasing_enemies(
         velocity.x = agent_desired_velocity.velocity().x;
         velocity.z = agent_desired_velocity.velocity().z;
 
-        let excluded_entities: Vec<Entity> =
-            medkit_query.iter().chain(std::iter::once(entity)).collect();
+        let excluded_entities: Vec<Entity> = world_object_collectible
+            .iter()
+            .chain(std::iter::once(entity))
+            .collect();
 
         let spatial_query_filter = &SpatialQueryFilter::default()
             .with_excluded_entities(excluded_entities.clone());

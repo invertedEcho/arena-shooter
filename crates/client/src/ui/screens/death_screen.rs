@@ -3,8 +3,8 @@ use bevy::prelude::*;
 use game_core::GameStateWave;
 use lightyear::prelude::*;
 use shared::{
-    AppRole, ClientRespawnRequest, DEFAULT_HEALTH,
-    SPAWN_POINT_MEDIUM_PLASTIC_MAP, components::Health,
+    AppRole, DEFAULT_HEALTH, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
+    components::Health, multiplayer_messages::ClientRespawnRequest,
     protocol::OrderedReliableChannel,
 };
 

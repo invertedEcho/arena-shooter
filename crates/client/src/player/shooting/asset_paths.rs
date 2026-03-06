@@ -1,4 +1,4 @@
-use crate::shared::WeaponType;
+use shared::shooting::WeaponType;
 
 pub const ASSAULT_RIFLE_MODEL_PATH: &str = "weapons/assault_rifle.glb";
 pub const PISTOL_MODEL_PATH: &str = "weapons/pistol.glb";

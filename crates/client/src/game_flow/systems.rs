@@ -4,8 +4,8 @@ use bevy::{
 };
 use lightyear::prelude::MessageSender;
 use shared::{
-    GameStateServer,
-    protocol::{ChangeGameServerStateRequest, OrderedReliableChannel},
+    GameStateServer, multiplayer_messages::ChangeGameServerStateRequest,
+    protocol::OrderedReliableChannel,
 };
 
 use crate::{

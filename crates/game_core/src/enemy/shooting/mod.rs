@@ -6,7 +6,9 @@ use crate::{
     },
 };
 use bevy::prelude::*;
-use shared::{EnemyKilledMessage, GameStateServer, PlayerHitMessage};
+use shared::{
+    EnemyKilledMessage, GameStateServer, multiplayer_messages::PlayerHitMessage,
+};
 
 pub mod components;
 pub mod systems;

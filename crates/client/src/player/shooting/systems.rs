@@ -3,9 +3,10 @@ use bevy::{input::mouse::MouseWheel, prelude::*};
 use lightyear::prelude::*;
 use shared::{
     components::Health,
+    multiplayer_messages::ShootRequest,
     player::{AimType, PlayerState},
-    protocol::{OrderedReliableChannel, ShootRequest},
-    shooting::MAX_SHOOTING_DISTANCE,
+    protocol::OrderedReliableChannel,
+    shooting::{MAX_SHOOTING_DISTANCE, PlayerWeapons, WeaponSlotType},
 };
 
 use crate::{
@@ -17,9 +18,7 @@ use crate::{
             weapon_positions::get_position_for_weapon,
         },
         shooting::{
-            components::{
-                PlayerShootCooldownTimer, PlayerWeapons, ShootRecoil, Weapon,
-            },
+            components::{PlayerShootCooldownTimer, ShootRecoil},
             messages::{
                 PlayerBulletHit, PlayerWeaponFiredMessage,
                 PlayerWeaponSlotChangeMessage, ReloadPlayerWeaponMessage,
@@ -27,10 +26,7 @@ use crate::{
             resources::{ChangeWeaponCooldown, WeaponReloadTimer},
         },
     },
-    shared::{
-        WeaponSlotType, WeaponState, WeaponStats, WeaponType,
-        get_fire_delay_by_weapon_type,
-    },
+    shared::get_fire_delay_by_weapon_type,
     utils::query_filters::{OurPlayerFilter, PlayerOrEnemyFilter},
 };
 
@@ -47,41 +43,15 @@ type WorldModelCameraQuery<'w, 's> = Single<
     (With<WorldCamera>, Without<Player>),
 >;
 
+// FIXME: rename
 pub fn add_player_weapons_to_new_players(
     added_players: Query<Entity, (Added<Player>, With<Controlled>)>,
     mut commands: Commands,
 ) {
     for player_entity in added_players {
-        commands.entity(player_entity).insert((
-            AimType::Normal,
-            PlayerWeapons {
-                weapons: [
-                    Weapon {
-                        stats: WeaponStats {
-                            weapon_type: WeaponType::AssaultRifle,
-                            max_loaded_ammo: 30,
-                            weapon_slot_type: WeaponSlotType::Primary,
-                        },
-                        state: WeaponState {
-                            loaded_ammo: 30,
-                            carried_ammo: 120,
-                        },
-                    },
-                    Weapon {
-                        stats: WeaponStats {
-                            weapon_type: WeaponType::Pistol,
-                            max_loaded_ammo: 15,
-                            weapon_slot_type: WeaponSlotType::Secondary,
-                        },
-                        state: WeaponState {
-                            loaded_ammo: 15,
-                            carried_ammo: 50,
-                        },
-                    },
-                ],
-            },
-            ShootRecoil::default(),
-        ));
+        commands
+            .entity(player_entity)
+            .insert((AimType::Normal, ShootRecoil::default()));
     }
 }
 
@@ -185,6 +155,8 @@ pub fn send_shoot_request_on_weapon_fired(
     }
 }
 
+// FIXME: dont think this should happen on client
+// -> but this is also mainly for spawning bullet impact particles which is fine?
 pub fn check_if_player_bullet_hit(
     mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
     mut message_writer: MessageWriter<PlayerBulletHit>,

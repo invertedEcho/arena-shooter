@@ -3,7 +3,7 @@ use std::{fs::File, io::Read};
 use avian3d::prelude::Collider;
 use bevy::prelude::*;
 use game_core::GameCoreLoadingState;
-use shared::{CurrentMap, GameModeServer, StartGame};
+use shared::{GameMap, GameModeServer, StartGame};
 
 use crate::utils::get_path_to_collider_json;
 
@@ -14,8 +14,8 @@ pub fn spawn_map_colliders(
     let file_path = get_path_to_collider_json();
 
     let mut file_buffer = String::from("");
-    let mut collider_file =
-        File::open(file_path).expect("Can open medium_plastic_colliders.json");
+    let mut collider_file = File::open(file_path)
+        .expect("Can open collider file for medium plastic map");
 
     collider_file.read_to_string(&mut file_buffer).unwrap();
 
@@ -44,7 +44,7 @@ pub fn spawn_map_colliders(
 
 pub fn write_start_game_message(mut message_writer: MessageWriter<StartGame>) {
     message_writer.write(StartGame {
-        map: CurrentMap::MediumPlastic,
+        map: GameMap::MediumPlastic,
         game_mode: GameModeServer::FreeForAll,
     });
 }

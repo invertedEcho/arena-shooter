@@ -1,7 +1,5 @@
 use bevy::prelude::*;
-use shared::player::AimType;
-
-use crate::shared::WeaponType;
+use shared::{player::AimType, shooting::WeaponType};
 
 pub fn get_position_for_weapon(
     weapon_type: &WeaponType,

@@ -2,19 +2,17 @@ use bevy::{color::palettes::css::WHITE, prelude::*};
 use game_core::GameStateWave;
 use lightyear::prelude::{Controlled, MessageReceiver};
 use shared::{
-    PlayerHitMessage,
     components::{DespawnTimer, Health},
+    multiplayer_messages::PlayerHitMessage,
     player::{AimType, Player, PlayerReady, PlayerState},
+    shooting::PlayerWeapons,
 };
 
 use crate::{
     game_flow::states::{AppState, InGameState},
     player::{
         camera::components::WorldCamera,
-        shooting::{
-            components::PlayerWeapons,
-            messages::{PlayerBulletHit, PlayerWeaponSlotChangeMessage},
-        },
+        shooting::messages::{PlayerBulletHit, PlayerWeaponSlotChangeMessage},
     },
     shared::components::OnlyVisibleInGame,
     ui::{

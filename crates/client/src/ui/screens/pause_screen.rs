@@ -39,6 +39,7 @@ fn spawn_pause_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
             },
             PauseMenuRoot,
             DespawnOnExit(InGameState::Paused),
+            Name::new("Pause Screen"),
         ))
         .with_children(|parent| {
             parent

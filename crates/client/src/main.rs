@@ -27,6 +27,7 @@ use crate::{
     player::PlayerPlugin,
     shared::{CommonPlugin, systems::apply_render_layers_to_children},
     ui::UserInterfacePlugin,
+    world::WorldPlugin,
 };
 
 mod audio;
@@ -42,6 +43,7 @@ mod player;
 mod shared;
 mod ui;
 mod utils;
+mod world;
 
 fn main() {
     let mut app = App::new();
@@ -133,7 +135,8 @@ fn main() {
         .add_plugins(ParticlesPlugin)
         .add_plugins(CharacterControllerPlugin)
         .add_plugins(AudioPlugin)
-        .add_plugins(EnemyVisualsPlugin);
+        .add_plugins(EnemyVisualsPlugin)
+        .add_plugins(WorldPlugin);
 
     if cfg!(debug_assertions) {
         app.add_plugins(GameplayDebugPlugin);

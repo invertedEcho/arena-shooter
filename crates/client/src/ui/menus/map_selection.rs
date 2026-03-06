@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::CurrentMap;
+use shared::GameMap;
 
 use crate::{
     game_flow::states::MainMenuState,
@@ -14,7 +14,7 @@ use crate::{
 };
 
 #[derive(Component)]
-pub struct MapSelectionButton(CurrentMap);
+pub struct MapSelectionButton(GameMap);
 
 #[derive(Component)]
 struct SelectedMapPreviewImage;
@@ -33,7 +33,7 @@ impl Plugin for MapSelectionPlugin {
                 update_selected_map_preview_image,
                 update_selected_map_button_color,
             )
-                .run_if(state_changed::<CurrentMap>),
+                .run_if(state_changed::<GameMap>),
         )
         .add_systems(Update, handle_map_selection_button_pressed);
     }
@@ -42,7 +42,7 @@ impl Plugin for MapSelectionPlugin {
 fn spawn_map_selection(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    selected_map_state: Res<State<CurrentMap>>,
+    selected_map_state: Res<State<GameMap>>,
 ) {
     let selected_map_state = selected_map_state.get();
 
@@ -63,8 +63,8 @@ fn spawn_map_selection(
         ))
         .with_children(|parent| {
             let selected_map_preview_image = match selected_map_state {
-                CurrentMap::TinyTown => "maps/tiny_town/preview.png",
-                CurrentMap::MediumPlastic => "maps/medium_plastic/preview.png",
+                GameMap::TinyTown => "maps/tiny_town/preview.png",
+                GameMap::MediumPlastic => "maps/medium_plastic/preview.png",
             };
             parent
                 .spawn(Node {
@@ -102,7 +102,7 @@ fn spawn_map_selection(
                 .spawn((
                     Node { ..default() },
                     Button,
-                    MapSelectionButton(CurrentMap::TinyTown),
+                    MapSelectionButton(GameMap::TinyTown),
                     TextColor::WHITE,
                     ExcludeFromHover,
                 ))
@@ -115,14 +115,14 @@ fn spawn_map_selection(
                     },
                     TextColor(get_text_button_color_for_map_selection_button(
                         selected_map_state,
-                        MapSelectionButton(CurrentMap::TinyTown),
+                        MapSelectionButton(GameMap::TinyTown),
                     )),
                 ));
             parent
                 .spawn((
                     Node { ..default() },
                     Button,
-                    MapSelectionButton(CurrentMap::MediumPlastic),
+                    MapSelectionButton(GameMap::MediumPlastic),
                     TextColor::WHITE,
                     ExcludeFromHover,
                 ))
@@ -135,7 +135,7 @@ fn spawn_map_selection(
                     },
                     TextColor(get_text_button_color_for_map_selection_button(
                         selected_map_state,
-                        MapSelectionButton(CurrentMap::MediumPlastic),
+                        MapSelectionButton(GameMap::MediumPlastic),
                     )),
                 ));
             parent.spawn((build_common_button(
@@ -152,7 +152,7 @@ fn spawn_map_selection(
 }
 
 fn get_text_button_color_for_map_selection_button(
-    selected_map_state: &CurrentMap,
+    selected_map_state: &GameMap,
     button: MapSelectionButton,
 ) -> Color {
     if button.0 == *selected_map_state {
@@ -165,18 +165,18 @@ fn get_text_button_color_for_map_selection_button(
 fn update_selected_map_preview_image(
     asset_server: Res<AssetServer>,
     mut image_node: Single<&mut ImageNode, With<SelectedMapPreviewImage>>,
-    selected_map_state: Res<State<CurrentMap>>,
+    selected_map_state: Res<State<GameMap>>,
 ) {
     let selected_map_preview_image = match *selected_map_state.get() {
-        CurrentMap::TinyTown => "maps/tiny_town/preview.png",
-        CurrentMap::MediumPlastic => "maps/medium_plastic/preview.png",
+        GameMap::TinyTown => "maps/tiny_town/preview.png",
+        GameMap::MediumPlastic => "maps/medium_plastic/preview.png",
     };
     image_node.image = asset_server.load(selected_map_preview_image);
 }
 
 fn handle_map_selection_button_pressed(
     query: Query<(&Interaction, &MapSelectionButton), Changed<Interaction>>,
-    mut next_selected_map_state: ResMut<NextState<CurrentMap>>,
+    mut next_selected_map_state: ResMut<NextState<GameMap>>,
 ) {
     for (interaction, map_selection_button) in query {
         if let Interaction::Pressed = interaction {
@@ -187,7 +187,7 @@ fn handle_map_selection_button_pressed(
 
 fn update_selected_map_button_color(
     query: Query<(&MapSelectionButton, &Children)>,
-    selected_map_state: Res<State<CurrentMap>>,
+    selected_map_state: Res<State<GameMap>>,
     mut text_color_query: Query<&mut TextColor>,
 ) {
     let selected_map_state = selected_map_state.get();

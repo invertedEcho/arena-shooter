@@ -2,10 +2,11 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 use lightyear::prelude::*;
 use shared::{
-    EnemyKilledMessage, PlayerHitMessage,
+    EnemyKilledMessage,
     components::{DespawnTimer, Health},
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
     game_score::GameScore,
+    multiplayer_messages::PlayerHitMessage,
     player::Player,
     shooting::MAX_SHOOTING_DISTANCE,
     utils::random::get_random_number_from_range,

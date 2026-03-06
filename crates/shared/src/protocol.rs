@@ -1,40 +1,22 @@
 use bevy::prelude::*;
 use lightyear::prelude::*;
-use serde::{Deserialize, Serialize};
 
 use crate::{
-    ClientRespawnRequest, ConfirmRespawn, GameModeServer, GameStateServer,
-    PlayerHitMessage,
-    components::Health,
+    components::{EntityPositionServer, Health},
     enemy::components::{Enemy, EnemyState},
     game_score::GameScore,
+    multiplayer_messages::{
+        ChangeGameServerStateRequest, ClientRespawnRequest,
+        ClientUpdatePositionMessage, ConfirmRespawn, PlayerHitMessage,
+        ShootRequest,
+    },
     player::{Player, PlayerState},
+    shooting::PlayerWeapons,
+    world_object::WorldObjectCollectibleServerSide,
 };
 
 pub struct OrderedReliableChannel;
 pub struct SequencedUnreliableChannel;
-
-#[derive(Serialize, Deserialize)]
-pub struct ClientUpdatePositionMessage {
-    pub new_translation: Vec3,
-}
-
-/// This component indicates the current location of an entity on the server. It is replicated to
-/// all clients. All clients interpolate the local transform of this entity to this component
-#[derive(Component, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub struct EntityPositionServer {
-    pub translation: Vec3,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ShootRequest {
-    pub origin: Vec3,
-    pub direction: Dir3,
-    // pub client_tick: u32,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ChangeGameServerStateRequest(pub GameStateServer);
 
 pub struct ProtocolPlugin;
 
@@ -71,6 +53,7 @@ impl Plugin for ProtocolPlugin {
 
         app.register_component::<Player>();
         app.register_component::<PlayerState>();
+        app.register_component::<PlayerWeapons>();
 
         app.register_component::<EntityPositionServer>();
 
@@ -79,12 +62,8 @@ impl Plugin for ProtocolPlugin {
         app.register_component::<Enemy>();
         app.register_component::<EnemyState>();
 
-        app.register_component::<GameModeServer>();
-
         app.register_component::<GameScore>();
 
-        // TODO: medkit should be spawned on server, replicated to clients, and only clients
-        // visually rotate them
-        // app.register_component::<Medkit>();
+        app.register_component::<WorldObjectCollectibleServerSide>();
     }
 }

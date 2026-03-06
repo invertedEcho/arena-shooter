@@ -8,14 +8,16 @@ pub mod character_controller;
 pub mod components;
 pub mod enemy;
 pub mod game_score;
+pub mod multiplayer_messages;
 pub mod player;
 pub mod protocol;
 pub mod shooting;
 pub mod utils;
+pub mod world_object;
 
 pub const DEFAULT_HEALTH: f32 = 100.0;
 
-#[derive(Resource, PartialEq)]
+#[derive(Resource, PartialEq, Debug)]
 pub enum ServerRunMode {
     Headless,
     Headful,
@@ -35,13 +37,14 @@ pub enum AppRole {
     DedicatedServer,
 }
 
-/// The game mode that is running on the server.
-/// In case of AppRole::DedicatedServer, this gets replicated to all connected clients.
-/// Must be a component as we can only replicate components with lightyear.
-#[derive(Component, Serialize, Deserialize, PartialEq, Debug, Clone)]
+/// The game mode that is running on the server
+#[derive(
+    States, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize, Default,
+)]
 pub enum GameModeServer {
-    Waves,
+    #[default]
     FreeForAll,
+    Waves,
     FreeRoam,
 }
 
@@ -52,19 +55,6 @@ pub enum GameStateServer {
     #[default]
     Running,
     Paused,
-}
-
-#[derive(Component)]
-pub struct Medkit {
-    pub active: bool,
-    pub health_to_give: f32,
-    pub float_direction: MedkitFloatDirection,
-    pub respawn_timer: Timer,
-}
-
-pub enum MedkitFloatDirection {
-    Up,
-    Down,
 }
 
 #[derive(Message)]
@@ -88,29 +78,13 @@ impl SpawnDebugSphereMessage {
     }
 }
 
-// A client can send this message to the server indicating that the player requested a respawn.
-// The server will then update the players health and the players position.
-#[derive(Serialize, Deserialize)]
-pub struct ClientRespawnRequest;
-
-/// This message is sent from server to client, so the client can spawn the damage indicator
-#[derive(Serialize, Deserialize, Message, Copy, Clone)]
-pub struct PlayerHitMessage {
-    pub origin: Vec3,
-}
-
-// The server will send this message to the client that the respawn was made and the client can now
-// update internal state, such as `InGameState`.
-#[derive(Serialize, Deserialize)]
-pub struct ConfirmRespawn;
-
 /// 0: The enemy entity that was killed
 #[derive(Message)]
 pub struct EnemyKilledMessage(pub Entity);
 
 pub const GRAVITY: f32 = 9.81;
 
-pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/main.gltf";
+pub const TINY_TOWN_MAP_PATH: &str = "maps/tiny_town/scene.gltf";
 pub const MEDIUM_PLASTIC_MAP_PATH: &str = "maps/medium_plastic/scene.gltf";
 pub const SPAWN_POINT_MEDIUM_PLASTIC_MAP: Vec3 = vec3(0.0, 10.0, 0.0);
 
@@ -134,8 +108,9 @@ impl Plugin for SharedPlugin {
     }
 }
 
+// The current game map
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
-pub enum CurrentMap {
+pub enum GameMap {
     #[default]
     MediumPlastic,
     TinyTown,
@@ -158,7 +133,7 @@ pub fn handle_despawn_timer(
 /// spawn enemies, etc...
 #[derive(Message)]
 pub struct StartGame {
-    pub map: CurrentMap,
+    pub map: GameMap,
     pub game_mode: GameModeServer,
 }
 

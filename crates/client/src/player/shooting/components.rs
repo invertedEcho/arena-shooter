@@ -1,19 +1,7 @@
 use bevy::prelude::*;
 
-use crate::shared::{WeaponState, WeaponStats};
-
 #[derive(Component)]
 pub struct PlayerShootCooldownTimer(pub Timer);
-
-#[derive(Component)]
-pub struct PlayerWeapons {
-    pub weapons: [Weapon; 2],
-}
-
-pub struct Weapon {
-    pub stats: WeaponStats,
-    pub state: WeaponState,
-}
 
 /// original_rotation gets updated whenever the player uses the mouse to look around.
 /// This way, we can have a camera kickback effect when shooting, but also know, to what value we

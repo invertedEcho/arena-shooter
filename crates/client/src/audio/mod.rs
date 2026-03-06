@@ -5,19 +5,16 @@ use shared::{
     character_controller::components::Grounded,
     components::DespawnTimer,
     player::{AimType, PlayerState},
+    shooting::{PlayerWeapons, WeaponType},
 };
 
 use crate::{
     game_flow::states::AppState,
     game_settings::GameSettings,
-    player::shooting::{
-        components::PlayerWeapons,
-        messages::{
-            PlayerWeaponFiredMessage, PlayerWeaponSlotChangeMessage,
-            ReloadPlayerWeaponMessage,
-        },
+    player::shooting::messages::{
+        PlayerWeaponFiredMessage, PlayerWeaponSlotChangeMessage,
+        ReloadPlayerWeaponMessage,
     },
-    shared::WeaponType,
     ui::common::AnyButtonInteractionQuery,
 };
 

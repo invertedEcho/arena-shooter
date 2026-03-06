@@ -6,8 +6,9 @@ use landmass_rerecast::{
     Island3dBundle, LandmassRerecastPlugin, NavMeshHandle3d,
 };
 use shared::{
-    AppRole, Medkit,
+    AppRole,
     character_controller::{CHARACTER_HEIGHT, MAX_SLOPE_ANGLE},
+    world_object::WorldObjectCollectibleServerSide,
 };
 
 use crate::GameCoreLoadingState;
@@ -45,12 +46,16 @@ fn generate_navmesh_on_map_colliders_ready(
     mut commands: Commands,
     mut generator: NavmeshGenerator,
     maybe_existing_nav_mesh: Option<Res<NavMeshHandle>>,
-    all_entities_except_medkits: Query<Entity, Without<Medkit>>,
+    all_entities_except_world_objects: Query<
+        Entity,
+        Without<WorldObjectCollectibleServerSide>,
+    >,
     app_role: Res<State<AppRole>>,
     mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
 ) {
-    // NOTE: We skip navmesh generation on dedicated server as we dont need it there currently
-    if *app_role.get() == AppRole::DedicatedServer {
+    // NOTE: We only do nav mesh generation in case this is ClientAndServer. no use on dedicated
+    // server currently
+    if *app_role.get() != AppRole::ClientAndServer {
         next_server_loading_state.set(GameCoreLoadingState::Done);
         return;
     }
@@ -65,7 +70,8 @@ fn generate_navmesh_on_map_colliders_ready(
         cell_size_fraction: 2.0,
         cell_height_fraction: 4.0,
         agent_height: CHARACTER_HEIGHT,
-        filter: Some(HashSet::from_iter(all_entities_except_medkits)),
+        // exclude world object coliders from nav mesh generation
+        filter: Some(HashSet::from_iter(all_entities_except_world_objects)),
         ..default()
     };
 
