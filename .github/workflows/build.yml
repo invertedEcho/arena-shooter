@@ -16,12 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt, clippy
+
       # TODO: eventuall we should use this cache action in all jobs
       - uses: Swatinem/rust-cache@v2
       - name: Cargo format
         run: |
-          rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
           cargo fmt --all -- --check
       - name: Install system dependencies
         run: |
@@ -30,7 +32,7 @@ jobs:
         # we create empty assets directory so build of `bevy_embedded_assets` wont fail
         run: |
           mkdir assets
-          cargo check
+          cargo clippy -- -D unused-imports -D unused-variables
 
   # Build for Linux
   build-linux:
@@ -41,7 +43,7 @@ jobs:
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
           targets: x86_64-unknown-linux-gnu
       - name: Install system dependencies
@@ -113,7 +115,7 @@ jobs:
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
           targets: x86_64-pc-windows-msvc
 
@@ -231,7 +233,7 @@ jobs:
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
           targets: aarch64-apple-darwin
       - name: Environment 

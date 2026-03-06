@@ -28,10 +28,6 @@ serde_json = "1.0.145"
 shared = { path = "./crates/shared", version = "0.1.0" }
 tokio = { version = "1.49.0", features = ["io-util", "net"] }
 
-[workspace.lints.rust]
-unused_imports = "deny"
-unused_variables = "deny"
-
 # [patch.crates-io]
 # lightyear = { path = "../lightyear/lightyear/" }
 
