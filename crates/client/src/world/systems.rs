@@ -39,19 +39,19 @@ pub fn spawn_visuals_for_world_objects(
             .entity(entity)
             .insert((
                 Visibility::Visible,
-                FloatDirection::Down,
                 // NOTE: Transform is not replicated from server to client, so we need to manually add it
                 Transform::from_translation(world_object_collectible.position),
             ))
-            .with_child((SceneRoot(model), Name::new("World Object Model")));
+            .with_child((
+                SceneRoot(model),
+                Name::new("World Object Model"),
+                FloatDirection::Down,
+            ));
     }
 }
 
 pub fn rotate_and_float_world_objects(
-    world_objects_query: Query<
-        (&mut FloatDirection, &mut Transform),
-        With<WorldObjectCollectibleServerSide>,
-    >,
+    world_objects_query: Query<(&mut FloatDirection, &mut Transform)>,
     time: Res<Time>,
 ) {
     const ORIGIN_Y: f32 = 0.0;

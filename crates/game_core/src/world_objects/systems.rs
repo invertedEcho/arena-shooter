@@ -62,21 +62,18 @@ pub fn spawn_world_objects(
     info!("Loaded spawn locations for world objects, spawning...");
 
     for spawn_location in spawn_locations {
-        commands
-            .spawn((
-                Transform::from_translation(spawn_location.position),
-                Replicate::to_clients(NetworkTarget::All),
-            ))
-            .with_child((
-                Collider::cuboid(0.2, 0.2, 0.2),
-                WorldObjectCollectibleServerSide {
-                    kind: spawn_location.kind,
-                    active: true,
-                    position: spawn_location.position,
-                },
-                CollidingEntities::default(),
-                RespawnTimer(Timer::from_seconds(5.0, TimerMode::Repeating)),
-            ));
+        commands.spawn((
+            Transform::from_translation(spawn_location.position),
+            Replicate::to_clients(NetworkTarget::All),
+            Collider::cuboid(0.2, 0.2, 0.2),
+            WorldObjectCollectibleServerSide {
+                kind: spawn_location.kind,
+                active: true,
+                position: spawn_location.position,
+            },
+            CollidingEntities::default(),
+            RespawnTimer(Timer::from_seconds(5.0, TimerMode::Repeating)),
+        ));
     }
 }
 
