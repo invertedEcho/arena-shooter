@@ -62,6 +62,7 @@ pub enum GameCoreLoadingState {
     #[default]
     Initial,
     GameScoreFinishedSetup,
+    // FIXME: MapSpawned is currently never entered again after the first game
     MapSpawned,
     CollidersSpawned,
     NavMeshReady,
@@ -457,6 +458,7 @@ fn check_collider_constructor_hierarchy_ready(
 #[derive(Resource, Debug)]
 pub struct WorldSceneHandle(pub Handle<Scene>);
 
+// FIXME: this detection logic doesnt work on second time
 fn check_world_scene_loaded(
     mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
     mut next_game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,

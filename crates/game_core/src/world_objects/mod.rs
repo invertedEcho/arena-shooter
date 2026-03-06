@@ -21,7 +21,7 @@ impl Plugin for MapPlugin {
         // for some reason, spawn_world_objects makes client crash when this is set to
         // OnEnter(GameCoreLoadingState::GameScoreFinishedSetup)
         app.add_systems(
-            OnEnter(GameCoreLoadingState::CollidersSpawned),
+            OnEnter(GameCoreLoadingState::Done),
             spawn_world_objects,
         );
         app.add_systems(

@@ -158,8 +158,8 @@ fn update_health_bar_of_enemies(
             progress_bar.width = percent(new_health.0);
         } else {
             warn!(
-                "Health changed of an enemy but couldnt find health bar to \
-                 update the value"
+                ?entity,
+                "Enemy Health changed but couldnt find enemies health bar"
             );
         }
     }
