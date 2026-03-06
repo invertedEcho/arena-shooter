@@ -17,11 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
       # TODO: eventuall we should use this cache action in all jobs
       - uses: Swatinem/rust-cache@v2
       - name: Cargo format
         run: |
-          rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
           cargo fmt --all -- --check
       - name: Install system dependencies
         run: |
