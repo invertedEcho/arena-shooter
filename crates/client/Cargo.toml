@@ -35,6 +35,3 @@ debug-build = [
   "bevy/dynamic_linking",
   "bevy/track_location",
 ]
-
-[lints]
-workspace = true
