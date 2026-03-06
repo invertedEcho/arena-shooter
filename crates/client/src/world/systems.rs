@@ -37,7 +37,12 @@ pub fn spawn_visuals_for_world_objects(
         // over the network. its only for visuals, so no need for replication.
         commands
             .entity(entity)
-            .insert((Visibility::Visible, FloatDirection::Down))
+            .insert((
+                Visibility::Visible,
+                FloatDirection::Down,
+                // NOTE: Transform is not replicated from server to client, so we need to manually add it
+                Transform::from_translation(world_object_collectible.position),
+            ))
             .with_child((SceneRoot(model), Name::new("World Object Model")));
     }
 }

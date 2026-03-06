@@ -21,7 +21,7 @@ use crate::world_objects::{
 #[derive(Debug, Serialize, Deserialize)]
 struct SpawnLocation {
     kind: WorldObjectCollectibleKind,
-    position: [f32; 3],
+    position: Vec3,
 }
 
 fn load_spawn_locations(
@@ -64,11 +64,7 @@ pub fn spawn_world_objects(
     for spawn_location in spawn_locations {
         commands
             .spawn((
-                Transform::from_xyz(
-                    spawn_location.position[0],
-                    spawn_location.position[1],
-                    spawn_location.position[2],
-                ),
+                Transform::from_translation(spawn_location.position),
                 Replicate::to_clients(NetworkTarget::All),
             ))
             .with_child((
@@ -76,6 +72,7 @@ pub fn spawn_world_objects(
                 WorldObjectCollectibleServerSide {
                     kind: spawn_location.kind,
                     active: true,
+                    position: spawn_location.position,
                 },
                 CollidingEntities::default(),
                 RespawnTimer(Timer::from_seconds(5.0, TimerMode::Repeating)),

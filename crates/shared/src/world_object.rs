@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct WorldObjectCollectibleServerSide {
     pub active: bool,
     pub kind: WorldObjectCollectibleKind,
+    pub position: Vec3,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
