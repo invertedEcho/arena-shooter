@@ -105,10 +105,6 @@ fn on_enter_connecting_to_server(
     server_entity: Query<Entity, With<Server>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
-    info!(
-        "Entered ClientLoadingState::ConnectingToServer! Spawning a client \
-         and triggering Connect to server"
-    );
     // Connected component only present on our own client
     for connected in connected_query {
         if connected {
@@ -140,8 +136,10 @@ fn on_enter_connecting_to_server(
         // ConnectToken. this happens in auth.rs
         commands.trigger(Connect { entity: client });
     } else {
-        info!("Connecting to official dedicated server");
-        info!("Spawning a 'normal' client");
+        info!(
+            "Connecting to official dedicated server, Spawning a 'normal' \
+             client"
+        );
         let auth_backend_addr = get_auth_backend_socket_addr_client_side();
         if let Some(auth_backend_addr) = auth_backend_addr {
             debug!(
@@ -153,7 +151,7 @@ fn on_enter_connecting_to_server(
             }));
             commands
                 .insert_resource(ConnectTokenRequestTask { task: Some(task) });
-            debug!("Inserted ConnectTokenRequestTask!");
+            debug!("Inserted ConnectTokenRequestTask");
         } else {
             next_app_state.set(AppState::Disconnected);
         }

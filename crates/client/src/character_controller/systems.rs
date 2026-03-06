@@ -165,18 +165,11 @@ pub fn handle_movement_actions_for_character_controllers(
 /// Updates the [`Grounded`] component
 pub fn update_grounded(
     mut query: Query<(&ShapeHits, &mut Grounded), EntitiesRelevantForGravity>,
-    world_objects_query: Query<Entity, With<WorldObjectCollectibleServerSide>>,
 ) {
     for (hits, mut grounded) in &mut query {
-        let hits_without_world_objects: Vec<&ShapeHitData> = hits
-            .0
-            .iter()
-            .filter(|shape_hit_data| {
-                !world_objects_query.contains(shape_hit_data.entity)
-            })
-            .collect();
-
-        let on_ground = !hits_without_world_objects.is_empty();
+        // we dont have to filter out world object collectibles, because we add them to excluded
+        // entities of the shapecaster for grounded detection
+        let on_ground = !hits.0.is_empty();
 
         if grounded.0 != on_ground {
             grounded.0 = on_ground;
