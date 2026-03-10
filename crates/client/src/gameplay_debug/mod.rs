@@ -22,7 +22,7 @@ use shared::{
 };
 
 use crate::{
-    game_flow::states::AppState,
+    enemy_visuals::HealthBarCamera, game_flow::states::AppState,
     gameplay_debug::states_overlay::DebugOverlayPlugin,
 };
 
@@ -69,6 +69,7 @@ impl Plugin for GameplayDebugPlugin {
                 tick_despawn_timer_debug_gizmo_lines,
                 handle_spawn_debug_points_message,
                 do_invicibility,
+                ensure_egui_context_exists,
             ),
         );
         app.add_systems(
@@ -319,5 +320,20 @@ fn do_invicibility(
 ) {
     if current_app_debug_state.invincibility {
         changed_health.0 = 100.0;
+    }
+}
+
+fn ensure_egui_context_exists(
+    mut commands: Commands,
+    existing_egui_contexts: Query<&PrimaryEguiContext>,
+    camera_query: Query<Entity, (With<Camera>, Without<HealthBarCamera>)>,
+) {
+    if existing_egui_contexts.count() == 0 {
+        let Some(first_camera) = camera_query.iter().next() else {
+            return;
+        };
+
+        info!("Inserting PrimaryEguiContext into first camera found");
+        commands.entity(first_camera).insert(PrimaryEguiContext);
     }
 }

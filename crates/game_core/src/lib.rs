@@ -3,8 +3,9 @@ use std::time::Duration;
 use avian3d::prelude::*;
 use bevy::{
     camera::visibility::RenderLayers, platform::collections::HashMap,
-    prelude::*,
+    prelude::*, reflect::TypePath,
 };
+use bevy_common_assets::json::JsonAssetPlugin;
 use lightyear::{
     netcode::NetcodeServer,
     prelude::{
@@ -12,6 +13,7 @@ use lightyear::{
         *,
     },
 };
+use serde::{Deserialize, Serialize};
 use shared::{
     AppRole, DEFAULT_HEALTH, GameMap, GameModeServer, GameStateServer,
     MEDIUM_PLASTIC_MAP_PATH, SPAWN_POINT_MEDIUM_PLASTIC_MAP, StartGame,
@@ -32,7 +34,9 @@ use shared::{
             SERVER_SOCKET_ADDR_SINGLEPLAYER,
         },
     },
-    world_object::WorldObjectCollectibleServerSide,
+    world_object::{
+        WorldObjectCollectibleKind, WorldObjectCollectibleServerSide,
+    },
 };
 
 use crate::{
@@ -86,6 +90,10 @@ impl Plugin for GameCorePlugin {
         app.init_state::<GameStateServer>();
         app.init_state::<GameMap>();
         app.init_state::<GameModeServer>();
+
+        app.add_plugins(JsonAssetPlugin::<SpawnLocationFile>::new(&[
+            "spawn_location.json",
+        ]));
 
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
 
@@ -564,4 +572,15 @@ fn read_stop_game_message(
             commands.entity(entity).despawn();
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Asset, TypePath)]
+pub struct SpawnLocationFile {
+    positions: Vec<SpawnLocation>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SpawnLocation {
+    kind: WorldObjectCollectibleKind,
+    position: Vec3,
 }

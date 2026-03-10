@@ -58,8 +58,8 @@ fn spawn_health_bar_for_new_enemy(
     added_enemy_query: Query<Entity, Added<Enemy>>,
     mut camera_order: Local<isize>,
 ) {
-    *camera_order -= 1;
     for enemy_entity in added_enemy_query {
+        *camera_order -= 1;
         let size = Extent3d {
             width: 512,
             height: 512,
