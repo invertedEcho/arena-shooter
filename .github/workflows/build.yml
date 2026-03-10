@@ -32,7 +32,7 @@ jobs:
         # we create empty assets directory so build of `bevy_embedded_assets` wont fail
         run: |
           mkdir assets
-          cargo clippy -- -D unused-imports -D unused-variables
+          cargo clippy -- -D unused-imports -D unused-variables -D clippy::needless_update
 
   # Build for Linux
   build-linux:
