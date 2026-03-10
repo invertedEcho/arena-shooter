@@ -12,10 +12,11 @@ pub struct ReloadPlayerWeaponMessage;
 pub struct PlayerWeaponSlotChangeMessage(pub usize);
 
 /// This message gets written whenever a player shoots, and the bullet hits something
-/// hit_point: Where the bullet hit exactly
-/// entity_hit: Which entity got hit by the bullet
 #[derive(Message)]
 pub struct PlayerBulletHit {
+    /// Where the bullet hit exactly
     pub hit_point: Vec3,
+    /// Which entity got hit by the bullet
     pub entity_hit: Entity,
+    pub hit_normal: Vec3,
 }

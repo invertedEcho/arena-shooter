@@ -13,6 +13,7 @@ use crate::{
             handle_input, handle_player_weapon_reload_timer,
             handle_reload_player_weapon_message, handle_weapon_slot_change,
             reset_aim_type_on_pause, send_shoot_request_on_weapon_fired,
+            spawn_bullet_hole_decal,
             spawn_bullet_impact_particle_on_player_bullet_hit,
             tick_player_weapon_shoot_cooldown_timer,
         },
@@ -46,6 +47,7 @@ impl Plugin for PlayerShootingPlugin {
                     handle_change_weapon_slot_cooldown,
                     send_shoot_request_on_weapon_fired,
                     check_if_player_bullet_hit,
+                    spawn_bullet_hole_decal,
                 )
                     .run_if(in_state(InGameState::Playing)),
             )

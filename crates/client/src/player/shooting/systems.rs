@@ -1,8 +1,10 @@
+use std::f32::consts::TAU;
+
 use avian3d::prelude::*;
 use bevy::{input::mouse::MouseWheel, prelude::*};
 use lightyear::prelude::*;
 use shared::{
-    components::Health,
+    components::{DespawnTimer, Health},
     multiplayer_messages::ShootRequest,
     player::{AimType, PlayerState},
     protocol::OrderedReliableChannel,
@@ -155,8 +157,6 @@ pub fn send_shoot_request_on_weapon_fired(
     }
 }
 
-// FIXME: dont think this should happen on client
-// -> but this is also mainly for spawning bullet impact particles which is fine?
 pub fn check_if_player_bullet_hit(
     mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
     mut message_writer: MessageWriter<PlayerBulletHit>,
@@ -183,6 +183,7 @@ pub fn check_if_player_bullet_hit(
         message_writer.write(PlayerBulletHit {
             hit_point,
             entity_hit: first_hit.entity,
+            hit_normal: first_hit.normal,
         });
     }
 }
@@ -210,6 +211,49 @@ pub fn spawn_bullet_impact_particle_on_player_bullet_hit(
                 variant: bullet_impact_effect_variant,
             },
         );
+    }
+}
+
+pub fn spawn_bullet_hole_decal(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut message_reader: MessageReader<PlayerBulletHit>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for message in message_reader.read() {
+        let position = message.hit_point;
+        let normal = message.hit_normal;
+
+        // slight offset because z-fighting / textures rendering on top of each other flickering
+        let position = position + normal * 0.001;
+
+        let random_rotation =
+            // remember, TAU is full circle 2pi, e.g. 0 - 360 degree, so this gives random rotation
+            // in full circle
+            Quat::from_axis_angle(Vec3::X, rand::random::<f32>() * TAU);
+        let rotation =
+            Quat::from_rotation_arc(Vec3::X, normal) * random_rotation;
+
+        commands.spawn((
+            Mesh3d(meshes.add(Plane3d {
+                normal: Dir3::X,
+                half_size: Vec2::splat(0.05),
+            })),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color_texture: Some(asset_server.load("bullet_hole.png")),
+                alpha_mode: AlphaMode::Blend,
+                unlit: true,
+                cull_mode: None,
+                ..default()
+            })),
+            Transform {
+                translation: position,
+                rotation,
+                ..default()
+            },
+            DespawnTimer(Timer::from_seconds(5.0, TimerMode::Once)),
+        ));
     }
 }
 
