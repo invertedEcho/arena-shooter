@@ -1,9 +1,7 @@
 use std::f32::consts::TAU;
 
-use avian3d::{math::Quaternion, prelude::*};
-use bevy::{
-    camera::visibility::RenderLayers, input::mouse::MouseWheel, prelude::*,
-};
+use avian3d::prelude::*;
+use bevy::{input::mouse::MouseWheel, prelude::*};
 use lightyear::prelude::*;
 use shared::{
     components::{DespawnTimer, Health},
