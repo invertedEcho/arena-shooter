@@ -220,8 +220,15 @@ pub fn spawn_bullet_hole_decal(
     mut message_reader: MessageReader<PlayerBulletHit>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    enemy_or_player: Query<Entity, PlayerOrEnemyFilter>,
 ) {
     for message in message_reader.read() {
+        let enemy_or_player_hit =
+            enemy_or_player.get(message.entity_hit).is_ok();
+        if enemy_or_player_hit {
+            continue;
+        }
+
         let position = message.hit_point;
         let normal = message.hit_normal;
 
