@@ -483,7 +483,19 @@ pub fn recoil_slerp_back(
     shoot_recoil: Single<&mut ShootRecoil>,
     mut world_camera: Single<&mut Transform, With<WorldCamera>>,
     time: Res<Time>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    player_query: Single<(&PlayerWeapons, &PlayerState)>,
 ) {
+    let (player_weapons, player_state) = player_query.into_inner();
+    let current_weapon =
+        &player_weapons.weapons[player_state.active_weapon_slot];
+    let has_ammo = current_weapon.state.loaded_ammo > 0;
+
+    // dont slerp back, otherwise recoil will never accumulate
+    if mouse_input.pressed(MouseButton::Left) && has_ammo {
+        return;
+    }
+
     world_camera.rotation = world_camera
         .rotation
         .slerp(shoot_recoil.original_rotation, 3.5 * time.delta_secs());
