@@ -47,7 +47,7 @@ use crate::{
     game_flow::GameFlowPlugin,
     nav_mesh_pathfinding::NavMeshPathfindingPlugin,
     player::PlayerPlugin,
-    world_objects::{MapPlugin, components::MapModel},
+    world_objects::{WorldObjectsPlugin, components::MapModel},
 };
 
 mod enemy;
@@ -91,8 +91,10 @@ impl Plugin for GameCorePlugin {
         app.init_state::<GameMap>();
         app.init_state::<GameModeServer>();
 
+        // any files loaded via the asset server, that end with `spawn_locations.json`, will be
+        // parsed into SpawnLocationFile struct, and can then be retrieved via the handle
         app.add_plugins(JsonAssetPlugin::<SpawnLocationFile>::new(&[
-            "spawn_location.json",
+            "spawn_locations.json",
         ]));
 
         app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
@@ -100,7 +102,7 @@ impl Plugin for GameCorePlugin {
         app.add_plugins(EnemyPlugin);
         app.add_plugins(NavMeshPathfindingPlugin);
         app.add_plugins(GameFlowPlugin);
-        app.add_plugins(MapPlugin);
+        app.add_plugins(WorldObjectsPlugin);
         app.add_plugins(PlayerPlugin);
 
         app.add_systems(

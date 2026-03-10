@@ -15,10 +15,9 @@ mod systems;
 
 const DEFAULT_HEALTH_TO_GIVE_MEDKIT: f32 = 25.0;
 
-pub struct MapPlugin;
+pub struct WorldObjectsPlugin;
 
-// FIXME: either rename this plugin or rename the directory world_objects
-impl Plugin for MapPlugin {
+impl Plugin for WorldObjectsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
