@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_inspector_egui::{
-    bevy_egui::{EguiContext, PrimaryEguiContext},
+    bevy_egui::{EguiContext, EguiPrimaryContextPass, PrimaryEguiContext},
     egui,
 };
 use bevy_landmass::debug::{EnableLandmassDebug, Landmass3dDebugPlugin};
@@ -23,16 +23,18 @@ use shared::{
 
 use crate::{
     game_flow::states::AppState,
-    gameplay_debug::debug_overlay::DebugOverlayPlugin,
+    gameplay_debug::states_overlay::DebugOverlayPlugin,
 };
 
-mod debug_overlay;
+mod states_overlay;
 
-#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default, Copy)]
-pub enum AppDebugState {
-    #[default]
-    Disabled,
-    Enabled,
+#[derive(Resource, Eq, Debug, PartialEq, Hash, Clone, Default, Copy)]
+pub struct AppDebugState {
+    show_physics_gizmos: bool,
+    show_nav_mesh: bool,
+    show_enemy_debug_texts: bool,
+    show_states_overlay: bool,
+    invincibility: bool,
 }
 
 /// This plugin adds functionality related to debugging the game itself, like having debug gizmos
@@ -48,7 +50,7 @@ impl Plugin for GameplayDebugPlugin {
         });
         app.add_plugins(PhysicsDebugPlugin);
 
-        app.init_state::<AppDebugState>();
+        app.init_resource::<AppDebugState>();
         app.add_plugins(DebugOverlayPlugin);
         app.add_plugins(Text3dPlugin {
             load_system_fonts: true,
@@ -60,13 +62,13 @@ impl Plugin for GameplayDebugPlugin {
         app.add_systems(
             Update,
             (
-                draw_gizmos.run_if(in_state(AppDebugState::Enabled)),
-                draw_enemy_fov.run_if(in_state(AppDebugState::Enabled)),
+                draw_gizmos,
+                draw_enemy_fov,
                 add_enemy_state_text,
                 update_enemy_debug_text,
                 tick_despawn_timer_debug_gizmo_lines,
                 handle_spawn_debug_points_message,
-                update_app_debug_state,
+                do_invicibility,
             ),
         );
         app.add_systems(
@@ -76,9 +78,10 @@ impl Plugin for GameplayDebugPlugin {
                 update_landmass_debug_enabled,
                 update_enemy_debug_text_visible,
             )
-                .run_if(state_changed::<AppDebugState>),
+                .run_if(resource_changed::<AppDebugState>),
         );
         // app.add_systems(EguiPrimaryContextPass, player_inspector);
+        app.add_systems(EguiPrimaryContextPass, developer_menu);
 
         app.insert_resource(DebugGizmos(Vec::new()));
     }
@@ -86,13 +89,10 @@ impl Plugin for GameplayDebugPlugin {
 
 fn update_physics_debug_enabled(
     mut store: ResMut<GizmoConfigStore>,
-    current_app_debug_state: Res<State<AppDebugState>>,
+    current_app_debug_state: Res<AppDebugState>,
 ) {
     let (config, _) = store.config_mut::<PhysicsGizmos>();
-    match current_app_debug_state.get() {
-        AppDebugState::Disabled => config.enabled = false,
-        AppDebugState::Enabled => config.enabled = true,
-    }
+    config.enabled = current_app_debug_state.show_physics_gizmos;
 }
 
 pub struct DebugGizmoLine {
@@ -241,12 +241,14 @@ fn _player_inspector(world: &mut World) {
 
 fn update_enemy_debug_text_visible(
     query: Query<&mut Visibility, With<EnemyDebugText>>,
-    current_app_debug_state: Res<State<AppDebugState>>,
+    current_app_debug_state: Res<AppDebugState>,
 ) {
-    let new_visibility = match current_app_debug_state.get() {
-        AppDebugState::Disabled => Visibility::Hidden,
-        AppDebugState::Enabled => Visibility::Visible,
+    let new_visibility = if current_app_debug_state.show_enemy_debug_texts {
+        Visibility::Visible
+    } else {
+        Visibility::Hidden
     };
+
     for mut visibility in query {
         *visibility = new_visibility;
     }
@@ -275,25 +277,47 @@ fn handle_spawn_debug_points_message(
     }
 }
 
-fn update_app_debug_state(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    current_app_debug_state: Res<State<AppDebugState>>,
-    mut next_app_debug_state: ResMut<NextState<AppDebugState>>,
-) {
-    if keyboard_input.just_pressed(KeyCode::KeyH) {
-        if *current_app_debug_state.get() == AppDebugState::Disabled {
-            next_app_debug_state.set(AppDebugState::Enabled);
-        } else if *current_app_debug_state.get() == AppDebugState::Enabled {
-            next_app_debug_state.set(AppDebugState::Disabled);
-        }
-    }
-}
-
 fn update_landmass_debug_enabled(
     mut land_mass_debug: ResMut<EnableLandmassDebug>,
-    new_app_debug_state: Res<State<AppDebugState>>,
+    current_app_debug_state: Res<AppDebugState>,
 ) {
-    let app_debug_state_enabled =
-        *new_app_debug_state.get() == AppDebugState::Enabled;
+    let app_debug_state_enabled = current_app_debug_state.show_nav_mesh;
     land_mass_debug.0 = app_debug_state_enabled;
+}
+
+fn developer_menu(
+    mut ui_context: Single<&mut EguiContext, With<PrimaryEguiContext>>,
+    mut app_debug_state: ResMut<AppDebugState>,
+) {
+    egui::Window::new("Developer Menu").show(ui_context.get_mut(), |ui| {
+        ui.horizontal(|ui| {
+            ui.label("Show physics gizmos");
+            ui.checkbox(&mut app_debug_state.show_physics_gizmos, "");
+        });
+        ui.horizontal(|ui| {
+            ui.label("Show nav mesh");
+            ui.checkbox(&mut app_debug_state.show_nav_mesh, "");
+        });
+        ui.horizontal(|ui| {
+            ui.label("Show enemy debug texts");
+            ui.checkbox(&mut app_debug_state.show_enemy_debug_texts, "");
+        });
+        ui.horizontal(|ui| {
+            ui.label("Show states overlay");
+            ui.checkbox(&mut app_debug_state.show_states_overlay, "");
+        });
+        ui.horizontal(|ui| {
+            ui.label("Invincibility");
+            ui.checkbox(&mut app_debug_state.invincibility, "");
+        });
+    });
+}
+
+fn do_invicibility(
+    mut changed_health: Single<&mut Health, (Changed<Health>, With<Player>)>,
+    current_app_debug_state: Res<AppDebugState>,
+) {
+    if current_app_debug_state.invincibility {
+        changed_health.0 = 100.0;
+    }
 }

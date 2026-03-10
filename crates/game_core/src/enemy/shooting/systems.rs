@@ -78,8 +78,8 @@ pub fn enemy_shoot_player(
             return;
         };
 
-        let entity_killed = first_hit.entity;
-        if let Ok(mut health) = health_query.get_mut(entity_killed) {
+        let entity_hit = first_hit.entity;
+        if let Ok(mut health) = health_query.get_mut(entity_hit) {
             health.0 -= 8.0;
 
             message_writer.write(PlayerHitMessage {
@@ -87,7 +87,7 @@ pub fn enemy_shoot_player(
             });
 
             if health.0 <= 0.0 {
-                commands.entity(entity_killed).insert(ColliderDisabled);
+                commands.entity(entity_hit).insert(ColliderDisabled);
                 if let Some(enemy_game_score) =
                     game_score.enemies.get_mut(&enemy_entity)
                 {

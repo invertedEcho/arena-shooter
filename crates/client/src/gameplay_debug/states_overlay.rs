@@ -18,7 +18,7 @@ impl Plugin for DebugOverlayPlugin {
             Update,
             (
                 update_debug_overlay_visibility
-                    .run_if(state_changed::<AppDebugState>),
+                    .run_if(resource_changed::<AppDebugState>),
                 update_current_app_state_text,
                 update_current_in_game_state_text,
                 update_current_main_menu_state,
@@ -205,11 +205,11 @@ fn update_debug_overlay_visibility(
         &mut Visibility,
         With<DebugOverlayRoot>,
     >,
-    app_debug_state: Res<State<AppDebugState>>,
+    app_debug_state: Res<AppDebugState>,
 ) {
-    if *app_debug_state.get() == AppDebugState::Enabled {
-        **debug_overlay_visibility = Visibility::Visible;
-    } else if *app_debug_state.get() == AppDebugState::Disabled {
-        **debug_overlay_visibility = Visibility::Hidden;
-    }
+    **debug_overlay_visibility = if app_debug_state.show_states_overlay {
+        Visibility::Visible
+    } else {
+        Visibility::Hidden
+    };
 }

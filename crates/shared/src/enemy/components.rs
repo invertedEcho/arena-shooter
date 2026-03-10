@@ -10,21 +10,10 @@ pub struct Enemy;
 #[derive(Component)]
 pub struct EnemyLastStateUpdate(pub Instant);
 
-impl EnemyState {
-    pub fn update_state(
-        &mut self,
-        new_state: EnemyState,
-        last_state_update: &mut EnemyLastStateUpdate,
-    ) {
-        if *self != new_state {
-            debug!("Enemy State change: {:?} -> {:?}", self, new_state);
-            *self = new_state;
-            last_state_update.0 = Instant::now();
-        }
-    }
-}
-
-#[derive(Default, PartialEq, Debug, Component, Serialize, Deserialize)]
+#[derive(
+    Default, PartialEq, Debug, Component, Serialize, Deserialize, Reflect,
+)]
+#[reflect(Component)]
 pub enum EnemyState {
     #[default]
     Idle,
@@ -40,4 +29,18 @@ pub enum EnemyState {
     Dead,
     /// This state is set when the enemies should rotate towards the player direction over time
     RotateTowardsPlayer,
+}
+
+impl EnemyState {
+    pub fn update_state(
+        &mut self,
+        new_state: EnemyState,
+        last_state_update: &mut EnemyLastStateUpdate,
+    ) {
+        if *self != new_state {
+            debug!("Enemy State change: {:?} -> {:?}", self, new_state);
+            *self = new_state;
+            last_state_update.0 = Instant::now();
+        }
+    }
 }
