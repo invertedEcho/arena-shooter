@@ -9,7 +9,7 @@ concurrency:
 
 env:
   binary: client
-  #itch_target: <itch.io-username>/<game-name>
+  game_name: arena-shooter
 
 jobs:
   check:
@@ -48,7 +48,7 @@ jobs:
           targets: x86_64-unknown-linux-gnu
       - name: Install system dependencies
         run: |
-          sudo apt-get update; sudo apt-get install -y pkg-config libx11-dev libasound2-dev libudev-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libwayland-dev libxkbcommon-dev mold
+          sudo apt-get update; sudo apt-get install -y pkg-config libx11-dev libasound2-dev libudev-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libwayland-dev libxkbcommon-dev mold zip
 
       - name: Cache cargo
         uses: actions/cache@v4
@@ -82,29 +82,17 @@ jobs:
 
       - name: Prepare package
         run: |
-          mkdir linux
-          cp target/x86_64-unknown-linux-gnu/release/${{ env.binary }} linux/
+          mv target/x86_64-unknown-linux-gnu/release/${{ env.binary }} ${{ env.game_name }}
 
       - name: Package as a zip
-        working-directory: ./linux
         run: |
-          zip --recurse-paths ../${{ env.binary }}.zip .
+          zip ${{ env.game_name}}-linux.zip ${{ env.game_name }}
 
       - name: Upload binaries to artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          path: ${{ env.binary }}.zip
-          name: linux
-
-      # - name: Upload binaries to release
-      #   if: ${{ env.add_binaries_to_github_release == 'true' }}
-      #   uses: svenstaro/upload-release-action@v2
-      #   with:
-      #     repo_token: ${{ secrets.GITHUB_TOKEN }}
-      #     file: ${{ env.binary }}.zip
-      #     asset_name: ${{ env.binary }}-linux-${{ steps.get_version.outputs.tag }}.zip
-      #     tag: ${{ github.ref }}
-      #     overwrite: true
+          path: ${{ env.game_name }}-linux.zip
+          archive: false
 
   # Build for Windows
   build-windows:
@@ -154,18 +142,17 @@ jobs:
 
       - name: Prepare package
         run: |
-          mkdir windows
-          cp target/x86_64-pc-windows-msvc/release/${{ env.binary }}.exe windows/
+          mv target/x86_64-pc-windows-msvc/release/${{ env.binary }}.exe ${{ env.game_name }}.exe
 
       - name: Package as a zip
         run: |
-          Compress-Archive -Path windows/* -DestinationPath ${{ env.binary }}.zip
+          Compress-Archive -Path ${{ env.game_name }}.exe -DestinationPath ${{ env.game_name }}-windows.zip
 
       - name: Upload binaries to artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          path: ${{ env.binary }}.zip
-          name: windows
+          path: ${{ env.game_name }}-windows.zip
+          archive: false
 
   # Build for MacOS x86_64
   build-macOS-intel:
@@ -214,15 +201,15 @@ jobs:
 
       - name: Prepare Package
         run: |
-          mkdir -p ${{ env.binary }}.app/Contents/MacOS
-          cp target/x86_64-apple-darwin/release/${{ env.binary }} ${{ env.binary }}.app/Contents/MacOS/
-          hdiutil create -fs HFS+ -volname "${{ env.binary }}" -srcfolder ${{ env.binary }}.app ${{ env.binary }}-macOS-intel.dmg
+          mkdir -p arena-shooter.app/Contents/MacOS
+          cp target/x86_64-apple-darwin/release/${{ env.binary }} ${{ env.game_name }}.app/Contents/MacOS/
+          hdiutil create -fs HFS+ -volname ${{ env.game_name }} -srcfolder ${{ env.game_name }}.app ${{ env.game_name }}-macOS-intel.dmg
 
       - name: Upload binaries to artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          path: ${{ env.binary }}-macOS-intel.dmg
-          name: macOS-intel
+          path: ${{ env.game_name }}-macOS-intel.dmg
+          archive: false
 
   # Build for MacOS Apple Silicon
   build-macOS-apple-silicon:
@@ -273,62 +260,12 @@ jobs:
 
       - name: Prepare Package
         run: |
-          mkdir -p ${{ env.binary }}.app/Contents/MacOS
-          cp target/aarch64-apple-darwin/release/${{ env.binary }} ${{ env.binary }}.app/Contents/MacOS/
-          hdiutil create -fs HFS+ -volname "${{ env.binary }}-macOS-apple-silicon" -srcfolder ${{ env.binary }}.app ${{ env.binary }}-macOS-apple-silicon.dmg
+          mkdir -p ${{ env.game_name }}.app/Contents/MacOS
+          cp target/aarch64-apple-darwin/release/${{ env.binary }} ${{ env.game_name }}.app/Contents/MacOS/
+          hdiutil create -fs HFS+ -volname "${{ env.game_name }}-macOS-apple-silicon" -srcfolder ${{ env.game_name }}.app ${{ env.game_name }}-macOS-apple-silicon.dmg
 
       - name: Upload binaries to artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          path: ${{ env.binary }}-macOS-apple-silicon.dmg
-          name: macOS-apple-silicon
-
-  # check-if-upload-to-itch-is-configured:
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     should-upload: ${{ steps.check-env.outputs.has-itch-target }}
-  #   steps:
-  #     - id: check-env
-  #       run: |
-  #         if [[ -z "$itch_target" ]]; then
-  #           echo "has-itch-target=no" >> $GITHUB_OUTPUT
-  #         else
-  #           echo "has-itch-target=yes" >> $GITHUB_OUTPUT
-  #         fi
-
-  # upload-to-itch:
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - check-if-upload-to-itch-is-configured
-  #     - release-wasm
-  #     - release-linux
-  #     - release-windows
-  #     - release-macOS-intel
-  #     - release-macOS-apple-silicon
-  #   if: ${{ needs.check-if-upload-to-itch-is-configured.outputs.should-upload == 'yes' }}
-  #
-  #   steps:
-  #     - name: Download artifacts
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         path: ./builds
-  #
-  #     - name: Install butler
-  #       run: |
-  #         curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
-  #         unzip butler.zip
-  #         chmod +x butler
-  #         ./butler -V
-  #     - uses: olegtarasov/get-tag@v2.1.2
-  #       id: get_version
-  #     - name: Upload to itch.io
-  #       env:
-  #         BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
-  #       run: |
-  #         for channel in $(ls builds); do
-  #           ./butler push \
-  #               --fix-permissions \
-  #               --userversion="${{ steps.get_version.outputs.tag }}" \
-  #               builds/$channel/* \
-  #               ${{ env.itch_target }}:$channel
-  #         done
+          path: ${{ env.game_name }}-macOS-apple-silicon.dmg
+          archive: false
