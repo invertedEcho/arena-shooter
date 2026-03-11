@@ -89,9 +89,10 @@ jobs:
           zip ${{ env.game_name}}-linux.zip ${{ env.game_name }}
 
       - name: Upload binaries to artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           path: ${{ env.game_name }}-linux.zip
+          archive: false
 
   # Build for Windows
   build-windows:
@@ -148,9 +149,10 @@ jobs:
           Compress-Archive -Path ${{ env.game_name }}.exe -DestinationPath ${{ env.game_name }}-windows.zip
 
       - name: Upload binaries to artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           path: ${{ env.game_name }}-windows.zip
+          archive: false
 
   # Build for MacOS x86_64
   build-macOS-intel:
@@ -204,9 +206,10 @@ jobs:
           hdiutil create -fs HFS+ -volname ${{ env.game_name }} -srcfolder ${{ env.game_name }}.app ${{ env.game_name }}-macOS-intel.dmg
 
       - name: Upload binaries to artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           path: ${{ env.game_name }}-macOS-intel.dmg
+          archive: false
 
   # Build for MacOS Apple Silicon
   build-macOS-apple-silicon:
@@ -262,6 +265,7 @@ jobs:
           hdiutil create -fs HFS+ -volname "${{ env.game_name }}-macOS-apple-silicon" -srcfolder ${{ env.game_name }}.app ${{ env.game_name }}-macOS-apple-silicon.dmg
 
       - name: Upload binaries to artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           path: ${{ env.game_name }}-macOS-apple-silicon.dmg
+          archive: false
