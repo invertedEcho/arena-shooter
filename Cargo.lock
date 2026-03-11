@@ -3776,6 +3776,7 @@ dependencies = [
  "avian3d",
  "avian_rerecast",
  "bevy",
+ "bevy_common_assets",
  "bevy_landmass",
  "bevy_rerecast",
  "landmass_rerecast",

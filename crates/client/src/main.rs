@@ -10,7 +10,7 @@ use bevy::{
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use bevy_hanabi::HanabiPlugin;
 use bevy_inspector_egui::{
-    bevy_egui::{self, EguiPlugin, PrimaryEguiContext},
+    bevy_egui::{self, EguiPlugin},
     quick::WorldInspectorPlugin,
 };
 use bevy_skein::SkeinPlugin;
@@ -18,7 +18,7 @@ use bevy_skein::SkeinPlugin;
 use crate::{
     audio::AudioPlugin,
     character_controller::CharacterControllerPlugin,
-    enemy_visuals::{EnemyVisualsPlugin, HealthBarCamera},
+    enemy_visuals::EnemyVisualsPlugin,
     game_flow::GameFlowPlugin,
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
@@ -144,22 +144,6 @@ fn main() {
 
     // TODO: move elsewhere
     app.add_observer(apply_render_layers_to_children);
-    app.add_systems(Update, ensure_egui_context_exists);
 
     app.run();
-}
-
-fn ensure_egui_context_exists(
-    mut commands: Commands,
-    existing_egui_contexts: Query<&PrimaryEguiContext>,
-    camera_query: Query<Entity, (With<Camera>, Without<HealthBarCamera>)>,
-) {
-    if existing_egui_contexts.count() == 0 {
-        let Some(first_camera) = camera_query.iter().next() else {
-            return;
-        };
-
-        info!("Inserting PrimaryEguiContext into first camera found");
-        commands.entity(first_camera).insert(PrimaryEguiContext);
-    }
 }
