@@ -1,9 +1,6 @@
-use std::{fs::File, io::Read};
-
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use lightyear::prelude::*;
-use serde::{Deserialize, Serialize};
 use shared::{
     AppRole, DEFAULT_HEALTH, GameMap,
     components::Health,
@@ -14,42 +11,35 @@ use shared::{
     },
 };
 
-use crate::world_objects::{
-    DEFAULT_HEALTH_TO_GIVE_MEDKIT, components::RespawnTimer,
+use crate::{
+    SpawnLocationFile,
+    world_objects::{DEFAULT_HEALTH_TO_GIVE_MEDKIT, components::RespawnTimer},
 };
 
-#[derive(Debug, Serialize, Deserialize)]
-struct SpawnLocation {
-    kind: WorldObjectCollectibleKind,
-    position: Vec3,
-}
+#[derive(Resource)]
+pub struct CurrentSpawnLocationsHandle(Handle<SpawnLocationFile>);
 
-fn load_spawn_locations(
-    game_map: &GameMap,
-) -> Result<std::vec::Vec<SpawnLocation>, serde_json::Error> {
-    let file_path = match game_map {
-        GameMap::MediumPlastic => {
-            "assets/maps/medium_plastic/spawn_locations.json"
-        }
-        GameMap::TinyTown => "assets/maps/tiny_town/spawn_locations.json",
+pub fn load_spawn_locations(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    game_map: Res<State<GameMap>>,
+) {
+    let file_path = match game_map.get() {
+        GameMap::MediumPlastic => "maps/medium_plastic/spawn_locations.json",
+        GameMap::TinyTown => "maps/tiny_town/spawn_locations.json",
     };
+    debug!("Loading spawn location file: {}", file_path);
 
-    let mut file_buffer = String::from("");
-    let mut collider_file = File::open(file_path)
-        .expect("Can open spawn_locations.json for corresponding game map");
-
-    collider_file.read_to_string(&mut file_buffer).unwrap();
-
-    let spawn_locations: Result<Vec<SpawnLocation>, serde_json::error::Error> =
-        serde_json::from_str(&file_buffer);
-
-    spawn_locations
+    let handle = asset_server.load(file_path);
+    debug!("Inserting SpawnLocationFile handle {:?}", handle.id());
+    commands.insert_resource(CurrentSpawnLocationsHandle(handle));
 }
 
 pub fn spawn_world_objects(
     mut commands: Commands,
-    game_map: Res<State<GameMap>>,
     app_role: Res<State<AppRole>>,
+    current_spawn_location_handle: Res<CurrentSpawnLocationsHandle>,
+    spawn_locations: ResMut<Assets<SpawnLocationFile>>,
 ) {
     if *app_role.get() == AppRole::ClientOnly {
         info!(
@@ -57,11 +47,23 @@ pub fn spawn_world_objects(
         );
         return;
     }
-    let spawn_locations = load_spawn_locations(game_map.get())
-        .expect("Couldn't load and parse spawn locations from json file");
+
+    let Some(spawn_location) =
+        spawn_locations.get(current_spawn_location_handle.0.id())
+    else {
+        // TODO: the handle will exist with an extremely very high chance at this point.
+        // the json file is just about 1KB big, so no way it wont be loaded at this point.
+        // the spawn location file gets loaded when player clicks on a map
+        panic!(
+            "Failed to load spawn locations, the asset hasnt been loaded yet \
+             or resource doesnt exist yet. Handle we wanted to retrieve: {}",
+            current_spawn_location_handle.0.id()
+        );
+    };
+
     info!("Loaded spawn locations for world objects, spawning...");
 
-    for spawn_location in spawn_locations {
+    for spawn_location in &spawn_location.positions {
         commands.spawn((
             Transform::from_translation(spawn_location.position),
             Replicate::to_clients(NetworkTarget::All),

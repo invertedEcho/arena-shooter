@@ -7,6 +7,7 @@ edition = "2024"
 avian_rerecast = { version = "0.4.0" }
 avian3d = { workspace = true }
 bevy = { workspace = true }
+bevy_common_assets = { version = "0.15.0", features = ["json"] }
 bevy_landmass = "0.11.0"
 bevy_rerecast = { version = "0.4.0", default-features = false, features = [
   "editor_integration"

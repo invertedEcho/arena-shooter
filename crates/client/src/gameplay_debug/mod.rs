@@ -22,7 +22,7 @@ use shared::{
 };
 
 use crate::{
-    game_flow::states::AppState,
+    enemy_visuals::HealthBarCamera, game_flow::states::AppState,
     gameplay_debug::states_overlay::DebugOverlayPlugin,
 };
 
@@ -32,7 +32,7 @@ mod states_overlay;
 pub struct AppDebugState {
     show_physics_gizmos: bool,
     show_nav_mesh: bool,
-    show_enemy_debug_texts: bool,
+    show_enemy_debug_info: bool,
     show_states_overlay: bool,
     invincibility: bool,
 }
@@ -69,6 +69,7 @@ impl Plugin for GameplayDebugPlugin {
                 tick_despawn_timer_debug_gizmo_lines,
                 handle_spawn_debug_points_message,
                 do_invicibility,
+                ensure_egui_context_exists,
             ),
         );
         app.add_systems(
@@ -126,7 +127,12 @@ fn tick_despawn_timer_debug_gizmo_lines(
 pub fn draw_enemy_fov(
     enemy_transforms: Query<&Transform, With<Enemy>>,
     mut gizmos: Gizmos,
+    current_app_debug_state: Res<AppDebugState>,
 ) {
+    if !current_app_debug_state.show_enemy_debug_info {
+        return;
+    }
+
     for transform in enemy_transforms {
         let pos = transform.translation;
         let forward = transform.forward();
@@ -243,7 +249,7 @@ fn update_enemy_debug_text_visible(
     query: Query<&mut Visibility, With<EnemyDebugText>>,
     current_app_debug_state: Res<AppDebugState>,
 ) {
-    let new_visibility = if current_app_debug_state.show_enemy_debug_texts {
+    let new_visibility = if current_app_debug_state.show_enemy_debug_info {
         Visibility::Visible
     } else {
         Visibility::Hidden
@@ -299,8 +305,8 @@ fn developer_menu(
             ui.checkbox(&mut app_debug_state.show_nav_mesh, "");
         });
         ui.horizontal(|ui| {
-            ui.label("Show enemy debug texts");
-            ui.checkbox(&mut app_debug_state.show_enemy_debug_texts, "");
+            ui.label("Show enemy debug info");
+            ui.checkbox(&mut app_debug_state.show_enemy_debug_info, "");
         });
         ui.horizontal(|ui| {
             ui.label("Show states overlay");
@@ -319,5 +325,20 @@ fn do_invicibility(
 ) {
     if current_app_debug_state.invincibility {
         changed_health.0 = 100.0;
+    }
+}
+
+fn ensure_egui_context_exists(
+    mut commands: Commands,
+    existing_egui_contexts: Query<&PrimaryEguiContext>,
+    camera_query: Query<Entity, (With<Camera>, Without<HealthBarCamera>)>,
+) {
+    if existing_egui_contexts.count() == 0 {
+        let Some(first_camera) = camera_query.iter().next() else {
+            return;
+        };
+
+        debug!("Inserting PrimaryEguiContext into first camera found");
+        commands.entity(first_camera).insert(PrimaryEguiContext);
     }
 }
