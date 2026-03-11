@@ -11,7 +11,7 @@ pub struct WorldObjectCollectibleServerSide {
     pub position: Vec3,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Copy, Clone)]
 pub enum WorldObjectCollectibleKind {
     Medkit,
     Ammunition,

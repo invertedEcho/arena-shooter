@@ -16,7 +16,6 @@ use crate::{
     world_objects::{DEFAULT_HEALTH_TO_GIVE_MEDKIT, components::RespawnTimer},
 };
 
-// FIXME: move elsewhere
 #[derive(Resource)]
 pub struct CurrentSpawnLocationsHandle(Handle<SpawnLocationFile>);
 
@@ -29,8 +28,10 @@ pub fn load_spawn_locations(
         GameMap::MediumPlastic => "maps/medium_plastic/spawn_locations.json",
         GameMap::TinyTown => "maps/tiny_town/spawn_locations.json",
     };
+    debug!("Loading spawn location file: {}", file_path);
 
     let handle = asset_server.load(file_path);
+    debug!("Inserting SpawnLocationFile handle {:?}", handle.id());
     commands.insert_resource(CurrentSpawnLocationsHandle(handle));
 }
 
@@ -38,7 +39,7 @@ pub fn spawn_world_objects(
     mut commands: Commands,
     app_role: Res<State<AppRole>>,
     current_spawn_location_handle: Res<CurrentSpawnLocationsHandle>,
-    mut spawn_locations: ResMut<Assets<SpawnLocationFile>>,
+    spawn_locations: ResMut<Assets<SpawnLocationFile>>,
 ) {
     if *app_role.get() == AppRole::ClientOnly {
         info!(
@@ -48,18 +49,21 @@ pub fn spawn_world_objects(
     }
 
     let Some(spawn_location) =
-        spawn_locations.remove(current_spawn_location_handle.0.id())
+        spawn_locations.get(current_spawn_location_handle.0.id())
     else {
-        // FIXME: we need to ensure the handle exists at this point
+        // TODO: the handle will exist with an extremely very high chance at this point.
+        // the json file is just about 1KB big, so no way it wont be loaded at this point.
+        // the spawn location file gets loaded when player clicks on a map
         panic!(
             "Failed to load spawn locations, the asset hasnt been loaded yet \
-             or resource doesnt exist yet"
+             or resource doesnt exist yet. Handle we wanted to retrieve: {}",
+            current_spawn_location_handle.0.id()
         );
     };
 
     info!("Loaded spawn locations for world objects, spawning...");
 
-    for spawn_location in spawn_location.positions {
+    for spawn_location in &spawn_location.positions {
         commands.spawn((
             Transform::from_translation(spawn_location.position),
             Replicate::to_clients(NetworkTarget::All),
