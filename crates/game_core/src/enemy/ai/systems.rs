@@ -6,7 +6,7 @@ use bevy_landmass::{
 use shared::{
     character_controller::apply_collide_and_slide,
     enemy::{
-        ENEMY_FOV, ENEMY_VISION_RANGE,
+        ENEMY_FOV, ENEMY_VISION_RANGE, UPDATE_ENEMY_STATE_COOLDOWN_SECONDS,
         components::{Enemy, EnemyLastStateUpdate, EnemyState},
     },
     player::Player,
@@ -15,12 +15,10 @@ use shared::{
 };
 
 use crate::enemy::{
-    ai::messages::UpdateEnemyAgentTargetMessage, spawn::EnemyAgentEntityPointer,
+    ai::messages::{PlayerHitEnemy, UpdateEnemyAgentTargetMessage},
+    spawn::EnemyAgent,
 };
 
-// TODO: except this is not the case...
-/// This system is the only system allowed to change the enemy state
-/// Depending on the EnemyState, different systems will be run.
 pub fn enemy_state_decision_system(
     enemy_query: Query<
         (
@@ -37,7 +35,6 @@ pub fn enemy_state_decision_system(
         UpdateEnemyAgentTargetMessage,
     >,
 ) {
-    const UPDATE_ENEMY_STATE_COOLDOWN: u64 = 2;
     for (
         enemy_entity,
         enemy_transform,
@@ -46,7 +43,7 @@ pub fn enemy_state_decision_system(
     ) in enemy_query
     {
         if enemy_last_state_update.0.elapsed().as_secs()
-            < UPDATE_ENEMY_STATE_COOLDOWN
+            < UPDATE_ENEMY_STATE_COOLDOWN_SECONDS
         {
             continue;
         }
@@ -114,13 +111,15 @@ pub fn enemy_state_decision_system(
                             player_transform,
                         ) {
                             enemy_state.update_state(
-                                EnemyState::AttackPlayer,
+                                EnemyState::AttackPlayer(player_entity),
                                 &mut enemy_last_state_update,
+                                false,
                             );
                         } else {
                             enemy_state.update_state(
-                                EnemyState::RotateTowardsPlayer,
+                                EnemyState::RotateTowardsPlayer(player_entity),
                                 &mut enemy_last_state_update,
+                                false,
                             );
                         }
                     } else if *enemy_state == EnemyState::GoToAgentTarget {
@@ -141,13 +140,15 @@ pub fn enemy_state_decision_system(
                         enemy_state.update_state(
                             EnemyState::GoToAgentTarget,
                             &mut enemy_last_state_update,
+                            false,
                         );
                     }
                 }
             } else {
                 enemy_state.update_state(
-                    EnemyState::RotateTowardsPlayer,
+                    EnemyState::RotateTowardsPlayer(player_entity),
                     &mut enemy_last_state_update,
+                    false,
                 );
             }
         } else if *enemy_state != EnemyState::GoToAgentTarget {
@@ -155,6 +156,7 @@ pub fn enemy_state_decision_system(
             enemy_state.update_state(
                 EnemyState::GoToAgentTarget,
                 &mut enemy_last_state_update,
+                false,
             );
             set_new_enemy_agent_message_writer
                 .write(UpdateEnemyAgentTargetMessage(enemy_entity));
@@ -165,26 +167,33 @@ pub fn enemy_state_decision_system(
 pub fn handle_set_new_enemy_agent_target_message(
     mut commands: Commands,
     mut message_reader: MessageReader<UpdateEnemyAgentTargetMessage>,
-    mut enemy_agents_query: Query<(
-        &EnemyAgentEntityPointer,
-        &mut AgentTarget3d,
-    )>,
+    mut enemy_agents_query: Query<&mut AgentTarget3d>,
+    enemy_query: Query<(&EnemyState, &EnemyAgent), With<Enemy>>,
     player_query: Single<(Entity, &Transform), With<Player>>,
     spatial_query: SpatialQuery,
 ) {
     for message in message_reader.read() {
         let enemy_entity = message.0;
-        let Some((_, mut agent_target)) = enemy_agents_query
-            .iter_mut()
-            .find(|(pointer, _)| pointer.0 == enemy_entity)
+
+        let Ok((enemy_state, enemy_agent)) = enemy_query.get(enemy_entity)
+        else {
+            continue;
+        };
+
+        if enemy_state.is_dead() {
+            continue;
+        }
+
+        let Ok(mut agent_target) = enemy_agents_query.get_mut(enemy_agent.0)
         else {
             warn!(
-                "Can not update enemy agent, unable to find Enemy Agent for \
-                 current entity {} via AgentEnemyEntityPointer",
-                enemy_entity
+                "Can not update enemy agent, unable to find Enemy Agent {} \
+                 for enemy entity {}",
+                enemy_agent.0, enemy_entity
             );
             continue;
         };
+
         let (player_entity, player_transform) = *player_query;
 
         // We use a raycast downwards, and use the hitpoint.
@@ -258,27 +267,16 @@ pub fn check_if_enemy_agent_reached_target(
         &mut EnemyLastStateUpdate,
         &mut LinearVelocity,
     )>,
-    enemy_agents_query: Query<(
-        &EnemyAgentEntityPointer,
-        &AgentState,
-        &mut AgentTarget3d,
-    )>,
+    enemy_agents_query: Query<(&AgentState, &mut AgentTarget3d, &ChildOf)>,
 ) {
-    for (agent_enemy_entity_pointer, agent_state, mut agent_target) in
-        enemy_agents_query
-    {
+    for (agent_state, mut agent_target, enemy_parent) in enemy_agents_query {
         if *agent_state != AgentState::ReachedTarget {
             continue;
         }
 
         let Ok((mut enemy_state, mut enemy_last_state_update, mut velocity)) =
-            enemy_query.get_mut(agent_enemy_entity_pointer.0)
+            enemy_query.get_mut(enemy_parent.0)
         else {
-            warn!(
-                "Failed to find the enemy {} for given \
-                 AgentPathfindingEnemyEntityPointer",
-                agent_enemy_entity_pointer.0
-            );
             continue;
         };
 
@@ -289,6 +287,7 @@ pub fn check_if_enemy_agent_reached_target(
         enemy_state.update_state(
             EnemyState::EnemyAgentReachedTarget,
             &mut enemy_last_state_update,
+            false,
         );
         velocity.0 = Vec3::ZERO;
         *agent_target = AgentTarget3d::None;
@@ -302,10 +301,7 @@ pub fn handle_chasing_enemies(
         &mut LinearVelocity,
         &Transform,
     )>,
-    enemy_agents_query: Query<(
-        &AgentDesiredVelocity3d,
-        &EnemyAgentEntityPointer,
-    )>,
+    enemy_agents_query: Query<(&AgentDesiredVelocity3d, &ChildOf)>,
     mut spatial_query: SpatialQuery,
     world_object_collectible: Query<
         Entity,
@@ -313,17 +309,10 @@ pub fn handle_chasing_enemies(
     >,
     time: Res<Time>,
 ) {
-    for (agent_desired_velocity, agent_enemy_entity_pointer) in
-        enemy_agents_query
-    {
+    for (agent_desired_velocity, enemy_parent) in enemy_agents_query {
         let Ok((enemy_state, entity, mut velocity, transform)) =
-            enemy_query.get_mut(agent_enemy_entity_pointer.0)
+            enemy_query.get_mut(enemy_parent.0)
         else {
-            warn!(
-                "Failed to find the enemy {} with linearvelocity from \
-                 AgentPathfindingEnemyEntityPointer",
-                agent_enemy_entity_pointer.0
-            );
             continue;
         };
 
@@ -363,11 +352,15 @@ pub fn rotate_enemies_towards_player_over_time(
         (&EnemyState, &mut Transform),
         (With<Enemy>, Without<Player>),
     >,
-    player_transform: Single<&Transform, With<Player>>,
+    player_query: Query<&Transform, With<Player>>,
     time: Res<Time>,
 ) {
     for (enemy_state, mut enemy_transform) in enemy_query {
-        if *enemy_state != EnemyState::RotateTowardsPlayer {
+        let EnemyState::RotateTowardsPlayer(player_entity) = enemy_state else {
+            continue;
+        };
+
+        let Ok(player_transform) = player_query.get(*player_entity) else {
             continue;
         };
 
@@ -400,24 +393,16 @@ pub fn rotate_enemies_towards_player_over_time(
 }
 
 pub fn update_enemy_agents_velocity(
-    mut agent_query: Query<(
-        &mut Velocity3d,
-        &AgentState,
-        &EnemyAgentEntityPointer,
-    )>,
+    mut agent_query: Query<(&mut Velocity3d, &AgentState, &ChildOf)>,
     mut enemy_query: Query<(Entity, &LinearVelocity)>,
     mut message_writer: MessageWriter<UpdateEnemyAgentTargetMessage>,
 ) {
-    for (mut agent_velocity, agent_state, agent_enemy_entity_pointer) in
+    for (mut agent_velocity, agent_state, enemy_parent) in
         agent_query.iter_mut()
     {
         let Ok((enemy_entity, enemy_velocity)) =
-            enemy_query.get_mut(agent_enemy_entity_pointer.0)
+            enemy_query.get_mut(enemy_parent.0)
         else {
-            warn!(
-                "Couldn't find enemy with LinearVelocity by id {}",
-                agent_enemy_entity_pointer.0
-            );
             continue;
         };
         if *agent_state == AgentState::TargetNotOnNavMesh {
@@ -435,5 +420,34 @@ pub fn zero_enemy_velocity(
 ) {
     for mut enemy in enemy_query {
         enemy.0 = Vec3::ZERO;
+    }
+}
+
+pub fn read_player_hit_enemy_messages(
+    mut message_reader: MessageReader<PlayerHitEnemy>,
+    mut enemy_query: Query<
+        (&mut EnemyState, &mut EnemyLastStateUpdate),
+        With<Enemy>,
+    >,
+) {
+    for message in message_reader.read() {
+        let Ok((mut enemy_state, mut enemy_last_state_update)) =
+            enemy_query.get_mut(message.enemy_entity)
+        else {
+            continue;
+        };
+
+        if enemy_state.is_dead() {
+            continue;
+        }
+
+        // first we want to rotate the enemy towards player, so it looks like the enemy noticed
+        // that he was shot, and rotates towards the shot origin
+
+        enemy_state.update_state(
+            EnemyState::RotateTowardsPlayer(message.player_entity),
+            &mut enemy_last_state_update,
+            false,
+        );
     }
 }

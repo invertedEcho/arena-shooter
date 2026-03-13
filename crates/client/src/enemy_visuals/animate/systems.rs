@@ -98,7 +98,6 @@ pub fn play_enemy_animation(
     mut message_reader: MessageReader<PlayEnemyAnimationMessage>,
     enemy_query: Query<&AnimationPlayerEntityPointer>,
     mut animation_players_and_transitions: Query<(
-        Entity,
         &mut AnimationPlayer,
         &mut AnimationTransitions,
     )>,
@@ -106,19 +105,12 @@ pub fn play_enemy_animation(
     for event in message_reader.read() {
         let Ok(animation_player_entity_pointer) = enemy_query.get(event.enemy)
         else {
-            warn!(
-                "Failed to play enemy animation. Reason: No enemy exists with \
-                 entity id given from PlayerBulletHitEnemy ({}) that contains \
-                 an AnimationPlayerEntityPointer!",
-                event.enemy
-            );
             continue;
         };
 
-        let Some((_, mut animation_player, mut animation_transitions)) =
+        let Ok((mut animation_player, mut animation_transitions)) =
             animation_players_and_transitions
-                .iter_mut()
-                .find(|(e, _, _)| *e == animation_player_entity_pointer.0)
+                .get_mut(animation_player_entity_pointer.0)
         else {
             warn!(
                 "Could not find animation player and transitions for enemy \

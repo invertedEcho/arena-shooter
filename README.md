@@ -77,16 +77,16 @@ For shooting:
 - [x] Enemy AI
   - [x] Enemies check if they can see the player and shoot them
   - [x] Chasing the player via pathfinding
+  - [x] Immediately rotate toward the player if enemy was shot
   - [ ] Going to locations the player made noises
 - [x] Multiplayer
 - [x] Weapon animations
   - [x] Weapon sway
   - [x] Weapon recoil animation (e.g. when shooting kick back)
   - [x] Interpolate translation when switching aiming
-- [ ] Audio Settings menu
-  - [x] Global volume
-  - [ ] Audio volume
-  - [ ] Music volume
+- [x] Audio Settings menu
+  - [x] Audio volume
+  - [x] Music volume
 - [ ] Graphics settings menu 
   - [ ] Target FPS
 - [ ] Input settings menu
@@ -94,22 +94,9 @@ For shooting:
 - and probably more stuff already implemented and coming soon..
 
 
-## idk what to call this section
-this project assumes 1 unit = 1m, e.g. a unit is like `Transform::from_xyz(1.0, 1.0, 1.0)`
-
 ## Libraries used
 uses:
 - bevy for game engine
 - avian3d for physics
 - skein for bevy <-> blender integration (work with bevy components in blender)
 - lightyear for multiplayer
-
-## Credits
-
-### 3D Models
-- fps/tps Map by theking1322 [CC-BY](https://creativecommons.org/licenses/by/3.0/) via Poly Pizza (https://poly.pizza/m/wna54gOjL7)
-- SWAT by Quaternius (https://poly.pizza/m/Btfn3G5Xv4)
-- "LOWPOLY | FPS | TDM | GAME | MAP by ResoForge" (https://skfb.ly/pxM87) by ResoForge (old profile) is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
-
-### Music & SFX
-- Main Menu Theme by [juanjo_sound](https://juanjosound.itch.io/)

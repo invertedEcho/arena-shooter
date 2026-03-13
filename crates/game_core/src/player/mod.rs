@@ -15,6 +15,8 @@ use shared::{
     shooting::MAX_SHOOTING_DISTANCE,
 };
 
+use crate::enemy::ai::messages::PlayerHitEnemy;
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -36,11 +38,13 @@ fn handle_shoot_requests(
     mut server_multi_message_sender: ServerMultiMessageSender,
     server: Single<&Server>,
     enemy_query: Query<Entity, With<Enemy>>,
+    mut player_hit_enemy_message_writer: MessageWriter<PlayerHitEnemy>,
 ) {
     for (mut message_receiver, client_entity_server_side, remote_id) in
         receivers
     {
         for message in message_receiver.receive() {
+            // the player entity that sent this ShootRequest
             let Some(shooter_entity) = player_query
                 .iter()
                 .find(|(_, controlled_by)| {
@@ -66,81 +70,88 @@ fn handle_shoot_requests(
                 continue;
             };
 
-            if let Ok(mut health) = health_query.get_mut(first_hit.entity) {
-                health.0 -= 8.0;
-                let is_enemy = enemy_query.get(first_hit.entity).is_ok();
-                if !is_enemy {
-                    if let Ok(client_entity_that_was_hit) =
-                        player_query.get(first_hit.entity).map(|i| i.1)
-                        && let Ok(client) =
-                            client_query.get(client_entity_that_was_hit.owner)
-                    {
-                        server_multi_message_sender
-                            .send::<PlayerHitMessage, OrderedReliableChannel>(
-                                &PlayerHitMessage {
-                                    origin: message.origin,
-                                },
-                                &server,
-                                &NetworkTarget::Single(client.0),
-                            )
-                            .ok();
-                    } else {
-                        error!(
-                            "Could not find client that was hit by the bullet"
+            let entity_hit = first_hit.entity;
+
+            // if we cant find health, this collider is just an obstacle
+            let Ok(mut health) = health_query.get_mut(entity_hit) else {
+                continue;
+            };
+
+            health.0 -= 8.0;
+
+            let is_enemy = enemy_query.get(first_hit.entity).is_ok();
+            if is_enemy {
+                player_hit_enemy_message_writer.write(PlayerHitEnemy {
+                    player_entity: shooter_entity,
+                    enemy_entity: entity_hit,
+                });
+            } else {
+                if let Ok(client_entity_that_was_hit) =
+                    player_query.get(entity_hit).map(|i| i.1)
+                    && let Ok(client) =
+                        client_query.get(client_entity_that_was_hit.owner)
+                {
+                    server_multi_message_sender
+                        .send::<PlayerHitMessage, OrderedReliableChannel>(
+                            &PlayerHitMessage {
+                                origin: message.origin,
+                            },
+                            &server,
+                            &NetworkTarget::Single(client.0),
+                        )
+                        .ok();
+                } else {
+                    error!("Could not find client that was hit by the bullet");
+                }
+            }
+
+            if health.0 <= 0.0 {
+                let entity_killed = first_hit.entity;
+                commands.entity(entity_killed).insert(ColliderDisabled);
+
+                match game_score.players.get_mut(&remote_id.to_bits()) {
+                    Some(player) => {
+                        debug!(
+                            "increased kill count of player with remote_id: {}",
+                            remote_id.to_bits()
                         );
+                        player.kills += 1;
+                    }
+                    None => {
+                        warn!(
+                            "Failed to find player in game score by remote_id \
+                             {}\nGame score: {:?}",
+                            remote_id.to_bits(),
+                            *game_score
+                        )
                     }
                 }
 
-                if health.0 <= 0.0 {
-                    let entity_killed = first_hit.entity;
-                    commands.entity(entity_killed).insert(ColliderDisabled);
-
-                    match game_score.players.get_mut(&remote_id.to_bits()) {
-                        Some(player) => {
-                            debug!(
-                                "increased kill count of player with \
-                                 remote_id: {}",
-                                remote_id.to_bits()
-                            );
-                            player.kills += 1;
-                        }
-                        None => {
+                // if we have game mode wave, the entity killed will always be an enemy. so we
+                // skip this case
+                if **game_mode_server == GameModeServer::Waves {
+                    return;
+                };
+                match player_query.get(entity_killed) {
+                    Ok((_, controlled_by)) => {
+                        if let Ok(remote_id) =
+                            client_query.get(controlled_by.owner)
+                            && let Some(player_score) =
+                                game_score.players.get_mut(&remote_id.to_bits())
+                        {
+                            player_score.deaths += 1;
+                        } else {
                             warn!(
-                                "Failed to find player in game score by \
-                                 remote_id {}\nGame score: {:?}",
-                                remote_id.to_bits(),
-                                *game_score
-                            )
-                        }
+                                "Failed to find client of player that was \
+                                 killed"
+                            );
+                        };
                     }
-
-                    // if we have game mode wave, the entity killed will always be an enemy. so we
-                    // skip this case
-                    if **game_mode_server == GameModeServer::Waves {
-                        return;
-                    };
-                    match player_query.get(entity_killed) {
-                        Ok((_, controlled_by)) => {
-                            if let Ok(remote_id) =
-                                client_query.get(controlled_by.owner)
-                                && let Some(player_score) = game_score
-                                    .players
-                                    .get_mut(&remote_id.to_bits())
-                            {
-                                player_score.deaths += 1;
-                            } else {
-                                warn!(
-                                    "Failed to find client of player that was \
-                                     killed"
-                                );
-                            };
-                        }
-                        Err(error) => {
-                            warn!(
-                                "Failed to find player that was killed: {}",
-                                error
-                            );
-                        }
+                    Err(error) => {
+                        warn!(
+                            "Failed to find player that was killed: {}",
+                            error
+                        );
                     }
                 }
             }

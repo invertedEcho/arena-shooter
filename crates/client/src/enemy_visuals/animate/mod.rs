@@ -47,7 +47,8 @@ pub enum EnemyAnimationType {
     HitReceive,
     IdleGun,
     IdleGunPointing,
-    Run,
+    // Run,
+    Walk,
 }
 
 fn get_animation_index_for_enemy_animation_type(
@@ -59,7 +60,8 @@ fn get_animation_index_for_enemy_animation_type(
         EnemyAnimationType::HitReceive => 2,
         EnemyAnimationType::IdleGun => 5,
         EnemyAnimationType::IdleGunPointing => 6,
-        EnemyAnimationType::Run => 16,
+        // EnemyAnimationType::Run => 16,
+        EnemyAnimationType::Walk => 22,
     }
 }
 
@@ -70,9 +72,9 @@ fn get_animation_type_for_enemy_state(
         EnemyState::Idle => EnemyAnimationType::IdleGun,
         EnemyState::PlayerInFOV => EnemyAnimationType::IdleGun,
         EnemyState::Dead => EnemyAnimationType::Death,
-        EnemyState::GoToAgentTarget => EnemyAnimationType::Run,
+        EnemyState::GoToAgentTarget => EnemyAnimationType::Walk,
         EnemyState::EnemyAgentReachedTarget => EnemyAnimationType::IdleGun,
-        EnemyState::AttackPlayer => EnemyAnimationType::IdleGunPointing,
-        EnemyState::RotateTowardsPlayer => EnemyAnimationType::IdleGun,
+        EnemyState::AttackPlayer(_) => EnemyAnimationType::IdleGunPointing,
+        EnemyState::RotateTowardsPlayer(_) => EnemyAnimationType::IdleGun,
     }
 }

@@ -2,17 +2,18 @@ use bevy::prelude::*;
 use shared::GameStateServer;
 
 use crate::enemy::ai::{
-    messages::UpdateEnemyAgentTargetMessage,
+    messages::{PlayerHitEnemy, UpdateEnemyAgentTargetMessage},
     systems::{
         check_if_enemy_agent_reached_target, enemy_state_decision_system,
         handle_chasing_enemies, handle_set_new_enemy_agent_target_message,
-        retry_get_new_agent_target, rotate_enemies_towards_player_over_time,
-        update_enemy_agents_velocity, zero_enemy_velocity,
+        read_player_hit_enemy_messages, retry_get_new_agent_target,
+        rotate_enemies_towards_player_over_time, update_enemy_agents_velocity,
+        zero_enemy_velocity,
     },
 };
 
 pub mod components;
-mod messages;
+pub mod messages;
 mod systems;
 
 // Roadmap to realistic enemy AI:
@@ -30,7 +31,9 @@ pub struct EnemyAiPlugin;
 
 impl Plugin for EnemyAiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<UpdateEnemyAgentTargetMessage>();
+        app.add_message::<UpdateEnemyAgentTargetMessage>()
+            .add_message::<PlayerHitEnemy>();
+
         app.add_systems(
             FixedUpdate,
             (
@@ -41,9 +44,11 @@ impl Plugin for EnemyAiPlugin {
                 rotate_enemies_towards_player_over_time,
                 handle_set_new_enemy_agent_target_message,
                 retry_get_new_agent_target,
+                read_player_hit_enemy_messages,
             )
                 .run_if(in_state(GameStateServer::Running)),
         );
+
         app.add_systems(OnEnter(GameStateServer::Paused), zero_enemy_velocity);
     }
 }

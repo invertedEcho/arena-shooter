@@ -22,7 +22,7 @@ pub fn enemy_shoot_player(
         &Transform,
         Option<&EnemyShootCooldownTimer>,
     )>,
-    player_transform: Single<&Transform, With<Player>>,
+    player_query: Query<&Transform, With<Player>>,
     spatial_query: SpatialQuery,
     mut health_query: Query<&mut Health>,
     client_query: Query<&RemoteId, With<Connected>>,
@@ -36,9 +36,13 @@ pub fn enemy_shoot_player(
         enemy_shoot_cooldown_timer,
     ) in enemy_query
     {
-        if *enemy_state != EnemyState::AttackPlayer {
+        let EnemyState::AttackPlayer(player_to_attack) = enemy_state else {
             continue;
-        }
+        };
+
+        let Ok(player_transform) = player_query.get(*player_to_attack) else {
+            continue;
+        };
 
         if enemy_shoot_cooldown_timer.is_some() {
             continue;
@@ -153,10 +157,8 @@ pub fn handle_enemy_killed_message(
     mut game_score: Single<&mut GameScore>,
 ) {
     for message in message_reader.read() {
-        let Some((enemy_entity, mut enemy_state, mut enemy_last_state_update)) =
-            enemy_query
-                .iter_mut()
-                .find(|(entity, _, _)| *entity == message.0)
+        let Ok((enemy_entity, mut enemy_state, mut enemy_last_state_update)) =
+            enemy_query.get_mut(message.0)
         else {
             warn!(
                 "An EnemyKilledMessage was read, but the containing enemy \
@@ -166,8 +168,11 @@ pub fn handle_enemy_killed_message(
             continue;
         };
 
-        enemy_state
-            .update_state(EnemyState::Dead, &mut enemy_last_state_update);
+        enemy_state.update_state(
+            EnemyState::Dead,
+            &mut enemy_last_state_update,
+            true,
+        );
         commands
             .entity(enemy_entity)
             .remove::<RigidBody>()
