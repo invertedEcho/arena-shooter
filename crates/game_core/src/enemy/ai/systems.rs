@@ -117,7 +117,7 @@ pub fn enemy_state_decision_system(
                             );
                         } else {
                             enemy_state.update_state(
-                                EnemyState::RotateTowardsPlayer,
+                                EnemyState::RotateTowardsPlayer(player_entity),
                                 &mut enemy_last_state_update,
                                 false,
                             );
@@ -146,7 +146,7 @@ pub fn enemy_state_decision_system(
                 }
             } else {
                 enemy_state.update_state(
-                    EnemyState::RotateTowardsPlayer,
+                    EnemyState::RotateTowardsPlayer(player_entity),
                     &mut enemy_last_state_update,
                     false,
                 );
@@ -352,11 +352,15 @@ pub fn rotate_enemies_towards_player_over_time(
         (&EnemyState, &mut Transform),
         (With<Enemy>, Without<Player>),
     >,
-    player_transform: Single<&Transform, With<Player>>,
+    player_query: Query<&Transform, With<Player>>,
     time: Res<Time>,
 ) {
     for (enemy_state, mut enemy_transform) in enemy_query {
-        if *enemy_state != EnemyState::RotateTowardsPlayer {
+        let EnemyState::RotateTowardsPlayer(player_entity) = enemy_state else {
+            continue;
+        };
+
+        let Ok(player_transform) = player_query.get(*player_entity) else {
             continue;
         };
 
@@ -437,16 +441,15 @@ pub fn read_player_hit_enemy_messages(
             continue;
         };
 
-        if *enemy_state == EnemyState::Dead {
+        if enemy_state.is_dead() {
             continue;
         }
 
-        info!(
-            "CALLING UPDATE STATE TO ATTACK PLAYER FOR ENEMY {}",
-            message.enemy_entity
-        );
+        // first we want to rotate the enemy towards player, so it looks like the enemy noticed
+        // that he was shot, and rotates towards the shot origin
+
         enemy_state.update_state(
-            EnemyState::AttackPlayer(message.player_entity),
+            EnemyState::RotateTowardsPlayer(message.player_entity),
             &mut enemy_last_state_update,
             false,
         );

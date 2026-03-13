@@ -11,8 +11,7 @@ use shared::{
     DEFAULT_HEALTH, GameMap,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, CHARACTER_FEET,
-        MAX_DISTANCE_GROUNDED_SHAPE_CAST, RUN_VELOCITY, WALK_VELOCITY,
-        components::Grounded,
+        MAX_DISTANCE_GROUNDED_SHAPE_CAST, components::Grounded,
     },
     components::{EntityPositionServer, Health},
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
@@ -208,8 +207,8 @@ fn handle_spawn_enemies_message(
                                     archipelago_ref.0,
                                 ),
                                 settings: AgentSettings {
-                                    desired_speed: WALK_VELOCITY,
-                                    max_speed: RUN_VELOCITY,
+                                    desired_speed: 1.0,
+                                    max_speed: 4.0,
                                     radius: ENEMY_AGENT_RADIUS,
                                 },
                             },

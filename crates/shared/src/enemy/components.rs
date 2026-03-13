@@ -24,13 +24,13 @@ pub enum EnemyState {
     PlayerInFOV,
     GoToAgentTarget,
     EnemyAgentReachedTarget,
-    /// The enemy will agent the player, given by the enum field
+    /// The enemy will attack the given player
     AttackPlayer(Entity),
     /// This state will be set when `enemy.health == 0.0`. A death animation will be played and
     /// afterwards the enemy will be despawned.
     Dead,
-    /// This state is set when the enemies should rotate towards the player direction over time
-    RotateTowardsPlayer,
+    /// This state is set when the enemies should rotate towards the given player direction over time
+    RotateTowardsPlayer(Entity),
 }
 
 impl EnemyState {
@@ -71,3 +71,7 @@ impl EnemyState {
         *self == EnemyState::Dead
     }
 }
+
+/// This component marks an enemy as ready to be used for external systems
+#[derive(Component)]
+pub struct EnemyReady;
