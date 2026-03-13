@@ -431,10 +431,6 @@ pub fn read_player_hit_enemy_messages(
     >,
 ) {
     for message in message_reader.read() {
-        info!(
-            "ENEMY {} WAS HIT BY PLAYER {}",
-            message.enemy_entity, message.player_entity
-        );
         let Ok((mut enemy_state, mut enemy_last_state_update)) =
             enemy_query.get_mut(message.enemy_entity)
         else {

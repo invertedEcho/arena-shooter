@@ -77,8 +77,8 @@ For shooting:
 - [x] Enemy AI
   - [x] Enemies check if they can see the player and shoot them
   - [x] Chasing the player via pathfinding
+  - [x] Immediately rotate toward the player if enemy was shot
   - [ ] Going to locations the player made noises
-  - [ ] Immediately change to AttackPlayer when player shoots enemy
 - [x] Multiplayer
 - [x] Weapon animations
   - [x] Weapon sway

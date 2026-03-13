@@ -47,7 +47,7 @@ pub enum EnemyAnimationType {
     HitReceive,
     IdleGun,
     IdleGunPointing,
-    Run,
+    // Run,
     Walk,
 }
 
@@ -60,7 +60,7 @@ fn get_animation_index_for_enemy_animation_type(
         EnemyAnimationType::HitReceive => 2,
         EnemyAnimationType::IdleGun => 5,
         EnemyAnimationType::IdleGunPointing => 6,
-        EnemyAnimationType::Run => 16,
+        // EnemyAnimationType::Run => 16,
         EnemyAnimationType::Walk => 22,
     }
 }

@@ -141,7 +141,6 @@ pub fn detect_killed_enemies(
 ) {
     for (enemy_entity, changed_enemy_health) in changed_enemy_health_query {
         if changed_enemy_health.0 <= 0.0 {
-            info!("DETECTED DEAD ENEMY {}", enemy_entity);
             enemy_killed_message_writer.write(EnemyKilledMessage(enemy_entity));
         }
     }
