@@ -41,10 +41,13 @@ pub struct SpawnEnemiesMessage {
     pub spawn_strategy: EnemySpawnStrategy,
 }
 
-/// Inserted into the pathfinding agent of an enemy, pointing towards the enemy entity that its
-/// inserted into
+// NOTE: we do it this way around, so we only have O(1) complexity, because we can use bevy
+// archetype entity table (e.g. .get()), instead of having to O(n), because using .iter().find() to get the
+// correct enemy parent.
+/// This points towards the pathfinding agent of this enemy.
+/// Note that the pathfinding agent is inserted as a child.
 #[derive(Component)]
-pub struct EnemyAgentEntityPointer(pub Entity);
+pub struct EnemyAgent(pub Entity);
 
 pub enum EnemySpawnStrategy {
     /// Enemies will be spawned at randomly picked EnemySpawnLocations
@@ -196,24 +199,30 @@ fn handle_spawn_enemies_message(
                         },
                     );
 
-                    commands.entity(enemy_entity).with_child((
-                        Name::new("Enemy Pathfinding Agent"),
-                        Agent3dBundle {
-                            agent: Agent::default(),
-                            archipelago_ref: ArchipelagoRef3d::new(
-                                archipelago_ref.0,
-                            ),
-                            settings: AgentSettings {
-                                desired_speed: WALK_VELOCITY,
-                                max_speed: RUN_VELOCITY,
-                                radius: ENEMY_AGENT_RADIUS,
+                    let enemy_agent = commands
+                        .spawn((
+                            Name::new("Enemy Pathfinding Agent"),
+                            Agent3dBundle {
+                                agent: Agent::default(),
+                                archipelago_ref: ArchipelagoRef3d::new(
+                                    archipelago_ref.0,
+                                ),
+                                settings: AgentSettings {
+                                    desired_speed: WALK_VELOCITY,
+                                    max_speed: RUN_VELOCITY,
+                                    radius: ENEMY_AGENT_RADIUS,
+                                },
                             },
-                        },
-                        AgentTarget3d::None,
-                        // the pathfinding agent must be exacly at the feet of the collider
-                        Transform::from_xyz(0.0, CHARACTER_FEET, 0.0),
-                        EnemyAgentEntityPointer(enemy_entity),
-                    ));
+                            AgentTarget3d::None,
+                            // the pathfinding agent must be exacly at the feet of the collider
+                            Transform::from_xyz(0.0, CHARACTER_FEET, 0.0),
+                        ))
+                        .id();
+
+                    commands.entity(enemy_entity).add_child(enemy_agent);
+                    commands
+                        .entity(enemy_entity)
+                        .insert(EnemyAgent(enemy_agent));
                 }
             }
         }

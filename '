@@ -158,8 +158,10 @@ pub fn handle_enemy_killed_message(
     mut game_score: Single<&mut GameScore>,
 ) {
     for message in message_reader.read() {
-        let Ok((enemy_entity, mut enemy_state, mut enemy_last_state_update)) =
-            enemy_query.get_mut(message.0)
+        let Some((enemy_entity, mut enemy_state, mut enemy_last_state_update)) =
+            enemy_query
+                .iter_mut()
+                .find(|(entity, _, _)| *entity == message.0)
         else {
             warn!(
                 "An EnemyKilledMessage was read, but the containing enemy \
@@ -169,11 +171,8 @@ pub fn handle_enemy_killed_message(
             continue;
         };
 
-        enemy_state.update_state(
-            EnemyState::Dead,
-            &mut enemy_last_state_update,
-            true,
-        );
+        enemy_state
+            .update_state(EnemyState::Dead, &mut enemy_last_state_update);
         commands
             .entity(enemy_entity)
             .remove::<RigidBody>()

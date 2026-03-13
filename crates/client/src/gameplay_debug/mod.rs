@@ -28,13 +28,25 @@ use crate::{
 
 mod states_overlay;
 
-#[derive(Resource, Eq, Debug, PartialEq, Hash, Clone, Default, Copy)]
+#[derive(Resource, Eq, Debug, PartialEq, Hash, Clone, Copy)]
 pub struct AppDebugState {
     show_physics_gizmos: bool,
     show_nav_mesh: bool,
     show_enemy_debug_info: bool,
     show_states_overlay: bool,
     invincibility: bool,
+}
+
+impl Default for AppDebugState {
+    fn default() -> Self {
+        Self {
+            show_physics_gizmos: false,
+            show_nav_mesh: false,
+            show_enemy_debug_info: true,
+            show_states_overlay: true,
+            invincibility: false,
+        }
+    }
 }
 
 /// This plugin adds functionality related to debugging the game itself, like having debug gizmos

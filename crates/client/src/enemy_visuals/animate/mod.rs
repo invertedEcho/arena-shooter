@@ -72,7 +72,7 @@ fn get_animation_type_for_enemy_state(
         EnemyState::Dead => EnemyAnimationType::Death,
         EnemyState::GoToAgentTarget => EnemyAnimationType::Run,
         EnemyState::EnemyAgentReachedTarget => EnemyAnimationType::IdleGun,
-        EnemyState::AttackPlayer => EnemyAnimationType::IdleGunPointing,
+        EnemyState::AttackPlayer(_) => EnemyAnimationType::IdleGunPointing,
         EnemyState::RotateTowardsPlayer => EnemyAnimationType::IdleGun,
     }
 }
