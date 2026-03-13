@@ -1,5 +1,41 @@
 # fun-shooter
 
+## Features
+- [x] User interface
+- [x] Player movement
+  - [x] Basic movement
+  - [x] Write a proper kinematic character controller from scratch
+    - [x] Climb slopes
+    - [x] slide along walls when going into walls instead of zeroeing velocity
+- [x] Different maps to play on
+- [X] Game modes
+  - [x] Free for all / Deathmatch
+  - [x] Wave mode (the game gets more difficult each round, e.g. more enemies are spawned)
+  - [ ] Capture the flag
+- [x] Particle effects
+  - [x] Wall/ground bullet impact
+  - [x] Blood splatter when hitting enemies
+- [x] Enemy AI
+  - [x] Enemies check if they can see the player and shoot them
+  - [x] Chasing the player via pathfinding
+  - [x] Immediately rotate toward the player if enemy was shot
+  - [ ] Going to locations the player made noises
+- [x] Multiplayer
+  - [ ] Global Leaderboard
+  - [ ] Lobbies, allow players to create lobbies, change game mode etc  
+- [x] Weapon animations
+  - [x] Weapon sway
+  - [x] Weapon recoil animation (e.g. when shooting kick back)
+  - [x] Interpolate translation when switching aiming
+- [x] Audio Settings menu
+  - [x] Audio volume
+  - [x] Music volume
+- [ ] Graphics settings menu 
+  - [ ] Target FPS
+- [ ] Input settings menu
+  - [ ] Change keybinds of all inputs in the game
+- and probably more stuff already implemented and coming soon..
+
 ## Compiling from source
 1. If you're on linux, install `mold`, a linker, for faster iterative compile times
   - Ubuntu/Debian: `sudo apt install mold clang`
@@ -48,7 +84,6 @@
   - All clients can then update the `Transform` of that corresponding player
     - This is done via interpolation so it looks smooth. Without the intermediate component `PlayerPositionServer`, we wouldn't be able to add interpolation
 
-
 For shooting:
 - Note that the following below is not yet implemented, just client sends message -> raycast on server
 - Server saves the position history of a player in a `VecDeque<(u32, Vec3)>`
@@ -57,42 +92,6 @@ For shooting:
 - Server looks up the position for the given `client_tick`
 - Server spawns temporary colliders to make the raycast
 - If hit was sucessful, the `Health` component on the corresponding player is updated
-
-## Todo and feature list
-- [x] User interface
-- [x] Player movement
-  - [x] Basic movement
-  - [x] Write a proper kinematic character controller from scratch
-    - [x] Climb slopes
-    - [x] slide along walls when going into walls instead of zeroeing velocity
-- [x] Different maps to play on
-- [X] Game modes
-  - [x] Free for all
-  - [x] Wave mode (the game gets more difficult each round, e.g. more enemies are spawned)
-  - [ ] Capture the flag
-  - [ ] Deathmatch
-- [x] Particle effects
-  - [x] Wall/ground bullet impact
-  - [x] Blood splatter when hitting enemies
-- [x] Enemy AI
-  - [x] Enemies check if they can see the player and shoot them
-  - [x] Chasing the player via pathfinding
-  - [x] Immediately rotate toward the player if enemy was shot
-  - [ ] Going to locations the player made noises
-- [x] Multiplayer
-- [x] Weapon animations
-  - [x] Weapon sway
-  - [x] Weapon recoil animation (e.g. when shooting kick back)
-  - [x] Interpolate translation when switching aiming
-- [x] Audio Settings menu
-  - [x] Audio volume
-  - [x] Music volume
-- [ ] Graphics settings menu 
-  - [ ] Target FPS
-- [ ] Input settings menu
-  - [ ] Change keybinds of all inputs in the game
-- and probably more stuff already implemented and coming soon..
-
 
 ## Libraries used
 uses:
