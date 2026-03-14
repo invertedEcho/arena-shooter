@@ -30,116 +30,115 @@ impl Plugin for EnemyVisualsPlugin {
         app.add_systems(
             Update,
             (
-                spawn_health_bar_for_new_enemy,
                 spawn_enemy_model_for_new_enemies,
                 update_health_bar_of_enemies,
                 rotate_enemy_toward_direction,
                 rotate_health_bar_to_player,
-                health_bar_follow_enemy,
                 despawn_health_bar_for_killed_enemies,
             ),
         );
+        app.add_observer(spawn_health_bar_for_new_enemy);
     }
 }
 
-/// 0: The enemy entity this health bar belongs to
-/// We need this to make the health bar follow the corresponding enemy
 #[derive(Component)]
-struct HealthBar(pub Entity);
+struct HealthBar;
 
 #[derive(Component)]
 pub struct HealthBarCamera;
 
 fn spawn_health_bar_for_new_enemy(
+    added_enemy: On<Add, Enemy>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut images: ResMut<Assets<Image>>,
-    added_enemy_query: Query<Entity, Added<Enemy>>,
     mut camera_order: Local<isize>,
 ) {
-    for enemy_entity in added_enemy_query {
-        *camera_order -= 1;
-        let size = Extent3d {
-            width: 512,
-            height: 512,
-            ..default()
-        };
+    let enemy_entity = added_enemy.entity;
+    *camera_order -= 1;
+    let size = Extent3d {
+        width: 512,
+        height: 512,
+        ..default()
+    };
 
-        // this is the texture that will be rendered to
-        let mut image = Image::new_fill(
-            size,
-            bevy::render::render_resource::TextureDimension::D2,
-            &[0, 0, 0, 0],
-            bevy::render::render_resource::TextureFormat::Bgra8UnormSrgb,
-            RenderAssetUsages::default(),
-        );
+    // this is the texture that will be rendered to
+    let mut image = Image::new_fill(
+        size,
+        bevy::render::render_resource::TextureDimension::D2,
+        &[0, 0, 0, 0],
+        bevy::render::render_resource::TextureFormat::Bgra8UnormSrgb,
+        RenderAssetUsages::default(),
+    );
 
-        // we need to set these flags in order to use the image as a render target
-        image.texture_descriptor.usage = TextureUsages::TEXTURE_BINDING
-            | TextureUsages::COPY_DST
-            | TextureUsages::RENDER_ATTACHMENT;
+    // we need to set these flags in order to use the image as a render target
+    image.texture_descriptor.usage = TextureUsages::TEXTURE_BINDING
+        | TextureUsages::COPY_DST
+        | TextureUsages::RENDER_ATTACHMENT;
 
-        let image_handle = images.add(image);
+    let image_handle = images.add(image);
 
-        let texture_camera = commands
-            .spawn((
-                Camera2d,
-                Camera {
-                    order: *camera_order,
-                    ..default()
-                },
-                RenderTarget::Image(image_handle.clone().into()),
-                HealthBarCamera,
-                DespawnOnExit(AppState::InGame),
-            ))
-            .id();
+    let texture_camera = commands
+        .spawn((
+            Camera2d,
+            Camera {
+                order: *camera_order,
+                ..default()
+            },
+            RenderTarget::Image(image_handle.clone().into()),
+            HealthBarCamera,
+            DespawnOnExit(AppState::InGame),
+        ))
+        .id();
 
-        let mesh_handle = meshes.add(Plane3d {
-            normal: Dir3::X,
-            half_size: vec2(0.5, 0.03),
+    let mesh_handle = meshes.add(Plane3d {
+        normal: Dir3::X,
+        half_size: vec2(0.25, 0.03),
+    });
+
+    let material_handle = materials.add(StandardMaterial {
+        cull_mode: None,
+        alpha_mode: AlphaMode::Blend,
+        base_color_texture: Some(image_handle),
+        // reflectance: 1.0,
+        unlit: true,
+        ..default()
+    });
+
+    commands
+        .spawn((
+            Node {
+                width: percent(100.0),
+                height: percent(100.0),
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BackgroundColor(Color::NONE),
+            UiTargetCamera(texture_camera),
+            DespawnOnExit(AppState::InGame),
+        ))
+        .with_children(|parent| {
+            parent.spawn((build_progress_bar(
+                HealthBarUINode(enemy_entity),
+                percent(100),
+                percent(100),
+            ),));
         });
 
-        let material_handle = materials.add(StandardMaterial {
-            cull_mode: None,
-            alpha_mode: AlphaMode::Blend,
-            base_color_texture: Some(image_handle),
-            reflectance: 1.0,
-            unlit: true,
-            ..default()
-        });
-
-        commands
-            .spawn((
-                Node {
-                    width: percent(100.0),
-                    height: percent(100.0),
-                    flex_direction: FlexDirection::Column,
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                BackgroundColor(Color::NONE),
-                UiTargetCamera(texture_camera),
-                DespawnOnExit(AppState::InGame),
-            ))
-            .with_children(|parent| {
-                parent.spawn((build_progress_bar(
-                    HealthBarUINode(enemy_entity),
-                    percent(100),
-                    percent(100),
-                ),));
-            });
-
-        commands.spawn((
+    let health_bar = commands
+        .spawn((
             Mesh3d(mesh_handle),
             MeshMaterial3d(material_handle),
-            Transform::default(),
+            Transform::from_translation(vec3(0.0, 1.0, 0.0)),
             Name::new("Health Bar"),
-            HealthBar(enemy_entity),
+            HealthBar,
             DespawnOnExit(AppState::InGame),
-        ));
-    }
+        ))
+        .id();
+    commands.entity(enemy_entity).add_child(health_bar);
 }
 
 #[derive(Component)]
@@ -225,54 +224,48 @@ fn rotate_enemy_toward_direction(
 }
 
 fn rotate_health_bar_to_player(
-    health_bar_query: Query<&mut Transform, With<HealthBar>>,
+    enemy_query: Query<&Transform, With<Enemy>>,
+    health_bar_query: Query<
+        (&mut Transform, &ChildOf),
+        (With<HealthBar>, Without<Enemy>),
+    >,
     player_transform: Single<&Transform, (With<Player>, Without<HealthBar>)>,
 ) {
-    for mut transform in health_bar_query {
+    for (mut transform, child_of) in health_bar_query {
+        let Ok(enemy_transform) = enemy_query.get(child_of.0) else {
+            continue;
+        };
+        let enemy_position = enemy_transform.translation;
+        let player_position = player_transform.translation;
+
+        // normalizing gives us only direction, without magnitude
+        let world_direction = (player_position - enemy_position).normalize();
+
+        // https://stackoverflow.com/a/77632865
+        let local_direction =
+            enemy_transform.rotation.inverse() * world_direction;
+
+        transform.look_to(local_direction, Vec3::Y);
+
         let offset =
             Quat::from_euler(EulerRot::XYZ, FRAC_PI_2, 0.0, -FRAC_PI_2);
-        transform.look_at(player_transform.translation, Vec3::Y);
         transform.rotation *= offset;
-    }
-}
-
-// TODO: we wouldnt need this if the health bar was a child of the enemy,
-// but right now i dont understand how we can take the parent rotation into account, so we get
-// global rotation of the health bar. we probably need to take the inverse of the enemy parent
-// rotation or something like this. this works so whatever
-fn health_bar_follow_enemy(
-    enemy_transform: Query<&Transform, With<Enemy>>,
-    health_bar_query: Query<(&mut Transform, &HealthBar), Without<Enemy>>,
-) {
-    for (mut health_bar_transform, health_bar) in health_bar_query {
-        match enemy_transform.get(health_bar.0) {
-            Ok(enemy_transform) => {
-                health_bar_transform.translation = enemy_transform.translation;
-                // so its above the head
-                health_bar_transform.translation.y += 1.0;
-            }
-            Err(error) => {
-                warn!(
-                    "Failed to update health bar position to enemy position: \
-                     {}",
-                    error
-                );
-            }
-        };
     }
 }
 
 fn despawn_health_bar_for_killed_enemies(
     mut commands: Commands,
     mut message_reader: MessageReader<EnemyKilledMessage>,
-    health_bars: Query<(Entity, &HealthBar)>,
+    health_bars: Query<(Entity, &ChildOf), With<HealthBar>>,
 ) {
     for message in message_reader.read() {
-        if let Some(health_bar_of_killed_enemy) = health_bars
+        let killed_enemy = message.0;
+
+        if let Some((health_bar_entity, _)) = health_bars
             .iter()
-            .find(|(_, health_bar)| message.0 == health_bar.0)
+            .find(|(_, child_of)| child_of.0 == killed_enemy)
         {
-            commands.entity(health_bar_of_killed_enemy.0).despawn();
+            commands.entity(health_bar_entity).despawn();
         }
     }
 }
