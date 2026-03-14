@@ -23,6 +23,7 @@
 - [x] Multiplayer
   - [ ] Global Leaderboard
   - [ ] Lobbies, allow players to create lobbies, change game mode etc  
+  - [ ] Level system, weapons for higher levels, need to earn credits to buy new weapons, but can also use weapons of killed higher leveled players
 - [x] Weapon animations
   - [x] Weapon sway
   - [x] Weapon recoil animation (e.g. when shooting kick back)
