@@ -44,7 +44,7 @@ use crate::{
         EnemyPlugin,
         spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
     },
-    game_flow::GameFlowPlugin,
+    game_flow::{GameFlowPlugin, get_enemy_count_per_wave},
     nav_mesh_pathfinding::NavMeshPathfindingPlugin,
     player::PlayerPlugin,
     world_objects::{WorldObjectsPlugin, components::MapModel},
@@ -78,6 +78,14 @@ pub struct GameStateWave {
     pub current_wave: usize,
     pub enemies_killed: usize,
     pub enemies_left_from_current_wave: usize,
+}
+
+#[derive(Message)]
+pub struct RetryWaveGameMode;
+
+#[derive(Message)]
+pub struct DespawnEnemyMessage {
+    pub enemies_to_despawn: Vec<Entity>,
 }
 
 /// This plugin adds all plugins & systems that need to run on the server, regardless if its for
@@ -297,13 +305,15 @@ fn on_game_core_loading_state_done(
 
     match *game_mode_server.get() {
         GameModeServer::Waves => {
+            let wave = 1;
+            let enemy_count = get_enemy_count_per_wave(wave);
             commands.insert_resource(GameStateWave {
-                current_wave: 1,
+                current_wave: wave,
                 enemies_killed: 0,
-                enemies_left_from_current_wave: 3,
+                enemies_left_from_current_wave: enemy_count,
             });
             spawn_enemies.write(SpawnEnemiesMessage {
-                enemy_count: 3,
+                enemy_count,
                 spawn_strategy: EnemySpawnStrategy::RandomSelection,
             });
         }

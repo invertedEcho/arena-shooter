@@ -1,6 +1,6 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use game_core::GameStateWave;
+use game_core::{GameStateWave, RetryWaveGameMode};
 use lightyear::prelude::*;
 use shared::{
     AppRole, DEFAULT_HEALTH, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
@@ -164,6 +164,7 @@ fn handle_button_press(
     >,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
     app_role: Res<State<AppRole>>,
+    mut retry_wave_game_mode_message_writer: MessageWriter<RetryWaveGameMode>,
 ) {
     for (interaction, button) in query {
         if interaction != &Interaction::Pressed {
@@ -171,6 +172,9 @@ fn handle_button_press(
         }
         match button {
             DeathScreenButton::Respawn => {
+                // we can always write this message even if we arent evven playing wave game mode,
+                // because then the message handler just wont do anything
+                retry_wave_game_mode_message_writer.write(RetryWaveGameMode);
                 // https://github.com/cBournhonesque/lightyear/issues/1417
                 // TODO: i really hate this
                 // unfortunately in HostClient setup (e.g. AppRole::ClientAndServer) we never
