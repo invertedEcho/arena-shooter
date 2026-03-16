@@ -25,6 +25,7 @@ pub struct PlayerBundle {
     aim_type: AimType,
     state: PlayerState,
     weapons: PlayerWeapons,
+    player_cash: PlayerCash,
 }
 
 #[derive(Component, Serialize, Deserialize, Clone, Default, PartialEq)]
@@ -34,6 +35,9 @@ pub struct PlayerState {
     pub dead: bool,
     pub active_weapon_slot: usize,
 }
+
+#[derive(Component)]
+pub struct PlayerCash(pub usize);
 
 pub const DEFAULT_PLAYER_WEAPONS: PlayerWeapons = PlayerWeapons {
     weapons: [
@@ -70,6 +74,7 @@ impl Default for PlayerBundle {
             aim_type: AimType::Normal,
             state: PlayerState::default(),
             weapons: DEFAULT_PLAYER_WEAPONS,
+            player_cash: PlayerCash(0),
         }
     }
 }

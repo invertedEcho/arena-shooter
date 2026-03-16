@@ -4,7 +4,7 @@ use lightyear::prelude::{Controlled, MessageReceiver};
 use shared::{
     components::{DespawnTimer, Health},
     multiplayer_messages::PlayerHitMessage,
-    player::{AimType, Player, PlayerReady, PlayerState},
+    player::{AimType, Player, PlayerCash, PlayerReady, PlayerState},
     shooting::PlayerWeapons,
 };
 
@@ -21,9 +21,10 @@ use crate::{
         hud::{
             CROSSHAIR_BULLET_HIT_PATH, MAIN_CROSSHAIR_PATH,
             components::{
-                CurrentWaveText, DamageIndicator, EnemiesLeftText,
-                PlayerCarriedAmmoText, PlayerCrosshair, PlayerHealthText,
-                PlayerHud, PlayerLoadedAmmoText, PlayerWeaponText,
+                CurrentCashAmount, CurrentWaveFinishedText, CurrentWaveText,
+                DamageIndicator, EnemiesLeftText, PlayerCarriedAmmoText,
+                PlayerCrosshair, PlayerHealthText, PlayerHud,
+                PlayerLoadedAmmoText, PlayerWeaponText,
             },
         },
     },
@@ -292,6 +293,8 @@ pub fn spawn_wave_hud(mut commands: Commands) {
             OnlyVisibleInGame,
         ))
         .with_children(|parent| {
+            parent.spawn(Text::new("Cash: "));
+            parent.spawn((Text::new("0"), CurrentCashAmount));
             parent.spawn(Text::new("Current wave:"));
             parent.spawn((Text::new(""), CurrentWaveText));
             parent.spawn(Text::new("Enemies left:"));
@@ -312,7 +315,6 @@ pub fn update_wave_hud(
         Text::new(game_state_wave.enemies_left_from_current_wave.to_string());
 }
 
-// TODO: do we need a message for this? cant we just watch for change in PlayerWeapons?
 pub fn update_selected_weapon(
     mut message_reader: MessageReader<PlayerWeaponSlotChangeMessage>,
     mut player_weapon_texts: Query<(&mut TextColor, &PlayerWeaponText)>,
@@ -406,5 +408,53 @@ pub fn fade_out_damage_indicator(
             }
             image_node.color = WHITE.with_alpha(new_alpha).into();
         }
+    }
+}
+
+pub fn spawn_current_wave_finished(
+    mut commands: Commands,
+    game_state_wave: If<Res<GameStateWave>>,
+) {
+    if game_state_wave.is_changed()
+        && game_state_wave.enemies_left_from_current_wave == 0
+    {
+        commands.spawn((
+            Node {
+                width: percent(100.0),
+                height: percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                padding: UiRect {
+                    top: percent(5.0),
+                    ..default()
+                },
+                ..default()
+            },
+            CurrentWaveFinishedText,
+            children![
+                (Text::new("Current wave finished!")),
+                (Text::new("Press (B) to buy new weapons")),
+                (Text::new("Press (E) to start a new wave"))
+            ],
+        ));
+    }
+}
+
+pub fn update_current_cash_amount(
+    changed_player_cash: Single<&PlayerCash, Changed<PlayerCash>>,
+    mut player_cash_text: Single<&mut Text, With<CurrentCashAmount>>,
+) {
+    ***player_cash_text = changed_player_cash.0.to_string();
+}
+
+pub fn remove_current_wave_finished_text(
+    mut commands: Commands,
+    game_state_wave: If<Res<GameStateWave>>,
+    current_wave_finished_text: Single<Entity, With<CurrentWaveFinishedText>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
+    let no_enemies_left = game_state_wave.enemies_left_from_current_wave == 0;
+    if no_enemies_left && keyboard_input.just_pressed(KeyCode::KeyE) {
+        commands.entity(*current_wave_finished_text).despawn();
     }
 }

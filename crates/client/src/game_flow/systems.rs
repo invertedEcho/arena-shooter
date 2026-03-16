@@ -2,6 +2,7 @@ use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
+use game_core::RequestNewWave;
 use lightyear::prelude::MessageSender;
 use shared::{
     GameStateServer, multiplayer_messages::ChangeGameServerStateRequest,
@@ -130,5 +131,14 @@ pub fn send_update_game_server_state_request_on_in_game_state_change(
                 ChangeGameServerStateRequest(GameStateServer::Paused),
             );
         }
+    }
+}
+
+pub fn handle_request_next_wave(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut message_writer: MessageWriter<RequestNewWave>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyE) {
+        message_writer.write(RequestNewWave);
     }
 }
