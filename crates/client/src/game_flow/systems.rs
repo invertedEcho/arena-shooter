@@ -38,8 +38,10 @@ pub fn manual_mouse_grab_toggle(
     if keyboard_input.just_pressed(KeyCode::KeyU) {
         if primary_cursor_options.grab_mode == CursorGrabMode::None {
             primary_cursor_options.grab_mode = CursorGrabMode::Locked;
+            primary_cursor_options.visible = false;
         } else {
             primary_cursor_options.grab_mode = CursorGrabMode::None;
+            primary_cursor_options.visible = true;
         }
     }
 }

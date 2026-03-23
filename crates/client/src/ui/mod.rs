@@ -11,12 +11,10 @@ mod menus;
 mod screens;
 pub mod widgets;
 
-// idk i kinda dont like this but no idea how else i should do it so systems from different modules
-// can react to this resource change
-// in future more stuff will be added here
 #[derive(Resource, Default)]
 pub struct UiState {
     pub score_board_overlay_visible: bool,
+    pub buy_overlay_visibile: bool,
 }
 
 pub struct UserInterfacePlugin;

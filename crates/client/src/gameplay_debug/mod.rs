@@ -22,8 +22,9 @@ use shared::{
 };
 
 use crate::{
-    enemy_visuals::HealthBarCamera, game_flow::states::AppState,
+    game_flow::states::AppState,
     gameplay_debug::states_overlay::DebugOverlayPlugin,
+    player::camera::components::{MainMenuCamera, WorldCamera},
 };
 
 mod states_overlay;
@@ -81,7 +82,6 @@ impl Plugin for GameplayDebugPlugin {
                 tick_despawn_timer_debug_gizmo_lines,
                 handle_spawn_debug_points_message,
                 do_invicibility,
-                ensure_egui_context_exists,
             ),
         );
         app.add_systems(
@@ -95,6 +95,8 @@ impl Plugin for GameplayDebugPlugin {
         );
         // app.add_systems(EguiPrimaryContextPass, player_inspector);
         app.add_systems(EguiPrimaryContextPass, developer_menu);
+
+        app.add_observer(ensure_egui_context_exists);
 
         app.insert_resource(DebugGizmos(Vec::new()));
     }
@@ -341,11 +343,12 @@ fn do_invicibility(
 }
 
 fn ensure_egui_context_exists(
+    _on_camera_add: On<Add, Camera>,
     mut commands: Commands,
-    existing_egui_contexts: Query<&PrimaryEguiContext>,
-    camera_query: Query<Entity, (With<Camera>, Without<HealthBarCamera>)>,
+    egui_contexts: Query<&PrimaryEguiContext>,
+    camera_query: Query<Entity, Or<(With<WorldCamera>, With<MainMenuCamera>)>>,
 ) {
-    if existing_egui_contexts.count() == 0 {
+    if egui_contexts.count() == 0 {
         let Some(first_camera) = camera_query.iter().next() else {
             return;
         };

@@ -1,13 +1,13 @@
 use bevy::prelude::*;
 
 use crate::ui::screens::{
-    buy_screen::BuyScreenPlugin, death_screen::DeathScreenPlugin,
+    buy_overlay::BuyScreenPlugin, death_screen::DeathScreenPlugin,
     disconnect_screen::DisconnectScreenPlugin,
     loading_screen::LoadingScreenPlugin, pause_screen::PauseScreenPlugin,
     score_board_overlay::ScoreBoardOverlayPlugin,
 };
 
-mod buy_screen;
+mod buy_overlay;
 mod death_screen;
 mod disconnect_screen;
 mod loading_screen;
