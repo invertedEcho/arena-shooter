@@ -31,6 +31,7 @@ use crate::{
             },
         },
     },
+    ui::UiState,
 };
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
@@ -152,7 +153,12 @@ pub fn update_yaw_pitch_on_mouse_motion(
     mouse_motion: Res<AccumulatedMouseMotion>,
     camera_transforms: Query<&mut Transform, AnyCamera>,
     mut shoot_recoil: Single<&mut ShootRecoil>,
+    ui_state: Res<UiState>,
 ) {
+    if ui_state.buy_overlay_visibile {
+        return;
+    }
+
     let delta = mouse_motion.delta;
     if delta == Vec2::ZERO {
         return;
@@ -319,7 +325,12 @@ pub fn weapon_sway(
     time: Res<Time>,
     mouse_motion: Res<AccumulatedMouseMotion>,
     mut transform: Single<&mut Transform, With<PlayerWeaponModel>>,
+    ui_state: Res<UiState>,
 ) {
+    if ui_state.buy_overlay_visibile {
+        return;
+    }
+
     // how fast it will return to initial position
     const DAMPING: f32 = 12.0;
 

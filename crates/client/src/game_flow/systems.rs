@@ -15,6 +15,7 @@ use crate::{
         PlayerDeathMessage,
         camera::{components::MainMenuCamera, get_main_menu_camera_transform},
     },
+    ui::UiState,
 };
 
 pub fn grab_mouse(
@@ -50,6 +51,7 @@ pub fn handle_escape_in_game(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     current_in_game_state: If<Res<State<InGameState>>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
+    mut ui_state: ResMut<UiState>,
 ) {
     let escape_just_pressed = keyboard_input.just_pressed(KeyCode::Escape);
     let current_in_game_state = current_in_game_state.get();
@@ -57,7 +59,11 @@ pub fn handle_escape_in_game(
     if escape_just_pressed {
         match current_in_game_state {
             InGameState::Playing => {
-                next_in_game_state.set(InGameState::Paused);
+                if ui_state.buy_overlay_visibile {
+                    ui_state.buy_overlay_visibile = false;
+                } else {
+                    next_in_game_state.set(InGameState::Paused);
+                }
             }
             InGameState::Paused => next_in_game_state.set(InGameState::Playing),
             InGameState::PlayerDead => {}

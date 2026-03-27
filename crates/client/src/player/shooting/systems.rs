@@ -29,6 +29,7 @@ use crate::{
         },
     },
     shared::get_fire_delay_by_weapon_type,
+    ui::UiState,
     utils::query_filters::{OurPlayerFilter, PlayerOrEnemyFilter},
 };
 
@@ -45,8 +46,7 @@ type WorldModelCameraQuery<'w, 's> = Single<
     (With<WorldCamera>, Without<Player>),
 >;
 
-// FIXME: rename
-pub fn add_player_weapons_to_new_players(
+pub fn setup_new_players(
     added_players: Query<Entity, (Added<Player>, With<Controlled>)>,
     mut commands: Commands,
 ) {
@@ -75,7 +75,12 @@ pub fn handle_input(
         (&mut PlayerWeapons, &mut PlayerState, &mut AimType),
         OurPlayerFilter,
     >,
+    ui_state: Res<UiState>,
 ) {
+    if ui_state.buy_overlay_visibile {
+        return;
+    }
+
     let (mut player_weapons, mut player_state, mut aim_type) =
         player_query.into_inner();
 

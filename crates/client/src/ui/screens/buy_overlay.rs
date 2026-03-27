@@ -1,8 +1,9 @@
 use bevy::{
-    color::palettes::css::GRAY,
+    color::palettes::{css::GRAY, tailwind::GRAY_900},
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
+use shared::{GAME_ITEMS, GameItem};
 
 use crate::{game_flow::states::InGameState, ui::UiState};
 
@@ -10,6 +11,11 @@ use crate::{game_flow::states::InGameState, ui::UiState};
 struct BuyScreenRoot;
 
 pub struct BuyScreenPlugin;
+
+#[derive(Component)]
+struct ShopItemButton {
+    item: GameItem,
+}
 
 impl Plugin for BuyScreenPlugin {
     fn build(&self, app: &mut App) {
@@ -49,25 +55,60 @@ fn spawn_buy_screen(mut commands: Commands) {
         ))
         .with_children(|parent| {
             parent
-                .spawn(Node {
+                .spawn((
+                    Node {
+                        flex_grow: 1.0,
+                        padding: UiRect::all(px(8)),
+                        border: UiRect {
+                            left: px(1),
+                            ..default()
+                        },
+                        ..default()
+                    },
+                    BorderColor::all(GRAY_900),
+                ))
+                .with_child(Node {
+                    justify_self: JustifySelf::Center,
+                    flex_direction: FlexDirection::Column,
                     flex_grow: 1.0,
-                    padding: UiRect::all(px(32)),
                     ..default()
                 })
-                .with_child(Text::new("Weapons"));
+                .with_children(|parent| {
+                    for game_item in GAME_ITEMS {
+                        parent.spawn(build_buy_list_item(
+                            game_item.kind.to_string(),
+                            game_item.cost,
+                        ));
+                    }
+                });
             parent
-                .spawn(Node {
-                    flex_grow: 1.0,
-                    padding: UiRect::all(px(32)),
-                    ..default()
-                })
+                .spawn((
+                    Node {
+                        flex_grow: 1.0,
+                        padding: UiRect::all(px(8)),
+                        border: UiRect {
+                            left: px(1),
+                            ..default()
+                        },
+                        ..default()
+                    },
+                    BorderColor::all(GRAY_900),
+                ))
                 .with_child(Text::new("Explosives"));
             parent
-                .spawn(Node {
-                    flex_grow: 1.0,
-                    padding: UiRect::all(px(32)),
-                    ..default()
-                })
+                .spawn((
+                    Node {
+                        flex_grow: 1.0,
+                        padding: UiRect::all(px(8)),
+                        border: UiRect {
+                            left: px(1),
+                            right: px(1),
+                            ..default()
+                        },
+                        ..default()
+                    },
+                    BorderColor::all(GRAY_900),
+                ))
                 .with_child(Text::new("Accessories"));
         });
 }
@@ -102,4 +143,17 @@ fn update_mouse_mode(
     } else {
         CursorGrabMode::Locked
     };
+}
+
+fn build_buy_list_item(item_name: String, cost: usize) -> impl Bundle {
+    (
+        Node {
+            border: UiRect::all(px(1)),
+            flex_direction: FlexDirection::Column,
+            ..default()
+        },
+        Button,
+        BackgroundColor(GRAY.with_alpha(0.7).into()),
+        children![Text::new(item_name), Text::new(format!("Cost: {}$", cost))],
+    )
 }
