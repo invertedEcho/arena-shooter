@@ -5,7 +5,7 @@ use shared::{
     character_controller::components::Grounded,
     components::DespawnTimer,
     player::{AimType, PlayerState},
-    shooting::{PlayerWeapons, WeaponType},
+    shooting::{PlayerWeapons, WeaponKind},
 };
 
 use crate::{
@@ -120,10 +120,10 @@ pub fn play_sound_on_player_weapon_fired(
             &player_weapons.weapons[player_state.active_weapon_slot];
 
         let shoot_sound = match current_weapon.stats.weapon_type {
-            WeaponType::AssaultRifle => {
+            WeaponKind::AssaultRifle => {
                 &(BASE_PATH_TO_ASSAULT_RIFLE_SOUNDS.to_string() + "shoot.mp3")
             }
-            WeaponType::Pistol => {
+            WeaponKind::Pistol => {
                 &(BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "shoot.ogg")
             }
         };
@@ -239,10 +239,10 @@ fn play_weapon_slot_change_audio(
     for message in message_reader.read() {
         let new_weapon = &player_weapons.weapons[message.0];
         let path = match new_weapon.stats.weapon_type {
-            WeaponType::Pistol => {
+            WeaponKind::Pistol => {
                 BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "equip.ogg"
             }
-            WeaponType::AssaultRifle => {
+            WeaponKind::AssaultRifle => {
                 BASE_PATH_TO_ASSAULT_RIFLE_SOUNDS.to_string() + "equip.mp3"
             }
         };
@@ -268,7 +268,7 @@ fn play_aim_sound_on_changed_aim_type(
         &player_weapons.weapons[player_state.active_weapon_slot];
     let current_weapon_stats = &current_weapon.stats;
 
-    if current_weapon_stats.weapon_type == WeaponType::Pistol {
+    if current_weapon_stats.weapon_type == WeaponKind::Pistol {
         play_sound_message_writer.write(PlaySoundMessage {
             path_to_audio: BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "aim.ogg",
         });
@@ -288,10 +288,10 @@ fn play_reload_sound(
             .weapon_type;
 
         let path = match current_weapon_type {
-            WeaponType::Pistol => {
+            WeaponKind::Pistol => {
                 BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "reload.ogg"
             }
-            WeaponType::AssaultRifle => {
+            WeaponKind::AssaultRifle => {
                 BASE_PATH_TO_ASSAULT_RIFLE_SOUNDS.to_string() + "reload.mp3"
             }
         };

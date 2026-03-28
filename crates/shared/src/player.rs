@@ -5,8 +5,8 @@ use crate::{
     DEFAULT_HEALTH,
     components::Health,
     shooting::{
-        PlayerWeapons, Weapon, WeaponSlotType, WeaponState, WeaponStats,
-        WeaponType,
+        AK47, GameWeapon, PlayerWeapon, PlayerWeapons, WeaponKind,
+        WeaponSlotType, WeaponState, WeaponStats,
     },
 };
 
@@ -41,27 +41,19 @@ pub struct PlayerCash(pub usize);
 
 pub const DEFAULT_PLAYER_WEAPONS: PlayerWeapons = PlayerWeapons {
     weapons: [
-        Weapon {
-            stats: WeaponStats {
-                weapon_type: WeaponType::AssaultRifle,
-                max_loaded_ammo: 30,
-                weapon_slot_type: WeaponSlotType::Primary,
-            },
+        PlayerWeapon {
             state: WeaponState {
                 loaded_ammo: 30,
                 carried_ammo: 120,
             },
+            game_weapon: AK47,
         },
-        Weapon {
-            stats: WeaponStats {
-                weapon_type: WeaponType::Pistol,
-                max_loaded_ammo: 15,
-                weapon_slot_type: WeaponSlotType::Secondary,
-            },
+        PlayerWeapon {
             state: WeaponState {
                 loaded_ammo: 15,
                 carried_ammo: 50,
             },
+            game_weapon: 
         },
     ],
 };

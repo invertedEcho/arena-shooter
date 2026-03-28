@@ -7,7 +7,7 @@ use lightyear::prelude::Controlled;
 use shared::{
     components::DespawnTimer,
     player::{AimType, Player, PlayerState},
-    shooting::{PlayerWeapons, WeaponType},
+    shooting::{PlayerWeapons, WeaponKind},
 };
 
 use crate::{
@@ -95,11 +95,11 @@ pub fn handle_spawn_player_camera_message(
             ));
 
             let weapon_model_path =
-                get_asset_path_for_weapon_type(&WeaponType::AssaultRifle);
+                get_asset_path_for_weapon_type(&WeaponKind::AssaultRifle);
             let weapon_model = asset_server
                 .load(GltfAssetLabel::Scene(0).from_asset(weapon_model_path));
             let weapon_position = get_position_for_weapon(
-                &WeaponType::AssaultRifle,
+                &WeaponKind::AssaultRifle,
                 &AimType::Normal,
             );
             parent
@@ -453,10 +453,10 @@ pub fn interpolate_weapon_position(
 
     if reloading {
         match weapon_type {
-            WeaponType::Pistol => {
+            WeaponKind::Pistol => {
                 target_destination.y -= 0.25;
             }
-            WeaponType::AssaultRifle => {
+            WeaponKind::AssaultRifle => {
                 target_destination.y -= 0.3;
             }
         }

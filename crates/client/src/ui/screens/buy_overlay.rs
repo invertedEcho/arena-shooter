@@ -3,7 +3,9 @@ use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
-use shared::{GAME_ITEMS, GameItem};
+use shared::{
+    GAME_ITEMS, GameItem, player::PlayerCash, shooting::PlayerWeapons,
+};
 
 use crate::{game_flow::states::InGameState, ui::UiState};
 
@@ -30,7 +32,8 @@ impl Plugin for BuyScreenPlugin {
             )
             .add_systems(
                 Update,
-                handle_input.run_if(in_state(InGameState::Playing)),
+                (handle_input, handle_pressed_buy_item)
+                    .run_if(in_state(InGameState::Playing)),
             );
     }
 }
@@ -63,17 +66,20 @@ fn spawn_buy_screen(mut commands: Commands) {
                             left: px(1),
                             ..default()
                         },
+                        justify_self: JustifySelf::Center,
+                        flex_direction: FlexDirection::Column,
                         ..default()
                     },
                     BorderColor::all(GRAY_900),
                 ))
-                .with_child(Node {
-                    justify_self: JustifySelf::Center,
-                    flex_direction: FlexDirection::Column,
-                    flex_grow: 1.0,
-                    ..default()
-                })
                 .with_children(|parent| {
+                    parent.spawn((
+                        Text::new("Weapons"),
+                        Node {
+                            align_self: AlignSelf::Center,
+                            ..default()
+                        },
+                    ));
                     for game_item in GAME_ITEMS {
                         parent.spawn(build_buy_list_item(
                             game_item.kind.to_string(),
@@ -139,7 +145,7 @@ fn update_mouse_mode(
 ) {
     primary_cursor_options.visible = ui_state.buy_overlay_visibile;
     primary_cursor_options.grab_mode = if ui_state.buy_overlay_visibile {
-        CursorGrabMode::Confined
+        CursorGrabMode::None
     } else {
         CursorGrabMode::Locked
     };
@@ -156,4 +162,21 @@ fn build_buy_list_item(item_name: String, cost: usize) -> impl Bundle {
         BackgroundColor(GRAY.with_alpha(0.7).into()),
         children![Text::new(item_name), Text::new(format!("Cost: {}$", cost))],
     )
+}
+
+fn handle_pressed_buy_item(
+    query: Query<(&Interaction, &ShopItemButton), Changed<Interaction>>,
+    player_query: Single<(&mut PlayerCash, &mut PlayerWeapons)>,
+) {
+    let (mut player_cash, mut player_weapons) = player_query.into_inner();
+
+    for (interaction, shop_item_button) in query {
+        if Interaction::Pressed != *interaction {
+            continue;
+        }
+        if shop_item_button.item.cost < player_cash.0 {
+            info!("not enough cash to buy item");
+        }
+        player_cash.0 -= shop_item_button.item.cost;
+    }
 }
