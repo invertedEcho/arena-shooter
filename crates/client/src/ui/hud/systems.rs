@@ -114,7 +114,7 @@ pub fn spawn_player_hud(
                             Text::new(format!(
                                 "{}: {}",
                                 index + 1,
-                                player_weapon.stats.weapon_type
+                                player_weapon.game_weapon.kind
                             )),
                             TextFont {
                                 font: asset_server.load(ITALIC_GAME_FONT_PATH),
@@ -431,6 +431,7 @@ pub fn spawn_current_wave_finished(
                 ..default()
             },
             CurrentWaveFinishedText,
+            DespawnOnExit(AppState::InGame),
             children![
                 (Text::new("Current wave finished!")),
                 (Text::new("Press (B) to buy new weapons")),

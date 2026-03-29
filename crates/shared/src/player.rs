@@ -5,8 +5,7 @@ use crate::{
     DEFAULT_HEALTH,
     components::Health,
     shooting::{
-        AK47, GameWeapon, PlayerWeapon, PlayerWeapons, WeaponKind,
-        WeaponSlotType, WeaponState, WeaponStats,
+        PlayerWeapon, PlayerWeapons, WEAPON_AK47, WEAPON_GLOCK, WeaponState,
     },
 };
 
@@ -46,14 +45,14 @@ pub const DEFAULT_PLAYER_WEAPONS: PlayerWeapons = PlayerWeapons {
                 loaded_ammo: 30,
                 carried_ammo: 120,
             },
-            game_weapon: AK47,
+            game_weapon: WEAPON_AK47,
         },
         PlayerWeapon {
             state: WeaponState {
                 loaded_ammo: 15,
                 carried_ammo: 50,
             },
-            game_weapon: 
+            game_weapon: WEAPON_GLOCK,
         },
     ],
 };

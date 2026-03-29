@@ -1,10 +1,18 @@
 use bevy::{
-    color::palettes::{css::GRAY, tailwind::GRAY_900},
+    color::palettes::{
+        css::{GRAY, WHITE},
+        tailwind::{GRAY_600, GRAY_900},
+    },
     prelude::*,
+    ui::InteractionDisabled,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use shared::{
-    GAME_ITEMS, GameItem, player::PlayerCash, shooting::PlayerWeapons,
+    player::PlayerCash,
+    shooting::{
+        ALL_GAME_WEAPONS, GameWeapon, PlayerWeapons, WeaponSlotType,
+        get_game_weapon_by_kind,
+    },
 };
 
 use crate::{game_flow::states::InGameState, ui::UiState};
@@ -15,9 +23,7 @@ struct BuyScreenRoot;
 pub struct BuyScreenPlugin;
 
 #[derive(Component)]
-struct ShopItemButton {
-    item: GameItem,
-}
+struct ShopItemButton(GameWeapon);
 
 impl Plugin for BuyScreenPlugin {
     fn build(&self, app: &mut App) {
@@ -32,7 +38,11 @@ impl Plugin for BuyScreenPlugin {
             )
             .add_systems(
                 Update,
-                (handle_input, handle_pressed_buy_item)
+                (
+                    handle_input,
+                    handle_pressed_buy_item,
+                    update_disabled_enabled_shop_item_buttons,
+                )
                     .run_if(in_state(InGameState::Playing)),
             );
     }
@@ -80,11 +90,8 @@ fn spawn_buy_screen(mut commands: Commands) {
                             ..default()
                         },
                     ));
-                    for game_item in GAME_ITEMS {
-                        parent.spawn(build_buy_list_item(
-                            game_item.kind.to_string(),
-                            game_item.cost,
-                        ));
+                    for game_weapon in ALL_GAME_WEAPONS {
+                        parent.spawn(build_buy_list_item(game_weapon));
                     }
                 });
             parent
@@ -151,7 +158,11 @@ fn update_mouse_mode(
     };
 }
 
-fn build_buy_list_item(item_name: String, cost: usize) -> impl Bundle {
+/// Simple marker component so we can filter in queries
+#[derive(Component)]
+struct ShopItemText;
+
+fn build_buy_list_item(game_weapon: GameWeapon) -> impl Bundle {
     (
         Node {
             border: UiRect::all(px(1)),
@@ -160,8 +171,38 @@ fn build_buy_list_item(item_name: String, cost: usize) -> impl Bundle {
         },
         Button,
         BackgroundColor(GRAY.with_alpha(0.7).into()),
-        children![Text::new(item_name), Text::new(format!("Cost: {}$", cost))],
+        children![
+            (Text::new(game_weapon.kind.to_string()), ShopItemText),
+            (
+                Text::new(format!("Cost: {}$", game_weapon.cost)),
+                ShopItemText
+            )
+        ],
+        ShopItemButton(game_weapon),
     )
+}
+
+fn update_disabled_enabled_shop_item_buttons(
+    mut commands: Commands,
+    player_cash_changed: Single<&PlayerCash, Changed<PlayerCash>>,
+    shop_item_buttons: Query<&ShopItemButton>,
+    text_color_query: Query<
+        (&mut TextColor, &ChildOf, Entity),
+        With<ShopItemText>,
+    >,
+) {
+    for (mut text_color, child_of, entity) in text_color_query {
+        let Ok(shop_item_button) = shop_item_buttons.get(child_of.0) else {
+            continue;
+        };
+        if shop_item_button.0.cost > player_cash_changed.0 {
+            commands.entity(entity).insert(InteractionDisabled);
+            *text_color = GRAY_600.into();
+        } else {
+            commands.entity(entity).remove::<InteractionDisabled>();
+            *text_color = WHITE.into();
+        }
+    }
 }
 
 fn handle_pressed_buy_item(
@@ -174,9 +215,24 @@ fn handle_pressed_buy_item(
         if Interaction::Pressed != *interaction {
             continue;
         }
-        if shop_item_button.item.cost < player_cash.0 {
+
+        if shop_item_button.0.cost > player_cash.0 {
             info!("not enough cash to buy item");
+            return;
         }
-        player_cash.0 -= shop_item_button.item.cost;
+
+        player_cash.0 -= shop_item_button.0.cost;
+
+        let game_weapon = get_game_weapon_by_kind(&shop_item_button.0.kind);
+
+        let player_weapon = match shop_item_button.0.slot_type {
+            WeaponSlotType::Primary => &mut player_weapons.weapons[0],
+            WeaponSlotType::Secondary => &mut player_weapons.weapons[1],
+        };
+
+        player_weapon.game_weapon = game_weapon.clone();
+        player_weapon.state.loaded_ammo = game_weapon.max_loaded_ammo;
+        // TODO: function to get this value depending on WeaponKind
+        player_weapon.state.carried_ammo = 360;
     }
 }

@@ -14,9 +14,9 @@ pub struct PlayerWeapons {
 }
 
 /// Static information of the weapon
-#[derive(Serialize, Deserialize, PartialEq)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 pub struct GameWeapon {
-    pub weapon_kind: WeaponKind,
+    pub kind: WeaponKind,
     pub cost: usize,
     /// How much ammunition the weapon can hold at most (e.g. in the barrel)
     pub max_loaded_ammo: u64,
@@ -46,6 +46,7 @@ pub enum WeaponSlotType {
 pub enum WeaponKind {
     Glock,
     AK47,
+    P90,
 }
 
 impl Display for WeaponKind {
@@ -53,24 +54,42 @@ impl Display for WeaponKind {
         match self {
             WeaponKind::Glock => write!(f, "Glock"),
             WeaponKind::AK47 => write!(f, "AK-47"),
+            WeaponKind::P90 => write!(f, "P-90"),
         }
     }
 }
 
-pub const AK47: GameWeapon = GameWeapon {
-    weapon_kind: WeaponKind::AK47,
+pub const WEAPON_AK47: GameWeapon = GameWeapon {
+    kind: WeaponKind::AK47,
     cost: 2000,
     max_loaded_ammo: 30,
     slot_type: WeaponSlotType::Primary,
-    damage: 25.0,
+    damage: 30.0,
 };
 
-pub const GLOCK: GameWeapon = GameWeapon {};
+pub const WEAPON_GLOCK: GameWeapon = GameWeapon {
+    kind: WeaponKind::Glock,
+    cost: 500,
+    max_loaded_ammo: 15,
+    slot_type: WeaponSlotType::Secondary,
+    damage: 20.0,
+};
 
-pub const ALL_GAME_WEAPONS: [GameWeapon; 2] = [
-    AK47,
-    GameWeapon {
-        weapon_kind: WeaponKind::Glock,
-        cost: 500,
-    },
-];
+pub const WEAPON_P90: GameWeapon = GameWeapon {
+    kind: WeaponKind::P90,
+    cost: 2500,
+    max_loaded_ammo: 40,
+    slot_type: WeaponSlotType::Primary,
+    damage: 20.0,
+};
+
+pub const ALL_GAME_WEAPONS: [GameWeapon; 3] =
+    [WEAPON_AK47, WEAPON_GLOCK, WEAPON_P90];
+
+pub fn get_game_weapon_by_kind(weapon_kind: &WeaponKind) -> GameWeapon {
+    match weapon_kind {
+        WeaponKind::Glock => WEAPON_GLOCK,
+        WeaponKind::AK47 => WEAPON_AK47,
+        WeaponKind::P90 => WEAPON_P90,
+    }
+}

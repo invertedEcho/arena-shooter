@@ -36,6 +36,7 @@ pub struct AppDebugState {
     show_enemy_debug_info: bool,
     show_states_overlay: bool,
     invincibility: bool,
+    pub interpolate_weapon_position: bool,
 }
 
 impl Default for AppDebugState {
@@ -46,6 +47,7 @@ impl Default for AppDebugState {
             show_enemy_debug_info: true,
             show_states_overlay: true,
             invincibility: false,
+            interpolate_weapon_position: true,
         }
     }
 }
@@ -330,6 +332,10 @@ fn developer_menu(
             ui.label("Invincibility");
             ui.checkbox(&mut app_debug_state.invincibility, "");
         });
+        ui.horizontal(|ui| {
+            ui.label("Interpolate weapon position");
+            ui.checkbox(&mut app_debug_state.interpolate_weapon_position, "");
+        })
     });
 }
 

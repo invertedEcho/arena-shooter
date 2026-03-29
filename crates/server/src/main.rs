@@ -55,7 +55,10 @@ impl Plugin for HeadfulServerPlugin {
 
         app.add_plugins(EguiPlugin::default())
             .add_plugins(WorldInspectorPlugin::new());
-        app.insert_resource(bevy_egui::EguiGlobalSettings::default());
+        app.insert_resource(bevy_egui::EguiGlobalSettings {
+            enable_absorb_bevy_input_system: true,
+            ..default()
+        });
     }
 }
 

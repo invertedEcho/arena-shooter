@@ -28,7 +28,7 @@ use crate::{
             resources::{ChangeWeaponCooldown, WeaponReloadTimer},
         },
     },
-    shared::get_fire_delay_by_weapon_type,
+    shared::get_fire_delay_by_weapon_kind,
     ui::UiState,
     utils::query_filters::{OurPlayerFilter, PlayerOrEnemyFilter},
 };
@@ -88,11 +88,11 @@ pub fn handle_input(
 
     let current_weapon =
         &mut player_weapons.weapons[player_state.active_weapon_slot];
-    let current_weapon_stats = &current_weapon.stats;
+    let current_weapon_stats = &current_weapon.game_weapon;
     let current_weapon_state = &mut current_weapon.state;
 
     let is_current_weapon_secondary =
-        current_weapon_stats.weapon_slot_type == WeaponSlotType::Secondary;
+        current_weapon_stats.slot_type == WeaponSlotType::Secondary;
 
     let weapon_is_full = current_weapon_stats.max_loaded_ammo
         == current_weapon_state.loaded_ammo;
@@ -132,7 +132,7 @@ pub fn handle_input(
         player_shot_messsage_writer.write(PlayerWeaponFiredMessage);
 
         let fire_delay =
-            get_fire_delay_by_weapon_type(&current_weapon_stats.weapon_type);
+            get_fire_delay_by_weapon_kind(&current_weapon_stats.kind);
         commands.spawn(PlayerShootCooldownTimer(Timer::from_seconds(
             fire_delay,
             TimerMode::Once,
@@ -314,12 +314,12 @@ pub fn handle_reload_player_weapon_message(
 
         player_state.reloading = true;
 
-        let weapon_type = &player_weapons.weapons
+        let weapon_kind = &player_weapons.weapons
             [player_state.active_weapon_slot]
-            .stats
-            .weapon_type;
+            .game_weapon
+            .kind;
         let weapon_position =
-            get_position_for_weapon(weapon_type, &AimType::Normal);
+            get_position_for_weapon(weapon_kind, &AimType::Normal);
 
         player_weapon_model_transform.translation = weapon_position;
     }
@@ -348,9 +348,10 @@ pub fn handle_player_weapon_reload_timer(
 
         let active_slot = player_state.active_weapon_slot;
 
-        let weapon_stats = player_weapons.weapons[active_slot].stats.clone();
-        let active_weapon_state =
-            &mut player_weapons.weapons[active_slot].state;
+        let current_weapon = &mut player_weapons.weapons[active_slot];
+
+        let weapon_stats = &current_weapon.game_weapon;
+        let active_weapon_state = &mut current_weapon.state;
 
         let missing_bullets_to_load =
             weapon_stats.max_loaded_ammo - active_weapon_state.loaded_ammo;

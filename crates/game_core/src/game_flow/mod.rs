@@ -13,6 +13,9 @@ use crate::{
     enemy::spawn::{EnemySpawnStrategy, SpawnEnemiesMessage},
 };
 
+const CASH_PER_ENEMY_KILL: usize = 100;
+const CASH_PER_WAVE_FINISHED: usize = 750;
+
 pub struct GameFlowPlugin;
 
 impl Plugin for GameFlowPlugin {
@@ -28,6 +31,7 @@ impl Plugin for GameFlowPlugin {
                 update_game_score_on_retry_wave_game_mode,
                 add_cash_on_enemy_killed,
                 handle_request_new_wave_message,
+                add_cash_on_wave_finished,
             ),
         );
     }
@@ -116,7 +120,20 @@ fn add_cash_on_enemy_killed(
     mut player_cash: Single<&mut PlayerCash>,
 ) {
     for _ in message_reader.read() {
-        player_cash.0 += 100;
+        player_cash.0 += CASH_PER_ENEMY_KILL;
+    }
+}
+
+fn add_cash_on_wave_finished(
+    game_state_wave: If<Res<GameStateWave>>,
+    mut player_cash: Single<&mut PlayerCash>,
+) {
+    let no_enemies_left = game_state_wave.enemies_left_from_current_wave == 0;
+    if game_state_wave.is_changed()
+        && !game_state_wave.is_added()
+        && no_enemies_left
+    {
+        player_cash.0 += CASH_PER_WAVE_FINISHED;
     }
 }
 

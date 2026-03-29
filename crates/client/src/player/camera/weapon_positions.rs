@@ -16,30 +16,29 @@ pub fn get_position_for_weapon(
         z: -0.3,
     };
 
-    const NORMAL_POSITION_ASSAULT_RIFLE: Vec3 = Vec3 {
+    const NORMAL_POSITION_AK_47: Vec3 = Vec3 {
         x: 0.2,
-        y: -0.3,
-        z: -0.5,
+        y: -0.25,
+        z: -0.3,
     };
     const SCOPED_POSITION_ASSAULT_RIFLE: Vec3 = Vec3 {
         x: 0.0,
-        y: -0.3,
+        y: -0.219,
         z: -0.3,
     };
 
     match weapon_type {
-        WeaponKind::Pistol => match aim_type {
+        WeaponKind::Glock => match aim_type {
             AimType::Normal => NORMAL_POSITION_PISTOL,
             AimType::Scoped => SCOPED_POSITION_PISTOL,
         },
-        WeaponKind::AssaultRifle => match aim_type {
-            AimType::Normal => NORMAL_POSITION_ASSAULT_RIFLE,
+        WeaponKind::AK47 | WeaponKind::P90 => match aim_type {
+            AimType::Normal => NORMAL_POSITION_AK_47,
             AimType::Scoped => SCOPED_POSITION_ASSAULT_RIFLE,
         },
     }
 }
 
-// TODO: this must change depending on the cameras FOV
 pub fn get_muzzle_flash_position_for_weapon(
     weapon_type: &WeaponKind,
     aim_type: &AimType,
@@ -51,11 +50,11 @@ pub fn get_muzzle_flash_position_for_weapon(
     const SCOPED_POSITION_PISTOL: Vec3 = Vec3::new(0.5, 0.05, 0.0);
 
     match weapon_type {
-        WeaponKind::Pistol => match aim_type {
+        WeaponKind::Glock => match aim_type {
             AimType::Normal => NORMAL_POSITION_PISTOL,
             AimType::Scoped => SCOPED_POSITION_PISTOL,
         },
-        WeaponKind::AssaultRifle => match aim_type {
+        WeaponKind::AK47 | WeaponKind::P90 => match aim_type {
             AimType::Normal => NORMAL_POSITION_ASSAULT_RIFLE,
             AimType::Scoped => SCOPED_POSITION_ASSAULT_RIFLE,
         },

@@ -20,6 +20,7 @@ use crate::{
 
 const BASE_PATH_TO_ASSAULT_RIFLE_SOUNDS: &str = "sfx/weapons/assault_rifle/";
 const BASE_PATH_TO_PISTOL_SOUNDS: &str = "sfx/weapons/pistol_walther_p38/";
+const BASE_PATH_TO_WEAPON_SOUNDS: &str = "sfx/weapons/";
 
 pub struct AudioPlugin;
 
@@ -119,12 +120,16 @@ pub fn play_sound_on_player_weapon_fired(
         let current_weapon =
             &player_weapons.weapons[player_state.active_weapon_slot];
 
-        let shoot_sound = match current_weapon.stats.weapon_type {
-            WeaponKind::AssaultRifle => {
+        let shoot_sound = match current_weapon.game_weapon.kind {
+            WeaponKind::AK47 => {
                 &(BASE_PATH_TO_ASSAULT_RIFLE_SOUNDS.to_string() + "shoot.mp3")
             }
-            WeaponKind::Pistol => {
+            WeaponKind::Glock => {
                 &(BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "shoot.ogg")
+            }
+            // TODO: hmm we need more weapon sounds
+            WeaponKind::P90 => {
+                &(BASE_PATH_TO_WEAPON_SOUNDS.to_string() + "smg/shoot.mp3")
             }
         };
         play_sound_message_writer.write(PlaySoundMessage {
@@ -238,11 +243,11 @@ fn play_weapon_slot_change_audio(
 ) {
     for message in message_reader.read() {
         let new_weapon = &player_weapons.weapons[message.0];
-        let path = match new_weapon.stats.weapon_type {
-            WeaponKind::Pistol => {
+        let path = match new_weapon.game_weapon.kind {
+            WeaponKind::Glock => {
                 BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "equip.ogg"
             }
-            WeaponKind::AssaultRifle => {
+            WeaponKind::AK47 | WeaponKind::P90 => {
                 BASE_PATH_TO_ASSAULT_RIFLE_SOUNDS.to_string() + "equip.mp3"
             }
         };
@@ -266,9 +271,9 @@ fn play_aim_sound_on_changed_aim_type(
 
     let current_weapon =
         &player_weapons.weapons[player_state.active_weapon_slot];
-    let current_weapon_stats = &current_weapon.stats;
+    let current_weapon_stats = &current_weapon.game_weapon;
 
-    if current_weapon_stats.weapon_type == WeaponKind::Pistol {
+    if current_weapon_stats.kind == WeaponKind::Glock {
         play_sound_message_writer.write(PlaySoundMessage {
             path_to_audio: BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "aim.ogg",
         });
@@ -282,16 +287,16 @@ fn play_reload_sound(
 ) {
     let (player_weapons, player_state) = player_query.into_inner();
     for _ in message_reader.read() {
-        let current_weapon_type = &player_weapons.weapons
+        let current_weapon_kind = &player_weapons.weapons
             [player_state.active_weapon_slot]
-            .stats
-            .weapon_type;
+            .game_weapon
+            .kind;
 
-        let path = match current_weapon_type {
-            WeaponKind::Pistol => {
+        let path = match current_weapon_kind {
+            WeaponKind::Glock => {
                 BASE_PATH_TO_PISTOL_SOUNDS.to_string() + "reload.ogg"
             }
-            WeaponKind::AssaultRifle => {
+            WeaponKind::AK47 | WeaponKind::P90 => {
                 BASE_PATH_TO_ASSAULT_RIFLE_SOUNDS.to_string() + "reload.mp3"
             }
         };
