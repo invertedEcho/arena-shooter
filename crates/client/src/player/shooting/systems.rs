@@ -8,7 +8,9 @@ use shared::{
     multiplayer_messages::ShootRequest,
     player::{AimType, PlayerState},
     protocol::OrderedReliableChannel,
-    shooting::{MAX_SHOOTING_DISTANCE, PlayerWeapons, WeaponSlotType},
+    shooting::{
+        MAX_SHOOTING_DISTANCE, PlayerWeapons, WeaponKind, WeaponSlotType,
+    },
 };
 
 use crate::{
@@ -431,5 +433,33 @@ pub fn check_if_player_dead(
 ) {
     if player_health.0 <= 0.0 {
         player_death_message_writer.write(PlayerDeathMessage);
+    }
+}
+
+pub fn handle_player_scope_aim(
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    player_query: Single<
+        (&mut AimType, &PlayerState, &PlayerWeapons),
+        With<Controlled>,
+    >,
+) {
+    let (mut aim_type, player_state, player_weapons) =
+        player_query.into_inner();
+
+    let current_weapon =
+        &player_weapons.weapons[player_state.active_weapon_slot];
+
+    if current_weapon.game_weapon.kind == WeaponKind::P90 {
+        return;
+    }
+
+    if player_state.reloading {
+        return;
+    }
+
+    if mouse_input.just_pressed(MouseButton::Right) {
+        *aim_type = AimType::Scoped;
+    } else if mouse_input.just_released(MouseButton::Right) {
+        *aim_type = AimType::Normal;
     }
 }

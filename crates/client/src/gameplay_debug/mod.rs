@@ -18,7 +18,7 @@ use shared::{
         ENEMY_FOV, ENEMY_VISION_RANGE,
         components::{Enemy, EnemyState},
     },
-    player::Player,
+    player::{Player, PlayerCash},
 };
 
 use crate::{
@@ -310,6 +310,7 @@ fn update_landmass_debug_enabled(
 fn developer_menu(
     mut ui_context: Single<&mut EguiContext, With<PrimaryEguiContext>>,
     mut app_debug_state: ResMut<AppDebugState>,
+    mut player_cash: Query<&mut PlayerCash>,
 ) {
     egui::Window::new("Developer Menu").show(ui_context.get_mut(), |ui| {
         ui.horizontal(|ui| {
@@ -335,7 +336,14 @@ fn developer_menu(
         ui.horizontal(|ui| {
             ui.label("Interpolate weapon position");
             ui.checkbox(&mut app_debug_state.interpolate_weapon_position, "");
-        })
+        });
+        if let Ok(mut player_cash) = player_cash.single_mut() {
+            ui.horizontal(|ui| {
+                if ui.button("Give player cash").clicked() {
+                    player_cash.0 += 1000;
+                }
+            });
+        }
     });
 }
 

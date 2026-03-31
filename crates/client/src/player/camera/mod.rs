@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     game_flow::states::InGameState,
     player::camera::systems::{
-        free_cam_orbit, handle_free_cam_movement, handle_player_scope_aim,
+        free_cam_orbit, handle_free_cam_movement,
         handle_spawn_player_camera_message, interpolate_weapon_position,
         make_player_weapon_hidden, make_player_weapon_visible,
         recoil_camera_kickback, recoil_slerp_back, setup_player_cameras,
@@ -37,7 +37,6 @@ impl Plugin for PlayerCameraPlugin {
                 setup_player_cameras,
                 handle_spawn_player_camera_message,
                 handle_free_cam_movement,
-                handle_player_scope_aim,
                 weapon_sway,
                 update_player_weapon_model,
                 spawn_muzzle_flash,

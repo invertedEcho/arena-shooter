@@ -10,7 +10,7 @@ use crate::{
         systems::{
             check_if_player_bullet_hit, check_if_player_dead,
             handle_change_weapon_slot_cooldown, handle_input,
-            handle_player_weapon_reload_timer,
+            handle_player_scope_aim, handle_player_weapon_reload_timer,
             handle_reload_player_weapon_message, handle_weapon_slot_change,
             reset_aim_type_on_pause, send_shoot_request_on_weapon_fired,
             setup_new_players, spawn_bullet_hole_decal,
@@ -48,6 +48,7 @@ impl Plugin for PlayerShootingPlugin {
                     send_shoot_request_on_weapon_fired,
                     check_if_player_bullet_hit,
                     spawn_bullet_hole_decal,
+                    handle_player_scope_aim,
                 )
                     .run_if(in_state(InGameState::Playing)),
             )

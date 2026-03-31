@@ -3,6 +3,7 @@ use bevy::{
     dev_tools::fps_overlay::{FpsOverlayPlugin, FrameTimeGraphConfig},
     diagnostic::FrameTimeDiagnosticsPlugin,
     input_focus::InputDispatchPlugin,
+    light::DirectionalLightShadowMap,
     prelude::*,
     ui_widgets::UiWidgetsPlugins,
     window::{PresentMode, WindowMode},
@@ -57,6 +58,8 @@ fn main() {
     let game_settings = get_or_create_game_settings();
 
     app.insert_resource(game_settings.clone());
+
+    // app.insert_resource(DirectionalLightShadowMap { size: 4096 });
 
     let window_mode = if game_settings.graphics.borderless_fullscreen {
         WindowMode::BorderlessFullscreen(MonitorSelection::Current)

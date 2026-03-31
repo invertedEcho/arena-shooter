@@ -133,23 +133,6 @@ pub fn handle_spawn_player_camera_message(
     }
 }
 
-pub fn handle_player_scope_aim(
-    mouse_input: Res<ButtonInput<MouseButton>>,
-    player_query: Single<(&mut AimType, &PlayerState), With<Controlled>>,
-) {
-    let (mut aim_type, player_state) = player_query.into_inner();
-
-    if player_state.reloading {
-        return;
-    }
-
-    if mouse_input.just_pressed(MouseButton::Right) {
-        *aim_type = AimType::Scoped;
-    } else if mouse_input.just_released(MouseButton::Right) {
-        *aim_type = AimType::Normal;
-    }
-}
-
 type AnyCamera = Or<(With<WorldCamera>, With<ViewModelCamera>)>;
 
 pub fn update_yaw_pitch_on_mouse_motion(
@@ -486,7 +469,7 @@ pub fn weapon_model_kickback(
     mut player_shot_message_reader: MessageReader<PlayerWeaponFiredMessage>,
 ) {
     for _ in player_shot_message_reader.read() {
-        player_weapon_model_transform.rotation *= Quat::from_rotation_z(0.15);
+        player_weapon_model_transform.rotation *= Quat::from_rotation_x(0.15);
     }
 }
 
