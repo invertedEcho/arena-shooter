@@ -20,6 +20,7 @@ use crate::{
                 FreeCam, MainMenuCamera, MuzzleFlash, PlayerCameraState,
                 PlayerWeaponModel, ViewModelCamera, WorldCamera,
             },
+            messages::UpdatePlayerWeaponModel,
             weapon_positions::{
                 get_muzzle_flash_position_for_weapon, get_position_for_weapon,
             },
@@ -340,24 +341,23 @@ pub fn weapon_sway(
 pub fn update_player_weapon_model(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    mut message_reader: MessageReader<PlayerWeaponSlotChangeMessage>,
+    mut message_reader: MessageReader<UpdatePlayerWeaponModel>,
     player_weapon_model_query: Single<
         (Entity, &mut Transform),
         With<PlayerWeaponModel>,
     >,
-    player_query: Single<(&PlayerWeapons, &AimType)>,
+    player_query: Single<(&PlayerWeapons, &AimType, &PlayerState)>,
 ) {
     let (player_weapon_model_entity, mut player_weapon_model_transform) =
         player_weapon_model_query.into_inner();
 
-    for message in message_reader.read() {
-        let player_weapons = player_query.0;
-        let aim_type = player_query.1;
+    let (player_weapons, aim_type, player_state) = player_query.into_inner();
 
-        let new_slot_index = message.0;
-
-        let weapon_kind =
-            &player_weapons.weapons[new_slot_index].game_weapon.kind;
+    for _ in message_reader.read() {
+        let weapon_kind = &player_weapons.weapons
+            [player_state.active_weapon_slot]
+            .game_weapon
+            .kind;
 
         let weapon_position = get_position_for_weapon(weapon_kind, aim_type);
 

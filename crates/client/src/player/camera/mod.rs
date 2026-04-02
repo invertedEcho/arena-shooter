@@ -2,17 +2,22 @@ use bevy::prelude::*;
 
 use crate::{
     game_flow::states::InGameState,
-    player::camera::systems::{
-        free_cam_orbit, handle_free_cam_movement,
-        handle_spawn_player_camera_message, interpolate_weapon_position,
-        make_player_weapon_hidden, make_player_weapon_visible,
-        recoil_camera_kickback, recoil_slerp_back, setup_player_cameras,
-        spawn_muzzle_flash, toggle_freecam, update_player_weapon_model,
-        update_yaw_pitch_on_mouse_motion, weapon_model_kickback, weapon_sway,
+    player::camera::{
+        messages::UpdatePlayerWeaponModel,
+        systems::{
+            free_cam_orbit, handle_free_cam_movement,
+            handle_spawn_player_camera_message, interpolate_weapon_position,
+            make_player_weapon_hidden, make_player_weapon_visible,
+            recoil_camera_kickback, recoil_slerp_back, setup_player_cameras,
+            spawn_muzzle_flash, toggle_freecam, update_player_weapon_model,
+            update_yaw_pitch_on_mouse_motion, weapon_model_kickback,
+            weapon_sway,
+        },
     },
 };
 
 pub mod components;
+pub mod messages;
 mod systems;
 pub mod weapon_positions;
 
@@ -25,7 +30,8 @@ pub struct PlayerCameraPlugin;
 
 impl Plugin for PlayerCameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<SpawnPlayerCamera>();
+        app.add_message::<SpawnPlayerCamera>()
+            .add_message::<UpdatePlayerWeaponModel>();
         app.add_systems(
             Update,
             (update_yaw_pitch_on_mouse_motion, free_cam_orbit)

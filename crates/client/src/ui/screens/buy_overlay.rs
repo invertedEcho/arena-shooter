@@ -15,7 +15,10 @@ use shared::{
     },
 };
 
-use crate::{game_flow::states::InGameState, ui::UiState};
+use crate::{
+    game_flow::states::InGameState,
+    player::camera::messages::UpdatePlayerWeaponModel, ui::UiState,
+};
 
 #[derive(Component)]
 struct BuyScreenRoot;
@@ -246,6 +249,9 @@ fn handle_pressed_buy_item(
         (Changed<Interaction>, Without<InteractionDisabled>),
     >,
     player_query: Single<(&mut PlayerCash, &mut PlayerWeapons)>,
+    mut update_player_weapon_model_message_writer: MessageWriter<
+        UpdatePlayerWeaponModel,
+    >,
 ) {
     let (mut player_cash, mut player_weapons) = player_query.into_inner();
 
@@ -273,6 +279,9 @@ fn handle_pressed_buy_item(
         player_weapon.state.loaded_ammo = game_weapon.max_loaded_ammo;
         // TODO: function to get this value depending on WeaponKind
         player_weapon.state.carried_ammo = 360;
+
+        update_player_weapon_model_message_writer
+            .write(UpdatePlayerWeaponModel);
     }
 }
 

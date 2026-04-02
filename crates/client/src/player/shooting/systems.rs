@@ -19,6 +19,7 @@ use crate::{
         Player, PlayerDeathMessage,
         camera::{
             components::{PlayerWeaponModel, WorldCamera},
+            messages::UpdatePlayerWeaponModel,
             weapon_positions::get_position_for_weapon,
         },
         shooting::{
@@ -376,6 +377,9 @@ pub fn handle_weapon_slot_change(
     mut player_state: Single<&mut PlayerState, With<Controlled>>,
     mut message_writer: MessageWriter<PlayerWeaponSlotChangeMessage>,
     existing_change_weapon_cooldown: Option<Res<ChangeWeaponCooldown>>,
+    mut update_player_weapon_model_message_writer: MessageWriter<
+        UpdatePlayerWeaponModel,
+    >,
 ) {
     // dont allow changing weapon if on cooldown
     if existing_change_weapon_cooldown.is_some() {
@@ -407,6 +411,8 @@ pub fn handle_weapon_slot_change(
         // cancel any ongoing reload
         commands.remove_resource::<WeaponReloadTimer>();
         player_state.reloading = false;
+        update_player_weapon_model_message_writer
+            .write(UpdatePlayerWeaponModel);
     }
 }
 
