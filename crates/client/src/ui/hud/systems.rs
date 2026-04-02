@@ -293,7 +293,7 @@ pub fn spawn_wave_hud(mut commands: Commands) {
             OnlyVisibleInGame,
         ))
         .with_children(|parent| {
-            parent.spawn(Text::new("Cash: "));
+            parent.spawn(Text::new("Cash:"));
             parent.spawn((Text::new("0"), CurrentCashAmount));
             parent.spawn(Text::new("Current wave:"));
             parent.spawn((Text::new(""), CurrentWaveText));

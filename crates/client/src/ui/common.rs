@@ -115,6 +115,7 @@ pub type AnyButtonInteractionQuery<'w, 's> = Query<
         Changed<Interaction>,
         With<Button>,
         Without<ExcludeFromHover>,
+        Without<InteractionDisabled>,
     ),
 >;
 

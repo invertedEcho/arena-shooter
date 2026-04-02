@@ -3,7 +3,6 @@ use bevy::{
     dev_tools::fps_overlay::{FpsOverlayPlugin, FrameTimeGraphConfig},
     diagnostic::FrameTimeDiagnosticsPlugin,
     input_focus::InputDispatchPlugin,
-    light::DirectionalLightShadowMap,
     prelude::*,
     ui_widgets::UiWidgetsPlugins,
     window::{PresentMode, WindowMode},

@@ -1,7 +1,7 @@
 use bevy::{
     color::palettes::{
         css::{GRAY, WHITE},
-        tailwind::{GRAY_600, GRAY_900},
+        tailwind::{GRAY_600, GRAY_900, RED_500},
     },
     prelude::*,
     ui::InteractionDisabled,
@@ -23,7 +23,12 @@ struct BuyScreenRoot;
 pub struct BuyScreenPlugin;
 
 #[derive(Component)]
-struct ShopItemButton(GameWeapon);
+struct ShopItemButton {
+    game_weapon: GameWeapon,
+    // TODO: maybe better name for this
+    text_entity: Entity,
+    cost_text_entity: Entity,
+}
 
 impl Plugin for BuyScreenPlugin {
     fn build(&self, app: &mut App) {
@@ -42,6 +47,7 @@ impl Plugin for BuyScreenPlugin {
                     handle_input,
                     handle_pressed_buy_item,
                     update_disabled_enabled_shop_item_buttons,
+                    update_texts_on_player_weapons_change,
                 )
                     .run_if(in_state(InGameState::Playing)),
             );
@@ -91,7 +97,7 @@ fn spawn_buy_screen(mut commands: Commands) {
                         },
                     ));
                     for game_weapon in ALL_GAME_WEAPONS {
-                        parent.spawn(build_buy_list_item(game_weapon));
+                        build_buy_list_item(parent, game_weapon);
                     }
                 });
             parent
@@ -158,74 +164,107 @@ fn update_mouse_mode(
     };
 }
 
-/// Simple marker component so we can filter in queries
 #[derive(Component)]
 struct ShopItemText;
 
-fn build_buy_list_item(game_weapon: GameWeapon) -> impl Bundle {
-    (
+#[derive(Component)]
+struct ShopItemCostText;
+
+fn build_buy_list_item(
+    parent_builder: &mut ChildSpawnerCommands,
+    game_weapon: GameWeapon,
+) {
+    let shop_item_text = parent_builder
+        .spawn((Text::new("Cost:"), ShopItemText))
+        .id();
+
+    let cost_text = parent_builder
+        .spawn((
+            Text::new(format!("{}$", game_weapon.cost)),
+            ShopItemCostText,
+        ))
+        .id();
+
+    let mut button_entity = parent_builder.spawn((
         Node {
             border: UiRect::all(px(1)),
             flex_direction: FlexDirection::Column,
+            padding: UiRect::all(px(8)),
             ..default()
         },
         Button,
+        ShopItemButton {
+            game_weapon: game_weapon.clone(),
+            text_entity: shop_item_text,
+            cost_text_entity: cost_text,
+        },
         BackgroundColor(GRAY.with_alpha(0.7).into()),
-        children![
-            (Text::new(game_weapon.kind.to_string()), ShopItemText),
-            (
-                Text::new(format!("Cost: {}$", game_weapon.cost)),
-                ShopItemText
-            )
-        ],
-        ShopItemButton(game_weapon),
-    )
+    ));
+
+    button_entity.with_children(|parent| {
+        parent.spawn(Text::new(game_weapon.kind.to_string()));
+        parent
+            .spawn((
+                Node {
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::SpaceBetween,
+                    ..default()
+                },
+                children![(),],
+            ))
+            .add_children(&[shop_item_text, cost_text]);
+    });
 }
 
 fn update_disabled_enabled_shop_item_buttons(
     mut commands: Commands,
     player_cash_changed: Single<&PlayerCash, Changed<PlayerCash>>,
-    shop_item_buttons: Query<&ShopItemButton>,
-    text_color_query: Query<
-        (&mut TextColor, &ChildOf, Entity),
-        With<ShopItemText>,
-    >,
+    shop_item_buttons: Query<(Entity, &ShopItemButton)>,
+    mut text_color_query: Query<&mut TextColor, With<ShopItemCostText>>,
 ) {
-    for (mut text_color, child_of, entity) in text_color_query {
-        let Ok(shop_item_button) = shop_item_buttons.get(child_of.0) else {
+    for (button_entity, shop_item_button) in shop_item_buttons {
+        let Ok(mut text_color) =
+            text_color_query.get_mut(shop_item_button.cost_text_entity)
+        else {
             continue;
         };
-        if shop_item_button.0.cost > player_cash_changed.0 {
-            commands.entity(entity).insert(InteractionDisabled);
-            *text_color = GRAY_600.into();
+        if shop_item_button.game_weapon.cost > player_cash_changed.0 {
+            commands.entity(button_entity).insert(InteractionDisabled);
+            *text_color = RED_500.into();
         } else {
-            commands.entity(entity).remove::<InteractionDisabled>();
+            commands
+                .entity(button_entity)
+                .remove::<InteractionDisabled>();
             *text_color = WHITE.into();
         }
     }
 }
 
 fn handle_pressed_buy_item(
-    query: Query<(&Interaction, &ShopItemButton), Changed<Interaction>>,
+    shop_item_button_query: Query<
+        (&Interaction, &ShopItemButton),
+        (Changed<Interaction>, Without<InteractionDisabled>),
+    >,
     player_query: Single<(&mut PlayerCash, &mut PlayerWeapons)>,
 ) {
     let (mut player_cash, mut player_weapons) = player_query.into_inner();
 
-    for (interaction, shop_item_button) in query {
+    for (interaction, shop_item_button) in shop_item_button_query {
         if Interaction::Pressed != *interaction {
             continue;
         }
 
-        if shop_item_button.0.cost > player_cash.0 {
+        if shop_item_button.game_weapon.cost > player_cash.0 {
             info!("not enough cash to buy item");
             return;
         }
 
-        player_cash.0 -= shop_item_button.0.cost;
+        player_cash.0 -= shop_item_button.game_weapon.cost;
 
-        let game_weapon = get_game_weapon_by_kind(&shop_item_button.0.kind);
+        let game_weapon =
+            get_game_weapon_by_kind(&shop_item_button.game_weapon.kind);
 
-        let player_weapon = match shop_item_button.0.slot_type {
+        let player_weapon = match shop_item_button.game_weapon.slot_type {
             WeaponSlotType::Primary => &mut player_weapons.weapons[0],
             WeaponSlotType::Secondary => &mut player_weapons.weapons[1],
         };
@@ -234,5 +273,59 @@ fn handle_pressed_buy_item(
         player_weapon.state.loaded_ammo = game_weapon.max_loaded_ammo;
         // TODO: function to get this value depending on WeaponKind
         player_weapon.state.carried_ammo = 360;
+    }
+}
+
+fn update_texts_on_player_weapons_change(
+    mut commands: Commands,
+    player_weapons: Single<&PlayerWeapons, Changed<PlayerWeapons>>,
+    shop_item_buttons: Query<(Entity, &ShopItemButton)>,
+    mut shop_item_text_query: Query<
+        (&mut Text, &mut TextColor),
+        With<ShopItemText>,
+    >,
+    mut shop_item_cost_text_query: Query<
+        &mut Visibility,
+        With<ShopItemCostText>,
+    >,
+) {
+    for (button_entity, shop_item_button) in shop_item_buttons {
+        let game_weapon = &shop_item_button.game_weapon;
+
+        // check if weapon of current weapon can be found in current player weapons
+        let weapon_equipped = player_weapons
+            .weapons
+            .iter()
+            .find(|weapon| weapon.game_weapon.kind == game_weapon.kind)
+            .is_some();
+
+        let Ok((mut shop_item_text, mut shop_item_text_color)) =
+            shop_item_text_query.get_mut(shop_item_button.text_entity)
+        else {
+            continue;
+        };
+
+        let Ok(mut shop_item_cost_text_visibility) = shop_item_cost_text_query
+            .get_mut(shop_item_button.cost_text_entity)
+        else {
+            continue;
+        };
+
+        if weapon_equipped {
+            commands.entity(button_entity).insert(InteractionDisabled);
+
+            **shop_item_text = "Equipped".to_string();
+            **shop_item_text_color = GRAY_600.into();
+
+            *shop_item_cost_text_visibility = Visibility::Hidden;
+        } else {
+            commands
+                .entity(button_entity)
+                .remove::<InteractionDisabled>();
+
+            **shop_item_text = "Cost:".to_string();
+
+            *shop_item_cost_text_visibility = Visibility::Inherited;
+        }
     }
 }
