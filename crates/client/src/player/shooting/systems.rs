@@ -8,7 +8,9 @@ use shared::{
     multiplayer_messages::ShootRequest,
     player::{AimType, PlayerState},
     protocol::OrderedReliableChannel,
-    shooting::{MAX_SHOOTING_DISTANCE, PlayerWeapons, WeaponSlotType},
+    shooting::{
+        MAX_SHOOTING_DISTANCE, PlayerWeapons, WeaponKind, WeaponSlotType,
+    },
 };
 
 use crate::{
@@ -17,6 +19,7 @@ use crate::{
         Player, PlayerDeathMessage,
         camera::{
             components::{PlayerWeaponModel, WorldCamera},
+            messages::UpdatePlayerWeaponModel,
             weapon_positions::get_position_for_weapon,
         },
         shooting::{
@@ -28,7 +31,8 @@ use crate::{
             resources::{ChangeWeaponCooldown, WeaponReloadTimer},
         },
     },
-    shared::get_fire_delay_by_weapon_type,
+    shared::get_fire_delay_by_weapon_kind,
+    ui::UiState,
     utils::query_filters::{OurPlayerFilter, PlayerOrEnemyFilter},
 };
 
@@ -45,8 +49,7 @@ type WorldModelCameraQuery<'w, 's> = Single<
     (With<WorldCamera>, Without<Player>),
 >;
 
-// FIXME: rename
-pub fn add_player_weapons_to_new_players(
+pub fn setup_new_players(
     added_players: Query<Entity, (Added<Player>, With<Controlled>)>,
     mut commands: Commands,
 ) {
@@ -75,7 +78,12 @@ pub fn handle_input(
         (&mut PlayerWeapons, &mut PlayerState, &mut AimType),
         OurPlayerFilter,
     >,
+    ui_state: Res<UiState>,
 ) {
+    if ui_state.buy_overlay_visibile {
+        return;
+    }
+
     let (mut player_weapons, mut player_state, mut aim_type) =
         player_query.into_inner();
 
@@ -83,11 +91,11 @@ pub fn handle_input(
 
     let current_weapon =
         &mut player_weapons.weapons[player_state.active_weapon_slot];
-    let current_weapon_stats = &current_weapon.stats;
+    let current_weapon_stats = &current_weapon.game_weapon;
     let current_weapon_state = &mut current_weapon.state;
 
     let is_current_weapon_secondary =
-        current_weapon_stats.weapon_slot_type == WeaponSlotType::Secondary;
+        current_weapon_stats.slot_type == WeaponSlotType::Secondary;
 
     let weapon_is_full = current_weapon_stats.max_loaded_ammo
         == current_weapon_state.loaded_ammo;
@@ -127,7 +135,7 @@ pub fn handle_input(
         player_shot_messsage_writer.write(PlayerWeaponFiredMessage);
 
         let fire_delay =
-            get_fire_delay_by_weapon_type(&current_weapon_stats.weapon_type);
+            get_fire_delay_by_weapon_kind(&current_weapon_stats.kind);
         commands.spawn(PlayerShootCooldownTimer(Timer::from_seconds(
             fire_delay,
             TimerMode::Once,
@@ -309,12 +317,12 @@ pub fn handle_reload_player_weapon_message(
 
         player_state.reloading = true;
 
-        let weapon_type = &player_weapons.weapons
+        let weapon_kind = &player_weapons.weapons
             [player_state.active_weapon_slot]
-            .stats
-            .weapon_type;
+            .game_weapon
+            .kind;
         let weapon_position =
-            get_position_for_weapon(weapon_type, &AimType::Normal);
+            get_position_for_weapon(weapon_kind, &AimType::Normal);
 
         player_weapon_model_transform.translation = weapon_position;
     }
@@ -343,9 +351,10 @@ pub fn handle_player_weapon_reload_timer(
 
         let active_slot = player_state.active_weapon_slot;
 
-        let weapon_stats = player_weapons.weapons[active_slot].stats.clone();
-        let active_weapon_state =
-            &mut player_weapons.weapons[active_slot].state;
+        let current_weapon = &mut player_weapons.weapons[active_slot];
+
+        let weapon_stats = &current_weapon.game_weapon;
+        let active_weapon_state = &mut current_weapon.state;
 
         let missing_bullets_to_load =
             weapon_stats.max_loaded_ammo - active_weapon_state.loaded_ammo;
@@ -368,6 +377,9 @@ pub fn handle_weapon_slot_change(
     mut player_state: Single<&mut PlayerState, With<Controlled>>,
     mut message_writer: MessageWriter<PlayerWeaponSlotChangeMessage>,
     existing_change_weapon_cooldown: Option<Res<ChangeWeaponCooldown>>,
+    mut update_player_weapon_model_message_writer: MessageWriter<
+        UpdatePlayerWeaponModel,
+    >,
 ) {
     // dont allow changing weapon if on cooldown
     if existing_change_weapon_cooldown.is_some() {
@@ -399,6 +411,8 @@ pub fn handle_weapon_slot_change(
         // cancel any ongoing reload
         commands.remove_resource::<WeaponReloadTimer>();
         player_state.reloading = false;
+        update_player_weapon_model_message_writer
+            .write(UpdatePlayerWeaponModel);
     }
 }
 
@@ -425,5 +439,33 @@ pub fn check_if_player_dead(
 ) {
     if player_health.0 <= 0.0 {
         player_death_message_writer.write(PlayerDeathMessage);
+    }
+}
+
+pub fn handle_player_scope_aim(
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    player_query: Single<
+        (&mut AimType, &PlayerState, &PlayerWeapons),
+        With<Controlled>,
+    >,
+) {
+    let (mut aim_type, player_state, player_weapons) =
+        player_query.into_inner();
+
+    let current_weapon =
+        &player_weapons.weapons[player_state.active_weapon_slot];
+
+    if current_weapon.game_weapon.kind == WeaponKind::P90 {
+        return;
+    }
+
+    if player_state.reloading {
+        return;
+    }
+
+    if mouse_input.just_pressed(MouseButton::Right) {
+        *aim_type = AimType::Scoped;
+    } else if mouse_input.just_released(MouseButton::Right) {
+        *aim_type = AimType::Normal;
     }
 }

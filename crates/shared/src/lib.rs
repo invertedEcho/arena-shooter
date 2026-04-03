@@ -142,3 +142,14 @@ pub struct StartGame {
 ///  NOTE: This message gets ignored if game_core has AppRole::DedicatedServer (atm)
 #[derive(Message)]
 pub struct StopGame;
+
+/// When this timer finishes, the next wave gets spawned.
+/// It gets inserted when finishing a wave, and removed when the timer has finished / when the next
+/// wave has started.
+#[derive(Resource)]
+pub struct NextWaveTimer(pub Timer);
+
+/// This message gets written whenever the current wave is finished, e.g. all enemies of the
+/// corresponding wave are killed
+#[derive(Message)]
+pub struct WaveFinishedMessage;

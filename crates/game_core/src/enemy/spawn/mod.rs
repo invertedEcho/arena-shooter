@@ -59,10 +59,7 @@ struct EdgesOfMap {
     min_z: f32,
     max_z: f32,
 }
-// first corner is at: 10, 7, 20
-// second corner is at: -10, 7, 20
-// third corner is at -10, 7, -20
-// third corner is at 10, 7, -20
+
 fn get_edges_of_map(selected_map: &GameMap) -> EdgesOfMap {
     match selected_map {
         GameMap::MediumPlastic => EdgesOfMap {
@@ -93,6 +90,7 @@ fn get_random_enemy_spawn_locations(
 
     let edges_of_map = get_edges_of_map(selected_map);
 
+    // FIXME: this may infinitely loop
     while enemy_spawn_locations.len() < enemy_spawn_count {
         let random_x = rng.random_range(edges_of_map.min_x..edges_of_map.max_x);
         let random_z = rng.random_range(edges_of_map.min_z..edges_of_map.max_z);

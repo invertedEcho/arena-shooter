@@ -18,12 +18,13 @@ use shared::{
         ENEMY_FOV, ENEMY_VISION_RANGE,
         components::{Enemy, EnemyState},
     },
-    player::Player,
+    player::{Player, PlayerCash},
 };
 
 use crate::{
-    enemy_visuals::HealthBarCamera, game_flow::states::AppState,
+    game_flow::states::AppState,
     gameplay_debug::states_overlay::DebugOverlayPlugin,
+    player::camera::components::{MainMenuCamera, WorldCamera},
 };
 
 mod states_overlay;
@@ -35,6 +36,7 @@ pub struct AppDebugState {
     show_enemy_debug_info: bool,
     show_states_overlay: bool,
     invincibility: bool,
+    pub interpolate_weapon_position: bool,
 }
 
 impl Default for AppDebugState {
@@ -45,6 +47,7 @@ impl Default for AppDebugState {
             show_enemy_debug_info: true,
             show_states_overlay: true,
             invincibility: false,
+            interpolate_weapon_position: true,
         }
     }
 }
@@ -81,7 +84,6 @@ impl Plugin for GameplayDebugPlugin {
                 tick_despawn_timer_debug_gizmo_lines,
                 handle_spawn_debug_points_message,
                 do_invicibility,
-                ensure_egui_context_exists,
             ),
         );
         app.add_systems(
@@ -95,6 +97,8 @@ impl Plugin for GameplayDebugPlugin {
         );
         // app.add_systems(EguiPrimaryContextPass, player_inspector);
         app.add_systems(EguiPrimaryContextPass, developer_menu);
+
+        app.add_observer(ensure_egui_context_exists);
 
         app.insert_resource(DebugGizmos(Vec::new()));
     }
@@ -306,6 +310,7 @@ fn update_landmass_debug_enabled(
 fn developer_menu(
     mut ui_context: Single<&mut EguiContext, With<PrimaryEguiContext>>,
     mut app_debug_state: ResMut<AppDebugState>,
+    mut player_cash: Query<&mut PlayerCash>,
 ) {
     egui::Window::new("Developer Menu").show(ui_context.get_mut(), |ui| {
         ui.horizontal(|ui| {
@@ -328,6 +333,17 @@ fn developer_menu(
             ui.label("Invincibility");
             ui.checkbox(&mut app_debug_state.invincibility, "");
         });
+        ui.horizontal(|ui| {
+            ui.label("Interpolate weapon position");
+            ui.checkbox(&mut app_debug_state.interpolate_weapon_position, "");
+        });
+        if let Ok(mut player_cash) = player_cash.single_mut() {
+            ui.horizontal(|ui| {
+                if ui.button("Give player cash").clicked() {
+                    player_cash.0 += 1000;
+                }
+            });
+        }
     });
 }
 
@@ -341,11 +357,12 @@ fn do_invicibility(
 }
 
 fn ensure_egui_context_exists(
+    _on_camera_add: On<Add, Camera>,
     mut commands: Commands,
-    existing_egui_contexts: Query<&PrimaryEguiContext>,
-    camera_query: Query<Entity, (With<Camera>, Without<HealthBarCamera>)>,
+    egui_contexts: Query<&PrimaryEguiContext>,
+    camera_query: Query<Entity, Or<(With<WorldCamera>, With<MainMenuCamera>)>>,
 ) {
-    if existing_egui_contexts.count() == 0 {
+    if egui_contexts.count() == 0 {
         let Some(first_camera) = camera_query.iter().next() else {
             return;
         };

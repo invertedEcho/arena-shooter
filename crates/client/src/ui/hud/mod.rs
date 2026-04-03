@@ -1,15 +1,21 @@
 use bevy::prelude::*;
 use game_core::GameStateWave;
+use shared::NextWaveTimer;
 
 use crate::{
     game_flow::states::{GameModeClient, InGameState},
-    ui::UiState,
-    ui::hud::systems::{
-        fade_out_damage_indicator, on_ui_state_change,
-        spawn_bullet_hit_crosshair, spawn_damage_indicator,
-        spawn_player_crosshair, spawn_player_hud, spawn_wave_hud,
-        update_player_ammo_text, update_player_crosshair_visibility,
-        update_player_health_text, update_selected_weapon, update_wave_hud,
+    ui::{
+        UiState,
+        hud::systems::{
+            fade_out_damage_indicator, hide_current_wave_finished_text,
+            on_ui_state_change, show_wave_finished_text,
+            spawn_bullet_hit_crosshair, spawn_damage_indicator,
+            spawn_info_text_current_wave_finished, spawn_player_crosshair,
+            spawn_player_hud, spawn_wave_hud, update_current_cash_amount,
+            update_next_wave_timer_text, update_player_ammo_text,
+            update_player_crosshair_visibility, update_player_health_text,
+            update_selected_weapon, update_wave_hud,
+        },
     },
 };
 
@@ -26,6 +32,7 @@ pub struct PlayerHudPlugin;
 
 impl Plugin for PlayerHudPlugin {
     fn build(&self, app: &mut App) {
+        app.add_systems(Startup, spawn_info_text_current_wave_finished);
         app.add_systems(
             Update,
             (
@@ -37,6 +44,9 @@ impl Plugin for PlayerHudPlugin {
                 update_selected_weapon,
                 spawn_damage_indicator,
                 fade_out_damage_indicator,
+                update_current_cash_amount,
+                update_next_wave_timer_text,
+                show_wave_finished_text,
             )
                 .run_if(in_state(InGameState::Playing)),
         );
@@ -50,6 +60,12 @@ impl Plugin for PlayerHudPlugin {
         app.add_systems(
             Update,
             on_ui_state_change.run_if(resource_changed::<UiState>),
+        );
+
+        app.add_systems(
+            Update,
+            hide_current_wave_finished_text
+                .run_if(resource_removed::<NextWaveTimer>),
         );
     }
 }

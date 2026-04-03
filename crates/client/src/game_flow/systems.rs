@@ -2,6 +2,7 @@ use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
+use game_core::RequestNewWave;
 use lightyear::prelude::MessageSender;
 use shared::{
     GameStateServer, multiplayer_messages::ChangeGameServerStateRequest,
@@ -14,6 +15,7 @@ use crate::{
         PlayerDeathMessage,
         camera::{components::MainMenuCamera, get_main_menu_camera_transform},
     },
+    ui::UiState,
 };
 
 pub fn grab_mouse(
@@ -37,8 +39,10 @@ pub fn manual_mouse_grab_toggle(
     if keyboard_input.just_pressed(KeyCode::KeyU) {
         if primary_cursor_options.grab_mode == CursorGrabMode::None {
             primary_cursor_options.grab_mode = CursorGrabMode::Locked;
+            primary_cursor_options.visible = false;
         } else {
             primary_cursor_options.grab_mode = CursorGrabMode::None;
+            primary_cursor_options.visible = true;
         }
     }
 }
@@ -47,6 +51,7 @@ pub fn handle_escape_in_game(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     current_in_game_state: If<Res<State<InGameState>>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
+    mut ui_state: ResMut<UiState>,
 ) {
     let escape_just_pressed = keyboard_input.just_pressed(KeyCode::Escape);
     let current_in_game_state = current_in_game_state.get();
@@ -54,7 +59,11 @@ pub fn handle_escape_in_game(
     if escape_just_pressed {
         match current_in_game_state {
             InGameState::Playing => {
-                next_in_game_state.set(InGameState::Paused);
+                if ui_state.buy_overlay_visibile {
+                    ui_state.buy_overlay_visibile = false;
+                } else {
+                    next_in_game_state.set(InGameState::Paused);
+                }
             }
             InGameState::Paused => next_in_game_state.set(InGameState::Playing),
             InGameState::PlayerDead => {}
@@ -130,5 +139,14 @@ pub fn send_update_game_server_state_request_on_in_game_state_change(
                 ChangeGameServerStateRequest(GameStateServer::Paused),
             );
         }
+    }
+}
+
+pub fn handle_request_next_wave(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut message_writer: MessageWriter<RequestNewWave>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyE) {
+        message_writer.write(RequestNewWave);
     }
 }

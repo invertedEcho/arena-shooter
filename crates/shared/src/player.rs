@@ -5,8 +5,7 @@ use crate::{
     DEFAULT_HEALTH,
     components::Health,
     shooting::{
-        PlayerWeapons, Weapon, WeaponSlotType, WeaponState, WeaponStats,
-        WeaponType,
+        PlayerWeapon, PlayerWeapons, WEAPON_AK47, WEAPON_GLOCK, WeaponState,
     },
 };
 
@@ -25,6 +24,7 @@ pub struct PlayerBundle {
     aim_type: AimType,
     state: PlayerState,
     weapons: PlayerWeapons,
+    player_cash: PlayerCash,
 }
 
 #[derive(Component, Serialize, Deserialize, Clone, Default, PartialEq)]
@@ -35,29 +35,24 @@ pub struct PlayerState {
     pub active_weapon_slot: usize,
 }
 
+#[derive(Component)]
+pub struct PlayerCash(pub usize);
+
 pub const DEFAULT_PLAYER_WEAPONS: PlayerWeapons = PlayerWeapons {
     weapons: [
-        Weapon {
-            stats: WeaponStats {
-                weapon_type: WeaponType::AssaultRifle,
-                max_loaded_ammo: 30,
-                weapon_slot_type: WeaponSlotType::Primary,
-            },
+        PlayerWeapon {
             state: WeaponState {
                 loaded_ammo: 30,
                 carried_ammo: 120,
             },
+            game_weapon: WEAPON_AK47,
         },
-        Weapon {
-            stats: WeaponStats {
-                weapon_type: WeaponType::Pistol,
-                max_loaded_ammo: 15,
-                weapon_slot_type: WeaponSlotType::Secondary,
-            },
+        PlayerWeapon {
             state: WeaponState {
                 loaded_ammo: 15,
                 carried_ammo: 50,
             },
+            game_weapon: WEAPON_GLOCK,
         },
     ],
 };
@@ -70,6 +65,7 @@ impl Default for PlayerBundle {
             aim_type: AimType::Normal,
             state: PlayerState::default(),
             weapons: DEFAULT_PLAYER_WEAPONS,
+            player_cash: PlayerCash(0),
         }
     }
 }

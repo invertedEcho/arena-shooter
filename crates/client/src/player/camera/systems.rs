@@ -7,11 +7,12 @@ use lightyear::prelude::Controlled;
 use shared::{
     components::DespawnTimer,
     player::{AimType, Player, PlayerState},
-    shooting::{PlayerWeapons, WeaponType},
+    shooting::{PlayerWeapons, WeaponKind},
 };
 
 use crate::{
     game_flow::states::AppState,
+    gameplay_debug::AppDebugState,
     player::{
         camera::{
             PLAYER_CAMERA_Y_OFFSET, SpawnPlayerCamera,
@@ -19,18 +20,17 @@ use crate::{
                 FreeCam, MainMenuCamera, MuzzleFlash, PlayerCameraState,
                 PlayerWeaponModel, ViewModelCamera, WorldCamera,
             },
+            messages::UpdatePlayerWeaponModel,
             weapon_positions::{
                 get_muzzle_flash_position_for_weapon, get_position_for_weapon,
             },
         },
         shooting::{
-            asset_paths::get_asset_path_for_weapon_type,
-            components::ShootRecoil,
-            messages::{
-                PlayerWeaponFiredMessage, PlayerWeaponSlotChangeMessage,
-            },
+            asset_paths::get_path_to_model_for_weapon_kind,
+            components::ShootRecoil, messages::PlayerWeaponFiredMessage,
         },
     },
+    ui::UiState,
 };
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
@@ -73,7 +73,7 @@ pub fn handle_spawn_player_camera_message(
                 Camera3d::default(),
                 Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
                 Projection::from(PerspectiveProjection {
-                    fov: 80.0_f32.to_radians(),
+                    fov: 90.0_f32.to_radians(),
                     ..default()
                 }),
                 DespawnOnExit(AppState::InGame),
@@ -94,13 +94,11 @@ pub fn handle_spawn_player_camera_message(
             ));
 
             let weapon_model_path =
-                get_asset_path_for_weapon_type(&WeaponType::AssaultRifle);
+                get_path_to_model_for_weapon_kind(&WeaponKind::AK47);
             let weapon_model = asset_server
                 .load(GltfAssetLabel::Scene(0).from_asset(weapon_model_path));
-            let weapon_position = get_position_for_weapon(
-                &WeaponType::AssaultRifle,
-                &AimType::Normal,
-            );
+            let weapon_position =
+                get_position_for_weapon(&WeaponKind::AK47, &AimType::Normal);
             parent
                 .spawn((
                     Name::new("ViewModelCamera"),
@@ -112,6 +110,10 @@ pub fn handle_spawn_player_camera_message(
                     },
                     RenderLayers::layer(1),
                     Transform::from_xyz(0.0, PLAYER_CAMERA_Y_OFFSET, 0.0),
+                    Projection::from(PerspectiveProjection {
+                        fov: 70.0,
+                        ..default()
+                    }),
                 ))
                 .with_child((
                     Name::new("PlayerWeaponModel"),
@@ -119,7 +121,7 @@ pub fn handle_spawn_player_camera_message(
                     Transform {
                         translation: weapon_position,
                         scale: Vec3::splat(2.0),
-                        rotation: Quat::from_rotation_y(FRAC_PI_2),
+                        ..default()
                     },
                     PlayerWeaponModel,
                     Visibility::Visible,
@@ -129,30 +131,18 @@ pub fn handle_spawn_player_camera_message(
     }
 }
 
-pub fn handle_player_scope_aim(
-    mouse_input: Res<ButtonInput<MouseButton>>,
-    player_query: Single<(&mut AimType, &PlayerState), With<Controlled>>,
-) {
-    let (mut aim_type, player_state) = player_query.into_inner();
-
-    if player_state.reloading {
-        return;
-    }
-
-    if mouse_input.just_pressed(MouseButton::Right) {
-        *aim_type = AimType::Scoped;
-    } else if mouse_input.just_released(MouseButton::Right) {
-        *aim_type = AimType::Normal;
-    }
-}
-
 type AnyCamera = Or<(With<WorldCamera>, With<ViewModelCamera>)>;
 
 pub fn update_yaw_pitch_on_mouse_motion(
     mouse_motion: Res<AccumulatedMouseMotion>,
     camera_transforms: Query<&mut Transform, AnyCamera>,
     mut shoot_recoil: Single<&mut ShootRecoil>,
+    ui_state: Res<UiState>,
 ) {
+    if ui_state.buy_overlay_visibile {
+        return;
+    }
+
     let delta = mouse_motion.delta;
     if delta == Vec2::ZERO {
         return;
@@ -319,7 +309,12 @@ pub fn weapon_sway(
     time: Res<Time>,
     mouse_motion: Res<AccumulatedMouseMotion>,
     mut transform: Single<&mut Transform, With<PlayerWeaponModel>>,
+    ui_state: Res<UiState>,
 ) {
+    if ui_state.buy_overlay_visibile {
+        return;
+    }
+
     // how fast it will return to initial position
     const DAMPING: f32 = 12.0;
 
@@ -335,37 +330,35 @@ pub fn weapon_sway(
 
     transform.rotation *= sway_rot;
 
-    transform.rotation = transform.rotation.slerp(
-        Quat::from_rotation_y(FRAC_PI_2),
-        DAMPING * time.delta_secs(),
-    );
+    transform.rotation = transform
+        .rotation
+        .slerp(Quat::IDENTITY, DAMPING * time.delta_secs());
 }
 
 pub fn update_player_weapon_model(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    mut message_reader: MessageReader<PlayerWeaponSlotChangeMessage>,
+    mut message_reader: MessageReader<UpdatePlayerWeaponModel>,
     player_weapon_model_query: Single<
         (Entity, &mut Transform),
         With<PlayerWeaponModel>,
     >,
-    player_query: Single<(&PlayerWeapons, &AimType)>,
+    player_query: Single<(&PlayerWeapons, &AimType, &PlayerState)>,
 ) {
     let (player_weapon_model_entity, mut player_weapon_model_transform) =
         player_weapon_model_query.into_inner();
 
-    for message in message_reader.read() {
-        let player_weapons = player_query.0;
-        let aim_type = player_query.1;
+    let (player_weapons, aim_type, player_state) = player_query.into_inner();
 
-        let new_slot_index = message.0;
+    for _ in message_reader.read() {
+        let weapon_kind = &player_weapons.weapons
+            [player_state.active_weapon_slot]
+            .game_weapon
+            .kind;
 
-        let weapon_type =
-            &player_weapons.weapons[new_slot_index].stats.weapon_type;
+        let weapon_position = get_position_for_weapon(weapon_kind, aim_type);
 
-        let weapon_position = get_position_for_weapon(weapon_type, aim_type);
-
-        let model_path = get_asset_path_for_weapon_type(weapon_type);
+        let model_path = get_path_to_model_for_weapon_kind(weapon_kind);
 
         let weapon_model =
             asset_server.load(GltfAssetLabel::Scene(0).from_asset(model_path));
@@ -391,7 +384,7 @@ pub fn spawn_muzzle_flash(
     for _ in player_shot_message_reader.read() {
         let active_weapon = player_state.active_weapon_slot;
         let muzzle_flash_position = get_muzzle_flash_position_for_weapon(
-            &player_weapons.weapons[active_weapon].stats.weapon_type,
+            &player_weapons.weapons[active_weapon].game_weapon.kind,
             aim_type,
         );
 
@@ -427,25 +420,32 @@ pub fn interpolate_weapon_position(
         With<PlayerWeaponModel>,
     >,
     time: Res<Time>,
+    app_debug_state: Option<ResMut<AppDebugState>>,
 ) {
+    if let Some(app_debug_state) = app_debug_state
+        && !app_debug_state.interpolate_weapon_position
+    {
+        return;
+    }
+
     const SPEED: f32 = 20.0;
 
     let (player_weapons, aim_type, player_state) = player_query.into_inner();
 
     let reloading = player_state.reloading;
 
-    let weapon_type = &player_weapons.weapons[player_state.active_weapon_slot]
-        .stats
-        .weapon_type;
+    let weapon_kind = &player_weapons.weapons[player_state.active_weapon_slot]
+        .game_weapon
+        .kind;
 
-    let mut target_destination = get_position_for_weapon(weapon_type, aim_type);
+    let mut target_destination = get_position_for_weapon(weapon_kind, aim_type);
 
     if reloading {
-        match weapon_type {
-            WeaponType::Pistol => {
+        match weapon_kind {
+            WeaponKind::Glock => {
                 target_destination.y -= 0.25;
             }
-            WeaponType::AssaultRifle => {
+            WeaponKind::AK47 | WeaponKind::P90 => {
                 target_destination.y -= 0.3;
             }
         }
@@ -466,7 +466,7 @@ pub fn weapon_model_kickback(
     mut player_shot_message_reader: MessageReader<PlayerWeaponFiredMessage>,
 ) {
     for _ in player_shot_message_reader.read() {
-        player_weapon_model_transform.rotation *= Quat::from_rotation_z(0.15);
+        player_weapon_model_transform.rotation *= Quat::from_rotation_x(0.15);
     }
 }
 

@@ -58,6 +58,8 @@ fn main() {
 
     app.insert_resource(game_settings.clone());
 
+    // app.insert_resource(DirectionalLightShadowMap { size: 4096 });
+
     let window_mode = if game_settings.graphics.borderless_fullscreen {
         WindowMode::BorderlessFullscreen(MonitorSelection::Current)
     } else {

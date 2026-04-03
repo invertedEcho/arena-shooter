@@ -2,9 +2,10 @@ use bevy::{color::palettes::css::WHITE, prelude::*};
 use game_core::GameStateWave;
 use lightyear::prelude::{Controlled, MessageReceiver};
 use shared::{
+    NextWaveTimer, WaveFinishedMessage,
     components::{DespawnTimer, Health},
     multiplayer_messages::PlayerHitMessage,
-    player::{AimType, Player, PlayerReady, PlayerState},
+    player::{AimType, Player, PlayerCash, PlayerReady, PlayerState},
     shooting::PlayerWeapons,
 };
 
@@ -21,7 +22,8 @@ use crate::{
         hud::{
             CROSSHAIR_BULLET_HIT_PATH, MAIN_CROSSHAIR_PATH,
             components::{
-                CurrentWaveText, DamageIndicator, EnemiesLeftText,
+                CurrentCashAmount, CurrentWaveFinishedText, CurrentWaveText,
+                DamageIndicator, EnemiesLeftText, NextWaveTimerText,
                 PlayerCarriedAmmoText, PlayerCrosshair, PlayerHealthText,
                 PlayerHud, PlayerLoadedAmmoText, PlayerWeaponText,
             },
@@ -113,7 +115,7 @@ pub fn spawn_player_hud(
                             Text::new(format!(
                                 "{}: {}",
                                 index + 1,
-                                player_weapon.stats.weapon_type
+                                player_weapon.game_weapon.kind
                             )),
                             TextFont {
                                 font: asset_server.load(ITALIC_GAME_FONT_PATH),
@@ -292,6 +294,8 @@ pub fn spawn_wave_hud(mut commands: Commands) {
             OnlyVisibleInGame,
         ))
         .with_children(|parent| {
+            parent.spawn(Text::new("Cash:"));
+            parent.spawn((Text::new("0"), CurrentCashAmount));
             parent.spawn(Text::new("Current wave:"));
             parent.spawn((Text::new(""), CurrentWaveText));
             parent.spawn(Text::new("Enemies left:"));
@@ -312,7 +316,6 @@ pub fn update_wave_hud(
         Text::new(game_state_wave.enemies_left_from_current_wave.to_string());
 }
 
-// TODO: do we need a message for this? cant we just watch for change in PlayerWeapons?
 pub fn update_selected_weapon(
     mut message_reader: MessageReader<PlayerWeaponSlotChangeMessage>,
     mut player_weapon_texts: Query<(&mut TextColor, &PlayerWeaponText)>,
@@ -407,4 +410,57 @@ pub fn fade_out_damage_indicator(
             image_node.color = WHITE.with_alpha(new_alpha).into();
         }
     }
+}
+
+pub fn spawn_info_text_current_wave_finished(mut commands: Commands) {
+    commands.spawn((
+        Node {
+            width: percent(100.0),
+            height: percent(100.0),
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            padding: UiRect {
+                top: percent(5.0),
+                ..default()
+            },
+            ..default()
+        },
+        CurrentWaveFinishedText,
+        DespawnOnExit(AppState::InGame),
+        children![
+            (Text::new("Current wave finished!")),
+            (Text::new("Press (B) to buy new weapons")),
+            (Text::new("Next wave in 10 seconds"), NextWaveTimerText)
+        ],
+        Visibility::Hidden,
+    ));
+}
+
+pub fn update_current_cash_amount(
+    changed_player_cash: Single<&PlayerCash, Changed<PlayerCash>>,
+    mut player_cash_text: Single<&mut Text, With<CurrentCashAmount>>,
+) {
+    ***player_cash_text = changed_player_cash.0.to_string();
+}
+
+pub fn update_next_wave_timer_text(
+    timer: If<Res<NextWaveTimer>>,
+    mut text: Single<&mut Text, With<NextWaveTimerText>>,
+) {
+    ***text = format!("Next wave in {:.2}", timer.0.0.remaining_secs());
+}
+
+pub fn show_wave_finished_text(
+    mut text_visibility: Single<&mut Visibility, With<CurrentWaveFinishedText>>,
+    mut wave_finished_message_reader: MessageReader<WaveFinishedMessage>,
+) {
+    for _ in wave_finished_message_reader.read() {
+        **text_visibility = Visibility::Visible;
+    }
+}
+
+pub fn hide_current_wave_finished_text(
+    mut text_visibility: Single<&mut Visibility, With<CurrentWaveFinishedText>>,
+) {
+    **text_visibility = Visibility::Hidden;
 }

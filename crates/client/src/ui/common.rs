@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, ui::InteractionDisabled};
 use lightyear::prelude::*;
 use shared::StopGame;
 
@@ -115,12 +115,13 @@ pub type AnyButtonInteractionQuery<'w, 's> = Query<
         Changed<Interaction>,
         With<Button>,
         Without<ExcludeFromHover>,
+        Without<InteractionDisabled>,
     ),
 >;
 
 fn handle_button_hover_text_color(
     query: AnyButtonInteractionQuery,
-    mut text_color_query: Query<&mut TextColor>,
+    mut text_color_query: Query<&mut TextColor, Without<InteractionDisabled>>,
 ) {
     for (interaction, children) in query {
         let Ok(mut text_color) = text_color_query.get_mut(children[0]) else {

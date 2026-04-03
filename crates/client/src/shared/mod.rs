@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::shooting::WeaponType;
+use shared::shooting::WeaponKind;
 
 use crate::{
     game_flow::states::InGameState,
@@ -28,9 +28,10 @@ impl Plugin for CommonPlugin {
     }
 }
 
-pub fn get_fire_delay_by_weapon_type(weapon_type: &WeaponType) -> f32 {
+pub fn get_fire_delay_by_weapon_kind(weapon_type: &WeaponKind) -> f32 {
     match weapon_type {
-        WeaponType::Pistol => 0.3,
-        WeaponType::AssaultRifle => 0.115,
+        WeaponKind::Glock => 0.3,
+        WeaponKind::AK47 => 0.115,
+        WeaponKind::P90 => 0.05,
     }
 }

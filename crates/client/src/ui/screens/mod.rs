@@ -1,11 +1,13 @@
 use bevy::prelude::*;
 
 use crate::ui::screens::{
-    death_screen::DeathScreenPlugin, disconnect_screen::DisconnectScreenPlugin,
+    buy_overlay::BuyScreenPlugin, death_screen::DeathScreenPlugin,
+    disconnect_screen::DisconnectScreenPlugin,
     loading_screen::LoadingScreenPlugin, pause_screen::PauseScreenPlugin,
     score_board_overlay::ScoreBoardOverlayPlugin,
 };
 
+mod buy_overlay;
 mod death_screen;
 mod disconnect_screen;
 mod loading_screen;
@@ -20,6 +22,7 @@ impl Plugin for UIScreensPlugin {
             .add_plugins(DisconnectScreenPlugin)
             .add_plugins(LoadingScreenPlugin)
             .add_plugins(PauseScreenPlugin)
-            .add_plugins(ScoreBoardOverlayPlugin);
+            .add_plugins(ScoreBoardOverlayPlugin)
+            .add_plugins(BuyScreenPlugin);
     }
 }

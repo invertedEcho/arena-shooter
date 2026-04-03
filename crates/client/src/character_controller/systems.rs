@@ -15,6 +15,7 @@ use shared::{
 use crate::{
     character_controller::messages::{MovementAction, MovementDirection},
     player::camera::components::{PlayerCameraState, WorldCamera},
+    ui::UiState,
     utils::query_filters::OurPlayerFilter,
 };
 
@@ -23,7 +24,12 @@ pub fn handle_keyboard_input_for_player(
     mut movement_action_writer: MessageWriter<MovementAction>,
     player_query: Single<(Entity, &PlayerCameraState)>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
+    ui_state: Res<UiState>,
 ) {
+    if ui_state.buy_overlay_visibile {
+        return;
+    }
+
     let (player_entity, player_camera_state) = player_query.into_inner();
 
     if *player_camera_state == PlayerCameraState::FreeCam {
