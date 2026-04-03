@@ -16,8 +16,9 @@ use shared::{
 };
 
 use crate::{
-    game_flow::states::InGameState,
-    player::camera::messages::UpdatePlayerWeaponModel, ui::UiState,
+    game_flow::states::{GameModeClient, InGameState},
+    player::camera::messages::UpdatePlayerWeaponModel,
+    ui::UiState,
 };
 
 #[derive(Component)]
@@ -52,7 +53,10 @@ impl Plugin for BuyScreenPlugin {
                     update_disabled_enabled_shop_item_buttons,
                     update_texts_on_player_weapons_change,
                 )
-                    .run_if(in_state(InGameState::Playing)),
+                    .run_if(
+                        in_state(InGameState::Playing)
+                            .and(not(in_state(GameModeClient::Multiplayer))),
+                    ),
             );
     }
 }
