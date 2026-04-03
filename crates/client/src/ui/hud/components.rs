@@ -33,3 +33,6 @@ pub struct CurrentCashAmount;
 
 #[derive(Component)]
 pub struct CurrentWaveFinishedText;
+
+#[derive(Component)]
+pub struct NextWaveTimerText;

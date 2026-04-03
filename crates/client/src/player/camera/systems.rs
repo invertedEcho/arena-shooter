@@ -27,10 +27,7 @@ use crate::{
         },
         shooting::{
             asset_paths::get_path_to_model_for_weapon_kind,
-            components::ShootRecoil,
-            messages::{
-                PlayerWeaponFiredMessage, PlayerWeaponSlotChangeMessage,
-            },
+            components::ShootRecoil, messages::PlayerWeaponFiredMessage,
         },
     },
     ui::UiState,

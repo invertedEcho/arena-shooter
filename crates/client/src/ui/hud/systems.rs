@@ -2,6 +2,7 @@ use bevy::{color::palettes::css::WHITE, prelude::*};
 use game_core::GameStateWave;
 use lightyear::prelude::{Controlled, MessageReceiver};
 use shared::{
+    NextWaveTimer, WaveFinishedMessage,
     components::{DespawnTimer, Health},
     multiplayer_messages::PlayerHitMessage,
     player::{AimType, Player, PlayerCash, PlayerReady, PlayerState},
@@ -22,9 +23,9 @@ use crate::{
             CROSSHAIR_BULLET_HIT_PATH, MAIN_CROSSHAIR_PATH,
             components::{
                 CurrentCashAmount, CurrentWaveFinishedText, CurrentWaveText,
-                DamageIndicator, EnemiesLeftText, PlayerCarriedAmmoText,
-                PlayerCrosshair, PlayerHealthText, PlayerHud,
-                PlayerLoadedAmmoText, PlayerWeaponText,
+                DamageIndicator, EnemiesLeftText, NextWaveTimerText,
+                PlayerCarriedAmmoText, PlayerCrosshair, PlayerHealthText,
+                PlayerHud, PlayerLoadedAmmoText, PlayerWeaponText,
             },
         },
     },
@@ -411,34 +412,28 @@ pub fn fade_out_damage_indicator(
     }
 }
 
-pub fn spawn_current_wave_finished(
-    mut commands: Commands,
-    game_state_wave: If<Res<GameStateWave>>,
-) {
-    if game_state_wave.is_changed()
-        && game_state_wave.enemies_left_from_current_wave == 0
-    {
-        commands.spawn((
-            Node {
-                width: percent(100.0),
-                height: percent(100.0),
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center,
-                padding: UiRect {
-                    top: percent(5.0),
-                    ..default()
-                },
+pub fn spawn_info_text_current_wave_finished(mut commands: Commands) {
+    commands.spawn((
+        Node {
+            width: percent(100.0),
+            height: percent(100.0),
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            padding: UiRect {
+                top: percent(5.0),
                 ..default()
             },
-            CurrentWaveFinishedText,
-            DespawnOnExit(AppState::InGame),
-            children![
-                (Text::new("Current wave finished!")),
-                (Text::new("Press (B) to buy new weapons")),
-                (Text::new("Press (E) to start a new wave"))
-            ],
-        ));
-    }
+            ..default()
+        },
+        CurrentWaveFinishedText,
+        DespawnOnExit(AppState::InGame),
+        children![
+            (Text::new("Current wave finished!")),
+            (Text::new("Press (B) to buy new weapons")),
+            (Text::new("Next wave in 10 seconds"), NextWaveTimerText)
+        ],
+        Visibility::Hidden,
+    ));
 }
 
 pub fn update_current_cash_amount(
@@ -448,14 +443,24 @@ pub fn update_current_cash_amount(
     ***player_cash_text = changed_player_cash.0.to_string();
 }
 
-pub fn remove_current_wave_finished_text(
-    mut commands: Commands,
-    game_state_wave: If<Res<GameStateWave>>,
-    current_wave_finished_text: Single<Entity, With<CurrentWaveFinishedText>>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
+pub fn update_next_wave_timer_text(
+    timer: If<Res<NextWaveTimer>>,
+    mut text: Single<&mut Text, With<NextWaveTimerText>>,
 ) {
-    let no_enemies_left = game_state_wave.enemies_left_from_current_wave == 0;
-    if no_enemies_left && keyboard_input.just_pressed(KeyCode::KeyE) {
-        commands.entity(*current_wave_finished_text).despawn();
+    ***text = format!("Next wave in {:.2}", timer.0.0.remaining_secs());
+}
+
+pub fn show_wave_finished_text(
+    mut text_visibility: Single<&mut Visibility, With<CurrentWaveFinishedText>>,
+    mut wave_finished_message_reader: MessageReader<WaveFinishedMessage>,
+) {
+    for _ in wave_finished_message_reader.read() {
+        **text_visibility = Visibility::Visible;
     }
+}
+
+pub fn hide_current_wave_finished_text(
+    mut text_visibility: Single<&mut Visibility, With<CurrentWaveFinishedText>>,
+) {
+    **text_visibility = Visibility::Hidden;
 }

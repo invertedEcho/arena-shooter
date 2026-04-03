@@ -88,7 +88,6 @@ pub struct DespawnEnemyMessage {
     pub enemies_to_despawn: Vec<Entity>,
 }
 
-/// A client can send this message so that game core spawns a new wave
 #[derive(Message)]
 pub struct RequestNewWave;
 
