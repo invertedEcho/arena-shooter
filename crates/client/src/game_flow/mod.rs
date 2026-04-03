@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use game_core::RequestNewWave;
 
 use crate::{
     game_flow::{
@@ -32,7 +31,6 @@ impl Plugin for GameFlowPlugin {
             .add_sub_state::<MainMenuState>()
             .add_sub_state::<ClientLoadingState>()
             .add_message::<PlayerDeathMessage>()
-            .add_message::<RequestNewWave>()
             .add_systems(
                 OnEnter(InGameState::Playing),
                 (grab_mouse, resume_all_animations),

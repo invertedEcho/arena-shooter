@@ -22,7 +22,8 @@ impl Plugin for GameFlowPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<RetryWaveGameMode>()
             .add_message::<DespawnEnemyMessage>()
-            .add_message::<WaveFinishedMessage>();
+            .add_message::<WaveFinishedMessage>()
+            .add_message::<RequestNewWave>();
 
         app.add_systems(
             Update,
