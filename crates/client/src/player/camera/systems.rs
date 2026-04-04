@@ -391,7 +391,8 @@ pub fn spawn_muzzle_flash(
         commands.entity(*player_weapon_model_entity).with_child((
             Transform {
                 translation: muzzle_flash_position,
-                rotation: Quat::from_euler(EulerRot::XYZ, 0.0, -FRAC_PI_2, 0.0),
+                // rotation: Quat::from_euler(EulerRot::XYZ, 0.0, -FRAC_PI_2, 0.0),
+                rotation: Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, 0.0),
                 scale: Vec3::splat(2.0),
             },
             MuzzleFlash,

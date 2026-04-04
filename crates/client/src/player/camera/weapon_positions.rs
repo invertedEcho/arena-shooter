@@ -51,10 +51,10 @@ pub fn get_muzzle_flash_position_for_weapon(
     weapon_type: &WeaponKind,
     aim_type: &AimType,
 ) -> Vec3 {
-    const NORMAL_POSITION_PISTOL: Vec3 = Vec3::new(0.4, 0.05, 0.03);
-    const NORMAL_POSITION_ASSAULT_RIFLE: Vec3 = Vec3::new(0.8, 0.07, 0.0);
+    const NORMAL_POSITION_ASSAULT_RIFLE: Vec3 = Vec3::new(0.0, 0.05, -0.7);
+    const SCOPED_POSITION_ASSAULT_RIFLE: Vec3 = Vec3::new(0.0, 0.1, -0.7);
 
-    const SCOPED_POSITION_ASSAULT_RIFLE: Vec3 = Vec3::new(0.8, 0.1, 0.0);
+    const NORMAL_POSITION_PISTOL: Vec3 = Vec3::new(0.4, 0.05, 0.03);
     const SCOPED_POSITION_PISTOL: Vec3 = Vec3::new(0.5, 0.05, 0.0);
 
     match weapon_type {

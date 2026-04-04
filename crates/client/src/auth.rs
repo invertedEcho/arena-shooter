@@ -21,6 +21,7 @@ pub fn fetch_connect_token(
     mut connect_token_request: ResMut<ConnectTokenRequestTask>,
     client: Single<Entity, With<Client>>,
     mut commands: Commands,
+    current_app_state: Res<State<AppState>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     if let Some(task) = &mut connect_token_request.task
@@ -31,6 +32,12 @@ pub fn fetch_connect_token(
         let Some(connect_token) = connect_token else {
             warn!("ConnectToken is None, couldnt connect to game server");
             connect_token_request.task = None;
+
+            // ignore if the player aborted connecting to multiplayer and started playing
+            // singleplayer instead
+            if *current_app_state.get() == AppState::InGame {
+                return;
+            }
             next_app_state.set(AppState::Disconnected);
             return;
         };
