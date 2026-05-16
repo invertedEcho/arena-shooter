@@ -1,5 +1,4 @@
 use bevy::{audio::Volume, prelude::*};
-use lightyear::prelude::Controlled;
 use rand::seq::IndexedRandom;
 use shared::{
     character_controller::components::Grounded,

@@ -1,5 +1,4 @@
 use bevy::{prelude::*, ui::InteractionDisabled};
-use lightyear::prelude::*;
 use shared::StopGame;
 
 use crate::{

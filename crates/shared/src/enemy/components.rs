@@ -1,20 +1,18 @@
 use std::time::Instant;
 
 use bevy::prelude::*;
-use serde::{Deserialize, Serialize};
+use bincode::{Decode, Encode};
 
 use crate::enemy::UPDATE_ENEMY_STATE_COOLDOWN_SECONDS;
 
 /// A marker component for an enemy
-#[derive(Component, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Component, Default, Encode, Decode, PartialEq)]
 pub struct Enemy;
 
 #[derive(Component)]
 pub struct EnemyLastStateUpdate(pub Instant);
 
-#[derive(
-    Default, PartialEq, Debug, Component, Serialize, Deserialize, Reflect,
-)]
+#[derive(Default, PartialEq, Debug, Component, Encode, Decode, Reflect)]
 #[reflect(Component)]
 pub enum EnemyState {
     #[default]

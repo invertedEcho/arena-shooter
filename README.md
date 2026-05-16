@@ -99,4 +99,3 @@ uses:
 - bevy for game engine
 - avian3d for physics
 - skein for bevy <-> blender integration (work with bevy components in blender)
-- lightyear for multiplayer

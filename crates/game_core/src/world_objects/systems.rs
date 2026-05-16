@@ -1,6 +1,5 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use lightyear::prelude::*;
 use shared::{
     AppRole, DEFAULT_HEALTH, GameMap,
     components::Health,

@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use lightyear::prelude::*;
+use netvy::AppComponentExt;
 
 use crate::{
-    components::{EntityPositionServer, Health},
+    components::Health,
     enemy::components::{Enemy, EnemyState},
     game_score::GameScore,
     multiplayer_messages::{
@@ -22,40 +22,38 @@ pub struct ProtocolPlugin;
 
 impl Plugin for ProtocolPlugin {
     fn build(&self, app: &mut App) {
-        app.add_channel::<SequencedUnreliableChannel>(ChannelSettings {
-            mode: ChannelMode::SequencedUnreliable,
-            ..default()
-        })
-        .add_direction(NetworkDirection::Bidirectional);
-
-        app.add_channel::<OrderedReliableChannel>(ChannelSettings {
-            mode: ChannelMode::OrderedReliable(ReliableSettings::default()),
-            ..default()
-        })
-        .add_direction(NetworkDirection::Bidirectional);
-
-        app.register_message::<ClientUpdatePositionMessage>()
-            .add_direction(NetworkDirection::ClientToServer);
-
-        app.register_message::<ShootRequest>()
-            .add_direction(NetworkDirection::ClientToServer);
-
-        app.register_message::<ClientRespawnRequest>()
-            .add_direction(NetworkDirection::ClientToServer);
-        app.register_message::<ConfirmRespawn>()
-            .add_direction(NetworkDirection::ServerToClient);
-
-        app.register_message::<ChangeGameServerStateRequest>()
-            .add_direction(NetworkDirection::ClientToServer);
-
-        app.register_message::<PlayerHitMessage>()
-            .add_direction(NetworkDirection::ServerToClient);
+        // app.add_channel::<SequencedUnreliableChannel>(ChannelSettings {
+        //     mode: ChannelMode::SequencedUnreliable,
+        //     ..default()
+        // })
+        // .add_direction(NetworkDirection::Bidirectional);
+        //
+        // app.add_channel::<OrderedReliableChannel>(ChannelSettings {
+        //     mode: ChannelMode::OrderedReliable(ReliableSettings::default()),
+        //     ..default()
+        // })
+        // .add_direction(NetworkDirection::Bidirectional);
+        //
+        // app.register_message::<ClientUpdatePositionMessage>()
+        //     .add_direction(NetworkDirection::ClientToServer);
+        //
+        // app.register_message::<ShootRequest>()
+        //     .add_direction(NetworkDirection::ClientToServer);
+        //
+        // app.register_message::<ClientRespawnRequest>()
+        //     .add_direction(NetworkDirection::ClientToServer);
+        // app.register_message::<ConfirmRespawn>()
+        //     .add_direction(NetworkDirection::ServerToClient);
+        //
+        // app.register_message::<ChangeGameServerStateRequest>()
+        //     .add_direction(NetworkDirection::ClientToServer);
+        //
+        // app.register_message::<PlayerHitMessage>()
+        //     .add_direction(NetworkDirection::ServerToClient);
 
         app.register_component::<Player>();
         app.register_component::<PlayerState>();
         app.register_component::<PlayerWeapons>();
-
-        app.register_component::<EntityPositionServer>();
 
         app.register_component::<Health>();
 

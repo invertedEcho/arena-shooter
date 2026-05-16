@@ -1,6 +1,5 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use lightyear::prelude::*;
 use shared::{
     EnemyKilledMessage,
     components::{DespawnTimer, Health},

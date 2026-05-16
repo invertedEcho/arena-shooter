@@ -1,6 +1,5 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use lightyear::prelude::Controlled;
 use shared::{
     GRAVITY,
     character_controller::{

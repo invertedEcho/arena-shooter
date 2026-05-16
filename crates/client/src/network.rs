@@ -6,8 +6,6 @@ use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use game_core::start_server;
-use lightyear::prelude::client::*;
-use lightyear::prelude::*;
 use shared::AppRole;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,

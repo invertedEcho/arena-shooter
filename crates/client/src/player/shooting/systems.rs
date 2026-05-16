@@ -2,7 +2,6 @@ use std::f32::consts::TAU;
 
 use avian3d::prelude::*;
 use bevy::{input::mouse::MouseWheel, prelude::*};
-use lightyear::prelude::*;
 use shared::{
     components::{DespawnTimer, Health},
     multiplayer_messages::ShootRequest,

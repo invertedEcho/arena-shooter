@@ -3,7 +3,6 @@ use bevy::{
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use game_core::RequestNewWave;
-use lightyear::prelude::MessageSender;
 use shared::{
     GameStateServer, multiplayer_messages::ChangeGameServerStateRequest,
     protocol::OrderedReliableChannel,

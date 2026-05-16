@@ -14,6 +14,7 @@ use bevy_inspector_egui::{
     quick::WorldInspectorPlugin,
 };
 use bevy_skein::SkeinPlugin;
+use netvy::{AppType, NetvyPlugin, client::ConnectToServer};
 
 use crate::{
     audio::AudioPlugin,
@@ -92,9 +93,6 @@ fn main() {
 
     app.add_plugins(game_core::GameCorePlugin);
 
-    // lightyear plugins
-    app.add_plugins(lightyear::prelude::client::ClientPlugins::default());
-
     app.add_plugins(SharedPlugin);
 
     app.add_plugins((UiWidgetsPlugins, InputDispatchPlugin));
@@ -147,5 +145,15 @@ fn main() {
     // TODO: move elsewhere
     app.add_observer(apply_render_layers_to_children);
 
+    app.add_plugins(NetvyPlugin(AppType::Client));
+    app.add_systems(Startup, trigger_connect);
+
     app.run();
+}
+
+fn trigger_connect(mut commands: Commands) {
+    commands.trigger(ConnectToServer {
+        server_url: "127.0.0.1".to_string(),
+        port: 8080,
+    });
 }

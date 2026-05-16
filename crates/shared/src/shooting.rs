@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use bevy::prelude::*;
+use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
 // no idea if this number makes sense but works so far
@@ -8,7 +9,7 @@ pub const MAX_SHOOTING_DISTANCE: f32 = 200.0;
 
 pub const DEFAULT_BULLET_DAMAGE: f32 = 7.5;
 
-#[derive(Component, Serialize, Deserialize, PartialEq)]
+#[derive(Component, Encode, Decode, PartialEq)]
 pub struct PlayerWeapons {
     pub weapons: [PlayerWeapon; 2],
 }

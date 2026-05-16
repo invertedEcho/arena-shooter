@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use lightyear::{connection::host::HostClient, prelude::RemoteId};
 use shared::{
     EnemyKilledMessage, GameStateServer, NextWaveTimer, WaveFinishedMessage,
     enemy::components::Enemy,

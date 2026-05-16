@@ -7,7 +7,6 @@ use bevy::state::app::StatesPlugin;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use game_core::{GameCoreLoadingState, start_server};
-use lightyear::utils::collections::HashSet;
 use shared::ServerRunMode;
 use shared::utils::auth::load_private_key_from_env;
 use shared::utils::network::{

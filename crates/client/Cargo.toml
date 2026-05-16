@@ -22,7 +22,7 @@ bevy_rich_text3d = "0.6.0"
 bevy_skein = "0.5.0"
 dirs = "6.0.0"
 game_core = { path = "../game_core", version = "0.1.0" }
-lightyear = { workspace = true }
+netvy = { workspace = true }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

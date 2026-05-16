@@ -1,6 +1,5 @@
 use bevy::{color::palettes::css::WHITE, prelude::*};
 use game_core::GameStateWave;
-use lightyear::prelude::{Controlled, MessageReceiver};
 use shared::{
     NextWaveTimer, WaveFinishedMessage,
     components::{DespawnTimer, Health},

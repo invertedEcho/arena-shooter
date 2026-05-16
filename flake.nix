@@ -36,18 +36,18 @@
                 wayland
                 alsa-lib
                 libudev-zero
-                xorg.libX11
-                xorg.libXcursor
-                xorg.libXi
-                xorg.libXrandr
+                libX11
+                libXcursor
+                libXi
+                libXrandr
                 libxkbcommon
               ];
             RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
             LD_LIBRARY_PATH = lib.makeLibraryPath [
               vulkan-loader
-              xorg.libX11
-              xorg.libXi
-              xorg.libXcursor
+              libX11
+              libXi
+              libXcursor
               libxkbcommon
             ];
           };

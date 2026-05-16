@@ -3,7 +3,6 @@ use bevy::{
     camera::visibility::RenderLayers, core_pipeline::Skybox,
     input::mouse::AccumulatedMouseMotion, prelude::*,
 };
-use lightyear::prelude::Controlled;
 use shared::{
     components::DespawnTimer,
     player::{AimType, Player, PlayerState},

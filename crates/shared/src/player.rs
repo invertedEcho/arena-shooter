@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use serde::{Deserialize, Serialize};
+use bincode::{Decode, Encode};
 
 use crate::{
     DEFAULT_HEALTH,
@@ -9,7 +9,7 @@ use crate::{
     },
 };
 
-#[derive(Component, Debug, Reflect, Serialize, PartialEq, Deserialize)]
+#[derive(Component, Debug, Reflect, PartialEq, Encode, Decode)]
 #[reflect(Component)]
 pub struct Player;
 
@@ -27,7 +27,7 @@ pub struct PlayerBundle {
     player_cash: PlayerCash,
 }
 
-#[derive(Component, Serialize, Deserialize, Clone, Default, PartialEq)]
+#[derive(Component, Encode, Decode, Clone, Default, PartialEq)]
 pub struct PlayerState {
     pub shooting: bool,
     pub reloading: bool,

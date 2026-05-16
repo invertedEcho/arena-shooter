@@ -6,13 +6,6 @@ use bevy::{
     prelude::*, reflect::TypePath,
 };
 use bevy_common_assets::json::JsonAssetPlugin;
-use lightyear::{
-    netcode::NetcodeServer,
-    prelude::{
-        server::{NetcodeConfig, ServerUdpIo, Start},
-        *,
-    },
-};
 use serde::{Deserialize, Serialize};
 use shared::{
     AppRole, DEFAULT_HEALTH, GameMap, GameModeServer, GameStateServer,
@@ -108,7 +101,7 @@ impl Plugin for GameCorePlugin {
             "spawn_locations.json",
         ]));
 
-        app.add_plugins(lightyear::prelude::server::ServerPlugins::default());
+        app.add_plugins(NetvyPlugin(AppType::Server));
 
         app.add_plugins(EnemyPlugin);
         app.add_plugins(NavMeshPathfindingPlugin);

@@ -1,6 +1,5 @@
 use avian3d::prelude::*;
 use bevy::{color::palettes::css::WHITE, prelude::*};
-use lightyear::prelude::{server::ClientOf, *};
 use shared::{
     AppRole, GameModeServer,
     character_controller::{
