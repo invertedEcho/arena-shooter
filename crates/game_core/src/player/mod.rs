@@ -1,11 +1,12 @@
 use avian3d::prelude::*;
 use bevy::{color::palettes::css::WHITE, prelude::*};
+use netvy::prelude::*;
 use shared::{
     AppRole, GameModeServer,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
-    components::{EntityPositionServer, Health},
+    components::Health,
     enemy::components::Enemy,
     game_score::{GameScore, LivingEntityStats},
     multiplayer_messages::{PlayerHitMessage, ShootRequest},

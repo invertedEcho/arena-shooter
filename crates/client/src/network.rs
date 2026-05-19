@@ -16,9 +16,6 @@ use shared::multiplayer_messages::{
 };
 use shared::player::Player;
 use shared::protocol::OrderedReliableChannel;
-use shared::utils::lightyear::{
-    DisconnectReason, parse_lightyear_disconnect_reason,
-};
 use shared::utils::network::{
     get_auth_backend_socket_addr_client_side,
     get_dedicated_server_socket_addr_client_side,
@@ -271,45 +268,46 @@ fn apply_server_position_other_clients(
     }
 }
 
-fn handle_disconnect(
-    trigger: On<Add, Disconnected>,
-    disconnected: Query<&Disconnected>,
-    mut next_app_state: ResMut<NextState<AppState>>,
-) {
-    match disconnected.get(trigger.entity) {
-        // NOTE: The library inserts Disconnected component per default, as that is the default state,
-        // even if we weren't even connected in the first place. So, for now,
-        // we check if there is a reason, if not, we weren't actually disconnected.
-        // https://github.com/cBournhonesque/lightyear/discussions/1375
-        Ok(disconnected) => {
-            if let Some(disconnected_reason) = &disconnected.reason {
-                info!(
-                    "Disconnected from server, reason: {:?}",
-                    disconnected_reason
-                );
-
-                let parsed_reason =
-                    parse_lightyear_disconnect_reason(disconnected_reason);
-
-                match parsed_reason {
-                    DisconnectReason::ClientTriggered => {
-                        next_app_state.set(AppState::MainMenu);
-                    }
-                    DisconnectReason::Unknown => {
-                        next_app_state.set(AppState::Disconnected);
-                    }
-                }
-            }
-        }
-        Err(error) => {
-            warn!(
-                "Disconnected from server, but could not retrieve \
-                 Disconnected component to get reason for disconnect: {}",
-                error
-            );
-        }
-    }
-}
+// FIXME: reimplement
+// fn handle_disconnect(
+//     trigger: On<Add, Disconnected>,
+//     disconnected: Query<&Disconnected>,
+//     mut next_app_state: ResMut<NextState<AppState>>,
+// ) {
+//     match disconnected.get(trigger.entity) {
+//         // NOTE: The library inserts Disconnected component per default, as that is the default state,
+//         // even if we weren't even connected in the first place. So, for now,
+//         // we check if there is a reason, if not, we weren't actually disconnected.
+//         // https://github.com/cBournhonesque/lightyear/discussions/1375
+//         Ok(disconnected) => {
+//             if let Some(disconnected_reason) = &disconnected.reason {
+//                 info!(
+//                     "Disconnected from server, reason: {:?}",
+//                     disconnected_reason
+//                 );
+//
+//                 let parsed_reason =
+//                     parse_lightyear_disconnect_reason(disconnected_reason);
+//
+//                 match parsed_reason {
+//                     DisconnectReason::ClientTriggered => {
+//                         next_app_state.set(AppState::MainMenu);
+//                     }
+//                     DisconnectReason::Unknown => {
+//                         next_app_state.set(AppState::Disconnected);
+//                     }
+//                 }
+//             }
+//         }
+//         Err(error) => {
+//             warn!(
+//                 "Disconnected from server, but could not retrieve \
+//                  Disconnected component to get reason for disconnect: {}",
+//                 error
+//             );
+//         }
+//     }
+// }
 
 fn handle_confirm_respawn_message(
     mut message_receiver: Single<&mut MessageReceiver<ConfirmRespawn>>,

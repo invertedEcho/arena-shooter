@@ -1,4 +1,4 @@
-use std::time::Duration;
+use netvy::{AppType, NetvyPlugin, SyncEntity, server::StartServer};
 
 use avian3d::prelude::*;
 use bevy::{
@@ -8,24 +8,15 @@ use bevy::{
 use bevy_common_assets::json::JsonAssetPlugin;
 use serde::{Deserialize, Serialize};
 use shared::{
-    AppRole, DEFAULT_HEALTH, GameMap, GameModeServer, GameStateServer,
-    MEDIUM_PLASTIC_MAP_PATH, SPAWN_POINT_MEDIUM_PLASTIC_MAP, StartGame,
-    StopGame, TINY_TOWN_MAP_PATH,
-    components::{EntityPositionServer, Health},
+    AppRole, GameMap, GameModeServer, GameStateServer, MEDIUM_PLASTIC_MAP_PATH,
+    StartGame, StopGame, TINY_TOWN_MAP_PATH,
+    components::Health,
     enemy::components::Enemy,
     game_score::GameScore,
-    multiplayer_messages::{
-        ChangeGameServerStateRequest, ClientRespawnRequest,
-        ClientUpdatePositionMessage, ConfirmRespawn,
-    },
     player::Player,
-    protocol::OrderedReliableChannel,
-    utils::{
-        auth::{LOCAL_SERVER_PRIVATE_KEY, load_private_key_from_env},
-        network::{
-            NETCODE_PROTOCOL_VERSION, SERVER_SOCKET_ADDR_DEDICATED_SERVER,
-            SERVER_SOCKET_ADDR_SINGLEPLAYER,
-        },
+    utils::network::{
+        SERVER_PORT, SERVER_SOCKET_ADDR_DEDICATED_SERVER,
+        SERVER_SOCKET_ADDR_SINGLEPLAYER,
     },
     world_object::{
         WorldObjectCollectibleKind, WorldObjectCollectibleServerSide,
@@ -111,14 +102,7 @@ impl Plugin for GameCorePlugin {
 
         app.add_systems(
             Update,
-            (
-                receive_and_apply_client_update_position
-                    .run_if(in_state(AppRole::DedicatedServer)),
-                handle_client_respawn_requests,
-                handle_game_server_state_update_request,
-                read_stop_game_message,
-                check_world_scene_loaded,
-            ),
+            (read_stop_game_message, check_world_scene_loaded),
         );
         app.add_systems(
             Update,
@@ -138,7 +122,7 @@ impl Plugin for GameCorePlugin {
             spawn_map,
         );
 
-        app.add_observer(handle_new_connection);
+        // app.add_observer(handle_new_connection);
         app.add_observer(check_collider_constructor_hierarchy_ready);
 
         app.add_systems(
@@ -173,29 +157,22 @@ pub fn start_server(mut commands: Commands, app_role: Res<State<AppRole>>) {
         app_role.get()
     );
 
-    let private_key = match app_role.get() {
-        AppRole::ClientOnly => {
-            return;
-        }
-        AppRole::ClientAndServer => LOCAL_SERVER_PRIVATE_KEY,
-        AppRole::DedicatedServer => load_private_key_from_env().unwrap(),
-    };
+    // FIXME: still needed?
+    // let server = commands
+    //     .spawn((
+    //         NetcodeServer::new(NetcodeConfig {
+    //             protocol_id: NETCODE_PROTOCOL_VERSION,
+    //             private_key,
+    //             ..default()
+    //         }),
+    //         LocalAddr(local_addr),
+    //         ServerUdpIo::default(),
+    //         Name::new(entity_name),
+    //         DespawnOnExit(AppRole::ClientAndServer),
+    //     ))
+    //     .id();
 
-    let server = commands
-        .spawn((
-            NetcodeServer::new(NetcodeConfig {
-                protocol_id: NETCODE_PROTOCOL_VERSION,
-                private_key,
-                ..default()
-            }),
-            LocalAddr(local_addr),
-            ServerUdpIo::default(),
-            Name::new(entity_name),
-            DespawnOnExit(AppRole::ClientAndServer),
-        ))
-        .id();
-
-    commands.trigger(Start { entity: server });
+    commands.trigger(StartServer { port: SERVER_PORT });
 }
 
 fn handle_start_game_message(
@@ -216,17 +193,14 @@ fn handle_start_game_message(
                 "Updated GameModeServer to {:?}, read from StartGame message.",
                 message.game_mode
             );
-            commands
-                .spawn((
-                    GameScore {
-                        players: HashMap::new(),
-                        enemies: HashMap::new(),
-                    },
-                    Name::new("Game Score"),
-                ))
-                .insert_if(Replicate::to_clients(NetworkTarget::All), || {
-                    *app_role.get() == AppRole::DedicatedServer
-                });
+            commands.spawn((
+                GameScore {
+                    players: HashMap::new(),
+                    enemies: HashMap::new(),
+                },
+                Name::new("Game Score"),
+                SyncEntity,
+            ));
         }
 
         // NOTE: theoretically the game score entity is not necessarily already spawned here, but we
@@ -236,47 +210,16 @@ fn handle_start_game_message(
     }
 }
 
-fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
-    commands
-        .entity(trigger.entity)
-        .insert((ReplicationSender::new(
-            Duration::from_millis(100),
-            SendUpdatesMode::SinceLastAck,
-            false,
-        ),));
-}
-
-/// This systems receives a message from clients, that their position has changed.
-/// The server will then apply it to the `PlayerPositionServer` component, which then gets
-/// replicated to all clients. All clients receive the updates from `PlayerPositionServer`, and
-/// update the Transform locally.
-fn receive_and_apply_client_update_position(
-    mut receivers: Query<(
-        &mut MessageReceiver<ClientUpdatePositionMessage>,
-        Entity,
-    )>,
-    mut players: Query<
-        (&mut EntityPositionServer, &mut Transform, &ControlledBy),
-        With<Player>,
-    >,
-) {
-    for (mut message_receiver, remote_id) in receivers.iter_mut() {
-        for message in message_receiver.receive() {
-            if let Some((mut server_position, mut transform, _)) = players
-                .iter_mut()
-                .find(|(_, _, controlled_by)| controlled_by.owner == remote_id)
-            {
-                server_position.translation = message.new_translation;
-                transform.translation = message.new_translation;
-            } else {
-                warn!(
-                    "Received a ClientUpdatePositionMessage but couldnt find \
-                     the corresponding Player entity on the server"
-                );
-            }
-        }
-    }
-}
+// FIXME: i think i disliked this API, so i wont add somethign like this in netvy
+// fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
+//     commands
+//         .entity(trigger.entity)
+//         .insert((ReplicationSender::new(
+//             Duration::from_millis(100),
+//             SendUpdatesMode::SinceLastAck,
+//             false,
+//         ),));
+// }
 
 fn on_game_core_loading_state_done(
     mut commands: Commands,
@@ -322,102 +265,104 @@ fn on_game_core_loading_state_done(
     };
 }
 
-fn handle_client_respawn_requests(
-    mut commands: Commands,
-    receivers: Query<(
-        &mut MessageReceiver<ClientRespawnRequest>,
-        &ControlledByRemote,
-        &RemoteId,
-    )>,
-    mut player_query: Query<(Entity, &mut Health, &mut EntityPositionServer)>,
-    mut server_multi_message_sender: ServerMultiMessageSender,
-    server: Single<&Server>,
-) {
-    for (mut message_receiver, controlled_by, remote_id) in receivers {
-        for _ in message_receiver.receive() {
-            info!("Received ClientRespawnRequest!");
-            match controlled_by.iter().next() {
-                Some(controlling_player) => {
-                    match player_query.get_mut(controlling_player) {
-                        Ok((
-                            player_entity,
-                            mut player_health,
-                            mut entity_position_server,
-                        )) => {
-                            player_health.0 = DEFAULT_HEALTH;
-                            entity_position_server.translation =
-                                SPAWN_POINT_MEDIUM_PLASTIC_MAP;
+// FIXME
+// fn handle_client_respawn_requests(
+//     mut commands: Commands,
+//     receivers: Query<(
+//         &mut MessageReceiver<ClientRespawnRequest>,
+//         &ControlledByRemote,
+//         &RemoteId,
+//     )>,
+//     mut player_query: Query<(Entity, &mut Health, &mut EntityPositionServer)>,
+//     mut server_multi_message_sender: ServerMultiMessageSender,
+//     server: Single<&Server>,
+// ) {
+//     for (mut message_receiver, controlled_by, remote_id) in receivers {
+//         for _ in message_receiver.receive() {
+//             info!("Received ClientRespawnRequest!");
+//             match controlled_by.iter().next() {
+//                 Some(controlling_player) => {
+//                     match player_query.get_mut(controlling_player) {
+//                         Ok((
+//                             player_entity,
+//                             mut player_health,
+//                             mut entity_position_server,
+//                         )) => {
+//                             player_health.0 = DEFAULT_HEALTH;
+//                             entity_position_server.translation =
+//                                 SPAWN_POINT_MEDIUM_PLASTIC_MAP;
+//
+//                             commands
+//                                 .entity(player_entity)
+//                                 .remove::<ColliderDisabled>();
+//
+//                             info!(
+//                                 "Sending confirm respawn message to client \
+//                                  with remote_id: {}",
+//                                 remote_id.0
+//                             );
+//                             let network_target =
+//                                 &NetworkTarget::Single(remote_id.0);
+//
+//                             let message_sent_result = server_multi_message_sender
+//                                 .send::<ConfirmRespawn, OrderedReliableChannel>(
+//                                     &ConfirmRespawn,
+//                                     &server,
+//                                     network_target,
+//                                 );
+//                             match message_sent_result {
+//                                 Ok(_) => {
+//                                     info!(
+//                                         "Succesfully sent ConfirmRespawn \
+//                                          message to client"
+//                                     );
+//                                 }
+//                                 Err(error) => {
+//                                     error!(
+//                                         "Failed to send ConfirmRespawn \
+//                                          message to client: {}",
+//                                         error
+//                                     );
+//                                 }
+//                             }
+//                         }
+//                         Err(error) => {
+//                             error!(
+//                                 "Failed to find controlling player: {}",
+//                                 error
+//                             );
+//                         }
+//                     }
+//                 }
+//                 None => {
+//                     error!(
+//                         "Received a ClientRespawnRequest but no \
+//                          'ControlledByRemote' exists"
+//                     );
+//                 }
+//             }
+//         }
+//     }
+// }
 
-                            commands
-                                .entity(player_entity)
-                                .remove::<ColliderDisabled>();
-
-                            info!(
-                                "Sending confirm respawn message to client \
-                                 with remote_id: {}",
-                                remote_id.0
-                            );
-                            let network_target =
-                                &NetworkTarget::Single(remote_id.0);
-
-                            let message_sent_result = server_multi_message_sender
-                                .send::<ConfirmRespawn, OrderedReliableChannel>(
-                                    &ConfirmRespawn,
-                                    &server,
-                                    network_target,
-                                );
-                            match message_sent_result {
-                                Ok(_) => {
-                                    info!(
-                                        "Succesfully sent ConfirmRespawn \
-                                         message to client"
-                                    );
-                                }
-                                Err(error) => {
-                                    error!(
-                                        "Failed to send ConfirmRespawn \
-                                         message to client: {}",
-                                        error
-                                    );
-                                }
-                            }
-                        }
-                        Err(error) => {
-                            error!(
-                                "Failed to find controlling player: {}",
-                                error
-                            );
-                        }
-                    }
-                }
-                None => {
-                    error!(
-                        "Received a ClientRespawnRequest but no \
-                         'ControlledByRemote' exists"
-                    );
-                }
-            }
-        }
-    }
-}
-
-fn handle_game_server_state_update_request(
-    mut message_receiver: Single<
-        &mut MessageReceiver<ChangeGameServerStateRequest>,
-    >,
-    app_role: Res<State<AppRole>>,
-    mut game_state_server: ResMut<NextState<GameStateServer>>,
-) {
-    for message in message_receiver.receive() {
-        if *app_role.get() != AppRole::ClientAndServer {
-            info!("Ignored ChangeGameServerStateRequest");
-            return;
-        }
-
-        info!("GameStateServer updated to {:?}", message.0);
-        game_state_server.set(message.0);
-    }
-}
+// FIXME
+// fn handle_game_server_state_update_request(
+//     mut message_receiver: Single<
+//         &mut MessageReceiver<ChangeGameServerStateRequest>,
+//     >,
+//     app_role: Res<State<AppRole>>,
+//     mut game_state_server: ResMut<NextState<GameStateServer>>,
+// ) {
+//     for message in message_receiver.receive() {
+//         if *app_role.get() != AppRole::ClientAndServer {
+//             info!("Ignored ChangeGameServerStateRequest");
+//             return;
+//         }
+//
+//         info!("GameStateServer updated to {:?}", message.0);
+//         game_state_server.set(message.0);
+//     }
+// }
 
 fn kill_players_below_death_zone(
     player_query: Query<(&mut Health, &Transform), With<Player>>,
@@ -557,8 +502,8 @@ fn log_updates_to_game_core_loading_state(
 type EntitiesToDespawnQueryFilter = Or<(
     With<GameMapLight>,
     With<Enemy>,
-    With<Server>,
-    With<Client>,
+    // With<Server>,
+    // With<Client>,
     With<GameScore>,
     With<MapModel>,
     With<WorldObjectCollectibleServerSide>,

@@ -1,15 +1,10 @@
 use bevy::prelude::*;
-use netvy::AppComponentExt;
+use netvy::registry::AppComponentExt;
 
 use crate::{
     components::Health,
     enemy::components::{Enemy, EnemyState},
     game_score::GameScore,
-    multiplayer_messages::{
-        ChangeGameServerStateRequest, ClientRespawnRequest,
-        ClientUpdatePositionMessage, ConfirmRespawn, PlayerHitMessage,
-        ShootRequest,
-    },
     player::{Player, PlayerState},
     shooting::PlayerWeapons,
     world_object::WorldObjectCollectibleServerSide,

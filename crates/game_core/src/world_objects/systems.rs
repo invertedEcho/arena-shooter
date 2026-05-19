@@ -1,5 +1,6 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use netvy::SyncEntity;
 use shared::{
     AppRole, DEFAULT_HEALTH, GameMap,
     components::Health,
@@ -65,7 +66,7 @@ pub fn spawn_world_objects(
     for spawn_location in &spawn_location.positions {
         commands.spawn((
             Transform::from_translation(spawn_location.position),
-            Replicate::to_clients(NetworkTarget::All),
+            SyncEntity,
             Collider::cuboid(0.2, 0.2, 0.2),
             WorldObjectCollectibleServerSide {
                 kind: spawn_location.kind,

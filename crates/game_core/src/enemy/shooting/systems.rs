@@ -24,7 +24,7 @@ pub fn enemy_shoot_player(
     player_query: Query<&Transform, With<Player>>,
     spatial_query: SpatialQuery,
     mut health_query: Query<&mut Health>,
-    client_query: Query<&RemoteId, With<Connected>>,
+    // client_query: Query<&RemoteId, With<Connected>>,
     mut game_score: Single<&mut GameScore>,
     mut message_writer: MessageWriter<PlayerHitMessage>,
 ) {
@@ -97,22 +97,23 @@ pub fn enemy_shoot_player(
                     enemy_game_score.kills += 1;
                 };
 
-                match client_query.single() {
-                    Ok(remote_id) => {
-                        if let Some(game_score_player) =
-                            game_score.players.get_mut(&remote_id.to_bits())
-                        {
-                            game_score_player.deaths += 1;
-                        };
-                    }
-                    Err(error) => {
-                        warn!(
-                            "Failed to get game score of player that was \
-                             killed: {}",
-                            error
-                        );
-                    }
-                }
+                // FIXME: reimplement
+                // match client_query.single() {
+                //     Ok(remote_id) => {
+                //         if let Some(game_score_player) =
+                //             game_score.players.get_mut(&remote_id.to_bits())
+                //         {
+                //             game_score_player.deaths += 1;
+                //         };
+                //     }
+                //     Err(error) => {
+                //         warn!(
+                //             "Failed to get game score of player that was \
+                //              killed: {}",
+                //             error
+                //         );
+                //     }
+                // }
             }
         }
     }

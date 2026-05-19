@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
 };
+use netvy::prelude::*;
 use rand::Rng;
 use shared::{
     DEFAULT_HEALTH, GameMap,
@@ -13,7 +14,7 @@ use shared::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, CHARACTER_FEET,
         MAX_DISTANCE_GROUNDED_SHAPE_CAST, components::Grounded,
     },
-    components::{EntityPositionServer, Health},
+    components::Health,
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
     game_score::{GameScore, LivingEntityStats},
 };
@@ -162,9 +163,7 @@ fn handle_spawn_enemies_message(
                             Health(DEFAULT_HEALTH),
                             EnemyState::default(),
                             Grounded::default(),
-                            EntityPositionServer {
-                                translation: enemy_spawn_location,
-                            },
+                            SyncPosition::default(),
                             RigidBody::Kinematic,
                             Collider::capsule(
                                 CHARACTER_CAPSULE_RADIUS,

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
-use bincode::{Decode, Encode};
+use serde::{Deserialize, Serialize};
 
-#[derive(Component, PartialEq, Encode, Decode, Reflect)]
+#[derive(Component, PartialEq, Serialize, Deserialize, Reflect)]
 pub struct Health(pub f32);
 
 /// Insert this component into entities that you want to have despawned when the given Timer has
