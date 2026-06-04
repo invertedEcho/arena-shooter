@@ -1,4 +1,4 @@
-use netvy::{AppType, NetvyPlugin, SyncEntity, server::StartServer};
+use netvy::prelude::*;
 
 use avian3d::prelude::*;
 use bevy::{
@@ -199,7 +199,7 @@ fn handle_start_game_message(
                     enemies: HashMap::new(),
                 },
                 Name::new("Game Score"),
-                SyncEntity,
+                ReplicateEntity,
             ));
         }
 

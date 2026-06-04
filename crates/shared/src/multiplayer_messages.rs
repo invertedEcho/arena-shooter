@@ -8,7 +8,7 @@ pub struct ClientUpdatePositionMessage {
     pub new_translation: Vec3,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Message, Serialize, Deserialize)]
 pub struct ShootRequest {
     pub origin: Vec3,
     pub direction: Dir3,

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use netvy::registry::AppComponentExt;
+use netvy::prelude::*;
 
 use crate::{
     components::Health,
