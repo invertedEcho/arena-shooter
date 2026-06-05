@@ -15,13 +15,13 @@ use shared::utils::network::{
 };
 use shared::{AppRole, SharedPlugin};
 
-use crate::auth::start_netcode_authentication_task;
+// use crate::auth::start_netcode_authentication_task;
 use crate::systems::{
     spawn_map_colliders, spawn_server_camera, write_start_game_message,
 };
 use crate::utils::get_run_mode;
 
-mod auth;
+// mod auth;
 mod systems;
 mod utils;
 
@@ -102,20 +102,20 @@ fn main() {
 
     app.insert_resource(run_mode);
 
-    // authentication
-    let client_ids = Arc::new(RwLock::new(HashSet::default()));
+    // // authentication
+    // let client_ids = Arc::new(RwLock::new(HashSet::default()));
 
-    start_netcode_authentication_task(
-        // this must be client side because it will be contained in the token that the client
-        // receives and uses to connect
-        get_dedicated_server_socket_addr_client_side().expect(
-            "Could not resolve game server address. Please make sure you have \
-             a working internet connection. Game server may be currently down",
-        ),
-        AUTH_BACKEND_ADDRESS_SERVER_SIDE,
-        client_ids.clone(),
-        load_private_key_from_env().unwrap(),
-    );
+    // start_netcode_authentication_task(
+    //     // this must be client side because it will be contained in the token that the client
+    //     // receives and uses to connect
+    //     get_dedicated_server_socket_addr_client_side().expect(
+    //         "Could not resolve game server address. Please make sure you have \
+    //          a working internet connection. Game server may be currently down",
+    //     ),
+    //     AUTH_BACKEND_ADDRESS_SERVER_SIDE,
+    //     client_ids.clone(),
+    //     load_private_key_from_env().unwrap(),
+    // );
 
     app.run();
 }

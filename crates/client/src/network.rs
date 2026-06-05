@@ -1,35 +1,26 @@
-use std::net::{Ipv6Addr, SocketAddr};
-
 use async_compat::Compat;
 use avian3d::prelude::*;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use game_core::start_server;
+use netvy::prelude::*;
 use shared::AppRole;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
-use shared::components::EntityPositionServer;
-use shared::multiplayer_messages::{
-    ClientUpdatePositionMessage, ConfirmRespawn, PlayerHitMessage,
-};
+use shared::multiplayer_messages::{ConfirmRespawn, PlayerHitMessage};
 use shared::player::Player;
-use shared::protocol::OrderedReliableChannel;
-use shared::utils::network::{
-    get_auth_backend_socket_addr_client_side,
-    get_dedicated_server_socket_addr_client_side,
-};
+use shared::utils::network::get_dedicated_server_socket_addr_client_side;
 
-use crate::auth::{
-    ConnectTokenRequestTask, fetch_connect_token,
-    get_connect_token_from_auth_backend,
-};
+// use crate::auth::{
+//     ConnectTokenRequestTask, fetch_connect_token,
+//     get_connect_token_from_auth_backend,
+// };
 use crate::character_controller::components::CharacterControllerBundle;
 use crate::game_flow::states::{
     AppState, ClientLoadingState, GameModeClient, InGameState,
 };
-use crate::utils::query_filters::OurPlayerFilter;
 
 const CLIENT_PORT: u16 = 0;
 
@@ -51,11 +42,11 @@ impl Plugin for NetworkPlugin {
             OnEnter(ClientLoadingState::ConnectingToServer),
             on_enter_connecting_to_server,
         );
-        app.add_systems(
-            Update,
-            fetch_connect_token
-                .run_if(resource_exists::<ConnectTokenRequestTask>),
-        );
+        // app.add_systems(
+        //     Update,
+        //     fetch_connect_token
+        //         .run_if(resource_exists::<ConnectTokenRequestTask>),
+        // );
         app.add_systems(
             Update,
             (
@@ -64,17 +55,8 @@ impl Plugin for NetworkPlugin {
                 handle_new_player,
             ),
         );
-        app.add_systems(
-            Update,
-            (
-                send_client_update_position,
-                apply_server_position_other_clients,
-            )
-                .run_if(in_state(GameModeClient::Multiplayer)),
-        );
-
         app.add_observer(handle_added_server);
-        app.add_observer(handle_disconnect);
+        // app.add_observer(handle_disconnect);
     }
 }
 
@@ -95,18 +77,18 @@ fn handle_added_server(
 
 fn on_enter_connecting_to_server(
     mut commands: Commands,
-    connected_query: Query<Has<Connected>>,
+    // connected_query: Query<Has<Connected>>,
     game_mode: Res<State<GameModeClient>>,
     server_entity: Query<Entity, With<Server>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     // Connected component only present on our own client
-    for connected in connected_query {
-        if connected {
-            warn!("Already connected to the game server");
-            continue;
-        }
-    }
+    // for connected in connected_query {
+    //     if connected {
+    //         warn!("Already connected to the game server");
+    //         continue;
+    //     }
+    // }
 
     let is_singleplayer = *game_mode.get() != GameModeClient::Multiplayer;
 
@@ -116,69 +98,61 @@ fn on_enter_connecting_to_server(
     {
         info!("Spawning a host client, we have single player mode");
 
-        let client = commands
-            .spawn((
-                Name::new("Host Client"),
-                LinkOf {
-                    server: server_entity,
-                },
-                Client::default(),
-            ))
-            .id();
+        let client_entity =
+            commands.spawn((Name::new("Host Client"), Client)).id();
 
         // NOTE: We only trigger the Connect in this system for host client, as the connect for a
         // client connecting to the official dedicated server triggers only when we received a
         // ConnectToken. this happens in auth.rs
-        commands.trigger(Connect { entity: client });
+        commands.trigger(ConnectToServer { client_entity });
     } else {
         info!(
             "Connecting to official dedicated server, Spawning a 'normal' \
              client"
         );
-        let auth_backend_addr = get_auth_backend_socket_addr_client_side();
-        if let Some(auth_backend_addr) = auth_backend_addr {
-            debug!(
-                "Starting task to get auth ConnectToken via AuthBackend at {}",
-                auth_backend_addr
-            );
-            let task = IoTaskPool::get().spawn_local(Compat::new(async move {
-                get_connect_token_from_auth_backend(auth_backend_addr).await
-            }));
-            commands
-                .insert_resource(ConnectTokenRequestTask { task: Some(task) });
-            debug!("Inserted ConnectTokenRequestTask");
-        } else {
-            next_app_state.set(AppState::Disconnected);
-        }
+        // let auth_backend_addr = get_auth_backend_socket_addr_client_side();
+        // if let Some(auth_backend_addr) = auth_backend_addr {
+        //     debug!(
+        //         "Starting task to get auth ConnectToken via AuthBackend at {}",
+        //         auth_backend_addr
+        //     );
+        //     let task = IoTaskPool::get().spawn_local(Compat::new(async move {
+        //         get_connect_token_from_auth_backend(auth_backend_addr).await
+        //     }));
+        //     commands
+        //         .insert_resource(ConnectTokenRequestTask { task: Some(task) });
+        //     debug!("Inserted ConnectTokenRequestTask");
+        // } else {
+        //     next_app_state.set(AppState::Disconnected);
+        // }
 
-        if let Some(server_address) =
-            get_dedicated_server_socket_addr_client_side()
-        {
-            commands.spawn((
+        // if let Some(server_address) =
+        //     get_dedicated_server_socket_addr_client_side()
+        // {
+        let client_entity = commands
+            .spawn((
                 Name::new("Client"),
-                Client::default(),
-                LocalAddr(SocketAddr::new(
-                    Ipv6Addr::UNSPECIFIED.into(),
-                    CLIENT_PORT,
-                )),
-                PeerAddr(server_address),
-                Link::new(None),
-                ReplicationReceiver::default(),
-                UdpIo::default(),
-            ));
-        } else {
-            info!(
-                "Could not resolve server address, setting AppState to \
-                 Disconnected"
-            );
-            next_app_state.set(AppState::Disconnected);
-        }
+                Client,
+                TargetAddress {
+                    address: "0.0.0.0".to_string(),
+                    port: CLIENT_PORT,
+                },
+            ))
+            .id();
+        commands.trigger(ConnectToServer { client_entity });
+        // } else {
+        //     info!(
+        //         "Could not resolve server address, setting AppState to \
+        //          Disconnected"
+        //     );
+        //     next_app_state.set(AppState::Disconnected);
+        // }
     }
 }
 
 fn handle_new_player(
     mut commands: Commands,
-    player_query: Query<(Entity, Has<Controlled>), Added<Player>>,
+    player_query: Query<(Entity, Has<Owned>), Added<Player>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut next_app_state: ResMut<NextState<AppState>>,
@@ -230,44 +204,6 @@ fn handle_new_player(
     }
 }
 
-fn send_client_update_position(
-    // With<Client> also ensures its the messagesender from our local client, as client component
-    // only gets inserted into our own client
-    mut message_sender: Single<
-        &mut MessageSender<ClientUpdatePositionMessage>,
-        With<Client>,
-    >,
-    player_transform: Single<&Transform, OurPlayerFilter>,
-) {
-    message_sender.send::<OrderedReliableChannel>(
-        ClientUpdatePositionMessage {
-            new_translation: player_transform.translation,
-        },
-    );
-}
-
-fn apply_server_position_other_clients(
-    time: Res<Time>,
-    mut query: Query<(
-        &mut Transform,
-        &EntityPositionServer,
-        Has<Controlled>, // present only on own player
-    )>,
-) {
-    for (mut transform, server_pos, controlled) in &mut query {
-        // Skip our own transform
-        if controlled {
-            continue;
-        }
-
-        let target = server_pos.translation;
-        let current = transform.translation;
-
-        let lerp_factor = 10.0 * time.delta_secs();
-        transform.translation = current.lerp(target, lerp_factor);
-    }
-}
-
 // FIXME: reimplement
 // fn handle_disconnect(
 //     trigger: On<Add, Disconnected>,
@@ -310,20 +246,20 @@ fn apply_server_position_other_clients(
 // }
 
 fn handle_confirm_respawn_message(
-    mut message_receiver: Single<&mut MessageReceiver<ConfirmRespawn>>,
+    mut message_receiver: Single<&mut NetMessageReader<ConfirmRespawn>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
-    for _ in message_receiver.receive() {
+    for _ in message_receiver.read() {
         info!("Respawn request was confirmed by server!");
         next_in_game_state.set(InGameState::Playing);
     }
 }
 
 fn handle_hit_message(
-    mut message_receiver: Single<&mut MessageReceiver<PlayerHitMessage>>,
+    mut message_receiver: Single<&mut NetMessageReader<PlayerHitMessage>>,
     mut message_sender: MessageWriter<PlayerHitMessage>,
 ) {
-    for message in message_receiver.receive() {
+    for message in message_receiver.read() {
         message_sender.write(PlayerHitMessage {
             origin: message.origin,
         });

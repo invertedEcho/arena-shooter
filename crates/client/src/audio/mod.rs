@@ -1,4 +1,5 @@
 use bevy::{audio::Volume, prelude::*};
+use netvy::prelude::*;
 use rand::seq::IndexedRandom;
 use shared::{
     character_controller::components::Grounded,
@@ -176,7 +177,7 @@ fn play_footstep_sound(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut last_play: Local<f32>,
     time: Res<Time>,
-    grounded: Single<&Grounded, With<Controlled>>,
+    grounded: Single<&Grounded, With<Owned>>,
     mut play_sound_message_writer: MessageWriter<PlaySoundMessage>,
 ) {
     *last_play += time.delta_secs();

@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
     Component, Serialize, Deserialize, PartialEq, Clone, Reflect, Debug,
 )]
 pub struct GameScore {
-    // for players, we use remote_id converted into bits (remote_id.to_bits()) as entities will differ on client and server
-    pub players: HashMap<u64, LivingEntityStats>,
+    // for players, we use peer_id as entities will differ on client and server
+    pub players: HashMap<u32, LivingEntityStats>,
     // as enemies only exists in singleplayer, we can just use Entity
     pub enemies: HashMap<Entity, LivingEntityStats>,
 }
@@ -18,12 +18,12 @@ pub struct LivingEntityStats {
     pub deaths: u64,
 }
 
-pub struct GameScoreDelta {
-    updated_players: HashMap<u64, LivingEntityStats>,
-    removed_players: Vec<u64>,
-    updated_enemies: HashMap<Entity, LivingEntityStats>,
-    removed_enemies: Vec<Entity>,
-}
+// pub struct GameScoreDelta {
+//     updated_players: HashMap<u64, LivingEntityStats>,
+//     removed_players: Vec<u64>,
+//     updated_enemies: HashMap<Entity, LivingEntityStats>,
+//     removed_enemies: Vec<Entity>,
+// }
 
 // impl Diffable<GameScoreDelta> for GameScore {
 //     fn base_value() -> Self {

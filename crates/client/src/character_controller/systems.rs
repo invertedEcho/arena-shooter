@@ -1,5 +1,6 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use netvy::prelude::*;
 use shared::{
     GRAVITY,
     character_controller::{
@@ -199,7 +200,7 @@ pub fn apply_gravity(
 }
 
 pub fn zero_player_velocity(
-    mut player_velocity: Single<&mut LinearVelocity, With<Controlled>>,
+    mut player_velocity: Single<&mut LinearVelocity, With<Owned>>,
 ) {
     player_velocity.x = 0.0;
     player_velocity.z = 0.0;

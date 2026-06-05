@@ -92,8 +92,6 @@ impl Plugin for GameCorePlugin {
             "spawn_locations.json",
         ]));
 
-        app.add_plugins(NetvyPlugin(AppType::Server));
-
         app.add_plugins(EnemyPlugin);
         app.add_plugins(NavMeshPathfindingPlugin);
         app.add_plugins(GameFlowPlugin);
@@ -157,22 +155,17 @@ pub fn start_server(mut commands: Commands, app_role: Res<State<AppRole>>) {
         app_role.get()
     );
 
-    // FIXME: still needed?
-    // let server = commands
-    //     .spawn((
-    //         NetcodeServer::new(NetcodeConfig {
-    //             protocol_id: NETCODE_PROTOCOL_VERSION,
-    //             private_key,
-    //             ..default()
-    //         }),
-    //         LocalAddr(local_addr),
-    //         ServerUdpIo::default(),
-    //         Name::new(entity_name),
-    //         DespawnOnExit(AppRole::ClientAndServer),
-    //     ))
-    //     .id();
+    let server_entity = commands
+        .spawn((
+            Server,
+            TargetAddress {
+                address: "0.0.0.0".to_string(),
+                port: SERVER_PORT,
+            },
+        ))
+        .id();
 
-    commands.trigger(StartServer { port: SERVER_PORT });
+    commands.trigger(StartServer { server_entity });
 }
 
 fn handle_start_game_message(

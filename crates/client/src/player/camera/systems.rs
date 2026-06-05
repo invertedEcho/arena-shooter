@@ -3,6 +3,7 @@ use bevy::{
     camera::visibility::RenderLayers, core_pipeline::Skybox,
     input::mouse::AccumulatedMouseMotion, prelude::*,
 };
+use netvy::prelude::*;
 use shared::{
     components::DespawnTimer,
     player::{AimType, Player, PlayerState},
@@ -35,8 +36,8 @@ use crate::{
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 
 pub fn setup_player_cameras(
-    // using With<Controlled> ensures we only add cameras to our own player
-    added_players: Query<Entity, (Added<Player>, With<Controlled>)>,
+    // using With<Owned> ensures we only add cameras to our own player
+    added_players: Query<Entity, (Added<Player>, With<Owned>)>,
     mut message_writer: MessageWriter<SpawnPlayerCamera>,
 ) {
     for added_player in added_players {

@@ -11,7 +11,6 @@ use shared::{
     game_score::{GameScore, LivingEntityStats},
     multiplayer_messages::{PlayerHitMessage, ShootRequest},
     player::{Player, PlayerBundle},
-    protocol::OrderedReliableChannel,
     shooting::MAX_SHOOTING_DISTANCE,
 };
 
@@ -28,203 +27,188 @@ impl Plugin for PlayerPlugin {
 
 fn handle_shoot_requests(
     mut commands: Commands,
-    // receivers: Query<(&mut MessageReceiver<ShootRequest>, Entity, &RemoteId)>,
+    message_readers: Query<(&mut NetMessageReader<ShootRequest>, &PeerId)>,
     mut health_query: Query<&mut Health>,
     spatial_query: SpatialQuery,
-    player_query: Query<Entity, With<Player>>,
+    player_query: Query<(Entity, &OwnedBy), With<Player>>,
     mut game_score: Single<&mut GameScore>,
     game_mode_server: Res<State<GameModeServer>>,
-    client_query: Query<&ClientId, With<Client>>,
+    client_query: Query<&PeerId, With<Client>>,
     enemy_query: Query<Entity, With<Enemy>>,
     mut player_hit_enemy_message_writer: MessageWriter<PlayerHitEnemy>,
-    message_reader: MessageReader<ShootRequest>,
+    mut server_net_message_writer: Single<
+        &mut NetMessageWriter<PlayerHitMessage>,
+        With<Server>,
+    >,
 ) {
-    for message in message_reader.read() {
-        // the player entity that sent this ShootRequest
-        let Some(shooter_entity) = player_query
-            .iter()
-            .find(|(_, controlled_by)| {
-                controlled_by.owner == client_entity_server_side
-            })
-            .map(|i| i.0)
-        else {
-            warn!(
-                "Received a ShootRequest but couldn't determine from which \
-                 player this came from"
-            );
-            continue;
-        };
-
-        let Some(first_hit) = spatial_query.cast_ray(
-            message.origin,
-            message.direction,
-            MAX_SHOOTING_DISTANCE,
-            false,
-            &SpatialQueryFilter::default()
-                .with_excluded_entities([shooter_entity]),
-        ) else {
-            continue;
-        };
-
-        let entity_hit = first_hit.entity;
-
-        // if we cant find health, this collider is just an obstacle
-        let Ok(mut health) = health_query.get_mut(entity_hit) else {
-            continue;
-        };
-
-        health.0 -= 8.0;
-
-        let is_enemy = enemy_query.get(first_hit.entity).is_ok();
-        if is_enemy {
-            player_hit_enemy_message_writer.write(PlayerHitEnemy {
-                player_entity: shooter_entity,
-                enemy_entity: entity_hit,
-            });
-        } else {
-            if let Ok(client_entity_that_was_hit) =
-                player_query.get(entity_hit).map(|i| i.1)
-                && let Ok(client) =
-                    client_query.get(client_entity_that_was_hit.owner)
-            {
-                server_multi_message_sender
-                    .send::<PlayerHitMessage, OrderedReliableChannel>(
-                        &PlayerHitMessage {
-                            origin: message.origin,
-                        },
-                        &server,
-                        &NetworkTarget::Single(client.0),
-                    )
-                    .ok();
-            } else {
-                error!("Could not find client that was hit by the bullet");
-            }
-        }
-
-        if health.0 <= 0.0 {
-            let entity_killed = first_hit.entity;
-            commands.entity(entity_killed).insert(ColliderDisabled);
-
-            match game_score.players.get_mut(&remote_id.to_bits()) {
-                Some(player) => {
-                    debug!(
-                        "increased kill count of player with remote_id: {}",
-                        remote_id.to_bits()
-                    );
-                    player.kills += 1;
-                }
-                None => {
-                    warn!(
-                        "Failed to find player in game score by remote_id \
-                         {}\nGame score: {:?}",
-                        remote_id.to_bits(),
-                        *game_score
-                    )
-                }
-            }
-
-            // if we have game mode wave, the entity killed will always be an enemy. so we
-            // skip this case
-            if **game_mode_server == GameModeServer::Waves {
-                return;
+    for (mut message_reader, peer_id) in message_readers {
+        for message in message_reader.read() {
+            // the player entity that sent this ShootRequest
+            let Some(shooter_entity) = player_query
+                .iter()
+                .find(|(_, controlled_by)| controlled_by.0.0 == peer_id.0)
+                .map(|i| i.0)
+            else {
+                warn!(
+                    "Received a ShootRequest but couldn't determine from \
+                     which player this came from"
+                );
+                continue;
             };
-            match player_query.get(entity_killed) {
-                Ok((_, controlled_by)) => {
-                    if let Ok(remote_id) = client_query.get(controlled_by.owner)
-                        && let Some(player_score) =
-                            game_score.players.get_mut(&remote_id.to_bits())
-                    {
-                        player_score.deaths += 1;
-                    } else {
-                        warn!(
-                            "Failed to find client of player that was killed"
+
+            let Some(first_hit) = spatial_query.cast_ray(
+                message.origin,
+                message.direction,
+                MAX_SHOOTING_DISTANCE,
+                false,
+                &SpatialQueryFilter::default()
+                    .with_excluded_entities([shooter_entity]),
+            ) else {
+                continue;
+            };
+
+            let entity_hit = first_hit.entity;
+
+            // if we cant find health, this collider is just an obstacle
+            let Ok(mut health) = health_query.get_mut(entity_hit) else {
+                continue;
+            };
+
+            health.0 -= 8.0;
+
+            let is_enemy = enemy_query.get(first_hit.entity).is_ok();
+            if is_enemy {
+                player_hit_enemy_message_writer.write(PlayerHitEnemy {
+                    player_entity: shooter_entity,
+                    enemy_entity: entity_hit,
+                });
+            } else {
+                if let Ok(client_entity_that_was_hit) =
+                    player_query.get(entity_hit).map(|i| i.0)
+                    && let Ok(client) =
+                        client_query.get(client_entity_that_was_hit)
+                {
+                    server_net_message_writer.write(PlayerHitMessage {
+                        origin: message.origin,
+                    });
+                    // server_multi_message_sender
+                    //     .send::<PlayerHitMessage, OrderedReliableChannel>(
+                    //         &PlayerHitMessage {
+                    //             origin: message.origin,
+                    //         },
+                    //         &server,
+                    //         &NetworkTarget::Single(client.0),
+                    //     )
+                    //     .ok();
+                } else {
+                    error!("Could not find client that was hit by the bullet");
+                }
+            }
+
+            if health.0 <= 0.0 {
+                let entity_killed = first_hit.entity;
+                commands.entity(entity_killed).insert(ColliderDisabled);
+
+                match game_score.players.get_mut(&peer_id.0) {
+                    Some(player) => {
+                        debug!(
+                            "increased kill count of player with peer_id: {}",
+                            peer_id.0
                         );
-                    };
+                        player.kills += 1;
+                    }
+                    None => {
+                        warn!(
+                            "Failed to find player in game score by peer_id \
+                             {}\nGame score: {:?}",
+                            peer_id.0, *game_score
+                        )
+                    }
                 }
-                Err(error) => {
-                    warn!("Failed to find player that was killed: {}", error);
-                }
+
+                // if we have game mode wave, the entity killed will always be an enemy. so we
+                // skip this case
+                if **game_mode_server == GameModeServer::Waves {
+                    return;
+                };
+                let Some(player_score) = game_score.players.get_mut(&peer_id.0)
+                else {
+                    warn!("Failed to find client of player that was killed");
+                    continue;
+                };
+                player_score.deaths += 1;
             }
         }
     }
 }
 
 fn spawn_player_on_new_client(
-    trigger: On<Add, Connected>,
-    clients_query: Query<&RemoteId, With<ClientOf>>,
+    trigger: On<Add, Client>,
+    clients_query: Query<&PeerId, With<Client>>,
     mut commands: Commands,
     materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut game_score: Query<&mut GameScore>,
     app_role: Res<State<AppRole>>,
 ) {
-    if let Ok(remote_id) = clients_query.get(trigger.entity) {
-        let peer_id = remote_id.0;
+    let Ok(peer_id) = clients_query.get(trigger.entity) else {
+        warn!("Failed to find peer id of new connected client");
+        return;
+    };
 
-        match game_score.single_mut() {
-            Ok(mut game_score) => {
-                game_score.players.insert(
-                    peer_id.to_bits(),
-                    LivingEntityStats {
-                        username: format!("Player {}", peer_id.to_bits()),
-                        ..default()
-                    },
-                );
-            }
-            Err(error) => {
-                error!("Failed to add player to game score: {}", error);
-            }
+    match game_score.single_mut() {
+        Ok(mut game_score) => {
+            game_score.players.insert(
+                peer_id.0,
+                LivingEntityStats {
+                    username: format!("Player {}", peer_id.0),
+                    ..default()
+                },
+            );
         }
+        Err(error) => {
+            error!("Failed to add player to game score: {}", error);
+        }
+    }
 
-        info!(
-            "Spawning a player for fully connected Client entity: {} | \
-             peer_id: {}",
-            trigger.entity, peer_id
-        );
+    info!(
+        "Spawning a player for fully connected Client entity: {} | peer_id: \
+         {:?}",
+        trigger.entity, peer_id
+    );
 
-        // NOTE: The replicate component gets inserted into the player entity, but only registered
-        // components will be replicated to all other clients
-        let player_entity = commands
-            .spawn((
-                PlayerBundle::default(),
-                Name::new("Player"),
-                SyncEntity,
-                SyncPosition::default(),
-                Visibility::Visible,
-                // FIXME: probably want something like this in netvy, although i hope i can find a
-                // better solution
-                // // we add the ControlledBy on the server, with the client entity as the owner of this
-                // // player, so on the client we can then filter by players that have the `Controlled`
-                // // component and those are the players that are actually owned by that client
-                // ControlledBy {
-                //     owner: trigger.entity,
-                //     lifetime: Lifetime::SessionBased,
-                // },
-                Collider::capsule(
+    let player_entity = commands
+        .spawn((
+            PlayerBundle::default(),
+            Name::new("Player"),
+            ReplicateEntity,
+            SyncPosition::default(),
+            Visibility::Visible,
+            OwnedBy(*peer_id),
+            Collider::capsule(
+                CHARACTER_CAPSULE_RADIUS,
+                CHARACTER_CAPSULE_LENGTH,
+            ),
+            RigidBody::Kinematic,
+        ))
+        // .insert_if(Controlled, || {
+        //     *app_role.get() == AppRole::ClientAndServer
+        // })
+        .id();
+
+    if *app_role.get() == AppRole::DedicatedServer {
+        // on headless setup, materials doesnt exist
+        if let Some(mut materials) = materials {
+            commands.entity(player_entity).insert((
+                Mesh3d(meshes.add(Capsule3d::new(
                     CHARACTER_CAPSULE_RADIUS,
                     CHARACTER_CAPSULE_LENGTH,
-                ),
-                RigidBody::Kinematic,
-            ))
-            // .insert_if(Controlled, || {
-            //     *app_role.get() == AppRole::ClientAndServer
-            // })
-            .id();
-
-        if *app_role.get() == AppRole::DedicatedServer {
-            // on headless setup, materials doesnt exist
-            if let Some(mut materials) = materials {
-                commands.entity(player_entity).insert((
-                    Mesh3d(meshes.add(Capsule3d::new(
-                        CHARACTER_CAPSULE_RADIUS,
-                        CHARACTER_CAPSULE_LENGTH,
-                    ))),
-                    MeshMaterial3d(materials.add(StandardMaterial {
-                        base_color: WHITE.into(),
-                        ..Default::default()
-                    })),
-                ));
-            }
+                ))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: WHITE.into(),
+                    ..Default::default()
+                })),
+            ));
         }
     }
 }

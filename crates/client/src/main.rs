@@ -14,7 +14,7 @@ use bevy_inspector_egui::{
     quick::WorldInspectorPlugin,
 };
 use bevy_skein::SkeinPlugin;
-use netvy::{AppType, NetvyPlugin, client::ConnectToServer};
+use netvy::prelude::*;
 
 use crate::{
     audio::AudioPlugin,
@@ -32,7 +32,7 @@ use crate::{
 };
 
 mod audio;
-mod auth;
+// mod auth;
 mod character_controller;
 mod enemy_visuals;
 mod game_flow;
@@ -85,6 +85,8 @@ fn main() {
                 ..default()
             }),
     );
+
+    app.add_plugins(NetvyPlugin(AppType::Client));
 
     // per default, a client is AppRole::ClientOnly. only when player clicks on Singleplayer,
     // AppRole gets set to AppRole::ClientAndServer. once we enter main menu root again, we set it
@@ -145,15 +147,20 @@ fn main() {
     // TODO: move elsewhere
     app.add_observer(apply_render_layers_to_children);
 
-    app.add_plugins(NetvyPlugin(AppType::Client));
     app.add_systems(Startup, trigger_connect);
 
     app.run();
 }
 
 fn trigger_connect(mut commands: Commands) {
-    commands.trigger(ConnectToServer {
-        server_url: "127.0.0.1".to_string(),
-        port: 8080,
-    });
+    let client_entity = commands
+        .spawn((
+            Client,
+            TargetAddress {
+                address: "0.0.0.0".to_string(),
+                port: 8080,
+            },
+        ))
+        .id();
+    commands.trigger(ConnectToServer { client_entity });
 }

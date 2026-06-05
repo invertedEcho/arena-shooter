@@ -1,6 +1,7 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use game_core::{GameStateWave, RetryWaveGameMode};
+use netvy::prelude::*;
 use shared::{
     AppRole, DEFAULT_HEALTH, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
     components::Health, multiplayer_messages::ClientRespawnRequest,
@@ -155,11 +156,11 @@ fn handle_button_press(
     mut commands: Commands,
     query: Query<(&Interaction, &DeathScreenButton), Changed<Interaction>>,
     mut respawn_request_message_sender: Single<
-        &mut MessageSender<ClientRespawnRequest>,
+        &mut NetMessageWriter<ClientRespawnRequest>,
     >,
     mut player_query: Single<
         (&mut Health, &mut Transform, Entity, &mut LinearVelocity),
-        With<Controlled>,
+        With<Owned>,
     >,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
     app_role: Res<State<AppRole>>,
@@ -171,7 +172,7 @@ fn handle_button_press(
         }
         match button {
             DeathScreenButton::Respawn => {
-                // we can always write this message even if we arent evven playing wave game mode,
+                // we can always write this message even if we arent even playing wave game mode,
                 // because then the message handler just wont do anything
                 retry_wave_game_mode_message_writer.write(RetryWaveGameMode);
                 // https://github.com/cBournhonesque/lightyear/issues/1417
@@ -198,8 +199,7 @@ fn handle_button_press(
                     // deathzone
                     velocity.0 = Vec3::ZERO;
                 } else {
-                    respawn_request_message_sender
-                        .send::<OrderedReliableChannel>(ClientRespawnRequest);
+                    respawn_request_message_sender.write(ClientRespawnRequest);
                 }
             }
         }

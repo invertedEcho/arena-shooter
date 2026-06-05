@@ -1,5 +1,6 @@
 use bevy::{color::palettes::css::WHITE, prelude::*};
 use game_core::GameStateWave;
+use netvy::prelude::*;
 use shared::{
     NextWaveTimer, WaveFinishedMessage,
     components::{DespawnTimer, Health},
@@ -36,7 +37,7 @@ pub fn spawn_player_hud(
     mut commands: Commands,
     player_query: Query<
         (&Health, &PlayerWeapons, &PlayerState),
-        (Added<PlayerReady>, With<Controlled>),
+        (Added<PlayerReady>, With<Owned>),
     >,
 ) {
     let Ok((player_health, player_weapons, player_state)) =
@@ -166,7 +167,7 @@ pub fn spawn_player_hud(
 pub fn spawn_player_crosshair(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    player_query: Query<Entity, (Added<Player>, With<Controlled>)>,
+    player_query: Query<Entity, (Added<Player>, With<Owned>)>,
 ) {
     for _ in player_query {
         commands
@@ -218,7 +219,7 @@ pub fn on_ui_state_change(
 }
 
 pub fn update_player_health_text(
-    player_health: Single<&Health, (Changed<Health>, With<Controlled>)>,
+    player_health: Single<&Health, (Changed<Health>, With<Owned>)>,
     mut player_health_text: Single<&mut Text, With<PlayerHealthText>>,
 ) {
     debug!("Updated player health text");
@@ -339,10 +340,10 @@ pub fn spawn_damage_indicator(
     mut message_reader: MessageReader<PlayerHitMessage>,
     player_transform: Single<&Transform, OurPlayerFilter>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
-    mut network_message_reader: Single<&mut MessageReceiver<PlayerHitMessage>>,
+    mut network_message_reader: Single<&mut NetMessageReader<PlayerHitMessage>>,
 ) {
     let internal_messages = message_reader.read().copied();
-    let network_messages = network_message_reader.receive();
+    let network_messages = network_message_reader.read();
 
     let combined_messages = internal_messages.chain(network_messages);
 

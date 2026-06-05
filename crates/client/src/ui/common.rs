@@ -1,4 +1,5 @@
 use bevy::{prelude::*, ui::InteractionDisabled};
+use netvy::prelude::*;
 use shared::StopGame;
 
 use crate::{
@@ -97,7 +98,8 @@ fn handle_common_ui_button_press(
 
                 debug!("Sending StopGame message and triggering disconnect");
                 message_writer.write(StopGame);
-                commands.trigger(Disconnect { entity: own_client });
+                // FIXME: implement in netvy
+                // commands.trigger(Disconnect { entity: own_client });
             }
             CommonUiButton::ToGameModeSelection => {
                 next_main_menu_state.set(MainMenuState::GameModeSelection);

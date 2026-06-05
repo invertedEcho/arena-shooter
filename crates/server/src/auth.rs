@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 use std::sync::{Arc, RwLock};
 
 use async_compat::Compat;
+use bevy::platform::collections::HashSet;
 use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use shared::utils::network::NETCODE_PROTOCOL_VERSION;

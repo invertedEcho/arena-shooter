@@ -2,11 +2,11 @@ use std::f32::consts::TAU;
 
 use avian3d::prelude::*;
 use bevy::{input::mouse::MouseWheel, prelude::*};
+use netvy::prelude::*;
 use shared::{
     components::{DespawnTimer, Health},
     multiplayer_messages::ShootRequest,
     player::{AimType, PlayerState},
-    protocol::OrderedReliableChannel,
     shooting::{
         MAX_SHOOTING_DISTANCE, PlayerWeapons, WeaponKind, WeaponSlotType,
     },
@@ -49,7 +49,7 @@ type WorldModelCameraQuery<'w, 's> = Single<
 >;
 
 pub fn setup_new_players(
-    added_players: Query<Entity, (Added<Player>, With<Controlled>)>,
+    added_players: Query<Entity, (Added<Player>, With<Owned>)>,
     mut commands: Commands,
 ) {
     for player_entity in added_players {
@@ -150,7 +150,7 @@ pub fn handle_input(
 pub fn send_shoot_request_on_weapon_fired(
     mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
     mut shoot_request_sender: Single<
-        &mut MessageSender<ShootRequest>,
+        &mut NetMessageWriter<ShootRequest>,
         With<Client>,
     >,
     world_model_camera_query: WorldModelCameraQuery,
@@ -159,8 +159,7 @@ pub fn send_shoot_request_on_weapon_fired(
         let origin = world_model_camera_query.1.translation();
         let direction = world_model_camera_query.1.forward();
 
-        shoot_request_sender
-            .send::<OrderedReliableChannel>(ShootRequest { direction, origin });
+        shoot_request_sender.write(ShootRequest { direction, origin });
     }
 }
 
@@ -373,7 +372,7 @@ pub fn handle_weapon_slot_change(
     mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut mouse_scroll_message_reader: MessageReader<MouseWheel>,
-    mut player_state: Single<&mut PlayerState, With<Controlled>>,
+    mut player_state: Single<&mut PlayerState, With<Owned>>,
     mut message_writer: MessageWriter<PlayerWeaponSlotChangeMessage>,
     existing_change_weapon_cooldown: Option<Res<ChangeWeaponCooldown>>,
     mut update_player_weapon_model_message_writer: MessageWriter<
@@ -433,7 +432,7 @@ pub fn reset_aim_type_on_pause(mut aim_type: Single<&mut AimType>) {
 }
 
 pub fn check_if_player_dead(
-    player_health: Single<&Health, (Changed<Health>, With<Controlled>)>,
+    player_health: Single<&Health, (Changed<Health>, With<Owned>)>,
     mut player_death_message_writer: MessageWriter<PlayerDeathMessage>,
 ) {
     if player_health.0 <= 0.0 {
@@ -445,7 +444,7 @@ pub fn handle_player_scope_aim(
     mouse_input: Res<ButtonInput<MouseButton>>,
     player_query: Single<
         (&mut AimType, &PlayerState, &PlayerWeapons),
-        With<Controlled>,
+        With<Owned>,
     >,
 ) {
     let (mut aim_type, player_state, player_weapons) =

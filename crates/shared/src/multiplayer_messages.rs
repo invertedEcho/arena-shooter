@@ -3,11 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::GameStateServer;
 
-#[derive(Serialize, Deserialize)]
-pub struct ClientUpdatePositionMessage {
-    pub new_translation: Vec3,
-}
-
 #[derive(Message, Serialize, Deserialize)]
 pub struct ShootRequest {
     pub origin: Vec3,

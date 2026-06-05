@@ -3,6 +3,7 @@ use bevy::{
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use game_core::RequestNewWave;
+use netvy::prelude::NetMessageWriter;
 use shared::{
     GameStateServer, multiplayer_messages::ChangeGameServerStateRequest,
     protocol::OrderedReliableChannel,
@@ -124,19 +125,17 @@ pub fn handle_player_death_event(
 pub fn send_update_game_server_state_request_on_in_game_state_change(
     current_in_game_state: If<Res<State<InGameState>>>,
     mut message_sender: Single<
-        &mut MessageSender<ChangeGameServerStateRequest>,
+        &mut NetMessageWriter<ChangeGameServerStateRequest>,
     >,
 ) {
     match *current_in_game_state.get() {
         InGameState::Playing => {
-            message_sender.send::<OrderedReliableChannel>(
-                ChangeGameServerStateRequest(GameStateServer::Running),
-            );
+            message_sender
+                .write(ChangeGameServerStateRequest(GameStateServer::Running));
         }
         InGameState::Paused | InGameState::PlayerDead => {
-            message_sender.send::<OrderedReliableChannel>(
-                ChangeGameServerStateRequest(GameStateServer::Paused),
-            );
+            message_sender
+                .write(ChangeGameServerStateRequest(GameStateServer::Paused));
         }
     }
 }
