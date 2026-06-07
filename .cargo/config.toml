@@ -5,8 +5,8 @@ rustflags = ["-C", "link-arg=-fuse-ld=/usr/bin/mold"]
 [unstable]
 codegen-backend = true
 
-[profile.dev]
-codegen-backend = "cranelift"
+# [profile.dev]
+# codegen-backend = "cranelift"
 
 [profile.dev.package."*"]
 codegen-backend = "llvm"
