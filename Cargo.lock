@@ -5848,6 +5848,7 @@ dependencies = [
  "dotenvy",
  "game_core",
  "hex",
+ "netvy",
  "rand",
  "serde_json",
  "shared",

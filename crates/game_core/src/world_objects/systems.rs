@@ -51,14 +51,16 @@ pub fn spawn_world_objects(
     let Some(spawn_location) =
         spawn_locations.get(current_spawn_location_handle.0.id())
     else {
-        // TODO: the handle will exist with an extremely very high chance at this point.
-        // the json file is just about 1KB big, so no way it wont be loaded at this point.
-        // the spawn location file gets loaded when player clicks on a map
-        panic!(
-            "Failed to load spawn locations, the asset hasnt been loaded yet \
-             or resource doesnt exist yet. Handle we wanted to retrieve: {}",
+        error!(
+            "Failed to load spawn locations, no SpawnLocations will be spawned. (spawn_location_handle={})",
             current_spawn_location_handle.0.id()
         );
+        return;
+        // panic!(
+        //     "Failed to load spawn locations, the asset hasnt been loaded yet \
+        //      or resource doesnt exist yet. Handle we wanted to retrieve: {}",
+        //     current_spawn_location_handle.0.id()
+        // );
     };
 
     info!("Loaded spawn locations for world objects, spawning...");

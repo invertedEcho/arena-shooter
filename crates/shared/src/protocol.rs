@@ -10,9 +10,6 @@ use crate::{
     world_object::WorldObjectCollectibleServerSide,
 };
 
-pub struct OrderedReliableChannel;
-pub struct SequencedUnreliableChannel;
-
 pub struct ProtocolPlugin;
 
 impl Plugin for ProtocolPlugin {

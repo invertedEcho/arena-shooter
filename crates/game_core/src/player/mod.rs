@@ -20,8 +20,10 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(spawn_player_on_new_client);
-        app.add_systems(Update, handle_shoot_requests);
+        app.add_systems(
+            Update,
+            (handle_shoot_requests, spawn_player_on_new_client),
+        );
     }
 }
 
@@ -143,72 +145,69 @@ fn handle_shoot_requests(
 }
 
 fn spawn_player_on_new_client(
-    trigger: On<Add, Client>,
-    clients_query: Query<&PeerId, With<Client>>,
+    clients_query: Query<(&PeerId, &ConnectionState), Changed<ConnectionState>>,
     mut commands: Commands,
-    materials: Option<ResMut<Assets<StandardMaterial>>>,
+    mut materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut game_score: Query<&mut GameScore>,
     app_role: Res<State<AppRole>>,
 ) {
-    let Ok(peer_id) = clients_query.get(trigger.entity) else {
-        warn!("Failed to find peer id of new connected client");
-        return;
-    };
+    for (peer_id, connection_state) in clients_query {
+        if *connection_state == ConnectionState::Connected {
+            match game_score.single_mut() {
+                Ok(mut game_score) => {
+                    game_score.players.insert(
+                        peer_id.0,
+                        LivingEntityStats {
+                            username: format!("Player {}", peer_id.0),
+                            ..default()
+                        },
+                    );
+                }
+                Err(error) => {
+                    error!("Failed to add player to game score: {}", error);
+                }
+            }
 
-    match game_score.single_mut() {
-        Ok(mut game_score) => {
-            game_score.players.insert(
-                peer_id.0,
-                LivingEntityStats {
-                    username: format!("Player {}", peer_id.0),
-                    ..default()
-                },
+            info!(
+                "Spawning a player for fully connected Client. (peer_id={})",
+                peer_id.0
             );
-        }
-        Err(error) => {
-            error!("Failed to add player to game score: {}", error);
-        }
-    }
 
-    info!(
-        "Spawning a player for fully connected Client entity: {} | peer_id: \
-         {:?}",
-        trigger.entity, peer_id
-    );
+            let player_entity = commands
+                .spawn((
+                    PlayerBundle::default(),
+                    Name::new("Player"),
+                    ReplicateEntity,
+                    SyncPosition::default(),
+                    Visibility::Visible,
+                    OwnedBy(*peer_id),
+                    Collider::capsule(
+                        CHARACTER_CAPSULE_RADIUS,
+                        CHARACTER_CAPSULE_LENGTH,
+                    ),
+                    RigidBody::Kinematic,
+                ))
+                .insert_if(Owned, || {
+                    *app_role.get() == AppRole::ClientAndServer
+                })
+                .id();
 
-    let player_entity = commands
-        .spawn((
-            PlayerBundle::default(),
-            Name::new("Player"),
-            ReplicateEntity,
-            SyncPosition::default(),
-            Visibility::Visible,
-            OwnedBy(*peer_id),
-            Collider::capsule(
-                CHARACTER_CAPSULE_RADIUS,
-                CHARACTER_CAPSULE_LENGTH,
-            ),
-            RigidBody::Kinematic,
-        ))
-        // .insert_if(Controlled, || {
-        //     *app_role.get() == AppRole::ClientAndServer
-        // })
-        .id();
-
-    if *app_role.get() == AppRole::DedicatedServer {
-        // on headless setup, materials doesnt exist
-        if let Some(mut materials) = materials {
-            commands.entity(player_entity).insert((
-                Mesh3d(meshes.add(Capsule3d::new(
-                    CHARACTER_CAPSULE_RADIUS,
-                    CHARACTER_CAPSULE_LENGTH,
-                ))),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: WHITE.into(),
-                    ..Default::default()
-                })),
-            ));
+            if *app_role.get() == AppRole::DedicatedServer {
+                // on headless setup, materials doesnt exist
+                if let Some(ref mut materials) = materials {
+                    commands.entity(player_entity).insert((
+                        Mesh3d(meshes.add(Capsule3d::new(
+                            CHARACTER_CAPSULE_RADIUS,
+                            CHARACTER_CAPSULE_LENGTH,
+                        ))),
+                        MeshMaterial3d(materials.add(StandardMaterial {
+                            base_color: WHITE.into(),
+                            ..Default::default()
+                        })),
+                    ));
+                }
+            }
         }
     }
 }

@@ -3,14 +3,13 @@ use bevy::{
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use game_core::RequestNewWave;
-use netvy::prelude::NetMessageWriter;
+use netvy::prelude::*;
 use shared::{
     GameStateServer, multiplayer_messages::ChangeGameServerStateRequest,
-    protocol::OrderedReliableChannel,
 };
 
 use crate::{
-    game_flow::states::{AppState, InGameState},
+    game_flow::states::{AppState, ClientLoadingState, InGameState},
     player::{
         PlayerDeathMessage,
         camera::{components::MainMenuCamera, get_main_menu_camera_transform},
@@ -146,5 +145,27 @@ pub fn handle_request_next_wave(
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyE) {
         message_writer.write(RequestNewWave);
+    }
+}
+
+// NOTE: only our client has the ConnectionState component present
+pub fn check_connection_state(
+    query: Query<&ConnectionState, Changed<ConnectionState>>,
+    mut client_loading_state: ResMut<NextState<ClientLoadingState>>,
+) {
+    for connection_state in query {
+        info!(
+            "ConnectionState changed, updating our ClientLoadingState. new \
+             connection_state: {connection_state:?}"
+        );
+        match connection_state {
+            ConnectionState::Connecting => {
+                client_loading_state
+                    .set(ClientLoadingState::ConnectingToServer);
+            }
+            ConnectionState::Connected => {
+                client_loading_state.set(ClientLoadingState::ConnectedToServer);
+            }
+        }
     }
 }

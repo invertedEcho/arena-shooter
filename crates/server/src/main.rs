@@ -1,5 +1,3 @@
-use std::sync::{Arc, RwLock};
-
 use bevy::log::LogPlugin;
 use bevy::mesh::MeshPlugin;
 use bevy::prelude::*;
@@ -7,12 +5,8 @@ use bevy::state::app::StatesPlugin;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use game_core::{GameCoreLoadingState, start_server};
+use netvy::prelude::*;
 use shared::ServerRunMode;
-use shared::utils::auth::load_private_key_from_env;
-use shared::utils::network::{
-    AUTH_BACKEND_ADDRESS_SERVER_SIDE,
-    get_dedicated_server_socket_addr_client_side,
-};
 use shared::{AppRole, SharedPlugin};
 
 // use crate::auth::start_netcode_authentication_task;
@@ -82,6 +76,8 @@ fn main() {
             info!("Starting server in headful mode...");
         }
     }
+
+    app.add_plugins(NetvyPlugin(AppType::Server));
 
     app.add_plugins(game_core::GameCorePlugin);
     app.add_plugins(SharedPlugin);

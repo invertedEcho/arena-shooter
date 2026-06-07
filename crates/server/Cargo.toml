@@ -12,6 +12,7 @@ bevy-inspector-egui = { workspace = true }
 dotenvy = "0.15.7"
 game_core = { path = "../game_core", version = "0.1.0" }
 hex = "0.4.3"
+netvy = { workspace = true }
 rand = { workspace = true }
 serde_json = { workspace = true }
 shared = { workspace = true }

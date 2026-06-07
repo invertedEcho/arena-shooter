@@ -72,8 +72,8 @@ fn main() {
         DefaultPlugins
             .set(WindowPlugin {
                 primary_window: Some(Window {
-                    title: "Fun Shooter".into(),
-                    name: Some("fun-shooter".into()),
+                    title: "Arena Shooter".into(),
+                    name: Some("arena-shooter".into()),
                     present_mode: PresentMode::AutoVsync,
                     mode: window_mode,
                     ..default()
@@ -147,20 +147,18 @@ fn main() {
     // TODO: move elsewhere
     app.add_observer(apply_render_layers_to_children);
 
-    app.add_systems(Startup, trigger_connect);
-
     app.run();
 }
 
-fn trigger_connect(mut commands: Commands) {
-    let client_entity = commands
-        .spawn((
-            Client,
-            TargetAddress {
-                address: "0.0.0.0".to_string(),
-                port: 8080,
-            },
-        ))
-        .id();
-    commands.trigger(ConnectToServer { client_entity });
-}
+// fn trigger_connect(mut commands: Commands) {
+//     let client_entity = commands
+//         .spawn((
+//             Client,
+//             TargetAddress {
+//                 address: "0.0.0.0".to_string(),
+//                 port: SERVER_PORT,
+//             },
+//         ))
+//         .id();
+//     commands.trigger(ConnectToServer { client_entity });
+// }

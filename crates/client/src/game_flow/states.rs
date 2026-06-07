@@ -11,16 +11,20 @@ pub enum AppState {
     Disconnected,
 }
 
+// TODO
 /// The current loading state of the client.
+/// Note that it only really has connection states, because the client itself only connects to the
+/// server. Map spawning etc is done by game_core. (which basically also runs in client... hmm)
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[source(AppState = AppState::LoadingGame)]
 pub enum ClientLoadingState {
     /// This state is set when the client is starting local server to play Singleplayer on
     /// It is skipped in case of connecting to the official dedicated server, e.g. multiplayer
-    #[default]
     StartingServer,
     /// This state is set when the client connects to the game server
+    #[default]
     ConnectingToServer,
+    ConnectedToServer,
 }
 
 impl Display for ClientLoadingState {
@@ -28,6 +32,7 @@ impl Display for ClientLoadingState {
         match self {
             Self::StartingServer => f.write_str("Starting local server"),
             Self::ConnectingToServer => f.write_str("Connecting to the server"),
+            Self::ConnectedToServer => f.write_str("Connected to server!"),
         }
     }
 }

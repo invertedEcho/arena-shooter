@@ -93,6 +93,7 @@ fn get_random_enemy_spawn_locations(
 
     // FIXME: this may infinitely loop
     while enemy_spawn_locations.len() < enemy_spawn_count {
+        info!("yep;....");
         let random_x = rng.random_range(edges_of_map.min_x..edges_of_map.max_x);
         let random_z = rng.random_range(edges_of_map.min_z..edges_of_map.max_z);
 

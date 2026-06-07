@@ -1,8 +1,6 @@
-use async_compat::Compat;
 use avian3d::prelude::*;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
-use bevy::tasks::IoTaskPool;
 use game_core::start_server;
 use netvy::prelude::*;
 use shared::AppRole;
@@ -11,7 +9,7 @@ use shared::character_controller::{
 };
 use shared::multiplayer_messages::{ConfirmRespawn, PlayerHitMessage};
 use shared::player::Player;
-use shared::utils::network::get_dedicated_server_socket_addr_client_side;
+use shared::utils::network::SERVER_PORT;
 
 // use crate::auth::{
 //     ConnectTokenRequestTask, fetch_connect_token,
@@ -79,13 +77,12 @@ fn on_enter_connecting_to_server(
     mut commands: Commands,
     // connected_query: Query<Has<Connected>>,
     game_mode: Res<State<GameModeClient>>,
-    server_entity: Query<Entity, With<Server>>,
     mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     // Connected component only present on our own client
     // for connected in connected_query {
     //     if connected {
-    //         warn!("Already connected to the game server");
+    //         warn!("Already connected to the game server; skipping connecting to the server.");
     //         continue;
     //     }
     // }
@@ -93,13 +90,19 @@ fn on_enter_connecting_to_server(
     let is_singleplayer = *game_mode.get() != GameModeClient::Multiplayer;
 
     // FIXME: following code is so insanely unreadable
-    if let Ok(server_entity) = server_entity.single()
-        && is_singleplayer
-    {
+    if is_singleplayer {
         info!("Spawning a host client, we have single player mode");
 
-        let client_entity =
-            commands.spawn((Name::new("Host Client"), Client)).id();
+        let client_entity = commands
+            .spawn((
+                Name::new("Host Client"),
+                Client,
+                TargetAddress {
+                    address: "0.0.0.0".to_string(),
+                    port: SERVER_PORT,
+                },
+            ))
+            .id();
 
         // NOTE: We only trigger the Connect in this system for host client, as the connect for a
         // client connecting to the official dedicated server triggers only when we received a

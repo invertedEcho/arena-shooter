@@ -60,7 +60,7 @@ fn spawn_main_menu(asset_server: Res<AssetServer>, mut commands: Commands) {
                     ..default()
                 })
                 .with_child((
-                    Text::new("Fun Shooter"),
+                    Text::new("Arena Shooter"),
                     TextFont {
                         font: asset_server.load(DEFAULT_GAME_FONT_PATH),
                         font_size: TITLE_FONT_SIZE,

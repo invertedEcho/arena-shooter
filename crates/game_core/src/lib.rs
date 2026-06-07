@@ -13,6 +13,9 @@ use shared::{
     components::Health,
     enemy::components::Enemy,
     game_score::GameScore,
+    multiplayer_messages::{
+        ChangeGameServerStateRequest, ClientRespawnRequest,
+    },
     player::Player,
     utils::network::{
         SERVER_PORT, SERVER_SOCKET_ADDR_DEDICATED_SERVER,
@@ -262,11 +265,11 @@ fn on_game_core_loading_state_done(
 // fn handle_client_respawn_requests(
 //     mut commands: Commands,
 //     receivers: Query<(
-//         &mut MessageReceiver<ClientRespawnRequest>,
+//         &mut NetMessageReader<ClientRespawnRequest>,
 //         &ControlledByRemote,
-//         &RemoteId,
+//         &PeerId,
 //     )>,
-//     mut player_query: Query<(Entity, &mut Health, &mut EntityPositionServer)>,
+//     mut player_query: Query<(Entity, &mut Health)>,
 //     mut server_multi_message_sender: ServerMultiMessageSender,
 //     server: Single<&Server>,
 // ) {
@@ -321,7 +324,7 @@ fn on_game_core_loading_state_done(
 //                         }
 //                         Err(error) => {
 //                             error!(
-//                                 "Failed to find controlling player: {}",
+//                              yo lets pop off dude   "Failed to find controlling player: {}",
 //                                 error
 //                             );
 //                         }
@@ -341,12 +344,12 @@ fn on_game_core_loading_state_done(
 // FIXME
 // fn handle_game_server_state_update_request(
 //     mut message_receiver: Single<
-//         &mut MessageReceiver<ChangeGameServerStateRequest>,
+//         &mut NetMessageReader<ChangeGameServerStateRequest>,
 //     >,
 //     app_role: Res<State<AppRole>>,
 //     mut game_state_server: ResMut<NextState<GameStateServer>>,
 // ) {
-//     for message in message_receiver.receive() {
+//     for message in message_receiver.read() {
 //         if *app_role.get() != AppRole::ClientAndServer {
 //             info!("Ignored ChangeGameServerStateRequest");
 //             return;

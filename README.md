@@ -1,4 +1,4 @@
-# fun-shooter
+# arena-shooter
 
 ## Features
 - [x] User interface
