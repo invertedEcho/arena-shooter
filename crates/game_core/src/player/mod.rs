@@ -53,7 +53,9 @@ fn handle_shoot_requests(
             else {
                 warn!(
                     "Received a ShootRequest but couldn't determine from \
-                     which player this came from"
+                     which player this came from. (peer_id={peer_id:?}, \
+                     player_query={:?})",
+                    player_query
                 );
                 continue;
             };
@@ -145,7 +147,7 @@ fn handle_shoot_requests(
 }
 
 fn spawn_player_on_new_client(
-    clients_query: Query<(&PeerId, &ConnectionState), Changed<ConnectionState>>,
+    clients_query: Query<(&PeerId, &ConnectionState), Added<PeerId>>,
     mut commands: Commands,
     mut materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,

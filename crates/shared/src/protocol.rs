@@ -5,6 +5,10 @@ use crate::{
     components::Health,
     enemy::components::{Enemy, EnemyState},
     game_score::GameScore,
+    multiplayer_messages::{
+        ChangeGameServerStateRequest, ClientRespawnRequest, ConfirmRespawn,
+        PlayerHitMessage, ShootRequest,
+    },
     player::{Player, PlayerState},
     shooting::PlayerWeapons,
     world_object::WorldObjectCollectibleServerSide,
@@ -26,22 +30,25 @@ impl Plugin for ProtocolPlugin {
         // })
         // .add_direction(NetworkDirection::Bidirectional);
         //
-        // app.register_message::<ClientUpdatePositionMessage>()
-        //     .add_direction(NetworkDirection::ClientToServer);
-        //
-        // app.register_message::<ShootRequest>()
-        //     .add_direction(NetworkDirection::ClientToServer);
-        //
-        // app.register_message::<ClientRespawnRequest>()
-        //     .add_direction(NetworkDirection::ClientToServer);
-        // app.register_message::<ConfirmRespawn>()
-        //     .add_direction(NetworkDirection::ServerToClient);
-        //
-        // app.register_message::<ChangeGameServerStateRequest>()
-        //     .add_direction(NetworkDirection::ClientToServer);
-        //
-        // app.register_message::<PlayerHitMessage>()
-        //     .add_direction(NetworkDirection::ServerToClient);
+        app.register_net_message::<ShootRequest>(
+            MessageDirection::ClientToServer,
+        );
+
+        app.register_net_message::<ClientRespawnRequest>(
+            MessageDirection::ClientToServer,
+        );
+
+        app.register_net_message::<ConfirmRespawn>(
+            MessageDirection::ServerToClient,
+        );
+
+        app.register_net_message::<ChangeGameServerStateRequest>(
+            MessageDirection::ClientToServer,
+        );
+
+        app.register_net_message::<PlayerHitMessage>(
+            MessageDirection::ServerToClient,
+        );
 
         app.register_component::<Player>();
         app.register_component::<PlayerState>();

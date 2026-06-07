@@ -59,7 +59,7 @@ pub enum InGameState {
     PlayerDead,
 }
 
-// The current game mode on the client
+// TODO: The client shouldn't change this 'manually', it should just mirror what game_core has.
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default, Copy)]
 pub enum GameModeClient {
     #[default]

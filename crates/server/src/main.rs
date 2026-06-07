@@ -25,6 +25,7 @@ struct HeadlessServerPlugin;
 impl Plugin for HeadlessServerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(MinimalPlugins);
+        app.add_plugins(StatesPlugin);
         app.add_plugins(AssetPlugin {
             file_path: "../../assets".to_string(),
             ..default()
@@ -62,10 +63,6 @@ fn main() {
     let run_mode_str = std::env::args().nth(1);
     let run_mode = get_run_mode(run_mode_str.as_ref());
 
-    app.add_plugins(StatesPlugin);
-
-    app.insert_state(AppRole::DedicatedServer);
-
     match run_mode {
         ServerRunMode::Headless => {
             app.add_plugins(HeadlessServerPlugin);
@@ -76,6 +73,8 @@ fn main() {
             info!("Starting server in headful mode...");
         }
     }
+
+    app.insert_state(AppRole::DedicatedServer);
 
     app.add_plugins(NetvyPlugin(AppType::Server));
 
