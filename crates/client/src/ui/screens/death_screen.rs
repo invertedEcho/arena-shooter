@@ -152,17 +152,10 @@ fn spawn_wave_game_mode_death_screen(
 }
 
 fn handle_button_press(
-    mut commands: Commands,
     query: Query<(&Interaction, &DeathScreenButton), Changed<Interaction>>,
     mut respawn_request_message_sender: Single<
         &mut NetMessageWriter<ClientRespawnRequest>,
     >,
-    mut player_query: Single<
-        (&mut Health, &mut Transform, Entity, &mut LinearVelocity),
-        With<Owned>,
-    >,
-    mut next_in_game_state: ResMut<NextState<InGameState>>,
-    app_role: Res<State<AppRole>>,
     mut retry_wave_game_mode_message_writer: MessageWriter<RetryWaveGameMode>,
 ) {
     for (interaction, button) in query {
@@ -174,32 +167,7 @@ fn handle_button_press(
                 // we can always write this message even if we arent even playing wave game mode,
                 // because then the message handler just wont do anything
                 retry_wave_game_mode_message_writer.write(RetryWaveGameMode);
-                // https://github.com/cBournhonesque/lightyear/issues/1417
-                // TODO: i really hate this
-                // unfortunately in HostClient setup (e.g. AppRole::ClientAndServer) we never
-                // receive the ConfirmRespawn message from server, so we just do the stuff that we
-                // would normally do manually
-                if *app_role.get() == AppRole::ClientAndServer {
-                    let (
-                        player_health,
-                        player_transform,
-                        player_entity,
-                        velocity,
-                    ) = &mut *player_query;
-
-                    player_health.0 = DEFAULT_HEALTH;
-                    player_transform.translation =
-                        SPAWN_POINT_MEDIUM_PLASTIC_MAP;
-                    next_in_game_state.set(InGameState::Playing);
-                    commands
-                        .entity(*player_entity)
-                        .remove::<ColliderDisabled>();
-                    // velocity may be very high if we died because we fell off the map into the
-                    // deathzone
-                    velocity.0 = Vec3::ZERO;
-                } else {
-                    respawn_request_message_sender.write(ClientRespawnRequest);
-                }
+                respawn_request_message_sender.write(ClientRespawnRequest);
             }
         }
     }

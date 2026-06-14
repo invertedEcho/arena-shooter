@@ -18,8 +18,8 @@ pub struct ChangeGameServerStateRequest(pub GameStateServer);
 #[derive(Serialize, Deserialize)]
 pub struct ClientRespawnRequest;
 
-/// This message is sent from server to client, so the client can spawn the damage indicator
-/// TODO: Explain when this message gets sent
+/// This message is sent from server to client, whenever another player/enemy shot the player of
+/// that client
 #[derive(Serialize, Deserialize, Message, Copy, Clone)]
 pub struct PlayerHitMessage {
     pub origin: Vec3,

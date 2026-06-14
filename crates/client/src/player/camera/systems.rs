@@ -36,8 +36,7 @@ use crate::{
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 
 pub fn setup_player_cameras(
-    // using With<Owned> ensures we only add cameras to our own player
-    added_players: Query<Entity, (Added<Player>, With<Owned>)>,
+    added_players: Query<Entity, (Added<Owned>, With<Player>)>,
     mut message_writer: MessageWriter<SpawnPlayerCamera>,
 ) {
     for added_player in added_players {

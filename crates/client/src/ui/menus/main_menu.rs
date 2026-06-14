@@ -114,7 +114,7 @@ fn handle_main_menu_button_pressed(
         match main_menu_button {
             MainMenuButton::Singleplayer => {
                 next_main_menu_state.set(MainMenuState::MapSelection);
-                next_app_role.set(AppRole::ClientAndServer);
+                // next_app_role.set(AppRole::ClientAndServer);
             }
             MainMenuButton::Multiplayer => {
                 next_game_mode_state.set(GameModeClient::Multiplayer);
@@ -125,7 +125,6 @@ fn handle_main_menu_button_pressed(
                 next_client_loading_state
                     .set(ClientLoadingState::ConnectingToServer);
 
-                info!("Writing StartGame message!");
                 message_writer.write(StartGame {
                     game_mode: GameModeServer::FreeForAll,
                     map: GameMap::MediumPlastic,

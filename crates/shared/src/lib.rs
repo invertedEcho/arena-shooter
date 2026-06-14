@@ -31,8 +31,8 @@ pub enum ServerRunMode {
 pub enum AppRole {
     /// This app is a client that is connecting to multiplayer server
     ClientOnly,
-    /// This app is a client that is also hosting a local server, e.g. Singleplayer
-    ClientAndServer,
+    // /// This app is a client that is also hosting a local server, e.g. Singleplayer
+    // ClientAndServer,
     /// This app is the server binary
     DedicatedServer,
 }

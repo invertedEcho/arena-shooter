@@ -13,14 +13,9 @@ use shared::{
     components::Health,
     enemy::components::Enemy,
     game_score::GameScore,
-    multiplayer_messages::{
-        ChangeGameServerStateRequest, ClientRespawnRequest,
-    },
+    multiplayer_messages::ChangeGameServerStateRequest,
     player::Player,
-    utils::network::{
-        SERVER_PORT, SERVER_SOCKET_ADDR_DEDICATED_SERVER,
-        SERVER_SOCKET_ADDR_SINGLEPLAYER,
-    },
+    utils::network::{SERVER_PORT, SERVER_SOCKET_ADDR_DEDICATED_SERVER},
     world_object::{
         WorldObjectCollectibleKind, WorldObjectCollectibleServerSide,
     },
@@ -103,7 +98,11 @@ impl Plugin for GameCorePlugin {
 
         app.add_systems(
             Update,
-            (read_stop_game_message, check_world_scene_loaded),
+            (
+                read_stop_game_message,
+                check_world_scene_loaded,
+                handle_game_server_state_update_request,
+            ),
         );
         app.add_systems(
             Update,
@@ -140,15 +139,15 @@ pub fn start_server(mut commands: Commands, app_role: Res<State<AppRole>>) {
             info!("Skipping starting of server, AppRole is ClientOnly");
             return;
         }
-        AppRole::ClientAndServer => "Local Server for singleplayer",
-        AppRole::DedicatedServer => "Server from server Binary",
+        // AppRole::ClientAndServer => "Local Server for singleplayer",
+        AppRole::DedicatedServer => "Dedicated Server",
     };
 
     let local_addr = match app_role.get() {
         AppRole::ClientOnly => {
             return;
         }
-        AppRole::ClientAndServer => SERVER_SOCKET_ADDR_SINGLEPLAYER,
+        // AppRole::ClientAndServer => SERVER_SOCKET_ADDR_SINGLEPLAYER,
         AppRole::DedicatedServer => SERVER_SOCKET_ADDR_DEDICATED_SERVER,
     };
 
@@ -165,6 +164,7 @@ pub fn start_server(mut commands: Commands, app_role: Res<State<AppRole>>) {
                 address: "0.0.0.0".to_string(),
                 port: SERVER_PORT,
             },
+            Name::new(entity_name),
         ))
         .id();
 
@@ -261,79 +261,57 @@ fn on_game_core_loading_state_done(
     };
 }
 
-// FIXME
+// FIXME: reintroduce
 // fn handle_client_respawn_requests(
 //     mut commands: Commands,
-//     receivers: Query<(
-//         &mut NetMessageReader<ClientRespawnRequest>,
-//         &ControlledByRemote,
-//         &PeerId,
-//     )>,
-//     mut player_query: Query<(Entity, &mut Health)>,
-//     mut server_multi_message_sender: ServerMultiMessageSender,
+//     receivers: Query<(&mut NetMessageReader<ClientRespawnRequest>, &PeerId)>,
+//     mut player_query: Query<(Entity, &mut Health, &OwnedBy)>,
+//     mut server_multi_message_sender: Single<
+//         &mut NetMessageWriter<ConfirmRespawn>,
+//     >,
 //     server: Single<&Server>,
 // ) {
-//     for (mut message_receiver, controlled_by, remote_id) in receivers {
-//         for _ in message_receiver.receive() {
+//     for (mut message_receiver, peer_id) in receivers {
+//         for _ in message_receiver.read() {
 //             info!("Received ClientRespawnRequest!");
-//             match controlled_by.iter().next() {
-//                 Some(controlling_player) => {
-//                     match player_query.get_mut(controlling_player) {
-//                         Ok((
-//                             player_entity,
-//                             mut player_health,
-//                             mut entity_position_server,
-//                         )) => {
-//                             player_health.0 = DEFAULT_HEALTH;
-//                             entity_position_server.translation =
-//                                 SPAWN_POINT_MEDIUM_PLASTIC_MAP;
+//             let Some((player_entity, mut player_health, _)) = player_query
+//                 .iter_mut()
+//                 .find(|(entity, health, owned_by)| owned_by.0 == *peer_id)
+//             else {
+//                 warn!(
+//                     "Read a ClientRespawnRequest but couldn't figure out to \
+//                      which player this belongs to"
+//                 );
+//                 continue;
+//             };
 //
-//                             commands
-//                                 .entity(player_entity)
-//                                 .remove::<ColliderDisabled>();
+//             player_health.0 = DEFAULT_HEALTH;
 //
-//                             info!(
-//                                 "Sending confirm respawn message to client \
-//                                  with remote_id: {}",
-//                                 remote_id.0
-//                             );
-//                             let network_target =
-//                                 &NetworkTarget::Single(remote_id.0);
+//             // TODO: use transform directly
+//             // entity_position_server.translation = SPAWN_POINT_MEDIUM_PLASTIC_MAP;
 //
-//                             let message_sent_result = server_multi_message_sender
-//                                 .send::<ConfirmRespawn, OrderedReliableChannel>(
-//                                     &ConfirmRespawn,
-//                                     &server,
-//                                     network_target,
-//                                 );
-//                             match message_sent_result {
-//                                 Ok(_) => {
-//                                     info!(
-//                                         "Succesfully sent ConfirmRespawn \
-//                                          message to client"
-//                                     );
-//                                 }
-//                                 Err(error) => {
-//                                     error!(
-//                                         "Failed to send ConfirmRespawn \
-//                                          message to client: {}",
-//                                         error
-//                                     );
-//                                 }
-//                             }
-//                         }
-//                         Err(error) => {
-//                             error!(
-//                              yo lets pop off dude   "Failed to find controlling player: {}",
-//                                 error
-//                             );
-//                         }
-//                     }
+//             commands.entity(player_entity).remove::<ColliderDisabled>();
+//
+//             info!(
+//                 "Sending confirm respawn message to client with remote_id: {}",
+//                 peer_id.0
+//             );
+//             // let network_target = &NetworkTarget::Single(peer_id.0);
+//
+//             let message_sent_result = server_multi_message_sender
+//                 .send::<ConfirmRespawn, OrderedReliableChannel>(
+//                 &ConfirmRespawn,
+//                 &server,
+//                 network_target,
+//             );
+//             match message_sent_result {
+//                 Ok(_) => {
+//                     info!("Succesfully sent ConfirmRespawn message to client");
 //                 }
-//                 None => {
+//                 Err(error) => {
 //                     error!(
-//                         "Received a ClientRespawnRequest but no \
-//                          'ControlledByRemote' exists"
+//                         "Failed to send ConfirmRespawn message to client: {}",
+//                         error
 //                     );
 //                 }
 //             }
@@ -341,24 +319,23 @@ fn on_game_core_loading_state_done(
 //     }
 // }
 
-// FIXME
-// fn handle_game_server_state_update_request(
-//     mut message_receiver: Single<
-//         &mut NetMessageReader<ChangeGameServerStateRequest>,
-//     >,
-//     app_role: Res<State<AppRole>>,
-//     mut game_state_server: ResMut<NextState<GameStateServer>>,
-// ) {
-//     for message in message_receiver.read() {
-//         if *app_role.get() != AppRole::ClientAndServer {
-//             info!("Ignored ChangeGameServerStateRequest");
-//             return;
-//         }
-//
-//         info!("GameStateServer updated to {:?}", message.0);
-//         game_state_server.set(message.0);
-//     }
-// }
+fn handle_game_server_state_update_request(
+    mut message_receiver: Single<
+        &mut NetMessageReader<ChangeGameServerStateRequest>,
+    >,
+    app_role: Res<State<AppRole>>,
+    mut game_state_server: ResMut<NextState<GameStateServer>>,
+) {
+    for message in message_receiver.read() {
+        if *app_role.get() != AppRole::ClientOnly {
+            info!("Ignored ChangeGameServerStateRequest");
+            return;
+        }
+
+        info!("GameStateServer updated to {:?}", message.0);
+        game_state_server.set(message.0);
+    }
+}
 
 fn kill_players_below_death_zone(
     player_query: Query<(&mut Health, &Transform), With<Player>>,
@@ -380,7 +357,7 @@ const COLLIDER_CONSTRUCTOR_COUNT_TINY_TOWN: usize = 2;
 
 fn check_collider_constructor_hierarchy_ready(
     _trigger: On<ColliderConstructorHierarchyReady>,
-    mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
+    mut game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     mut local_count: Local<usize>,
     current_map: Res<State<GameMap>>,
 ) {
@@ -399,10 +376,10 @@ fn check_collider_constructor_hierarchy_ready(
 
     info!(
         "All ColliderConstructorHierarchies are ready, setting \
-         ServerLoadingState::CollidersSpawned"
+         GameCoreLoadingState::CollidersSpawned"
     );
 
-    next_server_loading_state.set(GameCoreLoadingState::CollidersSpawned);
+    game_core_loading_state.set(GameCoreLoadingState::CollidersSpawned);
 
     // Reset back to zero to prepare for next GameStart
     *local_count = 0;
@@ -441,6 +418,7 @@ fn spawn_map(
     app_role: Res<State<AppRole>>,
     current_map: Res<State<GameMap>>,
 ) {
+    // Is this even true anymore? we have the spawn_locations_json, right?
     // FIXME: not spawning the map actually has the problem that the MedkitSpawnLocations and
     // AmmunitionPackSpawnLocations are never spawned. so dedicated server will never have those
     // we need another way of storing information on where to spawn medkits, etc
