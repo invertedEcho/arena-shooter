@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use shared::GameMode;
 use std::fmt::Display;
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
@@ -59,11 +60,9 @@ pub enum InGameState {
     PlayerDead,
 }
 
-// TODO: The client shouldn't change this 'manually', it should just mirror what game_core has.
-#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default, Copy)]
-pub enum GameModeClient {
-    #[default]
-    FreeRoam,
-    Waves,
-    Multiplayer,
+/// The current "configuration" of the game, on the client. It stores intermediate values such as
+/// game mode selected, map selected, until this gets sent to the server/game_core.
+#[derive(Resource, Debug, Default)]
+pub struct GameConfigClient {
+    pub game_mode: GameMode,
 }

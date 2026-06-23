@@ -3,7 +3,7 @@ use game_core::GameStateWave;
 use shared::NextWaveTimer;
 
 use crate::{
-    game_flow::states::{GameModeClient, InGameState},
+    game_flow::states::{AppState, InGameState},
     ui::{
         UiState,
         hud::systems::{
@@ -51,7 +51,7 @@ impl Plugin for PlayerHudPlugin {
                 .run_if(in_state(InGameState::Playing)),
         );
         app.add_systems(Update, spawn_player_hud);
-        app.add_systems(OnEnter(GameModeClient::Waves), spawn_wave_hud);
+        app.add_systems(OnEnter(AppState::InGame), spawn_wave_hud);
         app.add_systems(
             Update,
             (update_wave_hud)

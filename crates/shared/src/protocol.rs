@@ -6,8 +6,8 @@ use crate::{
     enemy::components::{Enemy, EnemyState},
     game_score::GameScore,
     multiplayer_messages::{
-        ChangeGameServerStateRequest, ClientRespawnRequest, ConfirmRespawn,
-        PlayerHitMessage, ShootRequest,
+        ClientCommand, ClientRespawnRequest, ConfirmRespawn, PlayerHitMessage,
+        ShootRequest,
     },
     player::{Player, PlayerState},
     shooting::PlayerWeapons,
@@ -42,12 +42,16 @@ impl Plugin for ProtocolPlugin {
             MessageDirection::ServerToClient,
         );
 
-        app.register_net_message::<ChangeGameServerStateRequest>(
+        app.register_net_message::<ClientCommand>(
             MessageDirection::ClientToServer,
         );
 
         app.register_net_message::<PlayerHitMessage>(
             MessageDirection::ServerToClient,
+        );
+
+        app.register_net_message::<ClientCommand>(
+            MessageDirection::ClientToServer,
         );
 
         app.register_component::<Player>();

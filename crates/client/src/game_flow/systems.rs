@@ -4,9 +4,7 @@ use bevy::{
 };
 use game_core::RequestNewWave;
 use netvy::prelude::*;
-use shared::{
-    GameStateServer, multiplayer_messages::ChangeGameServerStateRequest,
-};
+use shared::{GameStateServer, multiplayer_messages::ClientCommand};
 
 use crate::{
     game_flow::states::{AppState, ClientLoadingState, InGameState},
@@ -123,18 +121,16 @@ pub fn handle_player_death_event(
 
 pub fn send_update_game_server_state_request_on_in_game_state_change(
     current_in_game_state: If<Res<State<InGameState>>>,
-    mut message_sender: Single<
-        &mut NetMessageWriter<ChangeGameServerStateRequest>,
-    >,
+    mut message_sender: Single<&mut NetMessageWriter<ClientCommand>>,
 ) {
     match *current_in_game_state.get() {
         InGameState::Playing => {
             message_sender
-                .write(ChangeGameServerStateRequest(GameStateServer::Running));
+                .write(ClientCommand::SetState(GameStateServer::Running));
         }
         InGameState::Paused | InGameState::PlayerDead => {
             message_sender
-                .write(ChangeGameServerStateRequest(GameStateServer::Paused));
+                .write(ClientCommand::SetState(GameStateServer::Paused));
         }
     }
 }

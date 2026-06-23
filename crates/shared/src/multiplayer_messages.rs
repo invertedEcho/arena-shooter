@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::GameStateServer;
+use crate::{GameMap, GameMode, GameStateServer};
 
 #[derive(Message, Serialize, Deserialize)]
 pub struct ShootRequest {
@@ -10,8 +10,15 @@ pub struct ShootRequest {
     // pub client_tick: u32,
 }
 
+/// A client can send this to the server to request update of the game config on the server, such as
+/// the current map or game mode.
+// TODO: needs a more descriptive name
 #[derive(Serialize, Deserialize)]
-pub struct ChangeGameServerStateRequest(pub GameStateServer);
+pub enum ClientCommand {
+    SetGameMode(GameMode),
+    SetMap(GameMap),
+    SetState(GameStateServer),
+}
 
 /// A client can send this message to the server indicating that the player requested a respawn.
 /// The server will then update the players health and the players position.

@@ -20,7 +20,7 @@ use crate::{
     audio::AudioPlugin,
     character_controller::CharacterControllerPlugin,
     enemy_visuals::EnemyVisualsPlugin,
-    game_flow::GameFlowPlugin,
+    game_flow::{GameFlowPlugin, states::GameConfigClient},
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
     network::NetworkPlugin,
@@ -66,6 +66,8 @@ fn main() {
     } else {
         WindowMode::Windowed
     };
+
+    app.init_resource::<GameConfigClient>();
 
     // bevy-builtin plugins
     app.add_plugins(

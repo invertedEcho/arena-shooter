@@ -2,7 +2,7 @@ use avian3d::prelude::*;
 use bevy::{color::palettes::css::WHITE, prelude::*};
 use netvy::prelude::*;
 use shared::{
-    AppRole, GameModeServer,
+    AppRole, GameConfigServer, GameMode,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     },
@@ -27,6 +27,73 @@ impl Plugin for PlayerPlugin {
     }
 }
 
+fn spawn_player_on_new_client(
+    clients_query: Query<&PeerId, Added<PeerId>>,
+    mut commands: Commands,
+    mut materials: Option<ResMut<Assets<StandardMaterial>>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut game_score: Query<&mut GameScore>,
+    app_role: Res<State<AppRole>>,
+) {
+    if *app_role.get() == AppRole::ClientOnly {
+        return;
+    }
+
+    for peer_id in clients_query {
+        match game_score.single_mut() {
+            Ok(mut game_score) => {
+                game_score.players.insert(
+                    peer_id.0,
+                    LivingEntityStats {
+                        username: format!("Player {}", peer_id.0),
+                        ..default()
+                    },
+                );
+            }
+            Err(error) => {
+                error!("Failed to add player to game score: {}", error);
+            }
+        }
+
+        info!(
+            "Spawning a player for fully connected Client. (peer_id={})",
+            peer_id.0
+        );
+
+        let player_entity = commands
+            .spawn((
+                PlayerBundle::default(),
+                Name::new("Player"),
+                ReplicateEntity,
+                SyncPosition::default(),
+                Visibility::Visible,
+                OwnedBy(*peer_id),
+                Collider::capsule(
+                    CHARACTER_CAPSULE_RADIUS,
+                    CHARACTER_CAPSULE_LENGTH,
+                ),
+                RigidBody::Kinematic,
+            ))
+            .id();
+
+        if *app_role.get() == AppRole::DedicatedServer {
+            // on headless setup, materials doesnt exist
+            if let Some(ref mut materials) = materials {
+                commands.entity(player_entity).insert((
+                    Mesh3d(meshes.add(Capsule3d::new(
+                        CHARACTER_CAPSULE_RADIUS,
+                        CHARACTER_CAPSULE_LENGTH,
+                    ))),
+                    MeshMaterial3d(materials.add(StandardMaterial {
+                        base_color: WHITE.into(),
+                        ..Default::default()
+                    })),
+                ));
+            }
+        }
+    }
+}
+
 fn handle_shoot_requests(
     mut commands: Commands,
     message_readers: Query<(&mut NetMessageReader<ShootRequest>, &PeerId)>,
@@ -34,7 +101,6 @@ fn handle_shoot_requests(
     spatial_query: SpatialQuery,
     player_query: Query<(Entity, &OwnedBy), With<Player>>,
     mut game_score: Single<&mut GameScore>,
-    game_mode_server: Res<State<GameModeServer>>,
     client_query: Query<&PeerId, With<Client>>,
     enemy_query: Query<Entity, With<Enemy>>,
     mut player_hit_enemy_message_writer: MessageWriter<PlayerHitEnemy>,
@@ -42,7 +108,10 @@ fn handle_shoot_requests(
         &mut NetMessageWriter<PlayerHitMessage>,
         With<Server>,
     >,
+    game_config_server: Res<GameConfigServer>,
 ) {
+    let game_mode = &game_config_server.game_mode;
+
     for (mut message_reader, peer_id) in message_readers {
         for message in message_reader.read() {
             // the player entity that sent this ShootRequest
@@ -132,7 +201,7 @@ fn handle_shoot_requests(
 
                 // if we have game mode wave, the entity killed will always be an enemy. so we
                 // skip this case
-                if **game_mode_server == GameModeServer::Waves {
+                if *game_mode == GameMode::Waves {
                     return;
                 };
                 let Some(player_score) = game_score.players.get_mut(&peer_id.0)
@@ -141,76 +210,6 @@ fn handle_shoot_requests(
                     continue;
                 };
                 player_score.deaths += 1;
-            }
-        }
-    }
-}
-
-fn spawn_player_on_new_client(
-    clients_query: Query<&PeerId, Added<PeerId>>,
-    mut commands: Commands,
-    mut materials: Option<ResMut<Assets<StandardMaterial>>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut game_score: Query<&mut GameScore>,
-    app_role: Res<State<AppRole>>,
-) {
-    if *app_role.get() == AppRole::ClientOnly {
-        return;
-    }
-
-    for peer_id in clients_query {
-        match game_score.single_mut() {
-            Ok(mut game_score) => {
-                game_score.players.insert(
-                    peer_id.0,
-                    LivingEntityStats {
-                        username: format!("Player {}", peer_id.0),
-                        ..default()
-                    },
-                );
-            }
-            Err(error) => {
-                error!("Failed to add player to game score: {}", error);
-            }
-        }
-
-        info!(
-            "Spawning a player for fully connected Client. (peer_id={})",
-            peer_id.0
-        );
-
-        let player_entity = commands
-            .spawn((
-                PlayerBundle::default(),
-                Name::new("Player"),
-                ReplicateEntity,
-                SyncPosition::default(),
-                Visibility::Visible,
-                OwnedBy(*peer_id),
-                Collider::capsule(
-                    CHARACTER_CAPSULE_RADIUS,
-                    CHARACTER_CAPSULE_LENGTH,
-                ),
-                RigidBody::Kinematic,
-            ))
-            // .insert_if(Owned, || {
-            //     *app_role.get() == AppRole::ClientAndServer
-            // })
-            .id();
-
-        if *app_role.get() == AppRole::DedicatedServer {
-            // on headless setup, materials doesnt exist
-            if let Some(ref mut materials) = materials {
-                commands.entity(player_entity).insert((
-                    Mesh3d(meshes.add(Capsule3d::new(
-                        CHARACTER_CAPSULE_RADIUS,
-                        CHARACTER_CAPSULE_LENGTH,
-                    ))),
-                    MeshMaterial3d(materials.add(StandardMaterial {
-                        base_color: WHITE.into(),
-                        ..Default::default()
-                    })),
-                ));
             }
         }
     }

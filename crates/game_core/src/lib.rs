@@ -8,12 +8,12 @@ use bevy::{
 use bevy_common_assets::json::JsonAssetPlugin;
 use serde::{Deserialize, Serialize};
 use shared::{
-    AppRole, GameMap, GameModeServer, GameStateServer, MEDIUM_PLASTIC_MAP_PATH,
-    StartGame, StopGame, TINY_TOWN_MAP_PATH,
+    AppRole, GameConfigServer, GameMap, GameMode, GameStateServer,
+    MEDIUM_PLASTIC_MAP_PATH, StartGame, StopGame, TINY_TOWN_MAP_PATH,
     components::Health,
     enemy::components::Enemy,
     game_score::GameScore,
-    multiplayer_messages::ChangeGameServerStateRequest,
+    multiplayer_messages::ClientCommand,
     player::Player,
     utils::network::{SERVER_PORT, SERVER_SOCKET_ADDR_DEDICATED_SERVER},
     world_object::{
@@ -62,6 +62,7 @@ pub struct GameStateWave {
     pub enemies_left_from_current_wave: usize,
 }
 
+// TODO: maybe just one universal retry message
 #[derive(Message)]
 pub struct RetryWaveGameMode;
 
@@ -82,7 +83,6 @@ impl Plugin for GameCorePlugin {
         app.init_state::<GameCoreLoadingState>();
         app.init_state::<GameStateServer>();
         app.init_state::<GameMap>();
-        app.init_state::<GameModeServer>();
 
         // any files loaded via the asset server, that end with `spawn_locations.json`, will be
         // parsed into SpawnLocationFile struct, and can then be retrieved via the handle
@@ -101,7 +101,7 @@ impl Plugin for GameCorePlugin {
             (
                 read_stop_game_message,
                 check_world_scene_loaded,
-                handle_game_server_state_update_request,
+                handle_client_commands,
             ),
         );
         app.add_systems(
@@ -176,19 +176,11 @@ fn handle_start_game_message(
     mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     app_role: Res<State<AppRole>>,
     mut start_game_message_reader: MessageReader<StartGame>,
-    mut next_current_map: ResMut<NextState<GameMap>>,
-    mut game_mode_server: ResMut<NextState<GameModeServer>>,
 ) {
-    for message in start_game_message_reader.read() {
+    for _ in start_game_message_reader.read() {
         info!("Received StartGame message");
-        next_current_map.set(message.map.clone());
 
         if *app_role.get() != AppRole::ClientOnly {
-            game_mode_server.set(message.game_mode.clone());
-            info!(
-                "Updated GameModeServer to {:?}, read from StartGame message.",
-                message.game_mode
-            );
             commands.spawn((
                 GameScore {
                     players: HashMap::new(),
@@ -206,40 +198,37 @@ fn handle_start_game_message(
     }
 }
 
-// FIXME: i think i disliked this API, so i wont add somethign like this in netvy
-// fn handle_new_connection(trigger: On<Add, LinkOf>, mut commands: Commands) {
-//     commands
-//         .entity(trigger.entity)
-//         .insert((ReplicationSender::new(
-//             Duration::from_millis(100),
-//             SendUpdatesMode::SinceLastAck,
-//             false,
-//         ),));
-// }
-
 fn on_game_core_loading_state_done(
     mut commands: Commands,
-    game_mode_server: Res<State<GameModeServer>>,
     mut spawn_enemies: MessageWriter<SpawnEnemiesMessage>,
     enemy_query: Query<Entity, With<Enemy>>,
+    game_config_server: Option<Res<GameConfigServer>>,
     app_role: Res<State<AppRole>>,
 ) {
+    // we dont want to spawn enemies, etc, if this is client. the server handles that.
+    // this will change ofc once we implement HostClient mode in netvy
     if *app_role.get() == AppRole::ClientOnly {
-        info!(
-            "Not doing actions depending on GameModeServer, this is ClientOnly"
-        );
         return;
     }
-    // TODO: This would mean GameCore is not fully done? We still spawn enemies, so theoretically
-    // GameCoreLoadingState should not be done, e.g. we should add another state
+
+    let Some(game_config_server) = game_config_server else {
+        warn!(
+            "GameConfigServer doesn't exist, cant execute actions depending \
+             on it, like spawning enemies!"
+        );
+        return;
+    };
+
+    let game_mode_server = &game_config_server.game_mode;
+
     info!(
         "GameCoreLoadingState is done, now doing actions corresponding to \
          game mode. Game mode is: {:?}",
-        *game_mode_server
+        game_mode_server
     );
 
-    match *game_mode_server.get() {
-        GameModeServer::Waves => {
+    match game_mode_server {
+        GameMode::Waves => {
             let wave = 1;
             let enemy_count = get_enemy_count_per_wave(wave);
             commands.insert_resource(GameStateWave {
@@ -252,7 +241,7 @@ fn on_game_core_loading_state_done(
                 spawn_strategy: EnemySpawnStrategy::RandomSelection,
             });
         }
-        GameModeServer::FreeForAll | GameModeServer::FreeRoam => {
+        GameMode::FreeForAll | GameMode::FreeRoam => {
             commands.remove_resource::<GameStateWave>();
             for enemy in enemy_query {
                 commands.entity(enemy).despawn();
@@ -319,21 +308,30 @@ fn on_game_core_loading_state_done(
 //     }
 // }
 
-fn handle_game_server_state_update_request(
-    mut message_receiver: Single<
-        &mut NetMessageReader<ChangeGameServerStateRequest>,
-    >,
-    app_role: Res<State<AppRole>>,
+fn handle_client_commands(
+    mut net_message_reader: Single<&mut NetMessageReader<ClientCommand>>,
+    mut game_config_server: Option<ResMut<GameConfigServer>>,
     mut game_state_server: ResMut<NextState<GameStateServer>>,
 ) {
-    for message in message_receiver.read() {
-        if *app_role.get() != AppRole::ClientOnly {
-            info!("Ignored ChangeGameServerStateRequest");
+    for message in net_message_reader.read() {
+        let Some(ref mut game_config_server) = game_config_server else {
+            warn!(
+                "Received a ClientCommand but GameConfigServer resource \
+                 doesnt exist, can't handle ClientCommand."
+            );
             return;
+        };
+        match message {
+            ClientCommand::SetGameMode(game_mode) => {
+                game_config_server.game_mode = game_mode;
+            }
+            ClientCommand::SetMap(game_map) => {
+                game_config_server.game_map = game_map;
+            }
+            ClientCommand::SetState(new_game_state_server) => {
+                game_state_server.set(new_game_state_server);
+            }
         }
-
-        info!("GameStateServer updated to {:?}", message.0);
-        game_state_server.set(message.0);
     }
 }
 
@@ -418,10 +416,6 @@ fn spawn_map(
     app_role: Res<State<AppRole>>,
     current_map: Res<State<GameMap>>,
 ) {
-    // Is this even true anymore? we have the spawn_locations_json, right?
-    // FIXME: not spawning the map actually has the problem that the MedkitSpawnLocations and
-    // AmmunitionPackSpawnLocations are never spawned. so dedicated server will never have those
-    // we need another way of storing information on where to spawn medkits, etc
     if *app_role.get() == AppRole::DedicatedServer {
         info!("Skipping spawning map, AppRole is DedicatedServer");
         return;

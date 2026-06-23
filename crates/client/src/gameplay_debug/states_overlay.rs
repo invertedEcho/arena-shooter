@@ -1,9 +1,9 @@
 use bevy::prelude::*;
-use shared::GameModeServer;
 
 use crate::{
     game_flow::states::{
-        AppState, ClientLoadingState, InGameState, MainMenuState,
+        AppState, ClientLoadingState, GameConfigClient, InGameState,
+        MainMenuState,
     },
     gameplay_debug::AppDebugState,
 };
@@ -23,8 +23,8 @@ impl Plugin for DebugOverlayPlugin {
                 update_current_in_game_state_text,
                 update_current_main_menu_state,
                 update_loading_game_state_text,
-                update_current_server_game_mode_text
-                    .run_if(state_changed::<GameModeServer>),
+                update_current_game_config_client_text
+                    .run_if(resource_changed::<GameConfigClient>),
             ),
         );
     }
@@ -50,6 +50,9 @@ struct CurrentConnectionStateText;
 
 #[derive(Component)]
 struct DebugOverlayRoot;
+
+#[derive(Component)]
+struct CurrentGameConfigClientText;
 
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
@@ -96,6 +99,11 @@ fn spawn_debug_overlay(mut commands: Commands) {
             parent.spawn(build_debug_overlay_state_item_text(
                 "ConnectionState",
                 CurrentConnectionStateText,
+            ));
+
+            parent.spawn(build_debug_overlay_state_item_text(
+                "GameModeClient",
+                CurrentGameConfigClientText,
             ));
         });
 }
@@ -172,15 +180,11 @@ fn update_current_in_game_state_text(
     }
 }
 
-fn update_current_server_game_mode_text(
-    mut current_server_game_mode_text: Single<
-        &mut Text,
-        With<CurrentServerGameModeText>,
-    >,
-    server_game_mode: Res<State<GameModeServer>>,
+fn update_current_game_config_client_text(
+    mut text: Single<&mut Text, With<CurrentGameConfigClientText>>,
+    client_game_mode: Res<GameConfigClient>,
 ) {
-    **current_server_game_mode_text =
-        Text::new(format!("{:?}", *server_game_mode));
+    **text = Text::new(format!("{:?}", *client_game_mode));
 }
 
 fn update_loading_game_state_text(

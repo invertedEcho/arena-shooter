@@ -6,13 +6,11 @@ use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use game_core::{GameCoreLoadingState, start_server};
 use netvy::prelude::*;
-use shared::ServerRunMode;
-use shared::{AppRole, SharedPlugin};
+use shared::{AppRole, GameMap, GameMode, SharedPlugin};
+use shared::{GameConfigServer, ServerRunMode};
 
 // use crate::auth::start_netcode_authentication_task;
-use crate::systems::{
-    spawn_map_colliders, spawn_server_camera, write_start_game_message,
-};
+use crate::systems::{spawn_map_colliders, spawn_server_camera, start_game};
 use crate::utils::get_run_mode;
 
 // mod auth;
@@ -81,7 +79,12 @@ fn main() {
     app.add_plugins(game_core::GameCorePlugin);
     app.add_plugins(SharedPlugin);
 
-    app.add_systems(Startup, (start_server, write_start_game_message));
+    app.insert_resource(GameConfigServer {
+        game_mode: GameMode::FreeForAll,
+        game_map: GameMap::MediumPlastic,
+    });
+
+    app.add_systems(Startup, (start_server, start_game));
 
     // mimic the normal flow, because on the dedicated server we do things a bit differently, e.g.
     // we dont spawn the entire map with the collider constructors, but we only spawn the map

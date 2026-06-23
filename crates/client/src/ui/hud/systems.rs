@@ -2,7 +2,7 @@ use bevy::{color::palettes::css::WHITE, prelude::*};
 use game_core::GameStateWave;
 use netvy::prelude::*;
 use shared::{
-    NextWaveTimer, WaveFinishedMessage,
+    GameMode, NextWaveTimer, WaveFinishedMessage,
     components::{DespawnTimer, Health},
     multiplayer_messages::PlayerHitMessage,
     player::{AimType, Player, PlayerCash, PlayerReady, PlayerState},
@@ -10,7 +10,7 @@ use shared::{
 };
 
 use crate::{
-    game_flow::states::{AppState, InGameState},
+    game_flow::states::{AppState, GameConfigClient, InGameState},
     player::{
         camera::components::WorldCamera,
         shooting::messages::{PlayerBulletHit, PlayerWeaponSlotChangeMessage},
@@ -277,7 +277,14 @@ pub fn spawn_bullet_hit_crosshair(
     }
 }
 
-pub fn spawn_wave_hud(mut commands: Commands) {
+pub fn spawn_wave_hud(
+    mut commands: Commands,
+    game_config_client: Res<GameConfigClient>,
+) {
+    if game_config_client.game_mode != GameMode::Waves {
+        return;
+    }
+
     commands
         .spawn((
             DespawnOnExit(AppState::InGame),

@@ -37,19 +37,15 @@ pub enum AppRole {
     DedicatedServer,
 }
 
-/// The game mode that is running on the server
-#[derive(
-    States, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize, Default,
-)]
-pub enum GameModeServer {
-    #[default]
-    FreeForAll,
-    Waves,
-    FreeRoam,
+/// The currently active game configuration on the server
+#[derive(Resource, Serialize, Deserialize)]
+pub struct GameConfigServer {
+    pub game_mode: GameMode,
+    pub game_map: GameMap,
 }
 
 #[derive(
-    States, Clone, PartialEq, Eq, Hash, Debug, Default, Serialize, Deserialize,
+    States, Serialize, Deserialize, PartialEq, Clone, Eq, Hash, Debug, Default,
 )]
 pub enum GameStateServer {
     #[default]
@@ -109,7 +105,9 @@ impl Plugin for SharedPlugin {
 }
 
 // The current game map
-#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
+#[derive(
+    States, Eq, Debug, PartialEq, Hash, Clone, Default, Serialize, Deserialize,
+)]
 pub enum GameMap {
     #[default]
     MediumPlastic,
@@ -129,13 +127,12 @@ pub fn handle_despawn_timer(
     }
 }
 
+// FIXME: im kinda confused about the flow. we have the GameCoreLoadingState which also does stuff,
+// but this StartGame message also causes stuff.
 /// game_core listens for this message. Upon receiving, game_core will spawn the map, spawn colliders,
 /// spawn enemies, etc...
 #[derive(Message)]
-pub struct StartGame {
-    pub map: GameMap,
-    pub game_mode: GameModeServer,
-}
+pub struct StartGame;
 
 /// A client can send this message to game_core, and game_core will despawn the map,
 /// despawn enemies, etc
@@ -153,3 +150,14 @@ pub struct NextWaveTimer(pub Timer);
 /// corresponding wave are killed
 #[derive(Message)]
 pub struct WaveFinishedMessage;
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Copy, Clone, Default)]
+pub enum GameMode {
+    /// Every wave more enemies get spawned
+    Waves,
+    /// Player can move around the map freely
+    #[default]
+    FreeRoam,
+    /// Every player against every other player, no teams
+    FreeForAll,
+}

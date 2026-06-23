@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use shared::{GameMap, GameModeServer, StartGame};
+use shared::{GameMap, GameMode, StartGame};
 
 use crate::{
-    game_flow::states::{AppState, GameModeClient, MainMenuState},
+    game_flow::states::{AppState, GameConfigClient, MainMenuState},
     ui::{
         common::{
             DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
@@ -34,7 +34,7 @@ impl Plugin for GameModeSelectionUIPlugin {
 struct GameModeSelectionScreen;
 
 #[derive(Component)]
-struct GameModeSelectionButton(GameModeClient);
+struct GameModeSelectionButton(GameMode);
 
 #[derive(Component)]
 enum GameModeSelectionActionButton {
@@ -83,12 +83,12 @@ fn spawn_game_mode_selection_screen(
             parent.spawn(build_common_button(
                 "Waves",
                 asset_server.load(DEFAULT_GAME_FONT_PATH),
-                GameModeSelectionButton(GameModeClient::Waves),
+                GameModeSelectionButton(GameMode::Waves),
             ));
             parent.spawn(build_common_button(
                 "Free Roam",
                 asset_server.load(DEFAULT_GAME_FONT_PATH),
-                GameModeSelectionButton(GameModeClient::FreeRoam),
+                GameModeSelectionButton(GameMode::FreeRoam),
             ));
             parent.spawn(build_common_button(
                 "Go back",
@@ -103,27 +103,18 @@ fn handle_game_mode_selection_button_press(
         (&Interaction, &GameModeSelectionButton),
         Changed<Interaction>,
     >,
-    mut next_game_mode_state: ResMut<NextState<GameModeClient>>,
     mut next_app_state: ResMut<NextState<AppState>>,
     mut message_writer: MessageWriter<StartGame>,
     current_map: Res<State<GameMap>>,
+    mut game_config_client: ResMut<GameConfigClient>,
 ) {
     for (interaction, game_mode_selection_button) in query {
         if let Interaction::Pressed = interaction {
-            let pressed_game_mode = game_mode_selection_button.0;
-            next_game_mode_state.set(pressed_game_mode);
             next_app_state.set(AppState::LoadingGame);
 
-            let game_mode = match pressed_game_mode {
-                GameModeClient::FreeRoam => GameModeServer::FreeRoam,
-                GameModeClient::Waves => GameModeServer::Waves,
-                GameModeClient::Multiplayer => GameModeServer::FreeRoam,
-            };
+            game_config_client.game_mode = game_mode_selection_button.0;
 
-            message_writer.write(StartGame {
-                map: current_map.get().clone(),
-                game_mode,
-            });
+            message_writer.write(StartGame);
         }
     }
 }
