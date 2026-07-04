@@ -151,16 +151,3 @@ fn main() {
 
     app.run();
 }
-
-// fn trigger_connect(mut commands: Commands) {
-//     let client_entity = commands
-//         .spawn((
-//             Client,
-//             TargetAddress {
-//                 address: "0.0.0.0".to_string(),
-//                 port: SERVER_PORT,
-//             },
-//         ))
-//         .id();
-//     commands.trigger(ConnectToServer { client_entity });
-// }

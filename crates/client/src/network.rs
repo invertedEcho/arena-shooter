@@ -30,11 +30,7 @@ impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             OnEnter(ClientLoadingState::StartingServer),
-            start_host_client,
-        );
-        app.add_systems(
-            OnEnter(ClientLoadingState::ConnectingToServer),
-            on_enter_connecting_to_server,
+            start_host_client_server,
         );
         // app.add_systems(
         //     Update,
@@ -48,43 +44,12 @@ impl Plugin for NetworkPlugin {
                 handle_hit_message,
                 handle_new_player,
                 handle_added_owned_player,
+                spawn_host_client,
             ),
         );
         // app.add_observer(handle_added_server);
         // app.add_observer(handle_disconnect);
     }
-}
-
-// fn handle_added_server(
-//     trigger: On<Add, Server>,
-//     app_role: Res<State<AppRole>>,
-//     mut next_client_loading_state: ResMut<NextState<ClientLoadingState>>,
-// ) {
-//     info!("Server {} now added!", trigger.entity);
-//     if *app_role.get() == AppRole::ClientAndServer {
-//         info!(
-//             "Server was added and AppRole::ClientAndServer, setting \
-//              LoadingState to ConnectingToServer"
-//         );
-//         next_client_loading_state.set(ClientLoadingState::ConnectingToServer);
-//     }
-// }
-
-fn on_enter_connecting_to_server(mut commands: Commands) {
-    info!("Spawning a client and connecting to server...");
-
-    let client_entity = commands
-        .spawn((
-            Name::new("Host Client"),
-            Client,
-            TargetAddress {
-                address: "0.0.0.0".to_string(),
-                port: SERVER_PORT,
-            },
-        ))
-        .id();
-
-    commands.trigger(ConnectToServer { client_entity });
 }
 
 fn handle_new_player(
@@ -201,4 +166,44 @@ fn handle_hit_message(
     }
 }
 
-fn start_host_client() {}
+/// marker component for host client server
+#[derive(Component)]
+struct HostClientServer;
+
+fn start_host_client_server(mut commands: Commands) {
+    info!("Starting HostClient server");
+    let server_entity = commands
+        .spawn((
+            Server,
+            TargetAddress {
+                address: "127.0.0.1".to_string(),
+                port: SERVER_PORT,
+            },
+            HostClientServer,
+        ))
+        .id();
+
+    commands.trigger(StartServer { server_entity });
+}
+
+fn spawn_host_client(
+    mut commands: Commands,
+    added_host_client_server: Query<Entity, Added<HostClientServer>>,
+    mut next_client_connection_state: ResMut<NextState<ClientLoadingState>>,
+) {
+    for _ in added_host_client_server {
+        next_client_connection_state
+            .set(ClientLoadingState::ConnectingToServer);
+        let client_entity = commands
+            .spawn((
+                Client,
+                TargetAddress {
+                    address: "127.0.0.1".to_string(),
+                    port: SERVER_PORT,
+                },
+            ))
+            .id();
+
+        commands.trigger(ConnectToServer { client_entity });
+    }
+}
