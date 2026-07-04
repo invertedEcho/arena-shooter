@@ -4,9 +4,10 @@ use bevy::prelude::*;
 use bevy::state::app::StatesPlugin;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use game_core::{GameCoreLoadingState, start_server};
+use game_core::GameInitializationState;
 use netvy::prelude::*;
-use shared::{AppRole, GameMap, GameMode, SharedPlugin};
+use shared::utils::network::SERVER_PORT;
+use shared::{AppRole, GameConfig, GameMap, GameMode, SharedPlugin};
 use shared::{GameConfigServer, ServerRunMode};
 
 // use crate::auth::start_netcode_authentication_task;
@@ -79,10 +80,13 @@ fn main() {
     app.add_plugins(game_core::GameCorePlugin);
     app.add_plugins(SharedPlugin);
 
-    app.insert_resource(GameConfigServer {
+    // The dedicated server will start a game right away.
+    // Clients can join this one dedicated server.
+    // In the future, I want to implement being able to vote to change game mode / game map.
+    app.insert_resource(GameConfigServer(GameConfig {
         game_mode: GameMode::FreeForAll,
         game_map: GameMap::MediumPlastic,
-    });
+    }));
 
     app.add_systems(Startup, (start_server, start_game));
 
@@ -90,7 +94,7 @@ fn main() {
     // we dont spawn the entire map with the collider constructors, but we only spawn the map
     // colliders
     app.add_systems(
-        OnEnter(GameCoreLoadingState::GameScoreFinishedSetup),
+        OnEnter(GameInitializationState::GameScoreFinishedSetup),
         spawn_map_colliders,
     );
 
@@ -116,4 +120,17 @@ fn main() {
     // );
 
     app.run();
+}
+
+fn start_server(mut commands: Commands) {
+    let server_entity = commands
+        .spawn((
+            Server,
+            TargetAddress {
+                address: "0.0.0.0".to_string(),
+                port: SERVER_PORT,
+            },
+        ))
+        .id();
+    commands.trigger(StartServer { server_entity });
 }

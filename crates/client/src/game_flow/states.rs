@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::GameMode;
+use shared::GameConfig;
 use std::fmt::Display;
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
@@ -21,9 +21,9 @@ pub enum AppState {
 pub enum ClientLoadingState {
     /// This state is set when the client is starting local server to play Singleplayer on
     /// It is skipped in case of connecting to the official dedicated server, e.g. multiplayer
+    #[default]
     StartingServer,
     /// This state is set when the client connects to the game server
-    #[default]
     ConnectingToServer,
     ConnectedToServer,
 }
@@ -60,9 +60,7 @@ pub enum InGameState {
     PlayerDead,
 }
 
-/// The current "configuration" of the game, on the client. It stores intermediate values such as
-/// game mode selected, map selected, until this gets sent to the server/game_core.
+/// The current "configuration" of the game, on the client. It stores an intermediate value of the GameConfig,
+/// until it gets sent to the server/game_core.
 #[derive(Resource, Debug, Default)]
-pub struct GameConfigClient {
-    pub game_mode: GameMode,
-}
+pub struct PendingGameConfigClient(pub GameConfig);

@@ -2,8 +2,8 @@ use bevy::prelude::*;
 
 use crate::{
     game_flow::states::{
-        AppState, ClientLoadingState, GameConfigClient, InGameState,
-        MainMenuState,
+        AppState, ClientLoadingState, InGameState, MainMenuState,
+        PendingGameConfigClient,
     },
     gameplay_debug::AppDebugState,
 };
@@ -24,7 +24,7 @@ impl Plugin for DebugOverlayPlugin {
                 update_current_main_menu_state,
                 update_loading_game_state_text,
                 update_current_game_config_client_text
-                    .run_if(resource_changed::<GameConfigClient>),
+                    .run_if(resource_changed::<PendingGameConfigClient>),
             ),
         );
     }
@@ -182,7 +182,7 @@ fn update_current_in_game_state_text(
 
 fn update_current_game_config_client_text(
     mut text: Single<&mut Text, With<CurrentGameConfigClientText>>,
-    client_game_mode: Res<GameConfigClient>,
+    client_game_mode: Res<PendingGameConfigClient>,
 ) {
     **text = Text::new(format!("{:?}", *client_game_mode));
 }

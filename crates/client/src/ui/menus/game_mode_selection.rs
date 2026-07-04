@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use shared::{GameMap, GameMode, StartGame};
+use shared::{GameMode, StartGame};
 
 use crate::{
-    game_flow::states::{AppState, GameConfigClient, MainMenuState},
+    game_flow::states::{AppState, MainMenuState, PendingGameConfigClient},
     ui::{
         common::{
             DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
@@ -105,16 +105,15 @@ fn handle_game_mode_selection_button_press(
     >,
     mut next_app_state: ResMut<NextState<AppState>>,
     mut message_writer: MessageWriter<StartGame>,
-    current_map: Res<State<GameMap>>,
-    mut game_config_client: ResMut<GameConfigClient>,
+    mut pending_game_config: ResMut<PendingGameConfigClient>,
 ) {
     for (interaction, game_mode_selection_button) in query {
         if let Interaction::Pressed = interaction {
             next_app_state.set(AppState::LoadingGame);
 
-            game_config_client.game_mode = game_mode_selection_button.0;
+            pending_game_config.0.game_mode = game_mode_selection_button.0;
 
-            message_writer.write(StartGame);
+            message_writer.write(StartGame(pending_game_config.0));
         }
     }
 }

@@ -1,7 +1,6 @@
 use avian3d::prelude::*;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
-use game_core::start_server;
 use netvy::prelude::*;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
@@ -31,7 +30,7 @@ impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             OnEnter(ClientLoadingState::StartingServer),
-            start_server,
+            start_host_client,
         );
         app.add_systems(
             OnEnter(ClientLoadingState::ConnectingToServer),
@@ -201,3 +200,5 @@ fn handle_hit_message(
         });
     }
 }
+
+fn start_host_client() {}

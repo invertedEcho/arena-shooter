@@ -38,13 +38,15 @@ mod nav_mesh_pathfinding;
 mod player;
 mod world_objects;
 
-// on client, the state gets reset to Initial when we exit to main menu, as everything gets
-// despawned.
 // for server binary, this will just be used once, at startup
 // a few steps are skipped in case of AppRole::ClientOnly, such as generating the nav mesh or
 // spawning the GameScore. maybe i can come up with a better situation
+
+/// Tracks the current state of initializing a game. The main starting point is when a `StartGame`
+/// message is read. Then, the first state will be entered. Each state corresponds to one action,
+/// and upon finishing each action, it will update to the next action.
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
-pub enum GameCoreLoadingState {
+pub enum GameInitializationState {
     #[default]
     Initial,
     GameScoreFinishedSetup,
@@ -80,9 +82,8 @@ pub struct GameCorePlugin;
 
 impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<GameCoreLoadingState>();
+        app.init_state::<GameInitializationState>();
         app.init_state::<GameStateServer>();
-        app.init_state::<GameMap>();
 
         // any files loaded via the asset server, that end with `spawn_locations.json`, will be
         // parsed into SpawnLocationFile struct, and can then be retrieved via the handle
@@ -111,14 +112,14 @@ impl Plugin for GameCorePlugin {
         );
 
         app.add_systems(
-            OnEnter(GameCoreLoadingState::Done),
+            OnEnter(GameInitializationState::Done),
             on_game_core_loading_state_done,
         );
 
         app.add_systems(Update, handle_start_game_message);
 
         app.add_systems(
-            OnEnter(GameCoreLoadingState::GameScoreFinishedSetup),
+            OnEnter(GameInitializationState::GameScoreFinishedSetup),
             spawn_map,
         );
 
@@ -128,56 +129,20 @@ impl Plugin for GameCorePlugin {
         app.add_systems(
             Update,
             log_updates_to_game_core_loading_state
-                .run_if(state_changed::<GameCoreLoadingState>),
+                .run_if(state_changed::<GameInitializationState>),
         );
     }
 }
 
-pub fn start_server(mut commands: Commands, app_role: Res<State<AppRole>>) {
-    let entity_name = match app_role.get() {
-        AppRole::ClientOnly => {
-            info!("Skipping starting of server, AppRole is ClientOnly");
-            return;
-        }
-        // AppRole::ClientAndServer => "Local Server for singleplayer",
-        AppRole::DedicatedServer => "Dedicated Server",
-    };
-
-    let local_addr = match app_role.get() {
-        AppRole::ClientOnly => {
-            return;
-        }
-        // AppRole::ClientAndServer => SERVER_SOCKET_ADDR_SINGLEPLAYER,
-        AppRole::DedicatedServer => SERVER_SOCKET_ADDR_DEDICATED_SERVER,
-    };
-
-    info!(
-        "Starting server on {}, current AppRole: {:?}",
-        local_addr,
-        app_role.get()
-    );
-
-    let server_entity = commands
-        .spawn((
-            Server,
-            TargetAddress {
-                address: "0.0.0.0".to_string(),
-                port: SERVER_PORT,
-            },
-            Name::new(entity_name),
-        ))
-        .id();
-
-    commands.trigger(StartServer { server_entity });
-}
-
 fn handle_start_game_message(
     mut commands: Commands,
-    mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
+    mut next_server_loading_state: ResMut<NextState<GameInitializationState>>,
     app_role: Res<State<AppRole>>,
     mut start_game_message_reader: MessageReader<StartGame>,
 ) {
-    for _ in start_game_message_reader.read() {
+    for message in start_game_message_reader.read() {
+        commands.insert_resource(GameConfigServer(message.0));
+
         info!("Received StartGame message");
 
         if *app_role.get() != AppRole::ClientOnly {
@@ -194,7 +159,7 @@ fn handle_start_game_message(
         // NOTE: theoretically the game score entity is not necessarily already spawned here, but we
         // just do it here as spawning such a simple entity is trivial.
         next_server_loading_state
-            .set(GameCoreLoadingState::GameScoreFinishedSetup);
+            .set(GameInitializationState::GameScoreFinishedSetup);
     }
 }
 
@@ -205,12 +170,6 @@ fn on_game_core_loading_state_done(
     game_config_server: Option<Res<GameConfigServer>>,
     app_role: Res<State<AppRole>>,
 ) {
-    // we dont want to spawn enemies, etc, if this is client. the server handles that.
-    // this will change ofc once we implement HostClient mode in netvy
-    if *app_role.get() == AppRole::ClientOnly {
-        return;
-    }
-
     let Some(game_config_server) = game_config_server else {
         warn!(
             "GameConfigServer doesn't exist, cant execute actions depending \
@@ -219,7 +178,7 @@ fn on_game_core_loading_state_done(
         return;
     };
 
-    let game_mode_server = &game_config_server.game_mode;
+    let game_mode_server = &game_config_server.0.game_mode;
 
     info!(
         "GameCoreLoadingState is done, now doing actions corresponding to \
@@ -308,28 +267,38 @@ fn on_game_core_loading_state_done(
 //     }
 // }
 
+/// ClientCommands exist for the purpose for changing map / game mode on dedicated server, because
+/// there, no StartGame message is read, because its not a network message.
 fn handle_client_commands(
-    mut net_message_reader: Single<&mut NetMessageReader<ClientCommand>>,
+    query: Query<&mut NetMessageReader<ClientCommand>, With<Server>>,
     mut game_config_server: Option<ResMut<GameConfigServer>>,
     mut game_state_server: ResMut<NextState<GameStateServer>>,
+    app_role: Res<State<AppRole>>,
 ) {
-    for message in net_message_reader.read() {
-        let Some(ref mut game_config_server) = game_config_server else {
-            warn!(
-                "Received a ClientCommand but GameConfigServer resource \
-                 doesnt exist, can't handle ClientCommand."
-            );
-            return;
-        };
-        match message {
-            ClientCommand::SetGameMode(game_mode) => {
-                game_config_server.game_mode = game_mode;
-            }
-            ClientCommand::SetMap(game_map) => {
-                game_config_server.game_map = game_map;
-            }
-            ClientCommand::SetState(new_game_state_server) => {
-                game_state_server.set(new_game_state_server);
+    // the client is not supposed to read client commands. these get handled by the dedicated server
+    if *app_role.get() == AppRole::ClientOnly {
+        return;
+    }
+
+    for mut net_message_reader in query {
+        for message in net_message_reader.read() {
+            let Some(ref mut game_config_server) = game_config_server else {
+                warn!(
+                    "Received a ClientCommand but GameConfigServer resource \
+                     doesnt exist, can't handle ClientCommand."
+                );
+                return;
+            };
+            match message {
+                ClientCommand::SetGameMode(game_mode) => {
+                    game_config_server.0.game_mode = game_mode;
+                }
+                ClientCommand::SetMap(game_map) => {
+                    game_config_server.0.game_map = game_map;
+                }
+                ClientCommand::SetState(new_game_state_server) => {
+                    game_state_server.set(new_game_state_server);
+                }
             }
         }
     }
@@ -355,13 +324,13 @@ const COLLIDER_CONSTRUCTOR_COUNT_TINY_TOWN: usize = 2;
 
 fn check_collider_constructor_hierarchy_ready(
     _trigger: On<ColliderConstructorHierarchyReady>,
-    mut game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
+    mut game_core_loading_state: ResMut<NextState<GameInitializationState>>,
     mut local_count: Local<usize>,
-    current_map: Res<State<GameMap>>,
+    game_config: Res<GameConfigServer>,
 ) {
     *local_count += 1;
 
-    let required_count = match current_map.get() {
+    let required_count = match game_config.0.game_map {
         GameMap::MediumPlastic => COLLIDER_CONSTRUCTOR_COUNT_MEDIUM_PLASTIC,
         GameMap::TinyTown => COLLIDER_CONSTRUCTOR_COUNT_TINY_TOWN,
     };
@@ -377,7 +346,7 @@ fn check_collider_constructor_hierarchy_ready(
          GameCoreLoadingState::CollidersSpawned"
     );
 
-    game_core_loading_state.set(GameCoreLoadingState::CollidersSpawned);
+    game_core_loading_state.set(GameInitializationState::CollidersSpawned);
 
     // Reset back to zero to prepare for next GameStart
     *local_count = 0;
@@ -393,7 +362,9 @@ pub struct WorldSceneHandle(pub Handle<Scene>);
 // FIXME: this detection logic doesnt work on second time
 fn check_world_scene_loaded(
     mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
-    mut next_game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
+    mut next_game_core_loading_state: ResMut<
+        NextState<GameInitializationState>,
+    >,
     maybe_world_scene_handle: Option<Res<WorldSceneHandle>>,
 ) {
     for asset_event in asset_event_message_reader.read() {
@@ -402,7 +373,8 @@ fn check_world_scene_loaded(
             && *id == world_scene_handle.0.id()
         {
             info!("Map fully spawned");
-            next_game_core_loading_state.set(GameCoreLoadingState::MapSpawned);
+            next_game_core_loading_state
+                .set(GameInitializationState::MapSpawned);
         }
     }
 }
@@ -414,14 +386,15 @@ fn spawn_map(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     app_role: Res<State<AppRole>>,
-    current_map: Res<State<GameMap>>,
+    game_config: Res<GameConfigServer>,
 ) {
     if *app_role.get() == AppRole::DedicatedServer {
         info!("Skipping spawning map, AppRole is DedicatedServer");
+        // FIXME: wouldnt this then require to update the loading state?
         return;
     }
 
-    let map_path = match current_map.get() {
+    let map_path = match game_config.0.game_map {
         GameMap::MediumPlastic => MEDIUM_PLASTIC_MAP_PATH,
         GameMap::TinyTown => TINY_TOWN_MAP_PATH,
     };
@@ -457,7 +430,7 @@ fn spawn_map(
 }
 
 fn log_updates_to_game_core_loading_state(
-    game_core_loading_state: Res<State<GameCoreLoadingState>>,
+    game_core_loading_state: Res<State<GameInitializationState>>,
 ) {
     println!();
     info!(
@@ -470,8 +443,8 @@ fn log_updates_to_game_core_loading_state(
 type EntitiesToDespawnQueryFilter = Or<(
     With<GameMapLight>,
     With<Enemy>,
-    // With<Server>,
-    // With<Client>,
+    With<Server>,
+    With<Client>,
     With<GameScore>,
     With<MapModel>,
     With<WorldObjectCollectibleServerSide>,

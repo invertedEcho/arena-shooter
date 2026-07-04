@@ -10,7 +10,7 @@ use shared::{
 };
 
 use crate::{
-    game_flow::states::{AppState, GameConfigClient, InGameState},
+    game_flow::states::{AppState, InGameState, PendingGameConfigClient},
     player::{
         camera::components::WorldCamera,
         shooting::messages::{PlayerBulletHit, PlayerWeaponSlotChangeMessage},
@@ -279,9 +279,9 @@ pub fn spawn_bullet_hit_crosshair(
 
 pub fn spawn_wave_hud(
     mut commands: Commands,
-    game_config_client: Res<GameConfigClient>,
+    game_config_client: Res<PendingGameConfigClient>,
 ) {
-    if game_config_client.game_mode != GameMode::Waves {
+    if game_config_client.0.game_mode != GameMode::Waves {
         return;
     }
 

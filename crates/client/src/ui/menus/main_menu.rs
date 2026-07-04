@@ -2,7 +2,9 @@
 use shared::{AppRole, StartGame};
 
 use crate::{
-    game_flow::states::{AppState, ClientLoadingState, MainMenuState},
+    game_flow::states::{
+        AppState, ClientLoadingState, MainMenuState, PendingGameConfigClient,
+    },
     ui::{
         common::{
             CommonUiButton, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
@@ -103,6 +105,7 @@ fn handle_main_menu_button_pressed(
     mut next_app_role: ResMut<NextState<AppRole>>,
     mut next_client_loading_state: ResMut<NextState<ClientLoadingState>>,
     mut message_writer: MessageWriter<StartGame>,
+    pending_game_config: Res<PendingGameConfigClient>,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
         let Interaction::Pressed = interaction else {
@@ -122,7 +125,7 @@ fn handle_main_menu_button_pressed(
                 next_client_loading_state
                     .set(ClientLoadingState::ConnectingToServer);
 
-                message_writer.write(StartGame);
+                message_writer.write(StartGame(pending_game_config.0));
             }
             MainMenuButton::SettingsMainMenu => {
                 next_main_menu_state.set(MainMenuState::Settings);

@@ -110,7 +110,7 @@ fn handle_shoot_requests(
     >,
     game_config_server: Res<GameConfigServer>,
 ) {
-    let game_mode = &game_config_server.game_mode;
+    let game_mode = &game_config_server.0.game_mode;
 
     for (mut message_reader, peer_id) in message_readers {
         for message in message_reader.read() {

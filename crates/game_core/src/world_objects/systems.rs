@@ -2,7 +2,7 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 use netvy::prelude::*;
 use shared::{
-    AppRole, DEFAULT_HEALTH, GameMap,
+    AppRole, DEFAULT_HEALTH, GameConfigServer, GameMap,
     components::Health,
     player::{Player, PlayerState},
     shooting::PlayerWeapons,
@@ -19,12 +19,15 @@ use crate::{
 #[derive(Resource)]
 pub struct CurrentSpawnLocationsHandle(Handle<SpawnLocationFile>);
 
+// FIXME: this shouldnt happen just as a random side effect. why exactly do we need to do this?
+// I think we did it here just as a dirty fix, when user selects a map, we already pre load the
+// spawn_locations.json, so once the match starts, the handle is already ready.
 pub fn load_spawn_locations(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    game_map: Res<State<GameMap>>,
+    game_config: Res<GameConfigServer>,
 ) {
-    let file_path = match game_map.get() {
+    let file_path = match game_config.0.game_map {
         GameMap::MediumPlastic => "maps/medium_plastic/spawn_locations.json",
         GameMap::TinyTown => "maps/tiny_town/spawn_locations.json",
     };
@@ -38,9 +41,14 @@ pub fn load_spawn_locations(
 pub fn spawn_world_objects(
     mut commands: Commands,
     app_role: Res<State<AppRole>>,
-    current_spawn_location_handle: Res<CurrentSpawnLocationsHandle>,
+    current_spawn_location_handle: Option<Res<CurrentSpawnLocationsHandle>>,
     spawn_locations: ResMut<Assets<SpawnLocationFile>>,
 ) {
+    let Some(current_spawn_location_handle) = current_spawn_location_handle
+    else {
+        error!("CurrentSpawnLocationsHandle must exist");
+        return;
+    };
     if *app_role.get() == AppRole::ClientOnly {
         info!(
             "Not spawning WorldObjectCollectibleServerSide, this is ClientOnly"
@@ -52,7 +60,8 @@ pub fn spawn_world_objects(
         spawn_locations.get(current_spawn_location_handle.0.id())
     else {
         error!(
-            "Failed to load spawn locations, no SpawnLocations will be spawned. (spawn_location_handle={})",
+            "Failed to load spawn locations, no SpawnLocations will be \
+             spawned. (spawn_location_handle={})",
             current_spawn_location_handle.0.id()
         );
         return;

@@ -4,8 +4,8 @@ use shared::GameMode;
 use crate::{
     game_flow::{
         states::{
-            AppState, ClientLoadingState, GameConfigClient, InGameState,
-            MainMenuState,
+            AppState, ClientLoadingState, InGameState, MainMenuState,
+            PendingGameConfigClient,
         },
         systems::{
             free_mouse, grab_mouse, handle_escape_in_game,
@@ -62,6 +62,6 @@ impl Plugin for GameFlowPlugin {
     }
 }
 
-fn is_waves_game_mode(config: Res<GameConfigClient>) -> bool {
-    config.game_mode == GameMode::Waves
+fn is_waves_game_mode(config: Res<PendingGameConfigClient>) -> bool {
+    config.0.game_mode == GameMode::Waves
 }

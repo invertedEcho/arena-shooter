@@ -9,7 +9,7 @@ use bevy_landmass::{
 use netvy::prelude::*;
 use rand::Rng;
 use shared::{
-    DEFAULT_HEALTH, GameMap,
+    DEFAULT_HEALTH, GameConfigServer, GameMap,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, CHARACTER_FEET,
         MAX_DISTANCE_GROUNDED_SHAPE_CAST, components::Grounded,
@@ -128,7 +128,7 @@ fn handle_spawn_enemies_message(
         Entity,
         With<ValidEnemySpawnLocationArea>,
     >,
-    selected_map: Res<State<GameMap>>,
+    game_config: Res<GameConfigServer>,
 ) {
     for event in message_reader.read() {
         let Some(ref archipelago_ref) = archipelago_ref else {
@@ -148,7 +148,7 @@ fn handle_spawn_enemies_message(
                     enemy_spawn_count,
                     &mut spatial_query,
                     valid_spawn_location_areas.iter().collect(),
-                    selected_map.get(),
+                    &game_config.0.game_map,
                 );
 
                 for enemy_spawn_location in enemy_spawn_locations {

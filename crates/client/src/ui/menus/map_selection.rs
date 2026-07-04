@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use shared::GameMap;
 
 use crate::{
-    game_flow::states::MainMenuState,
+    game_flow::states::{MainMenuState, PendingGameConfigClient},
     ui::{
         common::{
             CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH,
@@ -33,7 +33,7 @@ impl Plugin for MapSelectionPlugin {
                 update_selected_map_preview_image,
                 update_selected_map_button_color,
             )
-                .run_if(state_changed::<GameMap>),
+                .run_if(resource_changed::<PendingGameConfigClient>),
         )
         .add_systems(Update, handle_map_selection_button_pressed);
     }
@@ -42,9 +42,9 @@ impl Plugin for MapSelectionPlugin {
 fn spawn_map_selection(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    selected_map_state: Res<State<GameMap>>,
+    pending_game_config: Res<PendingGameConfigClient>,
 ) {
-    let selected_map_state = selected_map_state.get();
+    let game_map = &pending_game_config.0.game_map;
 
     commands
         .spawn((
@@ -62,7 +62,7 @@ fn spawn_map_selection(
             BackgroundColor(UI_BACKGROUND),
         ))
         .with_children(|parent| {
-            let selected_map_preview_image = match selected_map_state {
+            let selected_map_preview_image = match game_map {
                 GameMap::TinyTown => "maps/tiny_town/preview.png",
                 GameMap::MediumPlastic => "maps/medium_plastic/preview.png",
             };
@@ -114,7 +114,7 @@ fn spawn_map_selection(
                         ..default()
                     },
                     TextColor(get_text_button_color_for_map_selection_button(
-                        selected_map_state,
+                        game_map,
                         MapSelectionButton(GameMap::TinyTown),
                     )),
                 ));
@@ -134,7 +134,7 @@ fn spawn_map_selection(
                         ..default()
                     },
                     TextColor(get_text_button_color_for_map_selection_button(
-                        selected_map_state,
+                        game_map,
                         MapSelectionButton(GameMap::MediumPlastic),
                     )),
                 ));
@@ -165,9 +165,9 @@ fn get_text_button_color_for_map_selection_button(
 fn update_selected_map_preview_image(
     asset_server: Res<AssetServer>,
     mut image_node: Single<&mut ImageNode, With<SelectedMapPreviewImage>>,
-    selected_map_state: Res<State<GameMap>>,
+    pending_game_config: Res<PendingGameConfigClient>,
 ) {
-    let selected_map_preview_image = match *selected_map_state.get() {
+    let selected_map_preview_image = match pending_game_config.0.game_map {
         GameMap::TinyTown => "maps/tiny_town/preview.png",
         GameMap::MediumPlastic => "maps/medium_plastic/preview.png",
     };
@@ -176,27 +176,27 @@ fn update_selected_map_preview_image(
 
 fn handle_map_selection_button_pressed(
     query: Query<(&Interaction, &MapSelectionButton), Changed<Interaction>>,
-    mut next_selected_map_state: ResMut<NextState<GameMap>>,
+    mut pending_game_config: ResMut<PendingGameConfigClient>,
 ) {
     for (interaction, map_selection_button) in query {
         if let Interaction::Pressed = interaction {
-            next_selected_map_state.set(map_selection_button.0.clone());
+            pending_game_config.0.game_map = map_selection_button.0.clone();
         }
     }
 }
 
 fn update_selected_map_button_color(
     query: Query<(&MapSelectionButton, &Children)>,
-    selected_map_state: Res<State<GameMap>>,
     mut text_color_query: Query<&mut TextColor>,
+    pending_game_config: Res<PendingGameConfigClient>,
 ) {
-    let selected_map_state = selected_map_state.get();
+    let selected_map_state = pending_game_config.0.game_map;
 
     for (map_selection_button, children) in query {
         let Ok(mut text_color) = text_color_query.get_mut(children[0]) else {
             continue;
         };
-        if map_selection_button.0 == *selected_map_state {
+        if map_selection_button.0 == selected_map_state {
             **text_color = UI_SELECTED;
         } else {
             **text_color = UI_TEXT;
