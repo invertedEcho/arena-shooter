@@ -347,8 +347,24 @@ pub fn spawn_damage_indicator(
     mut message_reader: MessageReader<PlayerHitMessage>,
     player_transform: Single<&Transform, OurPlayerFilter>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
-    mut network_message_reader: Single<&mut NetMessageReader<PlayerHitMessage>>,
+    mut network_message_readers: Query<
+        (&mut NetMessageReader<PlayerHitMessage>, &PeerId),
+        With<Client>,
+    >,
+    our_peer_id: Option<Res<OurPeerId>>,
 ) {
+    let Some(our_peer_id) = our_peer_id else {
+        return;
+    };
+
+    // TODO: remove once i add OurClient component in netvy
+    let Some((mut network_message_reader, _peer_id)) = network_message_readers
+        .iter_mut()
+        .find(|(_, peer_id)| **peer_id == our_peer_id.0)
+    else {
+        return;
+    };
+
     let internal_messages = message_reader.read().copied();
     let network_messages = network_message_reader.read();
 
