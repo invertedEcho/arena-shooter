@@ -69,12 +69,6 @@ pub fn spawn_loading_screen(
                 asset_server.load(DEFAULT_GAME_FONT_PATH),
                 LoadingScreenButton::Cancel,
             ));
-            parent.spawn((
-                Button,
-                Node::default(),
-                ManualTriggerConnectButton,
-                children![Text::new("Manual trigger connect")],
-            ));
         });
 }
 

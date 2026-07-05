@@ -15,7 +15,6 @@ use shared::{
     game_score::GameScore,
     multiplayer_messages::ClientCommand,
     player::Player,
-    utils::network::{SERVER_PORT, SERVER_SOCKET_ADDR_DEDICATED_SERVER},
     world_object::{
         WorldObjectCollectibleKind, WorldObjectCollectibleServerSide,
     },
@@ -372,7 +371,10 @@ fn check_world_scene_loaded(
             && let Some(ref world_scene_handle) = maybe_world_scene_handle
             && *id == world_scene_handle.0.id()
         {
-            info!("Map fully spawned");
+            info!(
+                "Map fully spawned, updating GameInitializationState -> \
+                 GameInitializationState::MapSpawned"
+            );
             next_game_core_loading_state
                 .set(GameInitializationState::MapSpawned);
         }

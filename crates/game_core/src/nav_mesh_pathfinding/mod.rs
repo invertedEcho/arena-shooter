@@ -55,7 +55,7 @@ fn generate_navmesh_on_map_colliders_ready(
 ) {
     // NOTE: We only do nav mesh generation in case this is ClientAndServer. no use on dedicated
     // server currently
-    if *app_role.get() != AppRole::ClientOnly {
+    if *app_role.get() == AppRole::DedicatedServer {
         next_server_loading_state.set(GameInitializationState::Done);
         return;
     }

@@ -46,7 +46,10 @@ pub fn spawn_world_objects(
 ) {
     let Some(current_spawn_location_handle) = current_spawn_location_handle
     else {
-        error!("CurrentSpawnLocationsHandle must exist");
+        error!(
+            "CurrentSpawnLocationsHandle must exist in order to be able to \
+             spawn WorldObjects (such as medkits)"
+        );
         return;
     };
     if *app_role.get() == AppRole::ClientOnly {

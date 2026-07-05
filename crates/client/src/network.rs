@@ -24,8 +24,6 @@ pub const GENERIC_NO_CONNECTION_ERROR_MESSAGE: &str =
 
 pub struct NetworkPlugin;
 
-// TODO: This plugin; its not really clear what purpose it has. It does too many different things. I
-// dont like this.
 impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
@@ -192,6 +190,10 @@ fn spawn_host_client(
     mut next_client_connection_state: ResMut<NextState<ClientLoadingState>>,
 ) {
     for _ in added_host_client_server {
+        info!(
+            "HostClientServer was added, spawning client and triggering \
+             Connect"
+        );
         next_client_connection_state
             .set(ClientLoadingState::ConnectingToServer);
         let client_entity = commands

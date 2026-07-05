@@ -88,7 +88,7 @@ fn main() {
             }),
     );
 
-    app.add_plugins(NetvyPlugin(AppType::Client));
+    app.add_plugins(NetvyPlugin(AppType::HostClient));
 
     // per default, a client is AppRole::ClientOnly. only when player clicks on Singleplayer,
     // AppRole gets set to AppRole::ClientAndServer. once we enter main menu root again, we set it

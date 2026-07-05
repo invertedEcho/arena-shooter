@@ -132,9 +132,9 @@ fn handle_spawn_enemies_message(
 ) {
     for event in message_reader.read() {
         let Some(ref archipelago_ref) = archipelago_ref else {
-            warn!(
-                "Received enemy spawn message but archipelago_ref doesnt \
-                 exist yet, ignoring message"
+            error!(
+                "Received enemy spawn message but nav mesh doesnt exist yet, \
+                 can't spawn enemies!"
             );
             return;
         };

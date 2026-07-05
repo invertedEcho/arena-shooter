@@ -114,10 +114,9 @@ fn handle_main_menu_button_pressed(
         match main_menu_button {
             MainMenuButton::Singleplayer => {
                 next_main_menu_state.set(MainMenuState::MapSelection);
-                // next_app_role.set(AppRole::ClientAndServer);
+                next_app_role.set(AppRole::HostClient);
             }
             MainMenuButton::Multiplayer => {
-                // next_game_mode_state.set(GameModeClient::Multiplayer);
                 next_app_state.set(AppState::LoadingGame);
                 next_app_role.set(AppRole::ClientOnly);
                 // NOTE: we skip state StartingServer, because in multiplayer we dont start a

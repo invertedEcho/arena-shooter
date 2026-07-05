@@ -8,10 +8,10 @@ use crate::{
             PendingGameConfigClient,
         },
         systems::{
-            free_mouse, grab_mouse, handle_escape_in_game,
-            handle_player_death_event, handle_request_next_wave,
-            manual_mouse_grab_toggle, pause_all_animations,
-            resume_all_animations,
+            check_connection_state, free_mouse, grab_mouse,
+            handle_escape_in_game, handle_player_death_event,
+            handle_request_next_wave, manual_mouse_grab_toggle,
+            pause_all_animations, resume_all_animations,
             send_update_game_server_state_request_on_in_game_state_change,
             spawn_main_menu_camera,
         },
@@ -47,7 +47,7 @@ impl Plugin for GameFlowPlugin {
                     handle_escape_in_game,
                     manual_mouse_grab_toggle,
                     handle_player_death_event,
-                    // check_connection_state,
+                    check_connection_state,
                 ),
             )
             .add_systems(

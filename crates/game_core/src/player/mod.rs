@@ -21,7 +21,7 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            Update,
+            FixedUpdate,
             (handle_shoot_requests, spawn_player_on_new_client),
         );
     }
@@ -35,24 +35,13 @@ fn spawn_player_on_new_client(
     mut game_score: Query<&mut GameScore>,
     app_role: Res<State<AppRole>>,
 ) {
-    if *app_role.get() == AppRole::ClientOnly {
-        return;
-    }
-
     for peer_id in clients_query {
-        match game_score.single_mut() {
-            Ok(mut game_score) => {
-                game_score.players.insert(
-                    peer_id.0,
-                    LivingEntityStats {
-                        username: format!("Player {}", peer_id.0),
-                        ..default()
-                    },
-                );
-            }
-            Err(error) => {
-                error!("Failed to add player to game score: {}", error);
-            }
+        if *app_role.get() == AppRole::ClientOnly {
+            info!(
+                "Not spawning a player, game_core is running in ClientOnly \
+                 mode."
+            );
+            return;
         }
 
         info!(
@@ -89,6 +78,22 @@ fn spawn_player_on_new_client(
                         ..Default::default()
                     })),
                 ));
+            }
+        }
+
+        // TODO: could be moved into seperate system
+        match game_score.single_mut() {
+            Ok(mut game_score) => {
+                game_score.players.insert(
+                    peer_id.0,
+                    LivingEntityStats {
+                        username: format!("Player {}", peer_id.0),
+                        ..default()
+                    },
+                );
+            }
+            Err(error) => {
+                error!("Failed to add player to game score: {}", error);
             }
         }
     }
