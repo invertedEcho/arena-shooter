@@ -45,7 +45,7 @@ mod world_objects;
 /// message is read. Then, the first state will be entered. Each state corresponds to one action,
 /// and upon finishing each action, it will update to the next action.
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
-pub enum GameInitializationState {
+pub enum GameCoreLoadingState {
     #[default]
     Initial,
     GameScoreFinishedSetup,
@@ -81,7 +81,7 @@ pub struct GameCorePlugin;
 
 impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<GameInitializationState>();
+        app.init_state::<GameCoreLoadingState>();
         app.init_state::<GameStateServer>();
 
         // any files loaded via the asset server, that end with `spawn_locations.json`, will be
@@ -111,14 +111,14 @@ impl Plugin for GameCorePlugin {
         );
 
         app.add_systems(
-            OnEnter(GameInitializationState::Done),
+            OnEnter(GameCoreLoadingState::Done),
             on_game_core_loading_state_done,
         );
 
         app.add_systems(Update, handle_start_game_message);
 
         app.add_systems(
-            OnEnter(GameInitializationState::GameScoreFinishedSetup),
+            OnEnter(GameCoreLoadingState::GameScoreFinishedSetup),
             spawn_map,
         );
 
@@ -128,14 +128,14 @@ impl Plugin for GameCorePlugin {
         app.add_systems(
             Update,
             log_updates_to_game_core_loading_state
-                .run_if(state_changed::<GameInitializationState>),
+                .run_if(state_changed::<GameCoreLoadingState>),
         );
     }
 }
 
 fn handle_start_game_message(
     mut commands: Commands,
-    mut next_server_loading_state: ResMut<NextState<GameInitializationState>>,
+    mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     app_role: Res<State<AppRole>>,
     mut start_game_message_reader: MessageReader<StartGame>,
 ) {
@@ -158,7 +158,7 @@ fn handle_start_game_message(
         // NOTE: theoretically the game score entity is not necessarily already spawned here, but we
         // just do it here as spawning such a simple entity is trivial.
         next_server_loading_state
-            .set(GameInitializationState::GameScoreFinishedSetup);
+            .set(GameCoreLoadingState::GameScoreFinishedSetup);
     }
 }
 
@@ -323,7 +323,7 @@ const COLLIDER_CONSTRUCTOR_COUNT_TINY_TOWN: usize = 2;
 
 fn check_collider_constructor_hierarchy_ready(
     _trigger: On<ColliderConstructorHierarchyReady>,
-    mut game_core_loading_state: ResMut<NextState<GameInitializationState>>,
+    mut game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     mut local_count: Local<usize>,
     game_config: Res<GameConfigServer>,
 ) {
@@ -345,7 +345,7 @@ fn check_collider_constructor_hierarchy_ready(
          GameCoreLoadingState::CollidersSpawned"
     );
 
-    game_core_loading_state.set(GameInitializationState::CollidersSpawned);
+    game_core_loading_state.set(GameCoreLoadingState::CollidersSpawned);
 
     // Reset back to zero to prepare for next GameStart
     *local_count = 0;
@@ -361,9 +361,7 @@ pub struct WorldSceneHandle(pub Handle<Scene>);
 // FIXME: this detection logic doesnt work on second time
 fn check_world_scene_loaded(
     mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
-    mut next_game_core_loading_state: ResMut<
-        NextState<GameInitializationState>,
-    >,
+    mut next_game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     maybe_world_scene_handle: Option<Res<WorldSceneHandle>>,
 ) {
     for asset_event in asset_event_message_reader.read() {
@@ -375,8 +373,7 @@ fn check_world_scene_loaded(
                 "Map fully spawned, updating GameInitializationState -> \
                  GameInitializationState::MapSpawned"
             );
-            next_game_core_loading_state
-                .set(GameInitializationState::MapSpawned);
+            next_game_core_loading_state.set(GameCoreLoadingState::MapSpawned);
         }
     }
 }
@@ -432,14 +429,12 @@ fn spawn_map(
 }
 
 fn log_updates_to_game_core_loading_state(
-    game_core_loading_state: Res<State<GameInitializationState>>,
+    game_core_loading_state: Res<State<GameCoreLoadingState>>,
 ) {
-    println!();
     info!(
-        "GameCoreLoadingState UPDATED! Now: {:?}",
+        "\nGameCoreLoadingState UPDATED! Now: {:?}\n",
         *game_core_loading_state.get()
     );
-    println!();
 }
 
 type EntitiesToDespawnQueryFilter = Or<(

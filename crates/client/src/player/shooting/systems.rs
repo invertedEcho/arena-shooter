@@ -154,12 +154,21 @@ pub fn send_shoot_request_on_weapon_fired(
         With<Client>,
     >,
     world_model_camera_query: WorldModelCameraQuery,
+    our_peer_id: Option<Res<OurPeerId>>,
 ) {
     for _ in message_reader.read() {
         let origin = world_model_camera_query.1.translation();
         let direction = world_model_camera_query.1.forward();
 
-        shoot_request_sender.write(ShootRequest { direction, origin });
+        let Some(ref our_peer_id) = our_peer_id else {
+            error!("OurPeerId doesn't exist, cant send ShootRequest!");
+            return;
+        };
+        shoot_request_sender.write(ShootRequest {
+            direction,
+            origin,
+            source_peer_id: our_peer_id.0,
+        });
     }
 }
 

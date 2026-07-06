@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy::state::app::StatesPlugin;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use game_core::GameInitializationState;
+use game_core::GameCoreLoadingState;
 use netvy::prelude::*;
 use shared::utils::network::SERVER_PORT;
 use shared::{AppRole, GameConfig, GameMap, GameMode, SharedPlugin};
@@ -94,7 +94,7 @@ fn main() {
     // we dont spawn the entire map with the collider constructors, but we only spawn the map
     // colliders
     app.add_systems(
-        OnEnter(GameInitializationState::GameScoreFinishedSetup),
+        OnEnter(GameCoreLoadingState::GameScoreFinishedSetup),
         spawn_map_colliders,
     );
 

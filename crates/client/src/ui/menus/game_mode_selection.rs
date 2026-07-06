@@ -45,7 +45,6 @@ fn spawn_game_mode_selection_screen(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) {
-    info!("Spawning GameModeSelectionScreen");
     commands
         .spawn((
             Node {

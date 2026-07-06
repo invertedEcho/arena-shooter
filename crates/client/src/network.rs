@@ -5,7 +5,7 @@ use netvy::prelude::*;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
 };
-use shared::multiplayer_messages::{ConfirmRespawn, PlayerHitMessage};
+use shared::multiplayer_messages::ConfirmRespawn;
 use shared::player::Player;
 use shared::utils::network::SERVER_PORT;
 
@@ -39,7 +39,6 @@ impl Plugin for NetworkPlugin {
             FixedUpdate,
             (
                 handle_confirm_respawn_message,
-                handle_hit_message,
                 handle_new_player,
                 handle_added_owned_player,
                 spawn_host_client,
@@ -150,17 +149,6 @@ fn handle_confirm_respawn_message(
     for _ in message_receiver.read() {
         info!("Respawn request was confirmed by server!");
         next_in_game_state.set(InGameState::Playing);
-    }
-}
-
-fn handle_hit_message(
-    mut message_receiver: Single<&mut NetMessageReader<PlayerHitMessage>>,
-    mut message_sender: MessageWriter<PlayerHitMessage>,
-) {
-    for message in message_receiver.read() {
-        message_sender.write(PlayerHitMessage {
-            origin: message.origin,
-        });
     }
 }
 

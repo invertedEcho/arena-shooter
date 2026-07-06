@@ -344,7 +344,6 @@ pub fn update_selected_weapon(
 pub fn spawn_damage_indicator(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut message_reader: MessageReader<PlayerHitMessage>,
     player_transform: Single<&Transform, OurPlayerFilter>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
     mut network_message_readers: Query<
@@ -365,12 +364,7 @@ pub fn spawn_damage_indicator(
         return;
     };
 
-    let internal_messages = message_reader.read().copied();
-    let network_messages = network_message_reader.read();
-
-    let combined_messages = internal_messages.chain(network_messages);
-
-    for message in combined_messages {
+    for message in network_message_reader.read() {
         if let Some(world_direction) =
             (message.origin - player_transform.translation).try_normalize()
         {

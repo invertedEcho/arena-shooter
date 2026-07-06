@@ -45,8 +45,6 @@ pub fn spawn_loading_screen(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) {
-    info!("Spawning Loading screen");
-
     commands
         .spawn((
             Node {

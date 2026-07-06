@@ -11,7 +11,7 @@ use shared::{
     world_object::WorldObjectCollectibleServerSide,
 };
 
-use crate::GameInitializationState;
+use crate::GameCoreLoadingState;
 
 pub const ENEMY_AGENT_RADIUS: f32 = 0.4;
 
@@ -27,7 +27,7 @@ impl Plugin for NavMeshPathfindingPlugin {
         app.add_plugins(Landmass3dPlugin::default());
         app.add_plugins(LandmassRerecastPlugin::default());
         app.add_systems(
-            OnEnter(GameInitializationState::CollidersSpawned),
+            OnEnter(GameCoreLoadingState::CollidersSpawned),
             generate_navmesh_on_map_colliders_ready,
         );
         app.add_observer(on_navmesh_ready);
@@ -51,12 +51,12 @@ fn generate_navmesh_on_map_colliders_ready(
         Without<WorldObjectCollectibleServerSide>,
     >,
     app_role: Res<State<AppRole>>,
-    mut next_server_loading_state: ResMut<NextState<GameInitializationState>>,
+    mut next_server_loading_state: ResMut<NextState<GameCoreLoadingState>>,
 ) {
     // NOTE: We only do nav mesh generation in case this is ClientAndServer. no use on dedicated
     // server currently
     if *app_role.get() == AppRole::DedicatedServer {
-        next_server_loading_state.set(GameInitializationState::Done);
+        next_server_loading_state.set(GameCoreLoadingState::Done);
         return;
     }
 
@@ -100,7 +100,7 @@ fn generate_navmesh_on_map_colliders_ready(
 fn on_navmesh_ready(
     trigger: On<NavmeshReady>,
     mut commands: Commands,
-    mut game_core_loading_state: ResMut<NextState<GameInitializationState>>,
+    mut game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     mut nav_meshes: ResMut<Assets<Navmesh>>,
 ) {
     let Some(nav_mesh_handle) = nav_meshes.get_strong_handle(trigger.0) else {
@@ -113,7 +113,7 @@ fn on_navmesh_ready(
     commands.insert_resource(NavMeshHandle(nav_mesh_handle));
 
     info!("NavMesh is now ready, updating GameCoreLoadingState to Done");
-    game_core_loading_state.set(GameInitializationState::Done);
+    game_core_loading_state.set(GameCoreLoadingState::Done);
 }
 
 // fn log_agent_state(agent_state: Query<&AgentState>) {

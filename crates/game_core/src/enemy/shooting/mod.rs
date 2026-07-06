@@ -6,9 +6,7 @@ use crate::{
     },
 };
 use bevy::prelude::*;
-use shared::{
-    EnemyKilledMessage, GameStateServer, multiplayer_messages::PlayerHitMessage,
-};
+use shared::{EnemyKilledMessage, GameStateServer};
 
 pub mod components;
 pub mod systems;
@@ -17,7 +15,6 @@ pub struct EnemyShootingPlugin;
 
 impl Plugin for EnemyShootingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<PlayerHitMessage>();
         app.add_message::<EnemyKilledMessage>().add_systems(
             Update,
             (

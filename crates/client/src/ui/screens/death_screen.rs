@@ -1,11 +1,7 @@
-use avian3d::prelude::*;
 use bevy::prelude::*;
 use game_core::{GameStateWave, RetryWaveGameMode};
 use netvy::prelude::*;
-use shared::{
-    AppRole, DEFAULT_HEALTH, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
-    components::Health, multiplayer_messages::ClientRespawnRequest,
-};
+use shared::multiplayer_messages::ClientRespawnRequest;
 
 use crate::{
     game_flow::{states::InGameState, systems::free_mouse},

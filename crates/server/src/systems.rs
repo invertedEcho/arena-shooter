@@ -2,16 +2,14 @@ use std::{fs::File, io::Read};
 
 use avian3d::prelude::Collider;
 use bevy::prelude::*;
-use game_core::GameInitializationState;
+use game_core::GameCoreLoadingState;
 use shared::{GameConfig, GameConfigServer, StartGame};
 
 use crate::utils::get_path_to_collider_json;
 
 pub fn spawn_map_colliders(
     mut commands: Commands,
-    mut next_game_core_loading_state: ResMut<
-        NextState<GameInitializationState>,
-    >,
+    mut next_game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
 ) {
     let file_path = get_path_to_collider_json();
 
@@ -41,7 +39,7 @@ pub fn spawn_map_colliders(
             );
         }
     }
-    next_game_core_loading_state.set(GameInitializationState::CollidersSpawned);
+    next_game_core_loading_state.set(GameCoreLoadingState::CollidersSpawned);
 }
 
 pub fn start_game(

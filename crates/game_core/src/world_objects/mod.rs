@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use shared::GameMap;
 
 use crate::{
-    GameInitializationState,
+    GameCoreLoadingState,
     world_objects::systems::{
         activate_world_objects_over_time,
         detect_collision_world_object_with_player, load_spawn_locations,
@@ -24,7 +24,7 @@ impl Plugin for WorldObjectsPlugin {
         //     load_spawn_locations.run_if(state_changed::<GameMap>),
         // );
         app.add_systems(
-            OnEnter(GameInitializationState::GameScoreFinishedSetup),
+            OnEnter(GameCoreLoadingState::GameScoreFinishedSetup),
             spawn_world_objects,
         );
         app.add_systems(

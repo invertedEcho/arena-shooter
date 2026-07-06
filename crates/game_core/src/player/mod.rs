@@ -28,14 +28,14 @@ impl Plugin for PlayerPlugin {
 }
 
 fn spawn_player_on_new_client(
-    clients_query: Query<&PeerId, Added<PeerId>>,
+    added_clients_query: Query<&PeerId, (Added<PeerId>, With<Client>)>,
     mut commands: Commands,
     mut materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut game_score: Query<&mut GameScore>,
     app_role: Res<State<AppRole>>,
 ) {
-    for peer_id in clients_query {
+    for peer_id in added_clients_query {
         if *app_role.get() == AppRole::ClientOnly {
             info!(
                 "Not spawning a player, game_core is running in ClientOnly \
@@ -43,11 +43,6 @@ fn spawn_player_on_new_client(
             );
             return;
         }
-
-        info!(
-            "Spawning a player for fully connected Client. (peer_id={})",
-            peer_id.0
-        );
 
         let player_entity = commands
             .spawn((
@@ -64,6 +59,12 @@ fn spawn_player_on_new_client(
                 RigidBody::Kinematic,
             ))
             .id();
+
+        info!(
+            "Spawned a player for fully connected Client. \
+             (player_entity={player_entity}, peer_id={})",
+            peer_id.0
+        );
 
         if *app_role.get() == AppRole::DedicatedServer {
             // on headless setup, materials doesnt exist
@@ -101,7 +102,7 @@ fn spawn_player_on_new_client(
 
 fn handle_shoot_requests(
     mut commands: Commands,
-    message_readers: Query<(&mut NetMessageReader<ShootRequest>, &PeerId)>,
+    message_readers: Query<&mut NetMessageReader<ShootRequest>>,
     mut health_query: Query<&mut Health>,
     spatial_query: SpatialQuery,
     player_query: Query<(Entity, &OwnedBy), With<Player>>,
@@ -117,19 +118,23 @@ fn handle_shoot_requests(
 ) {
     let game_mode = &game_config_server.0.game_mode;
 
-    for (mut message_reader, peer_id) in message_readers {
+    for mut message_reader in message_readers {
         for message in message_reader.read() {
             // the player entity that sent this ShootRequest
             let Some(shooter_entity) = player_query
                 .iter()
-                .find(|(_, controlled_by)| controlled_by.0.0 == peer_id.0)
+                .find(|(_, controlled_by)| {
+                    // FIXME: remove me once i implement better approach similar to bevy_replicon in
+                    // netvy
+                    controlled_by.0.0 == message.source_peer_id.0
+                })
                 .map(|i| i.0)
             else {
                 warn!(
                     "Received a ShootRequest but couldn't determine from \
-                     which player this came from. (peer_id={peer_id:?}, \
+                     which player this came from. (peer_id={:?}, \
                      player_query={:?})",
-                    player_query
+                    message.source_peer_id, player_query
                 );
                 continue;
             };
@@ -187,11 +192,11 @@ fn handle_shoot_requests(
                 let entity_killed = first_hit.entity;
                 commands.entity(entity_killed).insert(ColliderDisabled);
 
-                match game_score.players.get_mut(&peer_id.0) {
+                match game_score.players.get_mut(&message.source_peer_id.0) {
                     Some(player) => {
                         debug!(
                             "increased kill count of player with peer_id: {}",
-                            peer_id.0
+                            message.source_peer_id.0
                         );
                         player.kills += 1;
                     }
@@ -199,7 +204,7 @@ fn handle_shoot_requests(
                         warn!(
                             "Failed to find player in game score by peer_id \
                              {}\nGame score: {:?}",
-                            peer_id.0, *game_score
+                            message.source_peer_id.0, *game_score
                         )
                     }
                 }
@@ -209,7 +214,8 @@ fn handle_shoot_requests(
                 if *game_mode == GameMode::Waves {
                     return;
                 };
-                let Some(player_score) = game_score.players.get_mut(&peer_id.0)
+                let Some(player_score) =
+                    game_score.players.get_mut(&message.source_peer_id.0)
                 else {
                     warn!("Failed to find client of player that was killed");
                     continue;

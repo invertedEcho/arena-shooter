@@ -1,5 +1,6 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use netvy::prelude::*;
 use shared::{
     EnemyKilledMessage,
     components::{DespawnTimer, Health},
@@ -26,8 +27,16 @@ pub fn enemy_shoot_player(
     mut health_query: Query<&mut Health>,
     // client_query: Query<&RemoteId, With<Connected>>,
     mut game_score: Single<&mut GameScore>,
-    mut message_writer: MessageWriter<PlayerHitMessage>,
+    mut message_writer_query: Query<
+        &mut NetMessageWriter<PlayerHitMessage>,
+        With<Server>,
+    >,
 ) {
+    let Ok(mut message_writer) = message_writer_query.single_mut() else {
+        error!("not exactly one NetMessageWriter of server exists");
+        return;
+    };
+
     for (
         enemy_entity,
         enemy_state,

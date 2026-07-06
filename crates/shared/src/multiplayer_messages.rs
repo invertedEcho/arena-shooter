@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use netvy::PeerId;
 use serde::{Deserialize, Serialize};
 
 use crate::{GameMap, GameMode, GameStateServer};
@@ -7,7 +8,7 @@ use crate::{GameMap, GameMode, GameStateServer};
 pub struct ShootRequest {
     pub origin: Vec3,
     pub direction: Dir3,
-    // pub client_tick: u32,
+    pub source_peer_id: PeerId,
 }
 
 /// A client can send this to the server to request update of the game config on the server, such as
@@ -27,7 +28,7 @@ pub struct ClientRespawnRequest;
 
 /// This message is sent from server to client, whenever another player/enemy shot the player of
 /// that client
-#[derive(Serialize, Deserialize, Message, Copy, Clone)]
+#[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct PlayerHitMessage {
     pub origin: Vec3,
 }
