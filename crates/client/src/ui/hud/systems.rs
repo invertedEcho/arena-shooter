@@ -376,23 +376,33 @@ pub fn spawn_damage_indicator(
         {
             let direction_flat =
                 Vec3::new(world_direction.x, 0.0, world_direction.z)
-                    .normalize();
+                    .normalize_or_zero();
             let forward = camera_transform.forward();
-            let forward_flat = Vec3::new(forward.x, 0.0, forward.z).normalize();
+            let forward_flat =
+                Vec3::new(forward.x, 0.0, forward.z).normalize_or_zero();
 
-            let angle = forward_flat.angle_between(direction_flat);
+            let signed_angle =
+                if forward_flat == Vec3::ZERO || direction_flat == Vec3::ZERO {
+                    // you cant calculate the angle between two vectors if either of them is zero
+                    // quite obvious when you think about what the dot product formula is and also a
+                    // vector with zero has no direction, so you cant really calculate an angle between
+                    // "no direction" and a direction. every answer would theoretically be kinda correct
+                    0.0
+                } else {
+                    let angle = forward_flat.angle_between(direction_flat);
 
-            // the cross product gives us the area of the parallelogram, that we get after applying
-            // the transformation on two given vectors.
-            // but the cross product actually gives a vector. the length of that vector is the said
-            // area
-            // and the resulting vector will be a vector which is perpendicular to the
-            // parallelogram
-            let cross = forward_flat.cross(direction_flat);
+                    // the cross product gives us the area of the parallelogram, that we get after applying
+                    // the transformation on two given vectors.
+                    // but the cross product actually gives a vector. the length of that vector is the said
+                    // area
+                    // and the resulting vector will be a vector which is perpendicular to the
+                    // parallelogram
+                    let cross = forward_flat.cross(direction_flat);
 
-            // this is relevant as if the cross product is negative, it means the orienation
-            // changed during the transformation
-            let signed_angle = if cross.y < 0.0 { -angle } else { angle };
+                    // this is relevant as if the cross product is negative, it means the orienation
+                    // changed during the transformation
+                    if cross.y < 0.0 { -angle } else { angle }
+                };
 
             commands.spawn((
                 Node {
