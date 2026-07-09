@@ -281,6 +281,7 @@ fn handle_client_commands(
 
     for mut net_message_reader in query {
         for message in net_message_reader.read() {
+            info!("Handling ClientCommand {message:?}");
             let Some(ref mut game_config_server) = game_config_server else {
                 warn!(
                     "Received a ClientCommand but GameConfigServer resource \

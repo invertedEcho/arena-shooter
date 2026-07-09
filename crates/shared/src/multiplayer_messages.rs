@@ -13,8 +13,7 @@ pub struct ShootRequest {
 
 /// A client can send this to the server to request update of the game config on the server, such as
 /// the current map or game mode.
-// TODO: needs a more descriptive name
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ClientCommand {
     SetGameMode(GameMode),
     SetMap(GameMap),

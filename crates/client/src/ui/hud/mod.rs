@@ -34,7 +34,7 @@ impl Plugin for PlayerHudPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_info_text_current_wave_finished);
         app.add_systems(
-            Update,
+            FixedUpdate,
             (
                 update_player_health_text,
                 update_player_ammo_text,
@@ -50,20 +50,20 @@ impl Plugin for PlayerHudPlugin {
             )
                 .run_if(in_state(InGameState::Playing)),
         );
-        app.add_systems(Update, spawn_player_hud);
+        app.add_systems(FixedUpdate, spawn_player_hud);
         app.add_systems(OnEnter(AppState::InGame), spawn_wave_hud);
         app.add_systems(
-            Update,
+            FixedUpdate,
             (update_wave_hud)
                 .run_if(resource_exists_and_changed::<GameStateWave>),
         );
         app.add_systems(
-            Update,
+            FixedUpdate,
             on_ui_state_change.run_if(resource_changed::<UiState>),
         );
 
         app.add_systems(
-            Update,
+            FixedUpdate,
             hide_current_wave_finished_text
                 .run_if(resource_removed::<NextWaveTimer>),
         );
