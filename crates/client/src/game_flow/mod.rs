@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use game_core::GameCoreLoadingState;
 use shared::GameMode;
 
 use crate::{
@@ -12,7 +11,7 @@ use crate::{
             check_connection_state, free_mouse, grab_mouse,
             handle_escape_in_game, handle_player_death_event,
             handle_request_next_wave, manual_mouse_grab_toggle,
-            on_game_core_done, pause_all_animations, resume_all_animations,
+            pause_all_animations, resume_all_animations,
             send_update_game_server_state_request_on_in_game_state_change,
             spawn_main_menu_camera,
         },
@@ -59,10 +58,6 @@ impl Plugin for GameFlowPlugin {
             .add_systems(
                 Update,
                 handle_request_next_wave.run_if(is_waves_game_mode),
-            )
-            .add_systems(
-                OnEnter(GameCoreLoadingState::Done),
-                on_game_core_done,
             );
     }
 }

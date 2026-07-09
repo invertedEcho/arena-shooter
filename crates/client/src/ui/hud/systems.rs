@@ -284,7 +284,6 @@ pub fn spawn_wave_hud(
     if game_config_client.0.game_mode != GameMode::Waves {
         return;
     }
-
     commands
         .spawn((
             DespawnOnExit(AppState::InGame),

@@ -183,7 +183,3 @@ pub fn check_connection_state(
         }
     }
 }
-
-pub fn on_game_core_done(mut app_state: ResMut<NextState<AppState>>) {
-    app_state.set(AppState::InGame);
-}
