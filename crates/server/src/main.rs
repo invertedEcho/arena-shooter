@@ -1,3 +1,5 @@
+use std::net::{Ipv4Addr, SocketAddr};
+
 use bevy::log::LogPlugin;
 use bevy::mesh::MeshPlugin;
 use bevy::prelude::*;
@@ -123,14 +125,12 @@ fn main() {
 }
 
 fn start_server(mut commands: Commands) {
-    let server_entity = commands
-        .spawn((
-            Server,
-            TargetAddress {
-                address: "0.0.0.0".to_string(),
-                port: SERVER_PORT,
-            },
-        ))
-        .id();
+    let socket_address = SocketAddr::new(
+        std::net::IpAddr::V4(Ipv4Addr::new(0, 0, 0, 1)),
+        SERVER_PORT,
+    );
+
+    let server_entity =
+        commands.spawn((Server, TargetAddress(socket_address))).id();
     commands.trigger(StartServer { server_entity });
 }

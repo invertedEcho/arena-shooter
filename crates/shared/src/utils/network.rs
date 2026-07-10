@@ -46,8 +46,10 @@ fn resolve_with_retry(
     Err(last_err.unwrap())
 }
 
-pub fn get_dedicated_server_socket_addr_client_side() -> Option<SocketAddr> {
-    match resolve_with_retry("game.invertedecho.com:5888") {
+pub fn get_dedicated_server_socket_addr_client_side(
+    address_to_resolve: &String,
+) -> Option<SocketAddr> {
+    match resolve_with_retry(address_to_resolve) {
         Ok(success) => success.first().copied(),
         Err(error) => {
             warn!("Failed to resolve game server: {}", error);

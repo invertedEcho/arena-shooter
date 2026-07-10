@@ -1,3 +1,5 @@
+use std::net::{Ipv4Addr, SocketAddr};
+
 use avian3d::prelude::*;
 use bevy::color::palettes::css::WHITE;
 use bevy::prelude::*;
@@ -7,7 +9,9 @@ use shared::character_controller::{
 };
 use shared::multiplayer_messages::ConfirmRespawn;
 use shared::player::Player;
-use shared::utils::network::SERVER_PORT;
+use shared::utils::network::{
+    SERVER_PORT, get_dedicated_server_socket_addr_client_side,
+};
 
 // use crate::auth::{
 //     ConnectTokenRequestTask, fetch_connect_token,
@@ -25,7 +29,6 @@ pub const GENERIC_NO_CONNECTION_ERROR_MESSAGE: &str =
 #[derive(Message)]
 pub struct ConnectToDedicatedServer {
     pub server_address: String,
-    pub port: u16,
 }
 
 pub struct NetworkPlugin;
@@ -50,7 +53,7 @@ impl Plugin for NetworkPlugin {
                 handle_new_player,
                 handle_added_owned_player,
                 spawn_host_client,
-                handle_connect_to_dedicated_server
+                handle_connect_to_dedicated_server,
             ),
         );
         // app.add_observer(handle_added_server);
@@ -166,16 +169,14 @@ fn handle_confirm_respawn_message(
 struct HostClientServer;
 
 fn start_host_client_server(mut commands: Commands) {
+    let socket_address = SocketAddr::new(
+        std::net::IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+        SERVER_PORT,
+    );
+
     info!("Starting HostClient server");
     let server_entity = commands
-        .spawn((
-            Server,
-            TargetAddress {
-                address: "127.0.0.1".to_string(),
-                port: SERVER_PORT,
-            },
-            HostClientServer,
-        ))
+        .spawn((Server, TargetAddress(socket_address), HostClientServer))
         .id();
 
     commands.trigger(StartServer { server_entity });
@@ -193,15 +194,13 @@ fn spawn_host_client(
         );
         next_client_connection_state
             .set(ClientLoadingState::ConnectingToServer);
-        let client_entity = commands
-            .spawn((
-                Client,
-                TargetAddress {
-                    address: "127.0.0.1".to_string(),
-                    port: SERVER_PORT,
-                },
-            ))
-            .id();
+
+        let socket_address = SocketAddr::new(
+            std::net::IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+            SERVER_PORT,
+        );
+        let client_entity =
+            commands.spawn((Client, TargetAddress(socket_address))).id();
 
         commands.trigger(ConnectToServer { client_entity });
     }
@@ -212,15 +211,15 @@ fn handle_connect_to_dedicated_server(
     mut message_reader: MessageReader<ConnectToDedicatedServer>,
 ) {
     for message in message_reader.read() {
-        let client_entity = commands
-            .spawn((
-                Client,
-                TargetAddress {
-                    address: message.server_address.clone(),
-                    port: message.port,
-                },
-            ))
-            .id();
+        info!("READ ConnectToDedicatedServer message");
+        let Some(socket_address) = get_dedicated_server_socket_addr_client_side(
+            &message.server_address,
+        ) else {
+            error!("Failed to resolve dedicated server address!");
+            continue;
+        };
+        let client_entity =
+            commands.spawn((Client, TargetAddress(socket_address))).id();
         commands.trigger(ConnectToServer { client_entity });
     }
 }

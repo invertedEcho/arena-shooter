@@ -130,8 +130,8 @@ fn handle_main_menu_button_pressed(
 
                 connect_to_dedicated_server_message_writer.write(
                     ConnectToDedicatedServer {
-                        server_address: "game.invertedecho.com".to_string(),
-                        port: SERVER_PORT,
+                        server_address: "game.invertedecho.com:5888"
+                            .to_string(),
                     },
                 );
 
