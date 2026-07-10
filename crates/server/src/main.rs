@@ -126,7 +126,7 @@ fn main() {
 
 fn start_server(mut commands: Commands) {
     let socket_address = SocketAddr::new(
-        std::net::IpAddr::V4(Ipv4Addr::new(0, 0, 0, 1)),
+        std::net::IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
         SERVER_PORT,
     );
 

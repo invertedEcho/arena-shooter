@@ -162,6 +162,7 @@ fn handle_start_game_message(
     }
 }
 
+// FIXME: So when GameCoreLoadingState is done, why are we still doing stuff? we should rename it.
 fn on_game_core_loading_state_done(
     mut commands: Commands,
     mut spawn_enemies: MessageWriter<SpawnEnemiesMessage>,
@@ -169,6 +170,14 @@ fn on_game_core_loading_state_done(
     game_config_server: Option<Res<GameConfigServer>>,
     app_role: Res<State<AppRole>>,
 ) {
+    if *app_role.get() == AppRole::ClientOnly {
+        info!(
+            "AppRole is ClientOnly, not doing any actions corresponding to \
+             game mode."
+        );
+        return;
+    }
+
     let Some(game_config_server) = game_config_server else {
         warn!(
             "GameConfigServer doesn't exist, cant execute actions depending \
@@ -463,6 +472,7 @@ fn read_stop_game_message(
         for entity in entities_to_despawn {
             commands.entity(entity).despawn();
         }
+        commands.remove_resource::<GameStateWave>();
     }
 }
 
