@@ -40,9 +40,6 @@ struct CurrentInGameStateText;
 struct CurrentMainMenuStateText;
 
 #[derive(Component)]
-struct CurrentServerGameModeText;
-
-#[derive(Component)]
 struct CurrentClientLoadingState;
 
 #[derive(Component)]
@@ -84,11 +81,6 @@ fn spawn_debug_overlay(mut commands: Commands) {
             parent.spawn(build_debug_overlay_state_item_text(
                 "MainMenuState",
                 CurrentMainMenuStateText,
-            ));
-
-            parent.spawn(build_debug_overlay_state_item_text(
-                "ServerGameMode",
-                CurrentServerGameModeText,
             ));
 
             parent.spawn(build_debug_overlay_state_item_text(

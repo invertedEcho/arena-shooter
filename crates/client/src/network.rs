@@ -22,10 +22,18 @@ pub const GENERIC_NO_CONNECTION_ERROR_MESSAGE: &str =
     "Failed to connect to Game Server. Please verify your internet connection \
      works. The Game Server may also be currently unavailable.";
 
+#[derive(Message)]
+pub struct ConnectToDedicatedServer {
+    pub server_address: String,
+    pub port: u16,
+}
+
 pub struct NetworkPlugin;
 
 impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
+        app.add_message::<ConnectToDedicatedServer>();
+
         app.add_systems(
             OnEnter(ClientLoadingState::StartingServer),
             start_host_client_server,
@@ -42,6 +50,7 @@ impl Plugin for NetworkPlugin {
                 handle_new_player,
                 handle_added_owned_player,
                 spawn_host_client,
+                handle_connect_to_dedicated_server
             ),
         );
         // app.add_observer(handle_added_server);
@@ -194,6 +203,24 @@ fn spawn_host_client(
             ))
             .id();
 
+        commands.trigger(ConnectToServer { client_entity });
+    }
+}
+
+fn handle_connect_to_dedicated_server(
+    mut commands: Commands,
+    mut message_reader: MessageReader<ConnectToDedicatedServer>,
+) {
+    for message in message_reader.read() {
+        let client_entity = commands
+            .spawn((
+                Client,
+                TargetAddress {
+                    address: message.server_address.clone(),
+                    port: message.port,
+                },
+            ))
+            .id();
         commands.trigger(ConnectToServer { client_entity });
     }
 }

@@ -1,10 +1,11 @@
 ﻿use bevy::prelude::*;
-use shared::{AppRole, StartGame};
+use shared::{AppRole, StartGame, utils::network::SERVER_PORT};
 
 use crate::{
     game_flow::states::{
         AppState, ClientLoadingState, MainMenuState, PendingGameConfigClient,
     },
+    network::ConnectToDedicatedServer,
     ui::{
         common::{
             CommonUiButton, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
@@ -106,6 +107,9 @@ fn handle_main_menu_button_pressed(
     mut next_client_loading_state: ResMut<NextState<ClientLoadingState>>,
     mut message_writer: MessageWriter<StartGame>,
     pending_game_config: Res<PendingGameConfigClient>,
+    mut connect_to_dedicated_server_message_writer: MessageWriter<
+        ConnectToDedicatedServer,
+    >,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
         let Interaction::Pressed = interaction else {
@@ -123,6 +127,13 @@ fn handle_main_menu_button_pressed(
                 // server ourself but connect to the dedicated server
                 next_client_loading_state
                     .set(ClientLoadingState::ConnectingToServer);
+
+                connect_to_dedicated_server_message_writer.write(
+                    ConnectToDedicatedServer {
+                        server_address: "game.invertedecho.com".to_string(),
+                        port: SERVER_PORT,
+                    },
+                );
 
                 message_writer.write(StartGame(pending_game_config.0));
             }
