@@ -12,16 +12,34 @@ use shared::{
 };
 
 use crate::{
-    SpawnLocationFile,
+    GameCoreLoadingState, SpawnLocationFile,
     world_objects::{DEFAULT_HEALTH_TO_GIVE_MEDKIT, components::RespawnTimer},
 };
 
 #[derive(Resource)]
 pub struct CurrentSpawnLocationsHandle(Handle<SpawnLocationFile>);
 
-// FIXME: this shouldnt happen just as a random side effect. why exactly do we need to do this?
-// I think we did it here just as a dirty fix, when user selects a map, we already pre load the
-// spawn_locations.json, so once the match starts, the handle is already ready.
+pub fn check_spawn_locations_loaded(
+    mut asset_event_message_reader: MessageReader<
+        AssetEvent<SpawnLocationFile>,
+    >,
+    mut next_game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
+    spawn_location_handle: If<Res<CurrentSpawnLocationsHandle>>,
+) {
+    for asset_event in asset_event_message_reader.read() {
+        if let AssetEvent::LoadedWithDependencies { id } = asset_event
+            && *id == spawn_location_handle.0.0.id()
+        {
+            info!(
+                "Map fully spawned, updating GameInitializationState -> \
+                 GameInitializationState::MapSpawned"
+            );
+            next_game_core_loading_state
+                .set(GameCoreLoadingState::SpawnLocationsLoaded);
+        }
+    }
+}
+
 pub fn load_spawn_locations(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
@@ -68,11 +86,6 @@ pub fn spawn_world_objects(
             current_spawn_location_handle.0.id()
         );
         return;
-        // panic!(
-        //     "Failed to load spawn locations, the asset hasnt been loaded yet \
-        //      or resource doesnt exist yet. Handle we wanted to retrieve: {}",
-        //     current_spawn_location_handle.0.id()
-        // );
     };
 
     info!("Loaded spawn locations for world objects, spawning...");

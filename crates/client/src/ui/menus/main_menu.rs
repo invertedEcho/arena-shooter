@@ -1,4 +1,5 @@
 ﻿use bevy::prelude::*;
+use netvy::NetvyMode;
 use shared::{AppRole, StartGame, utils::network::SERVER_PORT};
 
 use crate::{
@@ -110,6 +111,7 @@ fn handle_main_menu_button_pressed(
     mut connect_to_dedicated_server_message_writer: MessageWriter<
         ConnectToDedicatedServer,
     >,
+    mut netvy_mode: ResMut<NetvyMode>,
 ) {
     for (interaction, main_menu_button) in main_menu_button_interactions {
         let Interaction::Pressed = interaction else {
@@ -119,8 +121,10 @@ fn handle_main_menu_button_pressed(
             MainMenuButton::Singleplayer => {
                 next_main_menu_state.set(MainMenuState::MapSelection);
                 next_app_role.set(AppRole::HostClient);
+                *netvy_mode = NetvyMode::HostClient;
             }
             MainMenuButton::Multiplayer => {
+                *netvy_mode = NetvyMode::Client;
                 next_app_state.set(AppState::LoadingGame);
                 next_app_role.set(AppRole::ClientOnly);
                 // NOTE: we skip state StartingServer, because in multiplayer we dont start a

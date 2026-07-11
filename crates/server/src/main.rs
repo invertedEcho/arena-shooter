@@ -77,7 +77,7 @@ fn main() {
 
     app.insert_state(AppRole::DedicatedServer);
 
-    app.add_plugins(NetvyPlugin(AppType::Server));
+    app.add_plugins(NetvyPlugin(NetvyMode::Server));
 
     app.add_plugins(game_core::GameCorePlugin);
     app.add_plugins(SharedPlugin);

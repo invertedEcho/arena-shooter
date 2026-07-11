@@ -49,6 +49,7 @@ pub enum GameCoreLoadingState {
     #[default]
     Initial,
     GameScoreFinishedSetup,
+    SpawnLocationsLoaded,
     // FIXME: MapSpawned is currently never entered again after the first game
     MapSpawned,
     CollidersSpawned,
@@ -372,12 +373,11 @@ pub struct WorldSceneHandle(pub Handle<Scene>);
 fn check_world_scene_loaded(
     mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
     mut next_game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
-    maybe_world_scene_handle: Option<Res<WorldSceneHandle>>,
+    world_scene_handle: If<Res<WorldSceneHandle>>,
 ) {
     for asset_event in asset_event_message_reader.read() {
         if let AssetEvent::LoadedWithDependencies { id } = asset_event
-            && let Some(ref world_scene_handle) = maybe_world_scene_handle
-            && *id == world_scene_handle.0.id()
+            && *id == world_scene_handle.0.0.id()
         {
             info!(
                 "Map fully spawned, updating GameInitializationState -> \
