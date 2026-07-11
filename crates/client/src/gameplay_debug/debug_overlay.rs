@@ -6,6 +6,7 @@ use crate::{
         PendingGameConfigClient,
     },
     gameplay_debug::AppDebugState,
+    ui::UiState,
 };
 
 const DEBUG_OVERLAY_TEXT_SIZE: f32 = 15.0;
@@ -25,6 +26,7 @@ impl Plugin for DebugOverlayPlugin {
                 update_loading_game_state_text,
                 update_current_game_config_client_text
                     .run_if(resource_changed::<PendingGameConfigClient>),
+                update_ui_state_text.run_if(resource_changed::<UiState>),
             ),
         );
     }
@@ -51,6 +53,9 @@ struct DebugOverlayRoot;
 #[derive(Component)]
 struct CurrentGameConfigClientText;
 
+#[derive(Component)]
+struct UiStateText;
+
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
         .spawn((
@@ -68,39 +73,41 @@ fn spawn_debug_overlay(mut commands: Commands) {
             ZIndex(1),
         ))
         .with_children(|parent| {
-            parent.spawn(build_debug_overlay_state_item_text(
+            parent.spawn(build_debug_overlay_item_text(
                 "AppState",
                 CurrentAppStateText,
             ));
 
-            parent.spawn(build_debug_overlay_state_item_text(
+            parent.spawn(build_debug_overlay_item_text(
                 "InGameState",
                 CurrentInGameStateText,
             ));
 
-            parent.spawn(build_debug_overlay_state_item_text(
+            parent.spawn(build_debug_overlay_item_text(
                 "MainMenuState",
                 CurrentMainMenuStateText,
             ));
 
-            parent.spawn(build_debug_overlay_state_item_text(
+            parent.spawn(build_debug_overlay_item_text(
                 "ClientLoadingState",
                 CurrentClientLoadingState,
             ));
 
-            parent.spawn(build_debug_overlay_state_item_text(
+            parent.spawn(build_debug_overlay_item_text(
                 "ConnectionState",
                 CurrentConnectionStateText,
             ));
 
-            parent.spawn(build_debug_overlay_state_item_text(
+            parent.spawn(build_debug_overlay_item_text(
                 "GameModeClient",
                 CurrentGameConfigClientText,
             ));
+
+            parent.spawn(build_debug_overlay_item_text("UiState", UiStateText));
         });
 }
 
-fn build_debug_overlay_state_item_text<T: Component>(
+fn build_debug_overlay_item_text<T: Component>(
     description: &str,
     marker_component: T,
 ) -> impl Bundle {
@@ -124,6 +131,7 @@ fn build_debug_overlay_state_item_text<T: Component>(
                     font_size: DEBUG_OVERLAY_TEXT_SIZE,
                     ..default()
                 },
+                TextLayout::new_with_linebreak(LineBreak::WordBoundary)
             )
         ],
     )
@@ -208,4 +216,11 @@ fn update_debug_overlay_visibility(
     } else {
         Visibility::Hidden
     };
+}
+
+fn update_ui_state_text(
+    ui_state: Res<UiState>,
+    mut text: Single<&mut Text, With<UiStateText>>,
+) {
+    ***text = format!("{ui_state:?}");
 }

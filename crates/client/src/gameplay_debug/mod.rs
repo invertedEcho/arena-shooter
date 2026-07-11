@@ -23,11 +23,11 @@ use shared::{
 
 use crate::{
     game_flow::states::AppState,
-    gameplay_debug::states_overlay::DebugOverlayPlugin,
+    gameplay_debug::debug_overlay::DebugOverlayPlugin,
     player::camera::components::{MainMenuCamera, WorldCamera},
 };
 
-mod states_overlay;
+mod debug_overlay;
 
 #[derive(Resource, Eq, Debug, PartialEq, Hash, Clone, Copy)]
 pub struct AppDebugState {

@@ -164,6 +164,16 @@ pub fn spawn_player_hud(
         });
 }
 
+pub fn show_crosshair(mut ui_state: ResMut<UiState>) {
+    debug!("Showing crosshair");
+    ui_state.crosshair_visible = true;
+}
+
+pub fn hide_crosshair(mut ui_state: ResMut<UiState>) {
+    debug!("Hiding crosshair");
+    ui_state.crosshair_visible = false;
+}
+
 pub fn spawn_player_crosshair(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
@@ -197,8 +207,14 @@ pub fn update_crosshair_visibility_on_aim_type_change(
     }
 
     match *player_aim_type {
-        AimType::Normal => ui_state.crosshair_visible = true,
-        AimType::Scoped => ui_state.crosshair_visible = false,
+        AimType::Normal => {
+            debug!("Showing crosshair because AimType changed to normal");
+            ui_state.crosshair_visible = true;
+        }
+        AimType::Scoped => {
+            debug!("Hiding crosshair because AimType changed to Scoped");
+            ui_state.crosshair_visible = false;
+        }
     }
 }
 

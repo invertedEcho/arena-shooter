@@ -7,8 +7,9 @@ use crate::{
     ui::{
         UiState,
         hud::systems::{
-            fade_out_damage_indicator, hide_current_wave_finished_text,
-            reflect_crosshair_visibility_from_ui_state,
+            fade_out_damage_indicator, hide_crosshair,
+            hide_current_wave_finished_text,
+            reflect_crosshair_visibility_from_ui_state, show_crosshair,
             show_wave_finished_text, spawn_bullet_hit_crosshair,
             spawn_damage_indicator, spawn_info_text_current_wave_finished,
             spawn_player_crosshair, spawn_player_hud, spawn_wave_hud,
@@ -70,5 +71,8 @@ impl Plugin for PlayerHudPlugin {
             hide_current_wave_finished_text
                 .run_if(resource_removed::<NextWaveTimer>),
         );
+
+        app.add_systems(OnEnter(InGameState::Playing), show_crosshair);
+        app.add_systems(OnExit(InGameState::Playing), hide_crosshair);
     }
 }

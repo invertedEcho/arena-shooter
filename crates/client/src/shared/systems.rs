@@ -44,7 +44,7 @@ pub fn disable_culling_for_skinned_meshes(
 pub fn hide_only_visible_in_game(
     query: Query<&mut Visibility, With<OnlyVisibleInGame>>,
 ) {
-    info!("Hiding all OnlyVisibleInGame entities");
+    debug!("Hiding all OnlyVisibleInGame entities");
     for mut visibility in query {
         *visibility = Visibility::Hidden;
     }
