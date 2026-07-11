@@ -166,26 +166,27 @@ fn handle_shoot_requests(
                     enemy_entity: entity_hit,
                 });
             } else {
-                if let Ok(client_entity_that_was_hit) =
-                    player_query.get(entity_hit).map(|i| i.0)
-                    && let Ok(client) =
-                        client_query.get(client_entity_that_was_hit)
-                {
-                    server_net_message_writer.write(PlayerHitMessage {
-                        origin: message.origin,
-                    });
-                    // server_multi_message_sender
-                    //     .send::<PlayerHitMessage, OrderedReliableChannel>(
-                    //         &PlayerHitMessage {
-                    //             origin: message.origin,
-                    //         },
-                    //         &server,
-                    //         &NetworkTarget::Single(client.0),
-                    //     )
-                    //     .ok();
-                } else {
-                    error!("Could not find client that was hit by the bullet");
-                }
+                // if let Ok(client_entity_that_was_hit) =
+                //     player_query.get(entity_hit).map(|i| i.0)
+                //     && let Ok(client) =
+                //         client_query.get(client_entity_that_was_hit)
+                // {
+                // FIXME: implement sending messages to specifc clients only in netvy
+                server_net_message_writer.write(PlayerHitMessage {
+                    origin: message.origin,
+                });
+                // server_multi_message_sender
+                //     .send::<PlayerHitMessage, OrderedReliableChannel>(
+                //         &PlayerHitMessage {
+                //             origin: message.origin,
+                //         },
+                //         &server,
+                //         &NetworkTarget::Single(client.0),
+                //     )
+                //     .ok();
+                // } else {
+                //     error!("Could not find client that was hit by the bullet");
+                // }
             }
 
             if health.0 <= 0.0 {
