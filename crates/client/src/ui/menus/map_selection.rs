@@ -180,7 +180,7 @@ fn handle_map_selection_button_pressed(
 ) {
     for (interaction, map_selection_button) in query {
         if let Interaction::Pressed = interaction {
-            pending_game_config.0.game_map = map_selection_button.0.clone();
+            pending_game_config.0.game_map = map_selection_button.0;
         }
     }
 }

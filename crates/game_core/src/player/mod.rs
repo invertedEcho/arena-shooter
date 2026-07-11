@@ -107,7 +107,6 @@ fn handle_shoot_requests(
     spatial_query: SpatialQuery,
     player_query: Query<(Entity, &OwnedBy), With<Player>>,
     mut game_score: Single<&mut GameScore>,
-    client_query: Query<&PeerId, With<Client>>,
     enemy_query: Query<Entity, With<Enemy>>,
     mut player_hit_enemy_message_writer: MessageWriter<PlayerHitEnemy>,
     mut server_net_message_writer: Single<

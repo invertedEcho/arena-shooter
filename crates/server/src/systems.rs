@@ -3,7 +3,7 @@ use std::{fs::File, io::Read};
 use avian3d::prelude::Collider;
 use bevy::prelude::*;
 use game_core::GameCoreLoadingState;
-use shared::{GameConfig, GameConfigServer, StartGame};
+use shared::{GameConfigServer, StartGame};
 
 use crate::utils::get_path_to_collider_json;
 

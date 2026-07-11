@@ -5,7 +5,6 @@ use bevy::{
     },
     prelude::*,
     ui::InteractionDisabled,
-    window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use shared::{
     player::PlayerCash,

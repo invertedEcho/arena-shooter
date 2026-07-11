@@ -1,7 +1,4 @@
-use bevy::{
-    prelude::*,
-    window::{CursorOptions, PrimaryWindow},
-};
+use bevy::prelude::*;
 use shared::GameMode;
 
 use crate::{

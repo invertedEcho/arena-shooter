@@ -1,6 +1,6 @@
 ﻿use bevy::prelude::*;
 use netvy::NetvyMode;
-use shared::{AppRole, StartGame, utils::network::SERVER_PORT};
+use shared::{AppRole, StartGame};
 
 use crate::{
     game_flow::states::{

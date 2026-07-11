@@ -47,7 +47,7 @@ fn resolve_with_retry(
 }
 
 pub fn get_dedicated_server_socket_addr_client_side(
-    address_to_resolve: &String,
+    address_to_resolve: &str,
 ) -> Option<SocketAddr> {
     match resolve_with_retry(address_to_resolve) {
         Ok(success) => success.first().copied(),
