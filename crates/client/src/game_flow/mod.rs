@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{
+    prelude::*,
+    window::{CursorOptions, PrimaryWindow},
+};
 use shared::GameMode;
 
 use crate::{
@@ -44,7 +47,7 @@ impl Plugin for GameFlowPlugin {
             .add_systems(
                 Update,
                 (
-                    handle_escape_in_game,
+                    handle_escape_in_game.run_if(in_state(AppState::InGame)),
                     manual_mouse_grab_toggle,
                     handle_player_death_event,
                     check_connection_state,

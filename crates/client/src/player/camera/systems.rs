@@ -138,7 +138,7 @@ pub fn update_yaw_pitch_on_mouse_motion(
     mut shoot_recoil: Single<&mut ShootRecoil>,
     ui_state: Res<UiState>,
 ) {
-    if ui_state.buy_overlay_visibile {
+    if ui_state.buy_overlay_visible {
         return;
     }
 
@@ -310,7 +310,7 @@ pub fn weapon_sway(
     mut transform: Single<&mut Transform, With<PlayerWeaponModel>>,
     ui_state: Res<UiState>,
 ) {
-    if ui_state.buy_overlay_visibile {
+    if ui_state.buy_overlay_visible {
         return;
     }
 

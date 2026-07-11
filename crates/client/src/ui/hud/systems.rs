@@ -188,33 +188,28 @@ pub fn spawn_player_crosshair(
     }
 }
 
-pub fn update_player_crosshair_visibility(
+pub fn update_crosshair_visibility_on_aim_type_change(
     player_aim_type: Single<&AimType, Changed<AimType>>,
-    mut player_cross_hair: Single<&mut Visibility, With<PlayerCrosshair>>,
-    ui_state: Res<UiState>,
+    mut ui_state: ResMut<UiState>,
 ) {
     if ui_state.score_board_overlay_visible {
         return;
     }
 
     match *player_aim_type {
-        AimType::Normal => **player_cross_hair = Visibility::Visible,
-        AimType::Scoped => **player_cross_hair = Visibility::Hidden,
+        AimType::Normal => ui_state.crosshair_visible = true,
+        AimType::Scoped => ui_state.crosshair_visible = false,
     }
 }
 
-// this is a seperate system because update_player_crosshair_visibility only runs when AimType
-// changes, and this system should only run if UiState changed
-pub fn on_ui_state_change(
+pub fn reflect_crosshair_visibility_from_ui_state(
     ui_state: Res<UiState>,
     mut player_cross_hair: Single<&mut Visibility, With<PlayerCrosshair>>,
-    player_aim_type: Single<&AimType, With<AimType>>,
 ) {
-    if ui_state.score_board_overlay_visible {
-        **player_cross_hair = Visibility::Hidden;
-    // only switch back to visible cross hair if player not currently scoping
-    } else if **player_aim_type != AimType::Scoped {
+    if ui_state.crosshair_visible {
         **player_cross_hair = Visibility::Visible;
+    } else {
+        **player_cross_hair = Visibility::Hidden;
     }
 }
 

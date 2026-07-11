@@ -15,18 +15,12 @@ use crate::{
     ui::UiState,
 };
 
-pub fn grab_mouse(
-    mut primary_cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
-) {
-    primary_cursor_options.visible = false;
-    primary_cursor_options.grab_mode = CursorGrabMode::Locked;
+pub fn grab_mouse(mut ui_state: ResMut<UiState>) {
+    ui_state.cursor_visible = false;
 }
 
-pub fn free_mouse(
-    mut primary_cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
-) {
-    primary_cursor_options.visible = true;
-    primary_cursor_options.grab_mode = CursorGrabMode::None;
+pub fn free_mouse(mut ui_state: ResMut<UiState>) {
+    ui_state.cursor_visible = true;
 }
 
 pub fn manual_mouse_grab_toggle(
@@ -34,10 +28,13 @@ pub fn manual_mouse_grab_toggle(
     mut primary_cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyU) {
+        debug!("Manual mouse grab toggle was requested");
         if primary_cursor_options.grab_mode == CursorGrabMode::None {
+            debug!("Manually grabbing mouse");
             primary_cursor_options.grab_mode = CursorGrabMode::Locked;
             primary_cursor_options.visible = false;
         } else {
+            debug!("Manually freeing mouse");
             primary_cursor_options.grab_mode = CursorGrabMode::None;
             primary_cursor_options.visible = true;
         }
@@ -56,8 +53,8 @@ pub fn handle_escape_in_game(
     if escape_just_pressed {
         match current_in_game_state {
             InGameState::Playing => {
-                if ui_state.buy_overlay_visibile {
-                    ui_state.buy_overlay_visibile = false;
+                if ui_state.buy_overlay_visible {
+                    ui_state.buy_overlay_visible = false;
                 } else {
                     next_in_game_state.set(InGameState::Paused);
                 }

@@ -26,7 +26,7 @@ pub fn handle_keyboard_input_for_player(
     camera_transform: Single<&Transform, With<WorldCamera>>,
     ui_state: Res<UiState>,
 ) {
-    if ui_state.buy_overlay_visibile {
+    if ui_state.buy_overlay_visible {
         return;
     }
 

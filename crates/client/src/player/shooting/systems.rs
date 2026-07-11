@@ -79,7 +79,7 @@ pub fn handle_input(
     >,
     ui_state: Res<UiState>,
 ) {
-    if ui_state.buy_overlay_visibile {
+    if ui_state.buy_overlay_visible {
         return;
     }
 

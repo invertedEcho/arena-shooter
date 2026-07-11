@@ -8,12 +8,13 @@ use crate::{
         UiState,
         hud::systems::{
             fade_out_damage_indicator, hide_current_wave_finished_text,
-            on_ui_state_change, show_wave_finished_text,
-            spawn_bullet_hit_crosshair, spawn_damage_indicator,
-            spawn_info_text_current_wave_finished, spawn_player_crosshair,
-            spawn_player_hud, spawn_wave_hud, update_current_cash_amount,
-            update_next_wave_timer_text, update_player_ammo_text,
-            update_player_crosshair_visibility, update_player_health_text,
+            reflect_crosshair_visibility_from_ui_state,
+            show_wave_finished_text, spawn_bullet_hit_crosshair,
+            spawn_damage_indicator, spawn_info_text_current_wave_finished,
+            spawn_player_crosshair, spawn_player_hud, spawn_wave_hud,
+            update_crosshair_visibility_on_aim_type_change,
+            update_current_cash_amount, update_next_wave_timer_text,
+            update_player_ammo_text, update_player_health_text,
             update_selected_weapon, update_wave_hud,
         },
     },
@@ -34,12 +35,12 @@ impl Plugin for PlayerHudPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_info_text_current_wave_finished);
         app.add_systems(
-            FixedUpdate,
+            Update,
             (
                 update_player_health_text,
                 update_player_ammo_text,
                 spawn_bullet_hit_crosshair,
-                update_player_crosshair_visibility,
+                update_crosshair_visibility_on_aim_type_change,
                 spawn_player_crosshair,
                 update_selected_weapon,
                 spawn_damage_indicator,
@@ -50,20 +51,22 @@ impl Plugin for PlayerHudPlugin {
             )
                 .run_if(in_state(InGameState::Playing)),
         );
-        app.add_systems(FixedUpdate, spawn_player_hud);
+        app.add_systems(Update, spawn_player_hud);
         app.add_systems(OnEnter(AppState::InGame), spawn_wave_hud);
         app.add_systems(
-            FixedUpdate,
+            Update,
             (update_wave_hud)
                 .run_if(resource_exists_and_changed::<GameStateWave>),
         );
         app.add_systems(
-            FixedUpdate,
-            on_ui_state_change.run_if(resource_changed::<UiState>),
+            Update,
+            reflect_crosshair_visibility_from_ui_state.run_if(
+                resource_changed::<UiState>.and(in_state(AppState::InGame)),
+            ),
         );
 
         app.add_systems(
-            FixedUpdate,
+            Update,
             hide_current_wave_finished_text
                 .run_if(resource_removed::<NextWaveTimer>),
         );

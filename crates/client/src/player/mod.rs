@@ -18,7 +18,7 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (mark_players_as_ready,))
+        app.add_systems(FixedUpdate, mark_players_as_ready)
             .add_plugins(PlayerCameraPlugin)
             .add_plugins(PlayerShootingPlugin);
     }
@@ -33,7 +33,7 @@ fn mark_players_as_ready(
     query: Query<Entity, PlayersWithoutReadyMarker>,
 ) {
     for entity in query {
-        debug!("Marking player entity as ready");
+        debug!("Marking player {entity} as ready");
         commands.entity(entity).insert(PlayerReady);
     }
 }

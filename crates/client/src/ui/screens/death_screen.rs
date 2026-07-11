@@ -5,7 +5,10 @@ use shared::multiplayer_messages::ClientRespawnRequest;
 
 use crate::{
     game_flow::{states::InGameState, systems::free_mouse},
-    ui::common::{CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH},
+    ui::{
+        UiState,
+        common::{CommonUiButton, DEFAULT_FONT_SIZE, DEFAULT_GAME_FONT_PATH},
+    },
 };
 
 pub struct DeathScreenPlugin;
@@ -14,7 +17,11 @@ impl Plugin for DeathScreenPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             OnEnter(InGameState::PlayerDead),
-            (spawn_wave_game_mode_death_screen, free_mouse),
+            (
+                spawn_wave_game_mode_death_screen,
+                free_mouse,
+                hide_player_crosshair,
+            ),
         )
         .add_systems(Update, handle_button_press);
     }
@@ -167,4 +174,8 @@ fn handle_button_press(
             }
         }
     }
+}
+
+fn hide_player_crosshair(mut ui_state: ResMut<UiState>) {
+    ui_state.crosshair_visible = false;
 }
