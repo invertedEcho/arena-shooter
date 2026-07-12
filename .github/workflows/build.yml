@@ -66,7 +66,7 @@ jobs:
           DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}    
           DROPBOX_ASSETS_PATH: ${{ secrets.DROPBOX_ASSETS_PATH }}
         run: |
-          curl -X POST https://content.dropboxapi.com/2/files/download_zip --header "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" --header "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
+          curl -X POST https://content.dropboxapi.com/2/files/download_zip -H "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" --header "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
           unzip assets.zip
 
       - name: Build
@@ -116,7 +116,13 @@ jobs:
           DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}    
           DROPBOX_ASSETS_PATH: ${{ secrets.DROPBOX_ASSETS_PATH }}
         run: |
-          curl -X POST https://content.dropboxapi.com/2/files/download_zip --header "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" --header "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
+          $dropboxArg = @{ path = $env:DROPBOX_ASSETS_PATH } | ConvertTo-Json -Compress
+
+          curl.exe -X POST "https://content.dropboxapi.com/2/files/download_zip" `
+            -H "Authorization: Bearer $env:DROPBOX_ACCESS_TOKEN" `
+            -H "Dropbox-API-Arg: $dropboxArg" `
+            --output assets.zip
+
           tar -xf assets.zip
 
       - name: Build
@@ -167,7 +173,7 @@ jobs:
           DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}    
           DROPBOX_ASSETS_PATH: ${{ secrets.DROPBOX_ASSETS_PATH }}
         run: |
-          curl -X POST https://content.dropboxapi.com/2/files/download_zip --header "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" --header "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
+          curl -X POST https://content.dropboxapi.com/2/files/download_zip -H "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" -H "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
           unzip assets.zip
 
       - name: Build
@@ -220,7 +226,7 @@ jobs:
           DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}    
           DROPBOX_ASSETS_PATH: ${{ secrets.DROPBOX_ASSETS_PATH }}
         run: |
-          curl -X POST https://content.dropboxapi.com/2/files/download_zip --header "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" --header "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
+          curl -X POST https://content.dropboxapi.com/2/files/download_zip -H "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" -H "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
           unzip assets.zip
 
       - name: Build
