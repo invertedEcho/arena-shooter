@@ -61,20 +61,13 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download assets from google drive
+      - name: Download assets from dropbox
         env:
-          GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}    
-          GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
+          DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}    
+          DROPBOX_ASSETS_PATH: ${{ secrets.DROPBOX_ASSETS_PATH }}
         run: |
-          sudo apt install -y rclone
-
-          echo "$GDRIVE_SERVICE_ACCOUNT_JSON" > /tmp/sa.json
-
-          export RCLONE_CONFIG_GDRIVE_TYPE=drive
-          export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
-          export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID=$GDRIVE_ASSETS_DIRECTORY_ID
-
-          rclone copy gdrive:assets assets/
+          curl -X POST https://content.dropboxapi.com/2/files/download_zip --header "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" --header "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
+          unzip assets.zip
 
       - name: Build
         run: |
@@ -118,23 +111,13 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download assets from google drive
+      - name: Download assets from dropbox
         env:
-          GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
-          GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
+          DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}    
+          DROPBOX_ASSETS_PATH: ${{ secrets.DROPBOX_ASSETS_PATH }}
         run: |
-          winget install rclone --accept-package-agreements --accept-source-agreements
-
-          Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
-          refreshenv
-
-          $env:GDRIVE_SERVICE_ACCOUNT_JSON | Out-File -Encoding utf8 $env:TEMP\sa.json
-
-          $env:RCLONE_CONFIG_GDRIVE_TYPE = "drive"
-          $env:RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE = "$env:TEMP\sa.json"
-          $env:RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID = $env:GDRIVE_ASSETS_DIRECTORY_ID
-
-          rclone copy gdrive:assets assets/
+          curl -X POST https://content.dropboxapi.com/2/files/download_zip --header "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" --header "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
+          tar -xf assets.zip
 
       - name: Build
         run: |
@@ -179,20 +162,13 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download assets from google drive
+      - name: Download assets from dropbox
         env:
-          GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}    
-          GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
+          DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}    
+          DROPBOX_ASSETS_PATH: ${{ secrets.DROPBOX_ASSETS_PATH }}
         run: |
-          brew install rclone
-
-          echo "$GDRIVE_SERVICE_ACCOUNT_JSON" > /tmp/sa.json
-
-          export RCLONE_CONFIG_GDRIVE_TYPE=drive
-          export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
-          export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID=$GDRIVE_ASSETS_DIRECTORY_ID
-
-          rclone copy gdrive:assets assets/
+          curl -X POST https://content.dropboxapi.com/2/files/download_zip --header "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" --header "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
+          unzip assets.zip
 
       - name: Build
         run: |
@@ -239,20 +215,13 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download assets from google drive
+      - name: Download assets from dropbox
         env:
-          GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}    
-          GDRIVE_ASSETS_DIRECTORY_ID: ${{ secrets.GDRIVE_ASSETS_DIRECTORY_ID }}
+          DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}    
+          DROPBOX_ASSETS_PATH: ${{ secrets.DROPBOX_ASSETS_PATH }}
         run: |
-          brew install rclone
-
-          echo "$GDRIVE_SERVICE_ACCOUNT_JSON" > /tmp/sa.json
-
-          export RCLONE_CONFIG_GDRIVE_TYPE=drive
-          export RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_FILE=/tmp/sa.json
-          export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID=$GDRIVE_ASSETS_DIRECTORY_ID
-
-          rclone copy gdrive:assets assets/
+          curl -X POST https://content.dropboxapi.com/2/files/download_zip --header "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" --header "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
+          unzip assets.zip
 
       - name: Build
         run: |
