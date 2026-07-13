@@ -356,25 +356,11 @@ pub fn spawn_damage_indicator(
     asset_server: Res<AssetServer>,
     player_transform: Single<&Transform, OurPlayerFilter>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
-    mut network_message_readers: Query<
-        (&mut NetMessageReader<PlayerHitMessage>, &PeerId),
-        With<Client>,
-    >,
-    our_peer_id: Option<Res<OurPeerId>>,
+    mut message_reader: MessageReader<FromServer<PlayerHitMessage>>,
 ) {
-    let Some(our_peer_id) = our_peer_id else {
-        return;
-    };
+    for message in message_reader.read() {
+        let message = message.0;
 
-    // TODO: remove once i add OurClient component in netvy
-    let Some((mut network_message_reader, _peer_id)) = network_message_readers
-        .iter_mut()
-        .find(|(_, peer_id)| **peer_id == our_peer_id.0)
-    else {
-        return;
-    };
-
-    for message in network_message_reader.read() {
         if let Some(world_direction) =
             (message.origin - player_transform.translation).try_normalize()
         {

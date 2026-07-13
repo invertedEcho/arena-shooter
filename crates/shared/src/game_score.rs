@@ -1,4 +1,5 @@
 use bevy::{platform::collections::HashMap, prelude::*};
+use netvy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(
@@ -6,7 +7,7 @@ use serde::{Deserialize, Serialize};
 )]
 pub struct GameScore {
     // for players, we use peer_id as entities will differ on client and server
-    pub players: HashMap<u32, LivingEntityStats>,
+    pub players: HashMap<PeerId, LivingEntityStats>,
     // as enemies only exists in singleplayer, we can just use Entity
     pub enemies: HashMap<Entity, LivingEntityStats>,
 }

@@ -8,12 +8,15 @@ use bevy::{
 use bevy_common_assets::json::JsonAssetPlugin;
 use serde::{Deserialize, Serialize};
 use shared::{
-    AppRole, GameConfigServer, GameMap, GameMode, GameStateServer,
-    MEDIUM_PLASTIC_MAP_PATH, StartGame, StopGame, TINY_TOWN_MAP_PATH,
+    AppRole, DEFAULT_HEALTH, GameConfigServer, GameMap, GameMode,
+    GameStateServer, MEDIUM_PLASTIC_MAP_PATH, StartGame, StopGame,
+    TINY_TOWN_MAP_PATH,
     components::Health,
     enemy::components::Enemy,
     game_score::GameScore,
-    multiplayer_messages::ClientCommand,
+    multiplayer_messages::{
+        ClientCommand, ClientRespawnRequest, ConfirmRespawn,
+    },
     player::Player,
     world_object::{
         WorldObjectCollectibleKind, WorldObjectCollectibleServerSide,
@@ -218,68 +221,49 @@ fn on_game_core_loading_state_done(
     };
 }
 
-// FIXME: reintroduce
-// fn handle_client_respawn_requests(
-//     mut commands: Commands,
-//     receivers: Query<(&mut NetMessageReader<ClientRespawnRequest>, &PeerId)>,
-//     mut player_query: Query<(Entity, &mut Health, &OwnedBy)>,
-//     mut server_multi_message_sender: Single<
-//         &mut NetMessageWriter<ConfirmRespawn>,
-//     >,
-//     server: Single<&Server>,
-// ) {
-//     for (mut message_receiver, peer_id) in receivers {
-//         for _ in message_receiver.read() {
-//             info!("Received ClientRespawnRequest!");
-//             let Some((player_entity, mut player_health, _)) = player_query
-//                 .iter_mut()
-//                 .find(|(entity, health, owned_by)| owned_by.0 == *peer_id)
-//             else {
-//                 warn!(
-//                     "Read a ClientRespawnRequest but couldn't figure out to \
-//                      which player this belongs to"
-//                 );
-//                 continue;
-//             };
-//
-//             player_health.0 = DEFAULT_HEALTH;
-//
-//             // TODO: use transform directly
-//             // entity_position_server.translation = SPAWN_POINT_MEDIUM_PLASTIC_MAP;
-//
-//             commands.entity(player_entity).remove::<ColliderDisabled>();
-//
-//             info!(
-//                 "Sending confirm respawn message to client with remote_id: {}",
-//                 peer_id.0
-//             );
-//             // let network_target = &NetworkTarget::Single(peer_id.0);
-//
-//             let message_sent_result = server_multi_message_sender
-//                 .send::<ConfirmRespawn, OrderedReliableChannel>(
-//                 &ConfirmRespawn,
-//                 &server,
-//                 network_target,
-//             );
-//             match message_sent_result {
-//                 Ok(_) => {
-//                     info!("Succesfully sent ConfirmRespawn message to client");
-//                 }
-//                 Err(error) => {
-//                     error!(
-//                         "Failed to send ConfirmRespawn message to client: {}",
-//                         error
-//                     );
-//                 }
-//             }
-//         }
-//     }
-// }
+fn handle_client_respawn_requests(
+    mut commands: Commands,
+    mut message_reader: MessageReader<FromClient<ClientRespawnRequest>>,
+    mut player_query: Query<(Entity, &mut Health, &OwnedBy)>,
+    mut message_writer: MessageWriter<ToClients<ConfirmRespawn>>,
+) {
+    for message in message_reader.read() {
+        info!("Received ClientRespawnRequest!");
+        let client_peer_id = message.source_client;
+        let Some((player_entity, mut player_health, _)) = player_query
+            .iter_mut()
+            .find(|(_, _, owned_by)| owned_by.0 == client_peer_id)
+        else {
+            warn!(
+                "Read a ClientRespawnRequest but couldn't figure out to which \
+                 player this belongs to"
+            );
+            continue;
+        };
+
+        player_health.0 = DEFAULT_HEALTH;
+
+        // TODO: use transform directly
+        // entity_position_server.translation = SPAWN_POINT_MEDIUM_PLASTIC_MAP;
+
+        commands.entity(player_entity).remove::<ColliderDisabled>();
+
+        info!(
+            "Sending confirm respawn message to client with PeerId: {:?}",
+            client_peer_id
+        );
+
+        message_writer.write(ToClients {
+            message: ConfirmRespawn,
+            target: NetworkMessageTarget::Clients(vec![client_peer_id]),
+        });
+    }
+}
 
 /// ClientCommands exist for the purpose for changing map / game mode on dedicated server, because
 /// there, no StartGame message is read, because its not a network message.
 fn handle_client_commands(
-    query: Query<&mut NetMessageReader<ClientCommand>, With<Server>>,
+    mut message_reader: MessageReader<FromClient<ClientCommand>>,
     mut game_config_server: Option<ResMut<GameConfigServer>>,
     mut game_state_server: ResMut<NextState<GameStateServer>>,
     app_role: Res<State<AppRole>>,
@@ -289,26 +273,27 @@ fn handle_client_commands(
         return;
     }
 
-    for mut net_message_reader in query {
-        for message in net_message_reader.read() {
-            info!("Handling ClientCommand {message:?}");
-            let Some(ref mut game_config_server) = game_config_server else {
-                warn!(
-                    "Received a ClientCommand but GameConfigServer resource \
-                     doesnt exist, can't handle ClientCommand."
-                );
-                return;
-            };
-            match message {
-                ClientCommand::SetGameMode(game_mode) => {
-                    game_config_server.0.game_mode = game_mode;
-                }
-                ClientCommand::SetMap(game_map) => {
-                    game_config_server.0.game_map = game_map;
-                }
-                ClientCommand::SetState(new_game_state_server) => {
-                    game_state_server.set(new_game_state_server);
-                }
+    for message in message_reader.read() {
+        info!(
+            "Handling ClientCommand {:?} from {:?}",
+            message.message, message.source_client
+        );
+        let Some(ref mut game_config_server) = game_config_server else {
+            warn!(
+                "Received a ClientCommand but GameConfigServer resource \
+                 doesnt exist, can't handle ClientCommand."
+            );
+            return;
+        };
+        match message.message {
+            ClientCommand::SetGameMode(game_mode) => {
+                game_config_server.0.game_mode = game_mode;
+            }
+            ClientCommand::SetMap(game_map) => {
+                game_config_server.0.game_map = game_map;
+            }
+            ClientCommand::SetState(ref new_game_state_server) => {
+                game_state_server.set(new_game_state_server.clone());
             }
         }
     }

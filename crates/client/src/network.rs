@@ -155,10 +155,10 @@ fn handle_added_owned_player(
 // }
 
 fn handle_confirm_respawn_message(
-    mut message_receiver: Single<&mut NetMessageReader<ConfirmRespawn>>,
+    mut message_reader: MessageReader<FromServer<ConfirmRespawn>>,
     mut next_in_game_state: ResMut<NextState<InGameState>>,
 ) {
-    for _ in message_receiver.read() {
+    for _ in message_reader.read() {
         info!("Respawn request was confirmed by server!");
         next_in_game_state.set(InGameState::Playing);
     }

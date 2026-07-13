@@ -4472,8 +4472,6 @@ dependencies = [
 [[package]]
 name = "netvy"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "444f902edaf1fc5c4bef26d1d26126ff2c8f0163382f83477aeeb66ddc37cdbd"
 dependencies = [
  "bevy",
  "bincode",

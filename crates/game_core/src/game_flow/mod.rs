@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use netvy::prelude::*;
 use shared::{
     EnemyKilledMessage, GameStateServer, NextWaveTimer, WaveFinishedMessage,
     enemy::components::Enemy,
@@ -30,7 +31,7 @@ impl Plugin for GameFlowPlugin {
                 handle_enemy_killed_message,
                 handle_retry_wave_game_mode_message,
                 handle_despawn_enemy_message,
-                // update_game_score_on_retry_wave_game_mode,
+                update_game_score_on_retry_wave_game_mode,
                 add_cash_on_enemy_killed,
                 handle_request_new_wave_message,
                 add_cash_on_wave_finished,
@@ -101,21 +102,19 @@ fn handle_retry_wave_game_mode_message(
     }
 }
 
-// FIXME: reimplement
-// fn update_game_score_on_retry_wave_game_mode(
-//     mut message_reader: MessageReader<RetryWaveGameMode>,
-//     mut game_score: Single<&mut GameScore>,
-//     // host_client: Single<&RemoteId, With<HostClient>>,
-// ) {
-//     for _ in message_reader.read() {
-//         if let Some(player_score) =
-//             game_score.players.get_mut(&host_client.to_bits())
-//         {
-//             player_score.kills = 0;
-//             player_score.deaths = 0;
-//         }
-//     }
-// }
+fn update_game_score_on_retry_wave_game_mode(
+    mut message_reader: MessageReader<RetryWaveGameMode>,
+    mut game_score: Single<&mut GameScore>,
+    our_peer_id: If<Res<OurPeerId>>,
+) {
+    for _ in message_reader.read() {
+        if let Some(player_score) = game_score.players.get_mut(&our_peer_id.0.0)
+        {
+            player_score.kills = 0;
+            player_score.deaths = 0;
+        }
+    }
+}
 
 fn handle_despawn_enemy_message(
     mut commands: Commands,

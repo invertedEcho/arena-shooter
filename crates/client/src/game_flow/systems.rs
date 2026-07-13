@@ -118,34 +118,18 @@ pub fn handle_player_death_event(
 
 pub fn send_update_game_server_state_request_on_in_game_state_change(
     current_in_game_state: If<Res<State<InGameState>>>,
-    mut message_writers: Query<
-        (&mut NetMessageWriter<ClientCommand>, &PeerId),
-        With<Client>,
-    >,
-    our_peer_id: If<Res<OurPeerId>>,
+    mut message_writer: MessageWriter<ToServer<ClientCommand>>,
 ) {
-    let Some(mut our_message_sender) = message_writers
-        .iter_mut()
-        // lol
-        .find(|(_, peer_id)| peer_id.0 == our_peer_id.0.0.0)
-    else {
-        error!(
-            "Can't send ClientCommand, failed to find our own \
-             NetMessageWriter!"
-        );
-        return;
-    };
-
     match *current_in_game_state.get() {
         InGameState::Playing => {
-            our_message_sender
-                .0
-                .write(ClientCommand::SetState(GameStateServer::Running));
+            message_writer.write(ToServer(ClientCommand::SetState(
+                GameStateServer::Running,
+            )));
         }
         InGameState::Paused | InGameState::PlayerDead => {
-            our_message_sender
-                .0
-                .write(ClientCommand::SetState(GameStateServer::Paused));
+            message_writer.write(ToServer(ClientCommand::SetState(
+                GameStateServer::Paused,
+            )));
         }
     }
 }

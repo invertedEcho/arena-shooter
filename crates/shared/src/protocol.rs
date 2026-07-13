@@ -30,27 +30,27 @@ impl Plugin for ProtocolPlugin {
         // })
         // .add_direction(NetworkDirection::Bidirectional);
         //
-        app.register_net_message::<ShootRequest>(
+        app.register_network_message::<ShootRequest>(
             MessageDirection::ClientToServer,
         );
 
-        app.register_net_message::<ClientRespawnRequest>(
+        app.register_network_message::<ClientRespawnRequest>(
             MessageDirection::ClientToServer,
         );
 
-        app.register_net_message::<ConfirmRespawn>(
+        app.register_network_message::<ConfirmRespawn>(
             MessageDirection::ServerToClient,
         );
 
-        app.register_net_message::<ClientCommand>(
+        app.register_network_message::<ClientCommand>(
             MessageDirection::ClientToServer,
         );
 
-        app.register_net_message::<PlayerHitMessage>(
+        app.register_network_message::<PlayerHitMessage>(
             MessageDirection::ServerToClient,
         );
 
-        app.register_net_message::<ClientCommand>(
+        app.register_network_message::<ClientCommand>(
             MessageDirection::ClientToServer,
         );
 

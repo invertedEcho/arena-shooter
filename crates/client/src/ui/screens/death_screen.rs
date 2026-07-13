@@ -156,9 +156,7 @@ fn spawn_wave_game_mode_death_screen(
 
 fn handle_button_press(
     query: Query<(&Interaction, &DeathScreenButton), Changed<Interaction>>,
-    mut respawn_request_message_sender: Single<
-        &mut NetMessageWriter<ClientRespawnRequest>,
-    >,
+    mut message_writer: MessageWriter<ToServer<ClientRespawnRequest>>,
     mut retry_wave_game_mode_message_writer: MessageWriter<RetryWaveGameMode>,
 ) {
     for (interaction, button) in query {
@@ -170,7 +168,7 @@ fn handle_button_press(
                 // we can always write this message even if we arent even playing wave game mode,
                 // because then the message handler just wont do anything
                 retry_wave_game_mode_message_writer.write(RetryWaveGameMode);
-                respawn_request_message_sender.write(ClientRespawnRequest);
+                message_writer.write(ToServer(ClientRespawnRequest));
             }
         }
     }

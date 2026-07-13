@@ -149,10 +149,7 @@ pub fn handle_input(
 
 pub fn send_shoot_request_on_weapon_fired(
     mut message_reader: MessageReader<PlayerWeaponFiredMessage>,
-    mut shoot_request_sender: Single<
-        &mut NetMessageWriter<ShootRequest>,
-        With<Client>,
-    >,
+    mut message_writer: MessageWriter<ToServer<ShootRequest>>,
     world_model_camera_query: WorldModelCameraQuery,
     our_peer_id: Option<Res<OurPeerId>>,
 ) {
@@ -164,11 +161,11 @@ pub fn send_shoot_request_on_weapon_fired(
             error!("OurPeerId doesn't exist, cant send ShootRequest!");
             return;
         };
-        shoot_request_sender.write(ShootRequest {
+        message_writer.write(ToServer(ShootRequest {
             direction,
             origin,
             source_peer_id: our_peer_id.0,
-        });
+        }));
     }
 }
 
