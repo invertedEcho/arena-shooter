@@ -9,8 +9,8 @@ use bevy_common_assets::json::JsonAssetPlugin;
 use serde::{Deserialize, Serialize};
 use shared::{
     AppRole, DEFAULT_HEALTH, GameConfigServer, GameMap, GameMode,
-    GameStateServer, MEDIUM_PLASTIC_MAP_PATH, StartGame, StopGame,
-    TINY_TOWN_MAP_PATH,
+    GameStateServer, MEDIUM_PLASTIC_MAP_PATH, SPAWN_POINT_MEDIUM_PLASTIC_MAP,
+    StartGame, StopGame, TINY_TOWN_MAP_PATH,
     components::Health,
     enemy::components::Enemy,
     game_score::GameScore,
@@ -106,6 +106,7 @@ impl Plugin for GameCorePlugin {
                 read_stop_game_message,
                 check_world_scene_loaded,
                 handle_client_commands,
+                handle_client_respawn_requests,
             ),
         );
         app.add_systems(
@@ -224,15 +225,16 @@ fn on_game_core_loading_state_done(
 fn handle_client_respawn_requests(
     mut commands: Commands,
     mut message_reader: MessageReader<FromClient<ClientRespawnRequest>>,
-    mut player_query: Query<(Entity, &mut Health, &OwnedBy)>,
+    mut player_query: Query<(Entity, &mut Health, &OwnedBy, &mut Transform)>,
     mut message_writer: MessageWriter<ToClients<ConfirmRespawn>>,
 ) {
     for message in message_reader.read() {
         info!("Received ClientRespawnRequest!");
         let client_peer_id = message.source_client;
-        let Some((player_entity, mut player_health, _)) = player_query
-            .iter_mut()
-            .find(|(_, _, owned_by)| owned_by.0 == client_peer_id)
+        let Some((player_entity, mut player_health, _, mut transform)) =
+            player_query
+                .iter_mut()
+                .find(|(_, _, owned_by, _)| owned_by.0 == client_peer_id)
         else {
             warn!(
                 "Read a ClientRespawnRequest but couldn't figure out to which \
@@ -243,8 +245,7 @@ fn handle_client_respawn_requests(
 
         player_health.0 = DEFAULT_HEALTH;
 
-        // TODO: use transform directly
-        // entity_position_server.translation = SPAWN_POINT_MEDIUM_PLASTIC_MAP;
+        transform.translation = SPAWN_POINT_MEDIUM_PLASTIC_MAP;
 
         commands.entity(player_entity).remove::<ColliderDisabled>();
 
