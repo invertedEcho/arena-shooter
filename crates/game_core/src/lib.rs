@@ -269,8 +269,8 @@ fn handle_client_commands(
     mut game_state_server: ResMut<NextState<GameStateServer>>,
     app_role: Res<State<AppRole>>,
 ) {
-    // the client is not supposed to read client commands. these get handled by the dedicated server
-    if *app_role.get() == AppRole::ClientOnly {
+    // currently we only use ClientCommands in HostClient mode.
+    if *app_role.get() != AppRole::HostClient {
         return;
     }
 
