@@ -61,12 +61,27 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download assets from dropbox
+      - name: Download assets from Dropbox
         env:
-          DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}    
+          DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
           DROPBOX_ASSETS_PATH: ${{ secrets.DROPBOX_ASSETS_PATH }}
         run: |
-          curl -X POST https://content.dropboxapi.com/2/files/download_zip -H "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" --header "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
+          ACCESS_TOKEN=$(
+            curl -s https://api.dropbox.com/oauth2/token \
+              -d grant_type=refresh_token \
+              -d refresh_token="$DROPBOX_REFRESH_TOKEN" \
+              -u "$DROPBOX_APP_KEY:$DROPBOX_APP_SECRET" \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])"
+          )
+
+          curl -L -X POST \
+            "https://content.dropboxapi.com/2/files/download_zip" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "Dropbox-API-Arg: {\"path\":\"$DROPBOX_ASSETS_PATH\"}" \
+            --output assets.zip
+
           unzip assets.zip
 
       - name: Build
@@ -111,15 +126,25 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download assets from dropbox
+      - name: Download assets from Dropbox
+        shell: pwsh
         env:
-          DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}    
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
+          DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
           DROPBOX_ASSETS_PATH: ${{ secrets.DROPBOX_ASSETS_PATH }}
         run: |
+          $tokenResponse = curl.exe -s https://api.dropboxapi.com/oauth2/token `
+            -u "${env:DROPBOX_APP_KEY}:${env:DROPBOX_APP_SECRET}" `
+            -d "grant_type=refresh_token" `
+            -d "refresh_token=$env:DROPBOX_REFRESH_TOKEN"
+
+          $accessToken = ($tokenResponse | ConvertFrom-Json).access_token
+
           $dropboxArg = @{ path = $env:DROPBOX_ASSETS_PATH } | ConvertTo-Json -Compress
 
           curl.exe -X POST "https://content.dropboxapi.com/2/files/download_zip" `
-            -H "Authorization: Bearer $env:DROPBOX_ACCESS_TOKEN" `
+            -H "Authorization: Bearer $accessToken" `
             -H "Dropbox-API-Arg: $dropboxArg" `
             --output assets.zip
 
@@ -168,12 +193,27 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download assets from dropbox
+      - name: Download assets from Dropbox
         env:
-          DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}    
+          DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
           DROPBOX_ASSETS_PATH: ${{ secrets.DROPBOX_ASSETS_PATH }}
         run: |
-          curl -X POST https://content.dropboxapi.com/2/files/download_zip -H "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" -H "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
+          ACCESS_TOKEN=$(
+            curl -s https://api.dropbox.com/oauth2/token \
+              -d grant_type=refresh_token \
+              -d refresh_token="$DROPBOX_REFRESH_TOKEN" \
+              -u "$DROPBOX_APP_KEY:$DROPBOX_APP_SECRET" \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])"
+          )
+
+          curl -L -X POST \
+            "https://content.dropboxapi.com/2/files/download_zip" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "Dropbox-API-Arg: {\"path\":\"$DROPBOX_ASSETS_PATH\"}" \
+            --output assets.zip
+
           unzip assets.zip
 
       - name: Build
@@ -221,12 +261,27 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download assets from dropbox
+      - name: Download assets from Dropbox
         env:
-          DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}    
+          DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
           DROPBOX_ASSETS_PATH: ${{ secrets.DROPBOX_ASSETS_PATH }}
         run: |
-          curl -X POST https://content.dropboxapi.com/2/files/download_zip -H "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" -H "Dropbox-API-Arg: {\"path\":\"${DROPBOX_ASSETS_PATH}\"}" --output assets.zip
+          ACCESS_TOKEN=$(
+            curl -s https://api.dropbox.com/oauth2/token \
+              -d grant_type=refresh_token \
+              -d refresh_token="$DROPBOX_REFRESH_TOKEN" \
+              -u "$DROPBOX_APP_KEY:$DROPBOX_APP_SECRET" \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])"
+          )
+
+          curl -L -X POST \
+            "https://content.dropboxapi.com/2/files/download_zip" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "Dropbox-API-Arg: {\"path\":\"$DROPBOX_ASSETS_PATH\"}" \
+            --output assets.zip
+
           unzip assets.zip
 
       - name: Build
