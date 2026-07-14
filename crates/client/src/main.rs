@@ -104,7 +104,7 @@ fn main() {
     app.add_plugins(FpsOverlayPlugin {
         config: bevy::dev_tools::fps_overlay::FpsOverlayConfig {
             text_config: TextFont {
-                font_size: 14.,
+                font_size: FontSize::Px(14.),
                 ..default()
             },
             enabled: game_settings.graphics.fps_overlay_shown,

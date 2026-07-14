@@ -43,7 +43,7 @@ pub fn spawn_visuals_for_world_objects(
                 Transform::from_translation(world_object_collectible.position),
             ))
             .with_child((
-                SceneRoot(model),
+                WorldAssetRoot(model),
                 Name::new("World Object Model"),
                 FloatDirection::Down,
             ));

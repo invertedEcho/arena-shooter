@@ -125,7 +125,7 @@ pub fn handle_spawn_player_camera_message(
                 ))
                 .with_child((
                     Name::new("PlayerWeaponModel"),
-                    SceneRoot(weapon_model),
+                    WorldAssetRoot(weapon_model),
                     Transform {
                         translation: weapon_position,
                         scale: Vec3::splat(2.0),
@@ -374,7 +374,7 @@ pub fn update_player_weapon_model(
         player_weapon_model_transform.translation = weapon_position;
         commands
             .entity(player_weapon_model_entity)
-            .insert((SceneRoot(weapon_model),));
+            .insert((WorldAssetRoot(weapon_model),));
     }
 }
 

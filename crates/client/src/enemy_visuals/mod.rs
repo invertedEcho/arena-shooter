@@ -188,7 +188,7 @@ fn spawn_enemy_model_for_new_enemies(
                 rotation: Quat::from_rotation_y(PI),
                 ..default()
             },
-            SceneRoot(enemy_model),
+            WorldAssetRoot(enemy_model),
             Visibility::Visible,
         ));
     }
