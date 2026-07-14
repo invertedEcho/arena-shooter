@@ -5,6 +5,7 @@ use crate::ui::screens::{
     disconnect_screen::DisconnectScreenPlugin,
     loading_screen::LoadingScreenPlugin, pause_screen::PauseScreenPlugin,
     score_board_overlay::ScoreBoardOverlayPlugin,
+    server_selection::ServerSelectionScreenPlugin,
 };
 
 mod buy_overlay;
@@ -13,6 +14,7 @@ mod disconnect_screen;
 mod loading_screen;
 mod pause_screen;
 mod score_board_overlay;
+mod server_selection;
 
 pub struct UIScreensPlugin;
 
@@ -23,6 +25,7 @@ impl Plugin for UIScreensPlugin {
             .add_plugins(LoadingScreenPlugin)
             .add_plugins(PauseScreenPlugin)
             .add_plugins(ScoreBoardOverlayPlugin)
-            .add_plugins(BuyScreenPlugin);
+            .add_plugins(BuyScreenPlugin)
+            .add_plugins(ServerSelectionScreenPlugin);
     }
 }

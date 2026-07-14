@@ -3,17 +3,19 @@ use game_core::GameStateWave;
 use shared::NextWaveTimer;
 
 use crate::{
-    game_flow::states::{GameModeClient, InGameState},
+    game_flow::states::{AppState, InGameState},
     ui::{
         UiState,
         hud::systems::{
-            fade_out_damage_indicator, hide_current_wave_finished_text,
-            on_ui_state_change, show_wave_finished_text,
-            spawn_bullet_hit_crosshair, spawn_damage_indicator,
-            spawn_info_text_current_wave_finished, spawn_player_crosshair,
-            spawn_player_hud, spawn_wave_hud, update_current_cash_amount,
-            update_next_wave_timer_text, update_player_ammo_text,
-            update_player_crosshair_visibility, update_player_health_text,
+            fade_out_damage_indicator, hide_crosshair,
+            hide_current_wave_finished_text,
+            reflect_crosshair_visibility_from_ui_state, show_crosshair,
+            show_wave_finished_text, spawn_bullet_hit_crosshair,
+            spawn_damage_indicator, spawn_info_text_current_wave_finished,
+            spawn_player_crosshair, spawn_player_hud, spawn_wave_hud,
+            update_crosshair_visibility_on_aim_type_change,
+            update_current_cash_amount, update_next_wave_timer_text,
+            update_player_ammo_text, update_player_health_text,
             update_selected_weapon, update_wave_hud,
         },
     },
@@ -39,7 +41,7 @@ impl Plugin for PlayerHudPlugin {
                 update_player_health_text,
                 update_player_ammo_text,
                 spawn_bullet_hit_crosshair,
-                update_player_crosshair_visibility,
+                update_crosshair_visibility_on_aim_type_change,
                 spawn_player_crosshair,
                 update_selected_weapon,
                 spawn_damage_indicator,
@@ -51,7 +53,7 @@ impl Plugin for PlayerHudPlugin {
                 .run_if(in_state(InGameState::Playing)),
         );
         app.add_systems(Update, spawn_player_hud);
-        app.add_systems(OnEnter(GameModeClient::Waves), spawn_wave_hud);
+        app.add_systems(OnEnter(AppState::InGame), spawn_wave_hud);
         app.add_systems(
             Update,
             (update_wave_hud)
@@ -59,7 +61,9 @@ impl Plugin for PlayerHudPlugin {
         );
         app.add_systems(
             Update,
-            on_ui_state_change.run_if(resource_changed::<UiState>),
+            reflect_crosshair_visibility_from_ui_state.run_if(
+                resource_changed::<UiState>.and(in_state(AppState::InGame)),
+            ),
         );
 
         app.add_systems(
@@ -67,5 +71,8 @@ impl Plugin for PlayerHudPlugin {
             hide_current_wave_finished_text
                 .run_if(resource_removed::<NextWaveTimer>),
         );
+
+        app.add_systems(OnEnter(InGameState::Playing), show_crosshair);
+        app.add_systems(OnExit(InGameState::Playing), hide_crosshair);
     }
 }

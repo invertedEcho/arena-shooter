@@ -14,12 +14,13 @@ use bevy_inspector_egui::{
     quick::WorldInspectorPlugin,
 };
 use bevy_skein::SkeinPlugin;
+use netvy::prelude::*;
 
 use crate::{
     audio::AudioPlugin,
     character_controller::CharacterControllerPlugin,
     enemy_visuals::EnemyVisualsPlugin,
-    game_flow::GameFlowPlugin,
+    game_flow::{GameFlowPlugin, states::PendingGameConfigClient},
     game_settings::get_or_create_game_settings,
     gameplay_debug::GameplayDebugPlugin,
     network::NetworkPlugin,
@@ -31,7 +32,7 @@ use crate::{
 };
 
 mod audio;
-mod auth;
+// mod auth;
 mod character_controller;
 mod enemy_visuals;
 mod game_flow;
@@ -66,13 +67,15 @@ fn main() {
         WindowMode::Windowed
     };
 
+    app.init_resource::<PendingGameConfigClient>();
+
     // bevy-builtin plugins
     app.add_plugins(
         DefaultPlugins
             .set(WindowPlugin {
                 primary_window: Some(Window {
-                    title: "Fun Shooter".into(),
-                    name: Some("fun-shooter".into()),
+                    title: "Arena Shooter".into(),
+                    name: Some("arena-shooter".into()),
                     present_mode: PresentMode::AutoVsync,
                     mode: window_mode,
                     ..default()
@@ -85,15 +88,14 @@ fn main() {
             }),
     );
 
+    app.add_plugins(NetvyPlugin(NetvyMode::HostClient));
+
     // per default, a client is AppRole::ClientOnly. only when player clicks on Singleplayer,
     // AppRole gets set to AppRole::ClientAndServer. once we enter main menu root again, we set it
     // back to ClientOnly
     app.insert_state(AppRole::ClientOnly);
 
     app.add_plugins(game_core::GameCorePlugin);
-
-    // lightyear plugins
-    app.add_plugins(lightyear::prelude::client::ClientPlugins::default());
 
     app.add_plugins(SharedPlugin);
 

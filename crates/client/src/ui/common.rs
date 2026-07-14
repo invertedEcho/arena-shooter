@@ -1,5 +1,4 @@
 use bevy::{prelude::*, ui::InteractionDisabled};
-use lightyear::prelude::*;
 use shared::StopGame;
 
 use crate::{
@@ -72,12 +71,10 @@ pub struct ExcludeFromHover;
 // TODO: This system does way too many things and especially things that aren't relevant for
 // `user_interface` module.
 fn handle_common_ui_button_press(
-    mut commands: Commands,
     query: Query<(&Interaction, &CommonUiButton), Changed<Interaction>>,
     mut app_exit_message_writer: MessageWriter<AppExit>,
     mut next_app_state: ResMut<NextState<AppState>>,
     mut next_main_menu_state: ResMut<NextState<MainMenuState>>,
-    own_client: Query<Entity, With<Client>>,
     mut message_writer: MessageWriter<StopGame>,
 ) {
     for (interaction, common_ui_button) in query {
@@ -92,13 +89,10 @@ fn handle_common_ui_button_press(
                 next_app_state.set(AppState::MainMenu);
                 next_main_menu_state.set(MainMenuState::Root);
 
-                let Ok(own_client) = own_client.single() else {
-                    continue;
-                };
-
                 debug!("Sending StopGame message and triggering disconnect");
                 message_writer.write(StopGame);
-                commands.trigger(Disconnect { entity: own_client });
+                // FIXME: implement in netvy
+                // commands.trigger(Disconnect { entity: own_client });
             }
             CommonUiButton::ToGameModeSelection => {
                 next_main_menu_state.set(MainMenuState::GameModeSelection);
@@ -147,6 +141,7 @@ fn handle_escape_press_back(
             MainMenuState::Credits => MainMenuState::Root,
             MainMenuState::GameModeSelection => MainMenuState::MapSelection,
             MainMenuState::MapSelection => MainMenuState::Root,
+            MainMenuState::ServerSelection => MainMenuState::Root,
         };
 
         next_main_menu_state.set(new_state);

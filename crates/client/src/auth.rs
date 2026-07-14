@@ -3,9 +3,6 @@ use std::net::SocketAddr;
 use bevy::prelude::*;
 use bevy::tasks::futures_lite::future;
 use bevy::tasks::{Task, block_on};
-use lightyear::netcode::{CONNECT_TOKEN_BYTES, ConnectToken};
-use lightyear::prelude::client::*;
-use lightyear::prelude::*;
 
 use crate::game_flow::states::AppState;
 

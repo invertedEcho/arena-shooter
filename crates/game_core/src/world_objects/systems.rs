@@ -1,8 +1,8 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use lightyear::prelude::*;
+use netvy::prelude::*;
 use shared::{
-    AppRole, DEFAULT_HEALTH, GameMap,
+    AppRole, DEFAULT_HEALTH, GameConfigServer, GameMap,
     components::Health,
     player::{Player, PlayerState},
     shooting::PlayerWeapons,
@@ -12,19 +12,40 @@ use shared::{
 };
 
 use crate::{
-    SpawnLocationFile,
+    GameCoreLoadingState, SpawnLocationFile,
     world_objects::{DEFAULT_HEALTH_TO_GIVE_MEDKIT, components::RespawnTimer},
 };
 
 #[derive(Resource)]
 pub struct CurrentSpawnLocationsHandle(Handle<SpawnLocationFile>);
 
+pub fn check_spawn_locations_loaded(
+    mut asset_event_message_reader: MessageReader<
+        AssetEvent<SpawnLocationFile>,
+    >,
+    mut next_game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
+    spawn_location_handle: If<Res<CurrentSpawnLocationsHandle>>,
+) {
+    for asset_event in asset_event_message_reader.read() {
+        if let AssetEvent::LoadedWithDependencies { id } = asset_event
+            && *id == spawn_location_handle.0.0.id()
+        {
+            info!(
+                "Map fully spawned, updating GameInitializationState -> \
+                 GameInitializationState::MapSpawned"
+            );
+            next_game_core_loading_state
+                .set(GameCoreLoadingState::SpawnLocationsLoaded);
+        }
+    }
+}
+
 pub fn load_spawn_locations(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    game_map: Res<State<GameMap>>,
+    game_config: Res<GameConfigServer>,
 ) {
-    let file_path = match game_map.get() {
+    let file_path = match game_config.0.game_map {
         GameMap::MediumPlastic => "maps/medium_plastic/spawn_locations.json",
         GameMap::TinyTown => "maps/tiny_town/spawn_locations.json",
     };
@@ -38,9 +59,17 @@ pub fn load_spawn_locations(
 pub fn spawn_world_objects(
     mut commands: Commands,
     app_role: Res<State<AppRole>>,
-    current_spawn_location_handle: Res<CurrentSpawnLocationsHandle>,
+    current_spawn_location_handle: Option<Res<CurrentSpawnLocationsHandle>>,
     spawn_locations: ResMut<Assets<SpawnLocationFile>>,
 ) {
+    let Some(current_spawn_location_handle) = current_spawn_location_handle
+    else {
+        error!(
+            "CurrentSpawnLocationsHandle must exist in order to be able to \
+             spawn WorldObjects (such as medkits)"
+        );
+        return;
+    };
     if *app_role.get() == AppRole::ClientOnly {
         info!(
             "Not spawning WorldObjectCollectibleServerSide, this is ClientOnly"
@@ -51,14 +80,12 @@ pub fn spawn_world_objects(
     let Some(spawn_location) =
         spawn_locations.get(current_spawn_location_handle.0.id())
     else {
-        // TODO: the handle will exist with an extremely very high chance at this point.
-        // the json file is just about 1KB big, so no way it wont be loaded at this point.
-        // the spawn location file gets loaded when player clicks on a map
-        panic!(
-            "Failed to load spawn locations, the asset hasnt been loaded yet \
-             or resource doesnt exist yet. Handle we wanted to retrieve: {}",
+        error!(
+            "Failed to load spawn locations, no SpawnLocations will be \
+             spawned. (spawn_location_handle={})",
             current_spawn_location_handle.0.id()
         );
+        return;
     };
 
     info!("Loaded spawn locations for world objects, spawning...");
@@ -66,7 +93,7 @@ pub fn spawn_world_objects(
     for spawn_location in &spawn_location.positions {
         commands.spawn((
             Transform::from_translation(spawn_location.position),
-            Replicate::to_clients(NetworkTarget::All),
+            ReplicateEntity,
             Collider::cuboid(0.2, 0.2, 0.2),
             WorldObjectCollectibleServerSide {
                 kind: spawn_location.kind,

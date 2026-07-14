@@ -6,14 +6,15 @@ use bevy::prelude::*;
 use bevy_landmass::{
     Agent, Agent3dBundle, AgentSettings, AgentTarget3d, ArchipelagoRef3d,
 };
+use netvy::prelude::*;
 use rand::Rng;
 use shared::{
-    DEFAULT_HEALTH, GameMap,
+    DEFAULT_HEALTH, GameConfigServer, GameMap,
     character_controller::{
         CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, CHARACTER_FEET,
         MAX_DISTANCE_GROUNDED_SHAPE_CAST, components::Grounded,
     },
-    components::{EntityPositionServer, Health},
+    components::Health,
     enemy::components::{Enemy, EnemyLastStateUpdate, EnemyState},
     game_score::{GameScore, LivingEntityStats},
 };
@@ -127,13 +128,13 @@ fn handle_spawn_enemies_message(
         Entity,
         With<ValidEnemySpawnLocationArea>,
     >,
-    selected_map: Res<State<GameMap>>,
+    game_config: Res<GameConfigServer>,
 ) {
     for event in message_reader.read() {
         let Some(ref archipelago_ref) = archipelago_ref else {
-            warn!(
-                "Received enemy spawn message but archipelago_ref doesnt \
-                 exist yet, ignoring message"
+            error!(
+                "Received enemy spawn message but nav mesh doesnt exist yet, \
+                 can't spawn enemies!"
             );
             return;
         };
@@ -147,7 +148,7 @@ fn handle_spawn_enemies_message(
                     enemy_spawn_count,
                     &mut spatial_query,
                     valid_spawn_location_areas.iter().collect(),
-                    selected_map.get(),
+                    &game_config.0.game_map,
                 );
 
                 for enemy_spawn_location in enemy_spawn_locations {
@@ -162,9 +163,7 @@ fn handle_spawn_enemies_message(
                             Health(DEFAULT_HEALTH),
                             EnemyState::default(),
                             Grounded::default(),
-                            EntityPositionServer {
-                                translation: enemy_spawn_location,
-                            },
+                            SyncPosition::default(),
                             RigidBody::Kinematic,
                             Collider::capsule(
                                 CHARACTER_CAPSULE_RADIUS,

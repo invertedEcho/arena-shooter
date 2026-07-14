@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use shared::GameConfig;
 use std::fmt::Display;
 
 #[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
@@ -11,7 +12,10 @@ pub enum AppState {
     Disconnected,
 }
 
+// TODO
 /// The current loading state of the client.
+/// Note that it only really has connection states, because the client itself only connects to the
+/// server. Map spawning etc is done by game_core. (which basically also runs in client... hmm)
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
 #[source(AppState = AppState::LoadingGame)]
 pub enum ClientLoadingState {
@@ -21,6 +25,7 @@ pub enum ClientLoadingState {
     StartingServer,
     /// This state is set when the client connects to the game server
     ConnectingToServer,
+    ConnectedToServer,
 }
 
 impl Display for ClientLoadingState {
@@ -28,6 +33,7 @@ impl Display for ClientLoadingState {
         match self {
             Self::StartingServer => f.write_str("Starting local server"),
             Self::ConnectingToServer => f.write_str("Connecting to the server"),
+            Self::ConnectedToServer => f.write_str("Connected to server!"),
         }
     }
 }
@@ -42,6 +48,7 @@ pub enum MainMenuState {
     MapSelection,
     GameModeSelection,
     Credits,
+    ServerSelection,
 }
 
 #[derive(SubStates, Eq, Debug, PartialEq, Hash, Clone, Default)]
@@ -54,11 +61,7 @@ pub enum InGameState {
     PlayerDead,
 }
 
-// The current game mode on the client
-#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default, Copy)]
-pub enum GameModeClient {
-    #[default]
-    FreeRoam,
-    Waves,
-    Multiplayer,
-}
+/// The current "configuration" of the game, on the client. It stores an intermediate value of the GameConfig,
+/// until it gets sent to the server/game_core.
+#[derive(Resource, Debug, Default)]
+pub struct PendingGameConfigClient(pub GameConfig);

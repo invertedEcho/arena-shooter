@@ -1,11 +1,12 @@
 use bevy::prelude::*;
-use shared::GameModeServer;
 
 use crate::{
     game_flow::states::{
         AppState, ClientLoadingState, InGameState, MainMenuState,
+        PendingGameConfigClient,
     },
     gameplay_debug::AppDebugState,
+    ui::UiState,
 };
 
 const DEBUG_OVERLAY_TEXT_SIZE: f32 = 15.0;
@@ -23,8 +24,9 @@ impl Plugin for DebugOverlayPlugin {
                 update_current_in_game_state_text,
                 update_current_main_menu_state,
                 update_loading_game_state_text,
-                update_current_server_game_mode_text
-                    .run_if(state_changed::<GameModeServer>),
+                update_current_game_config_client_text
+                    .run_if(resource_changed::<PendingGameConfigClient>),
+                update_ui_state_text.run_if(resource_changed::<UiState>),
             ),
         );
     }
@@ -40,16 +42,19 @@ struct CurrentInGameStateText;
 struct CurrentMainMenuStateText;
 
 #[derive(Component)]
-struct CurrentServerGameModeText;
-
-#[derive(Component)]
-struct CurrentLoadingGameStateText;
+struct CurrentClientLoadingState;
 
 #[derive(Component)]
 struct CurrentConnectionStateText;
 
 #[derive(Component)]
 struct DebugOverlayRoot;
+
+#[derive(Component)]
+struct CurrentGameConfigClientText;
+
+#[derive(Component)]
+struct UiStateText;
 
 fn spawn_debug_overlay(mut commands: Commands) {
     commands
@@ -68,39 +73,41 @@ fn spawn_debug_overlay(mut commands: Commands) {
             ZIndex(1),
         ))
         .with_children(|parent| {
-            parent.spawn(build_debug_overlay_state_item_text(
+            parent.spawn(build_debug_overlay_item_text(
                 "AppState",
                 CurrentAppStateText,
             ));
 
-            parent.spawn(build_debug_overlay_state_item_text(
+            parent.spawn(build_debug_overlay_item_text(
                 "InGameState",
                 CurrentInGameStateText,
             ));
 
-            parent.spawn(build_debug_overlay_state_item_text(
+            parent.spawn(build_debug_overlay_item_text(
                 "MainMenuState",
                 CurrentMainMenuStateText,
             ));
 
-            parent.spawn(build_debug_overlay_state_item_text(
-                "ServerGameMode",
-                CurrentServerGameModeText,
+            parent.spawn(build_debug_overlay_item_text(
+                "ClientLoadingState",
+                CurrentClientLoadingState,
             ));
 
-            parent.spawn(build_debug_overlay_state_item_text(
-                "LoadingGameState",
-                CurrentLoadingGameStateText,
-            ));
-
-            parent.spawn(build_debug_overlay_state_item_text(
+            parent.spawn(build_debug_overlay_item_text(
                 "ConnectionState",
                 CurrentConnectionStateText,
             ));
+
+            parent.spawn(build_debug_overlay_item_text(
+                "GameModeClient",
+                CurrentGameConfigClientText,
+            ));
+
+            parent.spawn(build_debug_overlay_item_text("UiState", UiStateText));
         });
 }
 
-fn build_debug_overlay_state_item_text<T: Component>(
+fn build_debug_overlay_item_text<T: Component>(
     description: &str,
     marker_component: T,
 ) -> impl Bundle {
@@ -124,6 +131,7 @@ fn build_debug_overlay_state_item_text<T: Component>(
                     font_size: DEBUG_OVERLAY_TEXT_SIZE,
                     ..default()
                 },
+                TextLayout::new_with_linebreak(LineBreak::WordBoundary)
             )
         ],
     )
@@ -172,21 +180,17 @@ fn update_current_in_game_state_text(
     }
 }
 
-fn update_current_server_game_mode_text(
-    mut current_server_game_mode_text: Single<
-        &mut Text,
-        With<CurrentServerGameModeText>,
-    >,
-    server_game_mode: Res<State<GameModeServer>>,
+fn update_current_game_config_client_text(
+    mut text: Single<&mut Text, With<CurrentGameConfigClientText>>,
+    client_game_mode: Res<PendingGameConfigClient>,
 ) {
-    **current_server_game_mode_text =
-        Text::new(format!("{:?}", *server_game_mode));
+    **text = Text::new(format!("{:?}", *client_game_mode));
 }
 
 fn update_loading_game_state_text(
     mut current_loading_game_state_text: Single<
         &mut Text,
-        With<CurrentLoadingGameStateText>,
+        With<CurrentClientLoadingState>,
     >,
     loading_game_state: Option<Res<State<ClientLoadingState>>>,
 ) {
@@ -212,4 +216,11 @@ fn update_debug_overlay_visibility(
     } else {
         Visibility::Hidden
     };
+}
+
+fn update_ui_state_text(
+    ui_state: Res<UiState>,
+    mut text: Single<&mut Text, With<UiStateText>>,
+) {
+    ***text = format!("{ui_state:?}");
 }

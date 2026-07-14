@@ -7,6 +7,6 @@ edition = "2024"
 avian3d = { workspace = true, features = ["serialize"] }
 bevy = { workspace = true }
 hex = "0.4.3"
-lightyear = { workspace = true, features = ["client", "server", "trace"] }
+netvy = { workspace = true }
 rand = { workspace = true }
-serde = "1.0.228"
+serde = { workspace = true }

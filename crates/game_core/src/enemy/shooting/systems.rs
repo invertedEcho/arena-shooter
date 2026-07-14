@@ -1,6 +1,6 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use lightyear::prelude::*;
+use netvy::prelude::*;
 use shared::{
     EnemyKilledMessage,
     components::{DespawnTimer, Health},
@@ -22,12 +22,11 @@ pub fn enemy_shoot_player(
         &Transform,
         Option<&EnemyShootCooldownTimer>,
     )>,
-    player_query: Query<&Transform, With<Player>>,
+    player_query: Query<(&Transform, &OwnedBy), With<Player>>,
     spatial_query: SpatialQuery,
     mut health_query: Query<&mut Health>,
-    client_query: Query<&RemoteId, With<Connected>>,
     mut game_score: Single<&mut GameScore>,
-    mut message_writer: MessageWriter<PlayerHitMessage>,
+    mut message_writer: MessageWriter<ToClients<PlayerHitMessage>>,
 ) {
     for (
         enemy_entity,
@@ -40,7 +39,9 @@ pub fn enemy_shoot_player(
             continue;
         };
 
-        let Ok(player_transform) = player_query.get(*player_to_attack) else {
+        let Ok((player_transform, player_owned_by)) =
+            player_query.get(*player_to_attack)
+        else {
             continue;
         };
 
@@ -82,38 +83,34 @@ pub fn enemy_shoot_player(
             return;
         };
 
-        let entity_hit = first_hit.entity;
-        if let Ok(mut health) = health_query.get_mut(entity_hit) {
+        let player_hit = first_hit.entity;
+        if let Ok(mut health) = health_query.get_mut(player_hit) {
             health.0 -= 8.0;
 
-            message_writer.write(PlayerHitMessage {
-                origin: enemy_transform.translation,
+            info!(
+                "sending network message player hit message to client {:?}",
+                player_owned_by.0
+            );
+            message_writer.write(ToClients {
+                message: PlayerHitMessage {
+                    origin: enemy_transform.translation,
+                },
+                target: NetworkMessageTarget::Clients(vec![player_owned_by.0]),
             });
 
             if health.0 <= 0.0 {
-                commands.entity(entity_hit).insert(ColliderDisabled);
+                commands.entity(player_hit).insert(ColliderDisabled);
                 if let Some(enemy_game_score) =
                     game_score.enemies.get_mut(&enemy_entity)
                 {
                     enemy_game_score.kills += 1;
                 };
 
-                match client_query.single() {
-                    Ok(remote_id) => {
-                        if let Some(game_score_player) =
-                            game_score.players.get_mut(&remote_id.to_bits())
-                        {
-                            game_score_player.deaths += 1;
-                        };
-                    }
-                    Err(error) => {
-                        warn!(
-                            "Failed to get game score of player that was \
-                             killed: {}",
-                            error
-                        );
-                    }
-                }
+                if let Some(game_score_player) =
+                    game_score.players.get_mut(&player_owned_by.0)
+                {
+                    game_score_player.deaths += 1;
+                };
             }
         }
     }

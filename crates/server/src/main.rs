@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock};
+use std::net::{Ipv4Addr, SocketAddr};
 
 use bevy::log::LogPlugin;
 use bevy::mesh::MeshPlugin;
@@ -6,23 +6,17 @@ use bevy::prelude::*;
 use bevy::state::app::StatesPlugin;
 use bevy_inspector_egui::bevy_egui::{self, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use game_core::{GameCoreLoadingState, start_server};
-use lightyear::utils::collections::HashSet;
-use shared::ServerRunMode;
-use shared::utils::auth::load_private_key_from_env;
-use shared::utils::network::{
-    AUTH_BACKEND_ADDRESS_SERVER_SIDE,
-    get_dedicated_server_socket_addr_client_side,
-};
-use shared::{AppRole, SharedPlugin};
+use game_core::GameCoreLoadingState;
+use netvy::prelude::*;
+use shared::utils::network::SERVER_PORT;
+use shared::{AppRole, GameConfig, GameMap, GameMode, SharedPlugin};
+use shared::{GameConfigServer, ServerRunMode};
 
-use crate::auth::start_netcode_authentication_task;
-use crate::systems::{
-    spawn_map_colliders, spawn_server_camera, write_start_game_message,
-};
+// use crate::auth::start_netcode_authentication_task;
+use crate::systems::{spawn_map_colliders, spawn_server_camera, start_game};
 use crate::utils::get_run_mode;
 
-mod auth;
+// mod auth;
 mod systems;
 mod utils;
 
@@ -32,6 +26,7 @@ struct HeadlessServerPlugin;
 impl Plugin for HeadlessServerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(MinimalPlugins);
+        app.add_plugins(StatesPlugin);
         app.add_plugins(AssetPlugin {
             file_path: "../../assets".to_string(),
             ..default()
@@ -69,10 +64,6 @@ fn main() {
     let run_mode_str = std::env::args().nth(1);
     let run_mode = get_run_mode(run_mode_str.as_ref());
 
-    app.add_plugins(StatesPlugin);
-
-    app.insert_state(AppRole::DedicatedServer);
-
     match run_mode {
         ServerRunMode::Headless => {
             app.add_plugins(HeadlessServerPlugin);
@@ -84,10 +75,22 @@ fn main() {
         }
     }
 
+    app.insert_state(AppRole::DedicatedServer);
+
+    app.add_plugins(NetvyPlugin(NetvyMode::Server));
+
     app.add_plugins(game_core::GameCorePlugin);
     app.add_plugins(SharedPlugin);
 
-    app.add_systems(Startup, (start_server, write_start_game_message));
+    // The dedicated server will start a game right away.
+    // Clients can join this one dedicated server.
+    // In the future, I want to implement being able to vote to change game mode / game map.
+    app.insert_resource(GameConfigServer(GameConfig {
+        game_mode: GameMode::FreeForAll,
+        game_map: GameMap::MediumPlastic,
+    }));
+
+    app.add_systems(Startup, (start_server, start_game));
 
     // mimic the normal flow, because on the dedicated server we do things a bit differently, e.g.
     // we dont spawn the entire map with the collider constructors, but we only spawn the map
@@ -103,20 +106,31 @@ fn main() {
 
     app.insert_resource(run_mode);
 
-    // authentication
-    let client_ids = Arc::new(RwLock::new(HashSet::default()));
+    // // authentication
+    // let client_ids = Arc::new(RwLock::new(HashSet::default()));
 
-    start_netcode_authentication_task(
-        // this must be client side because it will be contained in the token that the client
-        // receives and uses to connect
-        get_dedicated_server_socket_addr_client_side().expect(
-            "Could not resolve game server address. Please make sure you have \
-             a working internet connection. Game server may be currently down",
-        ),
-        AUTH_BACKEND_ADDRESS_SERVER_SIDE,
-        client_ids.clone(),
-        load_private_key_from_env().unwrap(),
-    );
+    // start_netcode_authentication_task(
+    //     // this must be client side because it will be contained in the token that the client
+    //     // receives and uses to connect
+    //     get_dedicated_server_socket_addr_client_side().expect(
+    //         "Could not resolve game server address. Please make sure you have \
+    //          a working internet connection. Game server may be currently down",
+    //     ),
+    //     AUTH_BACKEND_ADDRESS_SERVER_SIDE,
+    //     client_ids.clone(),
+    //     load_private_key_from_env().unwrap(),
+    // );
 
     app.run();
+}
+
+fn start_server(mut commands: Commands) {
+    let socket_address = SocketAddr::new(
+        std::net::IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
+        SERVER_PORT,
+    );
+
+    let server_entity =
+        commands.spawn((Server, TargetAddress(socket_address))).id();
+    commands.trigger(StartServer { server_entity });
 }

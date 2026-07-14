@@ -9,7 +9,7 @@ use crate::{
     },
 };
 
-#[derive(Component, Debug, Reflect, Serialize, PartialEq, Deserialize)]
+#[derive(Component, Debug, Reflect, PartialEq, Serialize, Deserialize)]
 #[reflect(Component)]
 pub struct Player;
 
@@ -27,7 +27,7 @@ pub struct PlayerBundle {
     player_cash: PlayerCash,
 }
 
-#[derive(Component, Serialize, Deserialize, Clone, Default, PartialEq)]
+#[derive(Component, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct PlayerState {
     pub shooting: bool,
     pub reloading: bool,

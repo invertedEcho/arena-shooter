@@ -5,7 +5,6 @@ use bevy::{
     },
     prelude::*,
     ui::InteractionDisabled,
-    window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use shared::{
     player::PlayerCash,
@@ -16,9 +15,8 @@ use shared::{
 };
 
 use crate::{
-    game_flow::states::{GameModeClient, InGameState},
-    player::camera::messages::UpdatePlayerWeaponModel,
-    ui::UiState,
+    game_flow::states::InGameState,
+    player::camera::messages::UpdatePlayerWeaponModel, ui::UiState,
 };
 
 #[derive(Component)]
@@ -39,10 +37,11 @@ impl Plugin for BuyScreenPlugin {
         app.add_systems(Startup, spawn_buy_screen)
             .add_systems(
                 Update,
-                (update_mouse_mode, update_visibility).run_if(
+                (update_buy_screen_visibility).run_if(
                     resource_changed::<UiState>
-                        .and(not(resource_added::<UiState>))
-                        .and(in_state(InGameState::Playing)),
+                        // TODO: why not run if its just been added? initial add should
+                        // probbly start with false anyways.
+                        .and(not(resource_added::<UiState>)),
                 ),
             )
             .add_systems(
@@ -53,12 +52,17 @@ impl Plugin for BuyScreenPlugin {
                     update_disabled_enabled_shop_item_buttons,
                     update_texts_on_player_weapons_change,
                 )
-                    .run_if(
-                        in_state(InGameState::Playing)
-                            .and(not(in_state(GameModeClient::Multiplayer))),
-                    ),
+                    .run_if(in_state(InGameState::Playing)),
+            )
+            .add_systems(
+                OnEnter(InGameState::PlayerDead),
+                hide_buy_overlay_when_dead,
             );
     }
+}
+
+fn hide_buy_overlay_when_dead(mut ui_state: ResMut<UiState>) {
+    ui_state.buy_overlay_visible = false;
 }
 
 fn spawn_buy_screen(mut commands: Commands) {
@@ -144,30 +148,19 @@ fn handle_input(
     mut ui_state: ResMut<UiState>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyB) {
-        ui_state.buy_overlay_visibile = !ui_state.buy_overlay_visibile;
+        ui_state.buy_overlay_visible = !ui_state.buy_overlay_visible;
+        ui_state.cursor_visible = ui_state.buy_overlay_visible;
     }
 }
 
-fn update_visibility(
+fn update_buy_screen_visibility(
     mut buy_screen_visibility: Single<&mut Visibility, With<BuyScreenRoot>>,
     ui_state: Res<UiState>,
 ) {
-    **buy_screen_visibility = if ui_state.buy_overlay_visibile {
+    **buy_screen_visibility = if ui_state.buy_overlay_visible {
         Visibility::Visible
     } else {
         Visibility::Hidden
-    };
-}
-
-fn update_mouse_mode(
-    ui_state: Res<UiState>,
-    mut primary_cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
-) {
-    primary_cursor_options.visible = ui_state.buy_overlay_visibile;
-    primary_cursor_options.grab_mode = if ui_state.buy_overlay_visibile {
-        CursorGrabMode::None
-    } else {
-        CursorGrabMode::Locked
     };
 }
 

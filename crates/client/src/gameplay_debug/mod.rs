@@ -12,7 +12,7 @@ use bevy_inspector_egui::{
 use bevy_landmass::debug::{EnableLandmassDebug, Landmass3dDebugPlugin};
 use bevy_rich_text3d::{Text3d, Text3dPlugin, Text3dStyling, TextAtlas};
 use shared::{
-    SpawnDebugSphereMessage,
+    DEFAULT_HEALTH, SpawnDebugSphereMessage,
     components::Health,
     enemy::{
         ENEMY_FOV, ENEMY_VISION_RANGE,
@@ -23,11 +23,11 @@ use shared::{
 
 use crate::{
     game_flow::states::AppState,
-    gameplay_debug::states_overlay::DebugOverlayPlugin,
+    gameplay_debug::debug_overlay::DebugOverlayPlugin,
     player::camera::components::{MainMenuCamera, WorldCamera},
 };
 
-mod states_overlay;
+mod debug_overlay;
 
 #[derive(Resource, Eq, Debug, PartialEq, Hash, Clone, Copy)]
 pub struct AppDebugState {
@@ -44,8 +44,8 @@ impl Default for AppDebugState {
         Self {
             show_physics_gizmos: false,
             show_nav_mesh: false,
-            show_enemy_debug_info: true,
-            show_states_overlay: true,
+            show_enemy_debug_info: false,
+            show_states_overlay: false,
             invincibility: false,
             interpolate_weapon_position: true,
         }
@@ -311,6 +311,7 @@ fn developer_menu(
     mut ui_context: Single<&mut EguiContext, With<PrimaryEguiContext>>,
     mut app_debug_state: ResMut<AppDebugState>,
     mut player_cash: Query<&mut PlayerCash>,
+    mut player_health: Query<&mut Health, With<Player>>,
 ) {
     egui::Window::new("Developer Menu").show(ui_context.get_mut(), |ui| {
         ui.horizontal(|ui| {
@@ -336,6 +337,13 @@ fn developer_menu(
         ui.horizontal(|ui| {
             ui.label("Interpolate weapon position");
             ui.checkbox(&mut app_debug_state.interpolate_weapon_position, "");
+        });
+        ui.horizontal(|ui| {
+            if ui.button("Suicide").clicked() {
+                if let Ok(mut player_health) = player_health.single_mut() {
+                    player_health.0 -= DEFAULT_HEALTH;
+                }
+            }
         });
         if let Ok(mut player_cash) = player_cash.single_mut() {
             ui.horizontal(|ui| {

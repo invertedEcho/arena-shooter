@@ -3,14 +3,11 @@ use bevy::{
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use game_core::RequestNewWave;
-use lightyear::prelude::MessageSender;
-use shared::{
-    GameStateServer, multiplayer_messages::ChangeGameServerStateRequest,
-    protocol::OrderedReliableChannel,
-};
+use netvy::prelude::*;
+use shared::{GameStateServer, multiplayer_messages::ClientCommand};
 
 use crate::{
-    game_flow::states::{AppState, InGameState},
+    game_flow::states::{AppState, ClientLoadingState, InGameState},
     player::{
         PlayerDeathMessage,
         camera::{components::MainMenuCamera, get_main_menu_camera_transform},
@@ -18,18 +15,12 @@ use crate::{
     ui::UiState,
 };
 
-pub fn grab_mouse(
-    mut primary_cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
-) {
-    primary_cursor_options.visible = false;
-    primary_cursor_options.grab_mode = CursorGrabMode::Locked;
+pub fn grab_mouse(mut ui_state: ResMut<UiState>) {
+    ui_state.cursor_visible = false;
 }
 
-pub fn free_mouse(
-    mut primary_cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
-) {
-    primary_cursor_options.visible = true;
-    primary_cursor_options.grab_mode = CursorGrabMode::None;
+pub fn free_mouse(mut ui_state: ResMut<UiState>) {
+    ui_state.cursor_visible = true;
 }
 
 pub fn manual_mouse_grab_toggle(
@@ -37,10 +28,13 @@ pub fn manual_mouse_grab_toggle(
     mut primary_cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyU) {
+        debug!("Manual mouse grab toggle was requested");
         if primary_cursor_options.grab_mode == CursorGrabMode::None {
+            debug!("Manually grabbing mouse");
             primary_cursor_options.grab_mode = CursorGrabMode::Locked;
             primary_cursor_options.visible = false;
         } else {
+            debug!("Manually freeing mouse");
             primary_cursor_options.grab_mode = CursorGrabMode::None;
             primary_cursor_options.visible = true;
         }
@@ -59,8 +53,8 @@ pub fn handle_escape_in_game(
     if escape_just_pressed {
         match current_in_game_state {
             InGameState::Playing => {
-                if ui_state.buy_overlay_visibile {
-                    ui_state.buy_overlay_visibile = false;
+                if ui_state.buy_overlay_visible {
+                    ui_state.buy_overlay_visible = false;
                 } else {
                     next_in_game_state.set(InGameState::Paused);
                 }
@@ -124,20 +118,18 @@ pub fn handle_player_death_event(
 
 pub fn send_update_game_server_state_request_on_in_game_state_change(
     current_in_game_state: If<Res<State<InGameState>>>,
-    mut message_sender: Single<
-        &mut MessageSender<ChangeGameServerStateRequest>,
-    >,
+    mut message_writer: MessageWriter<ToServer<ClientCommand>>,
 ) {
     match *current_in_game_state.get() {
         InGameState::Playing => {
-            message_sender.send::<OrderedReliableChannel>(
-                ChangeGameServerStateRequest(GameStateServer::Running),
-            );
+            message_writer.write(ToServer(ClientCommand::SetState(
+                GameStateServer::Running,
+            )));
         }
         InGameState::Paused | InGameState::PlayerDead => {
-            message_sender.send::<OrderedReliableChannel>(
-                ChangeGameServerStateRequest(GameStateServer::Paused),
-            );
+            message_writer.write(ToServer(ClientCommand::SetState(
+                GameStateServer::Paused,
+            )));
         }
     }
 }
@@ -148,5 +140,27 @@ pub fn handle_request_next_wave(
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyE) {
         message_writer.write(RequestNewWave);
+    }
+}
+
+// NOTE: only our client has the ConnectionState component present
+pub fn check_connection_state(
+    query: Query<&ConnectionState, Changed<ConnectionState>>,
+    mut client_loading_state: ResMut<NextState<ClientLoadingState>>,
+) {
+    for connection_state in query {
+        info!(
+            "ConnectionState changed, updating our ClientLoadingState. new \
+             connection_state: {connection_state:?}"
+        );
+        match connection_state {
+            ConnectionState::Connecting => {
+                client_loading_state
+                    .set(ClientLoadingState::ConnectingToServer);
+            }
+            ConnectionState::Connected => {
+                client_loading_state.set(ClientLoadingState::ConnectedToServer);
+            }
+        }
     }
 }

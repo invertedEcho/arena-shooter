@@ -17,39 +17,39 @@ pub mod world_object;
 
 pub const DEFAULT_HEALTH: f32 = 100.0;
 
+/// A struct describing the current configuratioan of the running game.
+/// On the client,
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default)]
+pub struct GameConfig {
+    pub game_mode: GameMode,
+    pub game_map: GameMap,
+}
+
 #[derive(Resource, PartialEq, Debug)]
 pub enum ServerRunMode {
     Headless,
     Headful,
 }
 
-/// This state exists both in server binary and client binary. As game_core runs on both server
-/// binary and client binary, it helps game_core to understand in which context it is currently
-/// running. So for example if the game_core checks this state and sees ClientOnly, then it knows
-/// not to run simulation logic, as the multiplayer server already runs that
+/// This state exists to help game_core to understand in which context it is currently
+/// running. For example, if the game_core checks this state and sees ClientOnly, then it knows
+/// not to run simulation logic, as the dedicated server already runs that
 #[derive(States, PartialEq, Debug, Hash, Clone, Eq)]
 pub enum AppRole {
     /// This app is a client that is connecting to multiplayer server
     ClientOnly,
     /// This app is a client that is also hosting a local server, e.g. Singleplayer
-    ClientAndServer,
+    HostClient,
     /// This app is the server binary
     DedicatedServer,
 }
 
-/// The game mode that is running on the server
-#[derive(
-    States, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize, Default,
-)]
-pub enum GameModeServer {
-    #[default]
-    FreeForAll,
-    Waves,
-    FreeRoam,
-}
+/// The currently active game configuration on the server
+#[derive(Resource, Serialize, Deserialize)]
+pub struct GameConfigServer(pub GameConfig);
 
 #[derive(
-    States, Clone, PartialEq, Eq, Hash, Debug, Default, Serialize, Deserialize,
+    States, Serialize, Deserialize, PartialEq, Clone, Eq, Hash, Debug, Default,
 )]
 pub enum GameStateServer {
     #[default]
@@ -108,8 +108,7 @@ impl Plugin for SharedPlugin {
     }
 }
 
-// The current game map
-#[derive(States, Eq, Debug, PartialEq, Hash, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Default)]
 pub enum GameMap {
     #[default]
     MediumPlastic,
@@ -129,13 +128,8 @@ pub fn handle_despawn_timer(
     }
 }
 
-/// game_core listens for this message. Upon receiving, game_core will spawn the map, spawn colliders,
-/// spawn enemies, etc...
-#[derive(Message)]
-pub struct StartGame {
-    pub map: GameMap,
-    pub game_mode: GameModeServer,
-}
+#[derive(Message, Copy, Clone)]
+pub struct StartGame(pub GameConfig);
 
 /// A client can send this message to game_core, and game_core will despawn the map,
 /// despawn enemies, etc
@@ -153,3 +147,14 @@ pub struct NextWaveTimer(pub Timer);
 /// corresponding wave are killed
 #[derive(Message)]
 pub struct WaveFinishedMessage;
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Copy, Clone, Default)]
+pub enum GameMode {
+    /// Every wave more enemies get spawned
+    Waves,
+    /// Player can move around the map freely
+    #[default]
+    FreeRoam,
+    /// Every player against every other player, no teams
+    FreeForAll,
+}

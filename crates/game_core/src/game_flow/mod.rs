@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use lightyear::{connection::host::HostClient, prelude::RemoteId};
+use netvy::prelude::*;
 use shared::{
     EnemyKilledMessage, GameStateServer, NextWaveTimer, WaveFinishedMessage,
     enemy::components::Enemy,
@@ -105,11 +105,10 @@ fn handle_retry_wave_game_mode_message(
 fn update_game_score_on_retry_wave_game_mode(
     mut message_reader: MessageReader<RetryWaveGameMode>,
     mut game_score: Single<&mut GameScore>,
-    host_client: Single<&RemoteId, With<HostClient>>,
+    our_peer_id: If<Res<OurPeerId>>,
 ) {
     for _ in message_reader.read() {
-        if let Some(player_score) =
-            game_score.players.get_mut(&host_client.to_bits())
+        if let Some(player_score) = game_score.players.get_mut(&our_peer_id.0.0)
         {
             player_score.kills = 0;
             player_score.deaths = 0;

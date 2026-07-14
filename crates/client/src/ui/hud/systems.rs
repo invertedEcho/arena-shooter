@@ -1,8 +1,8 @@
 use bevy::{color::palettes::css::WHITE, prelude::*};
 use game_core::GameStateWave;
-use lightyear::prelude::{Controlled, MessageReceiver};
+use netvy::prelude::*;
 use shared::{
-    NextWaveTimer, WaveFinishedMessage,
+    GameMode, NextWaveTimer, WaveFinishedMessage,
     components::{DespawnTimer, Health},
     multiplayer_messages::PlayerHitMessage,
     player::{AimType, Player, PlayerCash, PlayerReady, PlayerState},
@@ -10,7 +10,7 @@ use shared::{
 };
 
 use crate::{
-    game_flow::states::{AppState, InGameState},
+    game_flow::states::{AppState, InGameState, PendingGameConfigClient},
     player::{
         camera::components::WorldCamera,
         shooting::messages::{PlayerBulletHit, PlayerWeaponSlotChangeMessage},
@@ -37,7 +37,7 @@ pub fn spawn_player_hud(
     mut commands: Commands,
     player_query: Query<
         (&Health, &PlayerWeapons, &PlayerState),
-        (Added<PlayerReady>, With<Controlled>),
+        (Added<PlayerReady>, With<Owned>),
     >,
 ) {
     let Ok((player_health, player_weapons, player_state)) =
@@ -164,10 +164,20 @@ pub fn spawn_player_hud(
         });
 }
 
+pub fn show_crosshair(mut ui_state: ResMut<UiState>) {
+    debug!("Showing crosshair");
+    ui_state.crosshair_visible = true;
+}
+
+pub fn hide_crosshair(mut ui_state: ResMut<UiState>) {
+    debug!("Hiding crosshair");
+    ui_state.crosshair_visible = false;
+}
+
 pub fn spawn_player_crosshair(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    player_query: Query<Entity, (Added<Player>, With<Controlled>)>,
+    player_query: Query<Entity, (Added<Player>, With<Owned>)>,
 ) {
     for _ in player_query {
         commands
@@ -188,38 +198,39 @@ pub fn spawn_player_crosshair(
     }
 }
 
-pub fn update_player_crosshair_visibility(
+pub fn update_crosshair_visibility_on_aim_type_change(
     player_aim_type: Single<&AimType, Changed<AimType>>,
-    mut player_cross_hair: Single<&mut Visibility, With<PlayerCrosshair>>,
-    ui_state: Res<UiState>,
+    mut ui_state: ResMut<UiState>,
 ) {
     if ui_state.score_board_overlay_visible {
         return;
     }
 
     match *player_aim_type {
-        AimType::Normal => **player_cross_hair = Visibility::Visible,
-        AimType::Scoped => **player_cross_hair = Visibility::Hidden,
+        AimType::Normal => {
+            debug!("Showing crosshair because AimType changed to normal");
+            ui_state.crosshair_visible = true;
+        }
+        AimType::Scoped => {
+            debug!("Hiding crosshair because AimType changed to Scoped");
+            ui_state.crosshair_visible = false;
+        }
     }
 }
 
-// this is a seperate system because update_player_crosshair_visibility only runs when AimType
-// changes, and this system should only run if UiState changed
-pub fn on_ui_state_change(
+pub fn reflect_crosshair_visibility_from_ui_state(
     ui_state: Res<UiState>,
     mut player_cross_hair: Single<&mut Visibility, With<PlayerCrosshair>>,
-    player_aim_type: Single<&AimType, With<AimType>>,
 ) {
-    if ui_state.score_board_overlay_visible {
-        **player_cross_hair = Visibility::Hidden;
-    // only switch back to visible cross hair if player not currently scoping
-    } else if **player_aim_type != AimType::Scoped {
+    if ui_state.crosshair_visible {
         **player_cross_hair = Visibility::Visible;
+    } else {
+        **player_cross_hair = Visibility::Hidden;
     }
 }
 
 pub fn update_player_health_text(
-    player_health: Single<&Health, (Changed<Health>, With<Controlled>)>,
+    player_health: Single<&Health, (Changed<Health>, With<Owned>)>,
     mut player_health_text: Single<&mut Text, With<PlayerHealthText>>,
 ) {
     debug!("Updated player health text");
@@ -277,7 +288,13 @@ pub fn spawn_bullet_hit_crosshair(
     }
 }
 
-pub fn spawn_wave_hud(mut commands: Commands) {
+pub fn spawn_wave_hud(
+    mut commands: Commands,
+    game_config_client: Res<PendingGameConfigClient>,
+) {
+    if game_config_client.0.game_mode != GameMode::Waves {
+        return;
+    }
     commands
         .spawn((
             DespawnOnExit(AppState::InGame),
@@ -337,17 +354,13 @@ pub fn update_selected_weapon(
 pub fn spawn_damage_indicator(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut message_reader: MessageReader<PlayerHitMessage>,
     player_transform: Single<&Transform, OurPlayerFilter>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
-    mut network_message_reader: Single<&mut MessageReceiver<PlayerHitMessage>>,
+    mut message_reader: MessageReader<FromServer<PlayerHitMessage>>,
 ) {
-    let internal_messages = message_reader.read().copied();
-    let network_messages = network_message_reader.receive();
+    for message in message_reader.read() {
+        let message = message.0;
 
-    let combined_messages = internal_messages.chain(network_messages);
-
-    for message in combined_messages {
         if let Some(world_direction) =
             (message.origin - player_transform.translation).try_normalize()
         {

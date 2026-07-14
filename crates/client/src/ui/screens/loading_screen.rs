@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use netvy::prelude::{Client, ConnectToServer};
 use shared::StopGame;
 
 use crate::{
@@ -20,6 +21,7 @@ impl Plugin for LoadingScreenPlugin {
                 update_loading_state_text
                     .run_if(state_changed::<ClientLoadingState>),
                 handle_loading_screen_button_pressed,
+                trigger_manual_connect,
             ),
         );
     }
@@ -36,12 +38,13 @@ enum LoadingScreenButton {
     Cancel,
 }
 
+#[derive(Component)]
+struct ManualTriggerConnectButton;
+
 pub fn spawn_loading_screen(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) {
-    info!("Spawning Loading screen");
-
     commands
         .spawn((
             Node {
@@ -91,6 +94,31 @@ fn handle_loading_screen_button_pressed(
             LoadingScreenButton::Cancel => {
                 next_app_state.set(AppState::MainMenu);
                 stop_game_message_writer.write(StopGame);
+            }
+        }
+    }
+}
+
+fn trigger_manual_connect(
+    mut commands: Commands,
+    query: Query<Entity, With<Client>>,
+    interaction_query: Query<
+        (&Interaction, &ManualTriggerConnectButton),
+        Changed<Interaction>,
+    >,
+) {
+    for (interaction, _) in interaction_query {
+        let Interaction::Pressed = interaction else {
+            continue;
+        };
+
+        match query.single() {
+            Ok(client_entity) => {
+                info!("manual trigger connect");
+                commands.trigger(ConnectToServer { client_entity });
+            }
+            Err(error) => {
+                error!("Can't manual trigger connect: {error:?}");
             }
         }
     }

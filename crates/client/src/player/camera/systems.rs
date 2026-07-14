@@ -3,7 +3,7 @@ use bevy::{
     camera::visibility::RenderLayers, core_pipeline::Skybox,
     input::mouse::AccumulatedMouseMotion, prelude::*,
 };
-use lightyear::prelude::Controlled;
+use netvy::prelude::*;
 use shared::{
     components::DespawnTimer,
     player::{AimType, Player, PlayerState},
@@ -36,8 +36,7 @@ use crate::{
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 
 pub fn setup_player_cameras(
-    // using With<Controlled> ensures we only add cameras to our own player
-    added_players: Query<Entity, (Added<Player>, With<Controlled>)>,
+    added_players: Query<Entity, (Added<Owned>, With<Player>)>,
     mut message_writer: MessageWriter<SpawnPlayerCamera>,
 ) {
     for added_player in added_players {
@@ -50,8 +49,13 @@ pub fn handle_spawn_player_camera_message(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     main_menu_camera: Query<Entity, With<MainMenuCamera>>,
+    our_peer_id: Option<Res<OurPeerId>>,
 ) {
     for message in message_reader.read() {
+        let Some(ref our_peer_id) = our_peer_id else {
+            error!("Cant spawn player camera, OurPeerId doesnt exist");
+            return;
+        };
         info!(
             "Spawning new player camera, received SpawnPlayerCamera message!"
         );
@@ -60,7 +64,11 @@ pub fn handle_spawn_player_camera_message(
             info!("Despawning main menu camera before spawning player camera");
             commands.entity(main_menu_camera).despawn();
         }
-        commands.entity(message.0).insert(PlayerCameraState::Normal);
+        // FIXME: remove manually inserting Authority component once i figure out a solution how to
+        // do authority management in netvy
+        commands
+            .entity(message.0)
+            .insert((PlayerCameraState::Normal, Authority(our_peer_id.0)));
 
         commands.entity(message.0).with_children(|parent| {
             parent.spawn((
@@ -139,7 +147,7 @@ pub fn update_yaw_pitch_on_mouse_motion(
     mut shoot_recoil: Single<&mut ShootRecoil>,
     ui_state: Res<UiState>,
 ) {
-    if ui_state.buy_overlay_visibile {
+    if ui_state.buy_overlay_visible {
         return;
     }
 
@@ -311,7 +319,7 @@ pub fn weapon_sway(
     mut transform: Single<&mut Transform, With<PlayerWeaponModel>>,
     ui_state: Res<UiState>,
 ) {
-    if ui_state.buy_overlay_visibile {
+    if ui_state.buy_overlay_visible {
         return;
     }
 

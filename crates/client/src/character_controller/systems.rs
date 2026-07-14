@@ -1,6 +1,6 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use lightyear::prelude::Controlled;
+use netvy::prelude::*;
 use shared::{
     GRAVITY,
     character_controller::{
@@ -26,7 +26,7 @@ pub fn handle_keyboard_input_for_player(
     camera_transform: Single<&Transform, With<WorldCamera>>,
     ui_state: Res<UiState>,
 ) {
-    if ui_state.buy_overlay_visibile {
+    if ui_state.buy_overlay_visible {
         return;
     }
 
@@ -200,7 +200,7 @@ pub fn apply_gravity(
 }
 
 pub fn zero_player_velocity(
-    mut player_velocity: Single<&mut LinearVelocity, With<Controlled>>,
+    mut player_velocity: Single<&mut LinearVelocity, With<Owned>>,
 ) {
     player_velocity.x = 0.0;
     player_velocity.z = 0.0;
