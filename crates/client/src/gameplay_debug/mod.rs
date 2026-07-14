@@ -44,8 +44,8 @@ impl Default for AppDebugState {
         Self {
             show_physics_gizmos: false,
             show_nav_mesh: false,
-            show_enemy_debug_info: true,
-            show_states_overlay: true,
+            show_enemy_debug_info: false,
+            show_states_overlay: false,
             invincibility: false,
             interpolate_weapon_position: true,
         }

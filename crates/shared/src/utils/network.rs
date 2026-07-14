@@ -23,6 +23,8 @@ pub const AUTH_BACKEND_PORT: u16 = 4000;
 pub const SERVER_ADDRESS_SERVER_SIDE: IpAddr =
     IpAddr::V6(Ipv6Addr::UNSPECIFIED);
 
+pub const OFFICIAL_GAME_SERVER: &str = "0.0.0.0:5888";
+
 fn resolve_with_retry(
     address: &str,
 ) -> std::io::Result<Vec<std::net::SocketAddr>> {

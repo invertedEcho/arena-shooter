@@ -49,8 +49,13 @@ pub fn handle_spawn_player_camera_message(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     main_menu_camera: Query<Entity, With<MainMenuCamera>>,
+    our_peer_id: Option<Res<OurPeerId>>
 ) {
     for message in message_reader.read() {
+        let Some(ref our_peer_id) = our_peer_id else {
+            error!("Cant spawn player camera, OurPeerId doesnt exist");
+            return;
+        };
         info!(
             "Spawning new player camera, received SpawnPlayerCamera message!"
         );
@@ -59,7 +64,9 @@ pub fn handle_spawn_player_camera_message(
             info!("Despawning main menu camera before spawning player camera");
             commands.entity(main_menu_camera).despawn();
         }
-        commands.entity(message.0).insert(PlayerCameraState::Normal);
+        // FIXME: remove manually inserting Authority component once i figure out a solution how to
+        // do authority management in netvy
+        commands.entity(message.0).insert((PlayerCameraState::Normal, Authority(our_peer_id.0)));
 
         commands.entity(message.0).with_children(|parent| {
             parent.spawn((

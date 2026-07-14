@@ -141,6 +141,7 @@ fn handle_escape_press_back(
             MainMenuState::Credits => MainMenuState::Root,
             MainMenuState::GameModeSelection => MainMenuState::MapSelection,
             MainMenuState::MapSelection => MainMenuState::Root,
+            MainMenuState::ServerSelection => MainMenuState::Root,
         };
 
         next_main_menu_state.set(new_state);
