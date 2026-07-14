@@ -94,8 +94,9 @@ For shooting:
 - Server spawns temporary colliders to make the raycast
 - If hit was sucessful, the `Health` component on the corresponding player is updated
 
-## Libraries used
+## Technologies used
 uses:
 - bevy for game engine
 - avian3d for physics
 - skein for bevy <-> blender integration (work with bevy components in blender)
+- [netvy](https://github.com/invertedEcho/netvy) for multiplayer/networking
