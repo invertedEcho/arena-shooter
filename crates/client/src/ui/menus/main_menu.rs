@@ -3,7 +3,11 @@ use netvy::NetvyMode;
 use shared::{AppRole, StartGame, utils::network::OFFICIAL_GAME_SERVER};
 
 use crate::{
-    game_flow::states::{AppState, ClientLoadingState, MainMenuState, PendingGameConfigClient}, network::ConnectToDedicatedServer, ui::{
+    game_flow::states::{
+        AppState, ClientLoadingState, MainMenuState, PendingGameConfigClient,
+    },
+    network::ConnectToDedicatedServer,
+    ui::{
         common::{
             CommonUiButton, DEFAULT_GAME_FONT_PATH, DEFAULT_ROW_GAP,
             TITLE_FONT_SIZE, UI_BACKGROUND,
@@ -131,8 +135,7 @@ fn handle_main_menu_button_pressed(
 
                 connect_to_dedicated_server_message_writer.write(
                     ConnectToDedicatedServer {
-                        server_address: OFFICIAL_GAME_SERVER
-                            .to_string(),
+                        server_address: OFFICIAL_GAME_SERVER.to_string(),
                     },
                 );
 

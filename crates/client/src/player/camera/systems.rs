@@ -49,7 +49,7 @@ pub fn handle_spawn_player_camera_message(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     main_menu_camera: Query<Entity, With<MainMenuCamera>>,
-    our_peer_id: Option<Res<OurPeerId>>
+    our_peer_id: Option<Res<OurPeerId>>,
 ) {
     for message in message_reader.read() {
         let Some(ref our_peer_id) = our_peer_id else {
@@ -66,7 +66,9 @@ pub fn handle_spawn_player_camera_message(
         }
         // FIXME: remove manually inserting Authority component once i figure out a solution how to
         // do authority management in netvy
-        commands.entity(message.0).insert((PlayerCameraState::Normal, Authority(our_peer_id.0)));
+        commands
+            .entity(message.0)
+            .insert((PlayerCameraState::Normal, Authority(our_peer_id.0)));
 
         commands.entity(message.0).with_children(|parent| {
             parent.spawn((
