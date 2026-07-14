@@ -353,11 +353,11 @@ fn check_collider_constructor_hierarchy_ready(
 /// like enemy models, so we need to compare our WorldSceneHandle that we insert when we spawn the
 /// map with the one that we get from the LoadedWithDependencies message/event.
 #[derive(Resource, Debug)]
-pub struct WorldSceneHandle(pub Handle<Scene>);
+pub struct WorldSceneHandle(pub Handle<WorldAsset>);
 
 // FIXME: this detection logic doesnt work on second time
 fn check_world_scene_loaded(
-    mut asset_event_message_reader: MessageReader<AssetEvent<Scene>>,
+    mut asset_event_message_reader: MessageReader<AssetEvent<WorldAsset>>,
     mut next_game_core_loading_state: ResMut<NextState<GameCoreLoadingState>>,
     world_scene_handle: If<Res<WorldSceneHandle>>,
 ) {
@@ -401,7 +401,7 @@ fn spawn_map(
     commands.spawn((
         DirectionalLight {
             illuminance: 6000.,
-            shadows_enabled: true,
+            shadow_maps_enabled: true,
             ..default()
         },
         GameMapLight,
@@ -416,7 +416,7 @@ fn spawn_map(
     commands.insert_resource(WorldSceneHandle(world_scene_handle.clone()));
 
     commands.spawn((
-        SceneRoot(world_scene_handle),
+        WorldAssetRoot(world_scene_handle),
         Name::new("Scene Root (Map)"),
         Visibility::Visible,
         RigidBody::Static,
