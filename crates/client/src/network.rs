@@ -109,7 +109,7 @@ fn handle_added_owned_player(
 
     // TODO: is this a good idea? we assume that if our player is
     // present, it means GameCore is ready.
-    info!("Our player was added, setting AppState to InGame");
+    info!("Player with Owned component was added, setting AppState to InGame");
     next_app_state.set(AppState::InGame);
 }
 

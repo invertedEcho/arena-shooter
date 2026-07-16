@@ -13,9 +13,9 @@ use crate::{
 #[reflect(Component)]
 pub struct Player;
 
-/// This component marks an entity as ready to be used for external systems that depend on the player, such as the HUD
+/// This component marks our player as ready to be used for external systems that depend on specific components being present, such as the HUD
 #[derive(Component)]
-pub struct PlayerReady;
+pub struct OurPlayerReady;
 
 #[derive(Bundle)]
 pub struct PlayerBundle {

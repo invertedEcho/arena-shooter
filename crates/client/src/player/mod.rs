@@ -1,6 +1,7 @@
 use bevy::prelude::*;
+use netvy::Owned;
 use shared::{
-    player::{Player, PlayerReady},
+    player::{OurPlayerReady, Player},
     shooting::PlayerWeapons,
 };
 
@@ -24,8 +25,13 @@ impl Plugin for PlayerPlugin {
     }
 }
 
-type PlayersWithoutReadyMarker =
-    (With<Player>, With<PlayerWeapons>, Without<PlayerReady>);
+type PlayersWithoutReadyMarker = (
+    With<Player>,
+    With<PlayerWeapons>,
+    // we only insert PlayerReady component into our own player.
+    With<Owned>,
+    Without<OurPlayerReady>,
+);
 
 // hmm should this run on client?
 fn mark_players_as_ready(
@@ -34,6 +40,6 @@ fn mark_players_as_ready(
 ) {
     for entity in query {
         debug!("Marking player {entity} as ready");
-        commands.entity(entity).insert(PlayerReady);
+        commands.entity(entity).insert(OurPlayerReady);
     }
 }

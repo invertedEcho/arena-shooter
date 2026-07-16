@@ -89,11 +89,11 @@ fn generate_navmesh_on_map_colliders_ready(
 
         let navmesh = generator.generate(nav_mesh_settings);
 
-        commands.spawn(Island3dBundle {
+        commands.spawn((Island3dBundle {
             island: Island,
             archipelago_ref: ArchipelagoRef3d::new(archipelago_id),
             nav_mesh: NavMeshHandle3d(navmesh),
-        });
+        }, Name::new("NavMesh bundle")));
     }
 }
 

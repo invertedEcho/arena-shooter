@@ -40,6 +40,7 @@ pub fn setup_player_cameras(
     mut message_writer: MessageWriter<SpawnPlayerCamera>,
 ) {
     for added_player in added_players {
+        info!("Player was added with Owned component, spawning player camera");
         message_writer.write(SpawnPlayerCamera(added_player));
     }
 }
@@ -56,12 +57,8 @@ pub fn handle_spawn_player_camera_message(
             error!("Cant spawn player camera, OurPeerId doesnt exist");
             return;
         };
-        info!(
-            "Spawning new player camera, received SpawnPlayerCamera message!"
-        );
-
         for main_menu_camera in main_menu_camera {
-            info!("Despawning main menu camera before spawning player camera");
+            debug!("Despawning main menu camera before spawning player camera");
             commands.entity(main_menu_camera).despawn();
         }
         // FIXME: remove manually inserting Authority component once i figure out a solution how to
