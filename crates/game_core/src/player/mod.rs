@@ -11,7 +11,7 @@ use shared::{
     game_score::{GameScore, LivingEntityStats},
     multiplayer_messages::{PlayerHitMessage, ShootRequest},
     player::{Player, PlayerBundle},
-    shooting::{MAX_SHOOTING_DISTANCE, PlayerWeapons},
+    shooting::{MAX_SHOOTING_DISTANCE, PlayerKilled, PlayerWeapons},
 };
 
 use crate::{
@@ -119,6 +119,8 @@ fn handle_shoot_requests(
     mut add_kill_and_death_game_score_message_writer: MessageWriter<
         AddKillAndDeathGameScore,
     >,
+    mut player_killed_msg_writer: MessageWriter<ToClients<PlayerKilled>>,
+    net_entities: Query<(&NetEntityId, &Owner), With<Player>>,
 ) {
     for message in message_reader.read() {
         let source_client = message.source_client;
@@ -203,6 +205,29 @@ fn handle_shoot_requests(
                     entity_killed,
                 },
             );
+
+            if !is_enemy {
+                match net_entities.get(entity_killed) {
+                    Ok((net_entity_killed, owner)) => {
+                        let message = PlayerKilled {
+                            player_killed: *net_entity_killed,
+                        };
+
+                        info!(
+                            "Notifying all clients except killed one about player killed"
+                        );
+                        player_killed_msg_writer.write(ToClients {
+                            message,
+                            target: NetworkMessageTarget::Except(vec![owner.0]),
+                        });
+                    }
+                    Err(error) => {
+                        error!(
+                            "Failed to find net information about player killed: {error:?}"
+                        );
+                    }
+                };
+            }
         }
     }
 }
