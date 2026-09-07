@@ -4,16 +4,16 @@ use netvy::prelude::*;
 use shared::{
     GRAVITY,
     character_controller::{
-        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, DesiredVelocity,
-        JUMP_VELOCITY, RUN_VELOCITY, WALK_VELOCITY, apply_collide_and_slide,
-        components::{CharacterController, Grounded},
+        CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS, JUMP_VELOCITY,
+        RUN_VELOCITY, WALK_VELOCITY,
+        components::{CharacterController, DesiredVelocity, Grounded},
     },
     enemy::components::Enemy,
     world_object::WorldObjectCollectibleServerSide,
 };
 
 use crate::{
-    character_controller::messages::{MovementAction, MovementDirection},
+    character_controller::messages::JumpAction,
     player::camera::components::{PlayerCameraState, WorldCamera},
     ui::UiState,
     utils::query_filters::OurPlayerFilter,
@@ -21,8 +21,8 @@ use crate::{
 
 pub fn handle_keyboard_input_for_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut movement_action_writer: MessageWriter<MovementAction>,
-    player_query: Single<(Entity, &PlayerCameraState)>,
+    mut movement_action_writer: MessageWriter<JumpAction>,
+    player_query: Single<(Entity, &mut DesiredVelocity, &PlayerCameraState)>,
     camera_transform: Single<&Transform, With<WorldCamera>>,
     ui_state: Res<UiState>,
 ) {
@@ -30,7 +30,8 @@ pub fn handle_keyboard_input_for_player(
         return;
     }
 
-    let (player_entity, player_camera_state) = player_query.into_inner();
+    let (player_entity, mut desired_velocity, player_camera_state) =
+        player_query.into_inner();
 
     if *player_camera_state == PlayerCameraState::FreeCam {
         return;
@@ -52,34 +53,26 @@ pub fn handle_keyboard_input_for_player(
         return;
     };
 
-    let mut desired_velocity = Vec3::ZERO;
+    let mut new_desired_velocity = Vec3::ZERO;
 
     if keyboard_input.pressed(KeyCode::KeyW) {
-        desired_velocity += forward_camera * speed;
+        new_desired_velocity += forward_camera * speed;
     }
     if keyboard_input.pressed(KeyCode::KeyA) {
-        desired_velocity -= right * speed;
+        new_desired_velocity -= right * speed;
     }
     if keyboard_input.pressed(KeyCode::KeyD) {
-        desired_velocity += right * speed;
+        new_desired_velocity += right * speed;
     }
     if keyboard_input.pressed(KeyCode::KeyS) {
-        desired_velocity -= forward_camera * speed;
+        new_desired_velocity -= forward_camera * speed;
     }
+
+    desired_velocity.0 = new_desired_velocity;
 
     if keyboard_input.just_pressed(KeyCode::Space) {
-        movement_action_writer.write(MovementAction {
-            desired_velocity: MovementDirection::Jump,
+        movement_action_writer.write(JumpAction {
             character_controller_entity: player_entity,
-            sprinting: sprint,
-        });
-    }
-
-    if desired_velocity != Vec3::ZERO {
-        movement_action_writer.write(MovementAction {
-            desired_velocity: MovementDirection::Move(desired_velocity),
-            character_controller_entity: player_entity,
-            sprinting: sprint,
         });
     }
 }
@@ -101,23 +94,17 @@ pub fn apply_movement_damping(
     }
 }
 
-pub fn handle_movement_actions_for_character_controllers(
-    mut movement_action_reader: MessageReader<MovementAction>,
+pub fn handle_jump_action(
+    mut movement_action_reader: MessageReader<JumpAction>,
     mut character_controller_query: Query<
-        (&mut LinearVelocity, &Grounded, &Transform),
+        (&mut LinearVelocity, &Grounded),
         With<CharacterController>,
     >,
-    mut spatial_query: SpatialQuery,
-    time: Res<Time>,
-    world_objects_query: Query<Entity, With<WorldObjectCollectibleServerSide>>,
-    mut desired_velocity_res: ResMut<DesiredVelocity>,
 ) {
     for movement_action in movement_action_reader.read() {
-        let sprinting = movement_action.sprinting;
-        let direction = &movement_action.desired_velocity;
         let character_controller_entity =
             movement_action.character_controller_entity;
-        let Ok((mut velocity, grounded, transform)) =
+        let Ok((mut velocity, grounded)) =
             character_controller_query.get_mut(character_controller_entity)
         else {
             warn!(
@@ -127,29 +114,8 @@ pub fn handle_movement_actions_for_character_controllers(
             continue;
         };
 
-        match *direction {
-            MovementDirection::Jump => {
-                // This is pretty naive, but theoretically it works because we have the
-                // `check_above_head` system. In the future, we most likely just want a
-                // depenetration system which finds the shortest way out of the collider that we
-                // are stuck in.
-                if grounded.0 {
-                    velocity.y = JUMP_VELOCITY;
-                }
-            }
-            MovementDirection::Move(desired_velocity) => {
-                // FIXME: should probably get rid of this message
-                desired_velocity_res.0 = desired_velocity;
-
-                // // exclude world objects because we want to be able to walk through them
-                // let excluded_entities: Vec<Entity> = world_objects_query
-                //     .iter()
-                //     .chain(std::iter::once(character_controller_entity))
-                //     .collect();
-                //
-                // let spatial_query_filter = &SpatialQueryFilter::default()
-                //     .with_excluded_entities(excluded_entities.clone());
-            }
+        if grounded.0 {
+            velocity.y = JUMP_VELOCITY;
         }
     }
 }

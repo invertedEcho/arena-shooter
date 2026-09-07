@@ -1,14 +1,13 @@
 use bevy::prelude::*;
-use shared::character_controller::apply_collide_and_slide;
+use shared::character_controller::collide_and_slide_system;
 
 use crate::{
     character_controller::{
-        messages::MovementAction,
+        messages::JumpAction,
         systems::{
             apply_gravity, apply_movement_damping, check_above_head,
-            exclude_added_world_object_from_ground_caster,
-            handle_keyboard_input_for_player,
-            handle_movement_actions_for_character_controllers, update_grounded,
+            exclude_added_world_object_from_ground_caster, handle_jump_action,
+            handle_keyboard_input_for_player, update_grounded,
             zero_player_velocity,
         },
     },
@@ -23,20 +22,20 @@ pub struct CharacterControllerPlugin;
 
 impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<MovementAction>()
+        app.add_message::<JumpAction>()
             .add_systems(
-                FixedUpdate,
+                Update,
                 (
                     update_grounded,
                     apply_gravity,
                     check_above_head.after(update_grounded),
-                    handle_movement_actions_for_character_controllers,
+                    handle_jump_action,
                     apply_movement_damping,
                     exclude_added_world_object_from_ground_caster,
-                    apply_collide_and_slide,
                 )
                     .run_if(in_state(AppState::InGame)),
             )
+            .add_systems(FixedUpdate, collide_and_slide_system)
             .add_systems(
                 Update,
                 (handle_keyboard_input_for_player,)

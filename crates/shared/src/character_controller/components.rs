@@ -9,3 +9,6 @@ pub struct CharacterController;
     Component, Default, Serialize, Deserialize, PartialEq, Clone, Debug,
 )]
 pub struct Grounded(pub bool);
+
+#[derive(Component, Reflect)]
+pub struct DesiredVelocity(pub Vec3);
