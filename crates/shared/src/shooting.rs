@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use bevy::prelude::*;
+use netvy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 // no idea if this number makes sense but works so far
@@ -102,4 +103,11 @@ pub fn get_game_weapon_by_kind(weapon_kind: &WeaponKind) -> GameWeapon {
         WeaponKind::P90 => WEAPON_P90,
         WeaponKind::SniperRifle => WEAPON_SNIPER_RIFLE,
     }
+}
+
+/// server sends this to all clients whenever a player kills another player so they visually hide the killed
+/// player.
+#[derive(Message, Serialize, Deserialize)]
+pub struct PlayerKilled {
+    pub player_killed: NetEntityId,
 }

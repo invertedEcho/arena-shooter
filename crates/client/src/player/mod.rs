@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use netvy::prelude::*;
 use shared::{
     player::{OurPlayerReady, Player},
-    shooting::{PlayerWeapons, WeaponKind},
+    shooting::{PlayerKilled, PlayerWeapons, WeaponKind},
 };
 
 use crate::player::{
@@ -24,7 +24,11 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             FixedUpdate,
-            (mark_players_as_ready, add_player_weapon_model_on_new_player),
+            (
+                mark_players_as_ready,
+                add_player_weapon_model_on_new_player,
+                hide_player_on_killed,
+            ),
         )
         .add_plugins(PlayerCameraPlugin)
         .add_plugins(PlayerShootingPlugin);
@@ -39,7 +43,6 @@ type PlayersWithoutReadyMarker = (
     Without<OurPlayerReady>,
 );
 
-// hmm should this run on client?
 fn mark_players_as_ready(
     mut commands: Commands,
     query: Query<Entity, PlayersWithoutReadyMarker>,
@@ -80,5 +83,33 @@ fn add_player_weapon_model_on_new_player(
                 AlternateTargetRotation(*net_entity_id),
             ));
         });
+    }
+}
+
+fn hide_player_on_killed(
+    mut message_reader: MessageReader<FromServer<PlayerKilled>>,
+    mut player_query: Query<(&mut Visibility, &NetEntityId), With<Player>>,
+) {
+    for message in message_reader.read() {
+        let killed_player_net_entity = message.0.player_killed;
+
+        let Some(mut player_visibility) =
+            player_query
+                .iter_mut()
+                .find_map(|(visibility, net_entity_id)| {
+                    if net_entity_id.0 == killed_player_net_entity.0 {
+                        Some(visibility)
+                    } else {
+                        None
+                    }
+                })
+        else {
+            error!(
+                "Received PlayerKilled message from server but couldnt find player locally"
+            );
+            continue;
+        };
+        info!(?killed_player_net_entity, "Hiding killed player");
+        *player_visibility = Visibility::Hidden;
     }
 }

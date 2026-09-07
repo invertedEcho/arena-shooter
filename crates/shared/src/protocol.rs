@@ -10,7 +10,7 @@ use crate::{
         ShootRequest,
     },
     player::{Player, PlayerState},
-    shooting::PlayerWeapons,
+    shooting::{PlayerKilled, PlayerWeapons},
     world_object::WorldObjectCollectibleServerSide,
 };
 
@@ -40,6 +40,10 @@ impl Plugin for ProtocolPlugin {
 
         app.register_network_message::<ClientCommand>(
             MessageDirection::ClientToServer,
+        );
+
+        app.register_network_message::<PlayerKilled>(
+            MessageDirection::ServerToClients,
         );
 
         app.register_component::<Player>();
