@@ -1,6 +1,10 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
+use crate::character_controller::components::{
+    CharacterController, DesiredVelocity,
+};
+
 pub mod components;
 
 pub const CHARACTER_CAPSULE_RADIUS: f32 = 0.2;
@@ -19,10 +23,34 @@ pub const WALK_VELOCITY: f32 = 1.5;
 pub const RUN_VELOCITY: f32 = 3.0;
 pub const JUMP_VELOCITY: f32 = 3.0;
 
+pub fn collide_and_slide_system(
+    character_controllers: Query<
+        (Entity, &mut LinearVelocity, &DesiredVelocity, &Transform),
+        With<CharacterController>,
+    >,
+    mut spatial_query: SpatialQuery,
+    time: Res<Time>,
+) {
+    for (entity, mut velocity, desired_velocity, transform) in
+        character_controllers
+    {
+        apply_collide_and_slide(
+            &mut velocity,
+            desired_velocity.0,
+            transform,
+            &mut spatial_query,
+            &SpatialQueryFilter::default().with_excluded_entities([entity]),
+            time.delta_secs(),
+            0,
+            false,
+        );
+    }
+}
+
 pub fn apply_collide_and_slide(
     current_velocity: &mut Vec3,
     desired_velocity: Vec3,
-    origin_transform: &Transform,
+    transform: &Transform,
     spatial_query: &mut SpatialQuery,
     spatial_query_filter: &SpatialQueryFilter,
     time_delta_secs: f32,
@@ -30,6 +58,7 @@ pub fn apply_collide_and_slide(
     sprinting: bool,
 ) {
     const MAX_HITS: usize = 5;
+
     let Ok(direction_from_world_velocity) = Dir3::new(desired_velocity) else {
         return;
     };
@@ -40,17 +69,17 @@ pub fn apply_collide_and_slide(
     }
 
     if current_hit_count > MAX_HITS {
-        *current_velocity = Vec3::splat(0.);
+        *current_velocity = Vec3::splat(0.0);
         return;
     }
 
-    let ray_origin = origin_transform.translation
-        - direction_from_world_velocity.as_vec3() * 0.025;
+    let ray_origin =
+        transform.translation - direction_from_world_velocity.as_vec3() * 0.025;
 
     let Some(hit_ahead) = spatial_query.cast_shape(
         &Collider::capsule(CHARACTER_CAPSULE_RADIUS, CHARACTER_CAPSULE_LENGTH),
         ray_origin,
-        origin_transform.rotation,
+        transform.rotation,
         direction_from_world_velocity,
         &ShapeCastConfig {
             max_distance: MAX_DISTANCE_SHAPE_CAST_CHARACTER_CONTROLLER,
@@ -81,7 +110,7 @@ pub fn apply_collide_and_slide(
         *current_velocity = desired_velocity.reject_from_normalized(normal);
 
         // slope snapping
-        let ray_down_origin = origin_transform.translation + Vec3::Y * 0.5;
+        let ray_down_origin = transform.translation + Vec3::Y * 0.5;
         let ray_down_direction = Dir3::NEG_Y;
         let max_down_distance = 1.0;
 
@@ -95,7 +124,7 @@ pub fn apply_collide_and_slide(
             let hit_down_point =
                 ray_down_origin + ray_down_direction * hit_down.distance;
             let hit_down_y = hit_down_point.y;
-            let player_y = origin_transform.translation.y;
+            let player_y = transform.translation.y;
             let difference_y = hit_down_y - player_y;
             if difference_y.abs() < 0.3 {
                 debug!("Snapping character controller to slope");
@@ -113,10 +142,10 @@ pub fn apply_collide_and_slide(
 
         // update our transform so shape cast origin is correct
         let new_transform = Transform {
-            translation: origin_transform.translation
+            translation: transform.translation
                 + desired_velocity * time_delta_secs,
-            rotation: origin_transform.rotation,
-            scale: origin_transform.scale,
+            rotation: transform.rotation,
+            scale: transform.scale,
         };
 
         apply_collide_and_slide(

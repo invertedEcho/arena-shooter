@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use shared::character_controller::{
     CHARACTER_CAPSULE_LENGTH, CHARACTER_CAPSULE_RADIUS,
     MAX_DISTANCE_GROUNDED_SHAPE_CAST,
-    components::{CharacterController, Grounded},
+    components::{CharacterController, DesiredVelocity, Grounded},
 };
 
 #[derive(Bundle)]
@@ -14,6 +14,7 @@ pub struct CharacterControllerBundle {
     locked_axes: LockedAxes,
     grounded: Grounded,
     ground_caster: ShapeCaster,
+    desired_velocity: DesiredVelocity,
 }
 
 impl Default for CharacterControllerBundle {
@@ -40,6 +41,7 @@ impl Default for CharacterControllerBundle {
                 Dir3::NEG_Y,
             )
             .with_max_distance(MAX_DISTANCE_GROUNDED_SHAPE_CAST),
+            desired_velocity: DesiredVelocity(Vec3::ZERO),
         }
     }
 }
