@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use netvy::prelude::*;
 use shared::{
-    player::{OurPlayerReady, Player},
-    shooting::{PlayerKilled, PlayerWeapons, WeaponKind},
+    player::{OurPlayerReady, Player, PlayerKilled, PlayerWeapons},
+    shooting::WeaponKind,
 };
 
 use crate::player::{
@@ -70,6 +70,10 @@ fn add_player_weapon_model_on_new_player(
         if owner.0.0 == our_peer_id.0.0.0 {
             continue;
         }
+        info!(
+            ?net_entity_id,
+            "Spawning PlayerWeaponModel for new added player"
+        );
         commands.entity(player_entity).with_children(|parent| {
             parent.spawn((
                 Name::new("PlayerWeaponModel"),
@@ -113,3 +117,5 @@ fn hide_player_on_killed(
         *player_visibility = Visibility::Hidden;
     }
 }
+
+fn show_player_on_respawn() {}

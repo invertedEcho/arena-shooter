@@ -10,8 +10,8 @@ use shared::{
     enemy::components::Enemy,
     game_score::{GameScore, LivingEntityStats},
     multiplayer_messages::{PlayerHitMessage, ShootRequest},
-    player::{Player, PlayerBundle},
-    shooting::{MAX_SHOOTING_DISTANCE, PlayerKilled, PlayerWeapons},
+    player::{Player, PlayerBundle, PlayerKilled, PlayerWeapons},
+    shooting::MAX_SHOOTING_DISTANCE,
 };
 
 use crate::{

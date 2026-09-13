@@ -1,4 +1,4 @@
-use ::shared::{AppRole, ServerRunMode, SharedPlugin};
+use ::shared::{AppRole, ServerRunMode, SharedPlugin, player::Player};
 use bevy::{
     dev_tools::fps_overlay::{FpsOverlayPlugin, FrameTimeGraphConfig},
     diagnostic::FrameTimeDiagnosticsPlugin,
@@ -146,6 +146,17 @@ fn main() {
 
     // TODO: move elsewhere
     app.add_observer(apply_render_layers_to_children);
+    app.add_systems(FixedUpdate, debug_player_visibility);
 
     app.run();
+}
+
+fn debug_player_visibility(
+    query: Query<EntityRef, (Changed<Visibility>, With<Player>)>,
+) {
+    for entity_ref in query {
+        if let Some(res) = entity_ref.get_changed_by::<Visibility>() {
+            info!("VISIBILITY WAS CHANGED BY {res:?}");
+        }
+    }
 }

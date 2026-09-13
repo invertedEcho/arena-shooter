@@ -68,7 +68,7 @@ impl Plugin for GameplayDebugPlugin {
             draw_on_start: false,
             ..default()
         });
-        app.add_plugins(PhysicsDebugPlugin);
+        // app.add_plugins(PhysicsDebugPlugin);
 
         app.init_resource::<AppDebugState>();
         app.add_plugins(DebugOverlayPlugin);
@@ -92,9 +92,9 @@ impl Plugin for GameplayDebugPlugin {
             ),
         );
         app.add_systems(
-            Update,
+            FixedUpdate,
             (
-                update_physics_debug_enabled,
+                // update_physics_debug_enabled,
                 update_landmass_debug_enabled,
                 update_enemy_debug_text_visible,
             )
@@ -113,6 +113,9 @@ fn update_physics_debug_enabled(
     mut store: ResMut<GizmoConfigStore>,
     current_app_debug_state: Res<AppDebugState>,
 ) {
+    info!(
+        "YUUUUUUP CHANGED!! AppDebugState is changed, syyncing to PhysicsGizmos store"
+    );
     let (config, _) = store.config_mut::<PhysicsGizmos>();
     config.enabled = current_app_debug_state.show_physics_gizmos;
 }

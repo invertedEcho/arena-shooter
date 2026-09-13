@@ -4,8 +4,7 @@ use shared::{
     EnemyKilledMessage, GameStateServer, NextWaveTimer, WaveFinishedMessage,
     enemy::components::Enemy,
     game_score::GameScore,
-    player::{DEFAULT_PLAYER_WEAPONS, PlayerCash},
-    shooting::PlayerWeapons,
+    player::{DEFAULT_PLAYER_WEAPONS, PlayerCash, PlayerWeapons},
 };
 
 use crate::{

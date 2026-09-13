@@ -6,8 +6,8 @@ use bevy::{
 use netvy::prelude::*;
 use shared::{
     components::DespawnTimer,
-    player::{AimType, Player, PlayerState},
-    shooting::{PlayerWeapons, WeaponKind},
+    player::{AimType, Player, PlayerState, PlayerWeapons},
+    shooting::WeaponKind,
 };
 
 use crate::{
@@ -449,7 +449,7 @@ pub fn interpolate_weapon_position(
         (With<PlayerWeaponModel>, With<OurPlayerWeaponModel>),
     >,
     time: Res<Time>,
-    app_debug_state: Option<ResMut<AppDebugState>>,
+    app_debug_state: Option<Res<AppDebugState>>,
 ) {
     if let Some(app_debug_state) = app_debug_state
         && !app_debug_state.interpolate_weapon_position

@@ -1,12 +1,11 @@
 use bevy::prelude::*;
+use netvy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     DEFAULT_HEALTH,
     components::Health,
-    shooting::{
-        PlayerWeapon, PlayerWeapons, WEAPON_AK47, WEAPON_GLOCK, WeaponState,
-    },
+    shooting::{GameWeapon, WEAPON_AK47, WEAPON_GLOCK, WeaponState},
 };
 
 #[derive(Component, Debug, Reflect, PartialEq, Serialize, Deserialize)]
@@ -74,4 +73,30 @@ impl Default for PlayerBundle {
 pub enum AimType {
     Normal,
     Scoped,
+}
+
+/// server sends this to all clients whenever a player kills another player so they visually hide the killed
+/// player.
+#[derive(Message, Serialize, Deserialize)]
+pub struct PlayerKilled {
+    pub player_killed: NetEntityId,
+}
+
+/// server sends this to all clients whenever the server respawned a player.
+/// all clients will then make that player visible again, as they hid that player after receiving PlayerKilled message.
+#[derive(Message, Serialize, Deserialize)]
+pub struct PlayerRespawned {
+    pub player_killed: NetEntityId,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub struct PlayerWeapon {
+    pub state: WeaponState,
+    pub game_weapon: GameWeapon,
+}
+
+#[derive(Component, Serialize, Deserialize, PartialEq, Debug)]
+pub struct PlayerWeapons {
+    pub weapons: [PlayerWeapon; 2],
+    pub active_weapon_slot: usize,
 }

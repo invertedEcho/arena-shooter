@@ -6,10 +6,8 @@ use netvy::prelude::*;
 use shared::{
     components::{DespawnTimer, Health},
     multiplayer_messages::ShootRequest,
-    player::{AimType, PlayerState},
-    shooting::{
-        MAX_SHOOTING_DISTANCE, PlayerWeapons, WeaponKind, WeaponSlotType,
-    },
+    player::{AimType, PlayerState, PlayerWeapons},
+    shooting::{MAX_SHOOTING_DISTANCE, WeaponKind, WeaponSlotType},
 };
 
 use crate::{
