@@ -109,16 +109,13 @@ impl Plugin for GameplayDebugPlugin {
     }
 }
 
-fn update_physics_debug_enabled(
-    mut store: ResMut<GizmoConfigStore>,
-    current_app_debug_state: Res<AppDebugState>,
-) {
-    info!(
-        "YUUUUUUP CHANGED!! AppDebugState is changed, syyncing to PhysicsGizmos store"
-    );
-    let (config, _) = store.config_mut::<PhysicsGizmos>();
-    config.enabled = current_app_debug_state.show_physics_gizmos;
-}
+// fn update_physics_debug_enabled(
+//     mut store: ResMut<GizmoConfigStore>,
+//     current_app_debug_state: Res<AppDebugState>,
+// ) {
+//     let (config, _) = store.config_mut::<PhysicsGizmos>();
+//     config.enabled = current_app_debug_state.show_physics_gizmos;
+// }
 
 pub struct DebugGizmoLine {
     pub start: Vec3,
