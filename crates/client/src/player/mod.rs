@@ -1,8 +1,10 @@
 use bevy::prelude::*;
 use netvy::prelude::*;
 use shared::{
-    player::{OurPlayerReady, Player},
-    shooting::{PlayerWeapons, WeaponKind},
+    player::{
+        OurPlayerReady, Player, PlayerKilled, PlayerRespawned, PlayerWeapons,
+    },
+    shooting::WeaponKind,
 };
 
 use crate::player::{
@@ -24,7 +26,12 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             FixedUpdate,
-            (mark_players_as_ready, add_player_weapon_model_on_new_player),
+            (
+                mark_players_as_ready,
+                add_player_weapon_model_on_new_player,
+                hide_player_on_killed,
+                show_player_on_respawn,
+            ),
         )
         .add_plugins(PlayerCameraPlugin)
         .add_plugins(PlayerShootingPlugin);
@@ -39,7 +46,6 @@ type PlayersWithoutReadyMarker = (
     Without<OurPlayerReady>,
 );
 
-// hmm should this run on client?
 fn mark_players_as_ready(
     mut commands: Commands,
     query: Query<Entity, PlayersWithoutReadyMarker>,
@@ -67,6 +73,10 @@ fn add_player_weapon_model_on_new_player(
         if owner.0.0 == our_peer_id.0.0.0 {
             continue;
         }
+        info!(
+            ?net_entity_id,
+            "Spawning PlayerWeaponModel for new added player"
+        );
         commands.entity(player_entity).with_children(|parent| {
             parent.spawn((
                 Name::new("PlayerWeaponModel"),
@@ -76,9 +86,70 @@ fn add_player_weapon_model_on_new_player(
                     ..default()
                 },
                 PlayerWeaponModel,
-                Visibility::Visible,
+                Visibility::Inherited,
                 AlternateTargetRotation(*net_entity_id),
             ));
         });
+    }
+}
+
+fn hide_player_on_killed(
+    mut message_reader: MessageReader<FromServer<PlayerKilled>>,
+    mut player_query: Query<(&mut Visibility, &NetEntityId), With<Player>>,
+) {
+    for message in message_reader.read() {
+        let killed_player_net_entity = message.0.player_killed;
+
+        let Some(mut player_visibility) =
+            player_query
+                .iter_mut()
+                .find_map(|(visibility, net_entity_id)| {
+                    if net_entity_id.0 == killed_player_net_entity.0 {
+                        Some(visibility)
+                    } else {
+                        None
+                    }
+                })
+        else {
+            error!(
+                "Received PlayerKilled message from server but couldnt find player locally"
+            );
+            continue;
+        };
+        info!(?killed_player_net_entity, "Hiding killed player");
+        *player_visibility = Visibility::Hidden;
+    }
+}
+
+fn show_player_on_respawn(
+    mut message_reader: MessageReader<FromServer<PlayerRespawned>>,
+    mut player_query: Query<(&mut Visibility, &NetEntityId), With<Player>>,
+) {
+    for message in message_reader.read() {
+        let respawned_player_net_entity = message.0.player_respawned;
+
+        let Some(mut player_visibility) =
+            player_query
+                .iter_mut()
+                .find_map(|(visibility, net_entity_id)| {
+                    if net_entity_id.0 == respawned_player_net_entity.0 {
+                        Some(visibility)
+                    } else {
+                        None
+                    }
+                })
+        else {
+            error!(
+                ?respawned_player_net_entity,
+                "Received PlayerRespawned message from server but couldnt find player locally"
+            );
+            continue;
+        };
+
+        info!(
+            ?respawned_player_net_entity,
+            "Making respawned player visible again"
+        );
+        *player_visibility = Visibility::Visible;
     }
 }

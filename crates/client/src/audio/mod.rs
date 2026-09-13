@@ -4,8 +4,8 @@ use rand::seq::IndexedRandom;
 use shared::{
     character_controller::components::Grounded,
     components::DespawnTimer,
-    player::AimType,
-    shooting::{PlayerWeapons, WeaponKind},
+    player::{AimType, PlayerWeapons},
+    shooting::WeaponKind,
 };
 
 use crate::{

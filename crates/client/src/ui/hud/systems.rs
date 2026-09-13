@@ -5,8 +5,7 @@ use shared::{
     GameMode, NextWaveTimer, WaveFinishedMessage,
     components::{DespawnTimer, Health},
     multiplayer_messages::PlayerHitMessage,
-    player::{AimType, OurPlayerReady, Player, PlayerCash},
-    shooting::PlayerWeapons,
+    player::{AimType, OurPlayerReady, Player, PlayerCash, PlayerWeapons},
 };
 
 use crate::{

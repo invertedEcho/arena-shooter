@@ -7,10 +7,9 @@ use bevy::{
     ui::InteractionDisabled,
 };
 use shared::{
-    player::PlayerCash,
+    player::{PlayerCash, PlayerWeapons},
     shooting::{
-        ALL_GAME_WEAPONS, GameWeapon, PlayerWeapons, WeaponSlotType,
-        get_game_weapon_by_kind,
+        ALL_GAME_WEAPONS, GameWeapon, WeaponSlotType, get_game_weapon_by_kind,
     },
 };
 

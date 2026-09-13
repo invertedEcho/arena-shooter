@@ -9,8 +9,9 @@ use crate::{
         ClientCommand, ClientRespawnRequest, ConfirmRespawn, PlayerHitMessage,
         ShootRequest,
     },
-    player::{Player, PlayerState},
-    shooting::PlayerWeapons,
+    player::{
+        Player, PlayerKilled, PlayerRespawned, PlayerState, PlayerWeapons,
+    },
     world_object::WorldObjectCollectibleServerSide,
 };
 
@@ -40,6 +41,13 @@ impl Plugin for ProtocolPlugin {
 
         app.register_network_message::<ClientCommand>(
             MessageDirection::ClientToServer,
+        );
+
+        app.register_network_message::<PlayerKilled>(
+            MessageDirection::ServerToClients,
+        );
+        app.register_network_message::<PlayerRespawned>(
+            MessageDirection::ServerToClients,
         );
 
         app.register_component::<Player>();

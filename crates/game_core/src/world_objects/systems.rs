@@ -4,8 +4,7 @@ use netvy::prelude::*;
 use shared::{
     AppRole, DEFAULT_HEALTH, GameConfigServer, GameMap,
     components::Health,
-    player::Player,
-    shooting::PlayerWeapons,
+    player::{Player, PlayerWeapons},
     world_object::{
         WorldObjectCollectibleKind, WorldObjectCollectibleServerSide,
     },
