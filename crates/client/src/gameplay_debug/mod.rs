@@ -1,6 +1,5 @@
 use std::num::NonZero;
 
-use avian3d::prelude::*;
 use bevy::{
     color::palettes::{css::RED, tailwind::BLUE_700},
     prelude::*,
