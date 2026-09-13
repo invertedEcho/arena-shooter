@@ -86,7 +86,7 @@ pub struct PlayerKilled {
 /// all clients will then make that player visible again, as they hid that player after receiving PlayerKilled message.
 #[derive(Message, Serialize, Deserialize)]
 pub struct PlayerRespawned {
-    pub player_killed: NetEntityId,
+    pub player_respawned: NetEntityId,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]

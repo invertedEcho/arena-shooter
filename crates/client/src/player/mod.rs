@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 use netvy::prelude::*;
 use shared::{
-    player::{OurPlayerReady, Player, PlayerKilled, PlayerWeapons},
+    player::{
+        OurPlayerReady, Player, PlayerKilled, PlayerRespawned, PlayerWeapons,
+    },
     shooting::WeaponKind,
 };
 
@@ -28,6 +30,7 @@ impl Plugin for PlayerPlugin {
                 mark_players_as_ready,
                 add_player_weapon_model_on_new_player,
                 hide_player_on_killed,
+                show_player_on_respawn,
             ),
         )
         .add_plugins(PlayerCameraPlugin)
@@ -83,7 +86,7 @@ fn add_player_weapon_model_on_new_player(
                     ..default()
                 },
                 PlayerWeaponModel,
-                Visibility::Visible,
+                Visibility::Inherited,
                 AlternateTargetRotation(*net_entity_id),
             ));
         });
@@ -118,4 +121,35 @@ fn hide_player_on_killed(
     }
 }
 
-fn show_player_on_respawn() {}
+fn show_player_on_respawn(
+    mut message_reader: MessageReader<FromServer<PlayerRespawned>>,
+    mut player_query: Query<(&mut Visibility, &NetEntityId), With<Player>>,
+) {
+    for message in message_reader.read() {
+        let respawned_player_net_entity = message.0.player_respawned;
+
+        let Some(mut player_visibility) =
+            player_query
+                .iter_mut()
+                .find_map(|(visibility, net_entity_id)| {
+                    if net_entity_id.0 == respawned_player_net_entity.0 {
+                        Some(visibility)
+                    } else {
+                        None
+                    }
+                })
+        else {
+            error!(
+                ?respawned_player_net_entity,
+                "Received PlayerRespawned message from server but couldnt find player locally"
+            );
+            continue;
+        };
+
+        info!(
+            ?respawned_player_net_entity,
+            "Making respawned player visible again"
+        );
+        *player_visibility = Visibility::Visible;
+    }
+}

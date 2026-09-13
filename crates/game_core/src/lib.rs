@@ -14,7 +14,7 @@ use shared::{
     multiplayer_messages::{
         ClientCommand, ClientRespawnRequest, ConfirmRespawn,
     },
-    player::Player,
+    player::{Player, PlayerRespawned},
     world_object::{
         WorldObjectCollectibleKind, WorldObjectCollectibleServerSide,
     },
@@ -208,6 +208,7 @@ fn handle_client_respawn_requests(
     mut message_reader: MessageReader<FromClient<ClientRespawnRequest>>,
     mut player_query: Query<(Entity, &NetEntityId, &mut Health, &Owner)>,
     mut message_writer: MessageWriter<ToClients<ConfirmRespawn>>,
+    mut player_respawned_msg_writer: MessageWriter<ToClients<PlayerRespawned>>,
 ) {
     for message in message_reader.read() {
         info!(
@@ -243,7 +244,13 @@ fn handle_client_respawn_requests(
 
         message_writer.write(ToClients {
             message: ConfirmRespawn,
-            target: NetworkMessageTarget::Clients(vec![client_peer_id]),
+            target: NetworkMessageTarget::Single(client_peer_id),
+        });
+        player_respawned_msg_writer.write(ToClients {
+            message: PlayerRespawned {
+                player_respawned: *net_entity_id,
+            },
+            target: NetworkMessageTarget::Except(vec![client_peer_id]),
         });
     }
 }
